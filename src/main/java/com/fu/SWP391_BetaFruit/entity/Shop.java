@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Shop {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ShopId")
@@ -38,8 +39,14 @@ public class Shop {
     @Column(name = "BannerUrl", columnDefinition = "NVARCHAR(MAX)")
     private String bannerUrl;
 
-    @Column(name = "BankAccountInfo", columnDefinition = "NVARCHAR(255)")
-    private String bankAccountInfo;
+    @Column(name = "BankName", columnDefinition = "NVARCHAR(100)")
+    private String bankName;
+
+    @Column(name = "BankAccountNumber", length = 50)
+    private String bankAccountNumber;
+
+    @Column(name = "AccountName", columnDefinition = "NVARCHAR(100)")
+    private String accountName;
 
     @Column(name = "AvailableBalance", precision = 18, scale = 2)
     private BigDecimal availableBalance;
