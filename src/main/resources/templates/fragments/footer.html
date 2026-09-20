@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer class="site-footer" th:fragment="footer">
+    <div class="container footer-grid">
+        <section class="footer-intro" aria-labelledby="footer-brand">
+            <a class="brand brand-light" id="footer-brand" th:href="@{/}" href="/">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 48 48">
+                        <path d="M25.2 14.4c1.5-6.3 5.7-9.8 12-10.2-.3 6.2-4.2 10.2-10.8 11.1"/>
+                        <path d="M24 13.8C13.3 13.8 6.8 21 8.1 31.1 9.4 41.2 18.4 45 24 45s14.6-3.8 15.9-13.9C41.2 21 34.7 13.8 24 13.8Z"/>
+                    </svg>
+                </span>
+                <span class="brand-name">Beta<span>Fruit</span></span>
+            </a>
+            <p>Nông sản tươi ngon từ những nhà vườn uy tín, được giao đến tận cửa nhà bạn.</p>
+        </section>
+
+        <section class="footer-column">
+            <h2>Khám phá</h2>
+            <a th:href="@{/products}" href="/products">Sản phẩm</a>
+            <a th:href="@{/shops}" href="/shops">Cửa hàng</a>
+        </section>
+
+        <section class="footer-column">
+            <h2>Hỗ trợ</h2>
+            <a th:href="@{/help}" href="/help">Trung tâm trợ giúp</a>
+            <a th:href="@{/privacy}" href="/privacy">Chính sách bảo mật</a>
+        </section>
+
+        <section class="footer-column footer-contact">
+            <h2>Liên hệ</h2>
+            <p><strong>Hotline</strong><a href="tel:19001234">1900 1234</a></p>
+            <p><strong>Email</strong><a href="mailto:hello@betafruit.vn">hello@betafruit.vn</a></p>
+        </section>
+    </div>
+
+    <div class="container footer-bottom">
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> BetaFruit. All rights reserved.</p>
+        <p>Tươi từ vườn · Lành từ tâm</p>
+    </div>
+</footer>
+</body>
+</html>
