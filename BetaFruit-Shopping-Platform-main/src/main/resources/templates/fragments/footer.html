@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer class="site-footer" th:fragment="footer">
+    <div class="container footer-grid">
+        <section class="footer-intro" aria-labelledby="footer-brand">
+            <a class="brand brand-light" id="footer-brand" th:href="@{/}" href="/">
+                <img class="brand-logo" th:src="@{/images/betafruit-logo.png}"
+                     src="/images/betafruit-logo.png" alt="BetaFruit">
+            </a>
+            <p>Nông sản tươi ngon từ những nhà vườn uy tín, được giao đến tận cửa nhà bạn.</p>
+        </section>
+
+        <section class="footer-column">
+            <h2>Khám phá</h2>
+            <a th:href="@{/products}" href="/products">Sản phẩm</a>
+            <a th:href="@{/shops}" href="/shops">Cửa hàng</a>
+        </section>
+
+        <section class="footer-column">
+            <h2>Hỗ trợ</h2>
+            <a th:href="@{/help}" href="/help">Trung tâm trợ giúp</a>
+            <a th:href="@{/privacy}" href="/privacy">Chính sách bảo mật</a>
+        </section>
+
+        <section class="footer-column footer-contact">
+            <h2>Liên hệ</h2>
+            <p><strong>Hotline</strong><a href="tel:19001234">1900 1234</a></p>
+            <p><strong>Email</strong><a href="mailto:hello@betafruit.vn">hello@betafruit.vn</a></p>
+        </section>
+    </div>
+
+    <div class="container footer-bottom">
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> BetaFruit. All rights reserved.</p>
+        <p>Tươi từ vườn · Lành từ tâm</p>
+    </div>
+</footer>
+</body>
+</html>
