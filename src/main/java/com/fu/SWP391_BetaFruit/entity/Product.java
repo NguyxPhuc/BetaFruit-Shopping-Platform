@@ -36,11 +36,11 @@ public class Product {
     @Column(name = "Description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = com.fu.SWP391_BetaFruit.converter.ProductApprovalStatusConverter.class)
     @Column(name = "ApprovalStatus", length = 20)
     private ProductApprovalStatus approvalStatus;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = com.fu.SWP391_BetaFruit.converter.ProductVisibilityConverter.class)
     @Column(name = "VisibilityStatus", length = 20)
     private ProductVisibility visibilityStatus;
 
