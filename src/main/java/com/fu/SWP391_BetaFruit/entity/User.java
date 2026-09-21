@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -54,5 +55,5 @@ public class User {
             joinColumns = @JoinColumn(name = "UserId"),
             inverseJoinColumns = @JoinColumn(name = "RoleId")
     )
-    private List<Role> roles;
+    private List<Role> roles = new ArrayList<>();
 }
