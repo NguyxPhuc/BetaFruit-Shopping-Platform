@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý đơn hàng | BetaFruit</title>
+    <style th:replace="~{fragments/ShopSidebar :: shop-sidebar-styles}"></style>
+    <style>
+        :root { color-scheme: light; }
+        body { margin: 0; background: #eef8ff; color: #18334c; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        .shop-layout { display: flex; min-height: 100vh; }
+        .shop-content { flex: 1; min-width: 0; padding: 47px 8.4% 48px 4%; }
+        .page-heading { margin: 0 0 24px; }
+        .page-heading h1 { margin: 0; color: #173149; font-size: clamp(28px, 3vw, 34px); letter-spacing: -.9px; line-height: 1.1; }
+        .page-heading p { margin: 8px 0 0; color: #7690a6; font-size: 14px; }
+        .order-search { position: relative; max-width: 634px; margin-bottom: 29px; }
+        .order-search svg { position: absolute; top: 50%; left: 15px; width: 19px; height: 19px; color: #7893a8; fill: none; stroke: currentColor; stroke-width: 2.2; transform: translateY(-50%); pointer-events: none; }
+        .order-search input { width: 100%; height: 46px; padding: 0 17px 0 44px; border: 1px solid #d6e8f5; border-radius: 13px; outline: none; background: #fff; box-shadow: 0 1px 2px rgba(45, 94, 136, .03); color: #263f56; font: inherit; font-size: 14px; }
+        .order-search input:focus { border-color: #3671ff; box-shadow: 0 0 0 3px rgba(54,113,255,.12); }
+        .order-card { overflow: hidden; max-width: 920px; border: 1px solid #d6e8f5; border-radius: 18px; background: #fff; box-shadow: 0 2px 6px rgba(34, 80, 115, .04); }
+        .order-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .order-table th { height: 50px; padding: 0 24px; border-bottom: 1px solid #dbeaf4; color: #748da0; font-size: 11px; font-weight: 700; white-space: nowrap; }
+        .order-table td { height: 93px; padding: 9px 24px; border-bottom: 1px solid #dbeaf4; color: #29435a; font-size: 14px; font-weight: 600; }
+        .order-table tbody tr:last-child td { border-bottom: 0; }
+        .order-code { color: #1e3b54; white-space: nowrap; }
+        .order-customer { min-width: 104px; max-width: 150px; line-height: 1.45; }
+        .order-money { white-space: nowrap; }
+        .order-received { color: #526c81; font-weight: 500; white-space: nowrap; }
+        .order-status { display: inline-flex; align-items: center; gap: 7px; max-width: 91px; min-height: 41px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.2; }
+        .order-status::before { width: 5px; height: 5px; flex: none; border-radius: 50%; background: currentColor; content: ""; }
+        .order-status--pending { background: #fff7df; color: #d99010; }
+        .order-status--confirmed { background: #e1f8f8; color: #10bfae; }
+        .order-status--cancelled, .order-status--failed, .order-status--rejected { background: #ffeded; color: #e15757; }
+        .order-status--other { background: #eaf2ff; color: #3671ff; }
+        .order-actions { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; padding: 8px 12px; border: 1px solid #d6e8f5; border-radius: 9px; background: #fff; color: #30485c; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; transition: .18s ease; }
+        .button:hover { border-color: #8eb4ee; background: #f6faff; }
+        .button--primary { border-color: #3671ff; background: #3671ff; box-shadow: 0 6px 13px rgba(54,113,255,.25); color: #fff; }
+        .button--primary:hover { background: #1f5df5; }
+        .button--cancel { border-color: #ffd3d3; color: #d95858; }
+        .button--cancel:hover { background: #fff5f5; border-color: #efaaaa; }
+        .order-actions form { margin: 0; }
+        .empty-state { padding: 48px 24px; color: #7890a3; text-align: center; }
+        @media (max-width: 1000px) { .shop-content { padding-inline: 28px; } .order-card { overflow-x: auto; } .order-table { min-width: 780px; } }
+        @media (max-width: 700px) { .shop-content { padding: 30px 18px; } .order-table th, .order-table td { padding-inline: 16px; } }
+    </style>
+</head>
+<body>
+<main class="shop-layout">
+    <aside th:replace="~{fragments/ShopSidebar :: shop-sidebar('orders')}"></aside>
+
+    <section class="shop-content">
+        <header class="page-heading">
+            <h1>Quản lý đơn hàng</h1>
+            <p>Xem và xử lý các đơn hàng của khách</p>
+        </header>
+
+        <form class="order-search" method="get" th:action="@{/shop/orders}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"></circle><path d="m16 16 4 4"></path></svg>
+            <input type="search" name="keyword" th:value="${keyword}" placeholder="Tìm theo mã đơn, khách hàng" aria-label="Tìm đơn hàng">
+            <input th:if="${selectedStatus != null}" type="hidden" name="status" th:value="${selectedStatus}">
+        </form>
+
+        <div class="order-card">
+            <table class="order-table">
+                <thead>
+                <tr>
+                    <th scope="col">MÃ ĐƠN</th>
+                    <th scope="col">KHÁCH HÀNG</th>
+                    <th scope="col">TỔNG TIỀN</th>
+                    <th scope="col">TIỀN NHẬN</th>
+                    <th scope="col">TRẠNG THÁI</th>
+                    <th scope="col">THAO TÁC</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders.content}">
+                    <td class="order-code" th:text="${order.orderCode}">#DH1042</td>
+                    <td class="order-customer" th:text="${order.customerName}">Ngọc Hà</td>
+                    <td class="order-money" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">600.000đ</td>
+                    <td class="order-received">0đ</td>
+                    <td>
+                        <span class="order-status"
+                              th:classappend="${order.orderStatus == 'PENDING'} ? ' order-status--pending' : (${order.orderStatus == 'CONFIRMED'} ? ' order-status--confirmed' : (${order.orderStatus == 'CANCELLED' || order.orderStatus == 'FAILED' || order.orderStatus == 'REJECTED'} ? ' order-status--cancelled' : ' order-status--other'))"
+                              th:text="${order.orderStatusLabel}">Chờ xác nhận</span>
+                    </td>
+                    <td>
+                        <div class="order-actions">
+                            <!-- Trang chi tiết sẽ nối route thực tế sau. -->
+                            <a class="button" href="#">Xem chi tiết</a>
+                            <form th:if="${order.canCancel}" method="post" th:action="@{/shop/orders/{id}/cancel(id=${order.orderId})}">
+                                <button class="button button--cancel" type="submit" onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">Hủy đơn</button>
+                            </form>
+                            <form th:if="${order.canConfirm}" method="post" th:action="@{/shop/orders/{id}/confirm(id=${order.orderId})}">
+                                <button class="button button--primary" type="submit">Xác nhận</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${orders.empty}">
+                    <td class="empty-state" colspan="6">Chưa có đơn hàng nào phù hợp.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

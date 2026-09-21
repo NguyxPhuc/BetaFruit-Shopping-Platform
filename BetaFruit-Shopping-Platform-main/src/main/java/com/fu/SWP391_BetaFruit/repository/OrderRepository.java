@@ -29,4 +29,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             @Param("status") OrderStatus status,
             Pageable pageable
     );
+
+    @EntityGraph(attributePaths = "customer")
+    java.util.Optional<Order> findByOrderIdAndShopOwnerUserId(Integer orderId, Integer ownerId);
 }

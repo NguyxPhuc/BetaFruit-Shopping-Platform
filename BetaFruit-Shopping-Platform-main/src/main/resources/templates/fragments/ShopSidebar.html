@@ -39,7 +39,8 @@
     </nav>
 
     <div class="shop-sidebar__profile">
-        <img src="https://ui-avatars.com/api/?name=Minh+Anh&amp;background=c8d8d4&amp;color=1b3546" alt="Ảnh đại diện của Minh Anh">
+        <img th:src="${shopOwnerAvatar ?: 'https://ui-avatars.com/api/?name=Shop+Owner&amp;background=c8d8d4&amp;color=1b3546'}"
+             src="https://ui-avatars.com/api/?name=Minh+Anh&amp;background=c8d8d4&amp;color=1b3546" alt="Ảnh đại diện chủ cửa hàng">
         <div>
             <strong th:text="${shopOwnerName ?: 'Minh Anh'}">Minh Anh</strong>
             <small>Quản trị viên</small>

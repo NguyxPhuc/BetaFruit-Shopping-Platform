@@ -8,10 +8,11 @@ public record ShopOrderListItemResponse(
         Integer orderId,
         String orderCode,
         String customerName,
-        String customerAvatarUrl,
         BigDecimal finalAmount,
         String orderStatus,
         String orderStatusLabel,
+        boolean canConfirm,
+        boolean canCancel,
         LocalDateTime createdAt
 ) {
 }
