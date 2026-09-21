@@ -43,6 +43,7 @@ a { color: inherit; text-decoration: none; }
 .navbar { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
 
 .brand { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.brand-logo { display: block; width: 168px; height: 52px; object-fit: contain; }
 
 .brand-mark { width: 39px; height: 39px; display: inline-flex; }
 .brand-mark svg { width: 100%; fill: var(--green-700); }
@@ -129,6 +130,7 @@ a { color: inherit; text-decoration: none; }
     .navbar { min-height: 70px; }
     .brand-mark { width: 34px; height: 34px; }
     .brand-name { font-size: 22px; }
+    .brand-logo { width: 145px; height: 45px; }
     .nav-content { top: 74px; left: 14px; right: 14px; }
     .error-main { min-height: 580px; padding: 58px 0 70px; }
     .error-illustration { height: 155px; gap: 5px; }

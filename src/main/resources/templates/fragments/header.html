@@ -6,14 +6,8 @@
 
     <nav class="navbar container" aria-label="Điều hướng chính">
         <a class="brand" th:href="@{/}" href="/" aria-label="BetaFruit - Trang chủ">
-            <span class="brand-mark" aria-hidden="true">
-                <svg viewBox="0 0 48 48" role="img">
-                    <path d="M25.2 14.4c1.5-6.3 5.7-9.8 12-10.2-.3 6.2-4.2 10.2-10.8 11.1"/>
-                    <path d="M24 13.8C13.3 13.8 6.8 21 8.1 31.1 9.4 41.2 18.4 45 24 45s14.6-3.8 15.9-13.9C41.2 21 34.7 13.8 24 13.8Z"/>
-                    <path class="brand-seed" d="M24 19.3c-1.4 3.3-1.4 6.6 0 9.9 1.4-3.3 1.4-6.6 0-9.9Z"/>
-                </svg>
-            </span>
-            <span class="brand-name">Beta<span>Fruit</span></span>
+            <img class="brand-logo" th:src="@{/images/betafruit-logo.png}"
+                 src="/images/betafruit-logo.png" alt="BetaFruit">
         </a>
 
         <button class="menu-toggle" type="button" aria-expanded="false"
