@@ -1,14 +1,10 @@
 package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.response.ShopOrderListItemResponse;
-import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
-import com.fu.SWP391_BetaFruit.service.SessionUserService;
 import com.fu.SWP391_BetaFruit.service.ShopOrderService;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,62 +12,85 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.server.ResponseStatusException;
 
 @Controller
-@RequestMapping("/shop/orders")
+@RequestMapping({"/shop/orders", "/shop/orders.html"})
 public class ShopOrderController {
-    private final ShopOrderService shopOrderService;
-    private final SessionUserService sessionUserService;
+    /** Temporary test owner. Change it or pass ?ownerId={id} while login is unavailable. */
+    private static final Integer TEST_OWNER_ID = 1;
 
-    public ShopOrderController(ShopOrderService shopOrderService, SessionUserService sessionUserService) {
+    private final ShopOrderService shopOrderService;
+
+    public ShopOrderController(ShopOrderService shopOrderService) {
         this.shopOrderService = shopOrderService;
-        this.sessionUserService = sessionUserService;
     }
 
     @GetMapping
     public String orderList(
-            HttpSession session,
             Model model,
+            @RequestParam(defaultValue = "1") Integer ownerId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        User currentUser = sessionUserService.findCurrentUser(session).orElse(null);
-        if (currentUser == null) return "redirect:/login";
-        model.addAttribute("orders", shopOrderService.getOrdersForShopOwner(currentUser.getUserId(), keyword, status, page, size));
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean preview) {
+        Integer shopOwnerId = ownerId == null ? TEST_OWNER_ID : ownerId;
+        // Restore after login exists:
+        // User currentUser = sessionUserService.findCurrentUser(session).orElse(null);
+        // if (currentUser == null) return "redirect:/login";
+        // Integer shopOwnerId = currentUser.getUserId();
+        if (preview) {
+            model.addAttribute("orders", Page.empty());
+        } else try {
+            model.addAttribute("orders", shopOrderService.getOrdersForShopOwner(shopOwnerId, keyword, status, page, size));
+        } catch (Exception exception) {
+            // Keep the page testable when the local SQL Server is not reachable.
+            model.addAttribute("orders", Page.empty());
+            model.addAttribute("orderLoadError", "Không thể kết nối cơ sở dữ liệu để tải đơn hàng. Kiểm tra lại SQL Server rồi tải lại trang.");
+        }
         model.addAttribute("keyword", keyword);
         model.addAttribute("selectedStatus", status);
-        model.addAttribute("shopOwnerName", currentUser.getFullName());
-        model.addAttribute("shopOwnerAvatar", currentUser.getAvatarUrl());
+        model.addAttribute("ownerId", shopOwnerId);
+        model.addAttribute("shopOwnerName", "Chủ shop test");
         return "shop/orders";
     }
 
     @PostMapping("/{orderId}/confirm")
-    public String confirmOrder(@PathVariable Integer orderId, HttpSession session) {
-        shopOrderService.confirmOrder(orderId, currentUserId(session));
-        return "redirect:/shop/orders";
+    public String confirmOrder(@PathVariable Integer orderId,
+                               @RequestParam(defaultValue = "1") Integer ownerId) {
+        shopOrderService.confirmOrder(orderId, ownerId);
+        return "redirect:/shop/orders?ownerId=" + ownerId;
+    }
+
+    @PostMapping("/{orderId}/preparing")
+    public String startPreparingOrder(@PathVariable Integer orderId,
+                                      @RequestParam(defaultValue = "1") Integer ownerId) {
+        shopOrderService.startPreparingOrder(orderId, ownerId);
+        return "redirect:/shop/orders?ownerId=" + ownerId;
+    }
+
+    @PostMapping("/{orderId}/ready")
+    public String markOrderReady(@PathVariable Integer orderId,
+                                 @RequestParam(defaultValue = "1") Integer ownerId) {
+        shopOrderService.markOrderReady(orderId, ownerId);
+        return "redirect:/shop/orders?ownerId=" + ownerId;
     }
 
     @PostMapping("/{orderId}/cancel")
-    public String cancelOrder(@PathVariable Integer orderId, HttpSession session) {
-        shopOrderService.cancelOrder(orderId, currentUserId(session));
-        return "redirect:/shop/orders";
+    public String cancelOrder(@PathVariable Integer orderId,
+                              @RequestParam(defaultValue = "1") Integer ownerId) {
+        shopOrderService.cancelOrder(orderId, ownerId);
+        return "redirect:/shop/orders?ownerId=" + ownerId;
     }
 
     @GetMapping("/api")
     @ResponseBody
-    public Page<ShopOrderListItemResponse> getOrdersApi(HttpSession session,
+    public Page<ShopOrderListItemResponse> getOrdersApi(
+            @RequestParam(defaultValue = "1") Integer ownerId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return shopOrderService.getOrdersForShopOwner(currentUserId(session), keyword, status, page, size);
-    }
-
-    private Integer currentUserId(HttpSession session) {
-        return sessionUserService.findCurrentUser(session)
-                .map(User::getUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập"));
+        return shopOrderService.getOrdersForShopOwner(ownerId, keyword, status, page, size);
     }
 }

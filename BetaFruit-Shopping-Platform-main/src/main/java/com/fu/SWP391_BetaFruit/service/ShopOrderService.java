@@ -10,5 +10,9 @@ public interface ShopOrderService {
 
     void confirmOrder(Integer orderId, Integer ownerId);
 
+    void startPreparingOrder(Integer orderId, Integer ownerId);
+
+    void markOrderReady(Integer orderId, Integer ownerId);
+
     void cancelOrder(Integer orderId, Integer ownerId);
 }

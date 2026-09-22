@@ -53,7 +53,9 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 order.getOrderStatus() == null ? null : order.getOrderStatus().name(),
                 statusLabel(order.getOrderStatus()),
                 order.getOrderStatus() == OrderStatus.PENDING,
-                order.getOrderStatus() == OrderStatus.PENDING || order.getOrderStatus() == OrderStatus.CONFIRMED,
+                order.getOrderStatus() == OrderStatus.CONFIRMED,
+                order.getOrderStatus() == OrderStatus.PREPARING,
+                canShopCancel(order.getOrderStatus()),
                 order.getCreatedAt()
         );
     }
@@ -66,10 +68,22 @@ public class ShopOrderServiceImpl implements ShopOrderService {
 
     @Override
     @Transactional
+    public void startPreparingOrder(Integer orderId, Integer ownerId) {
+        changeStatus(orderId, ownerId, OrderStatus.CONFIRMED, OrderStatus.PREPARING, "Shop bắt đầu chuẩn bị hàng");
+    }
+
+    @Override
+    @Transactional
+    public void markOrderReady(Integer orderId, Integer ownerId) {
+        changeStatus(orderId, ownerId, OrderStatus.PREPARING, OrderStatus.READY, "Shop đã chuẩn bị xong hàng");
+    }
+
+    @Override
+    @Transactional
     public void cancelOrder(Integer orderId, Integer ownerId) {
         Order order = getOwnedOrder(orderId, ownerId);
-        if (order.getOrderStatus() != OrderStatus.PENDING && order.getOrderStatus() != OrderStatus.CONFIRMED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Chỉ có thể hủy đơn đang chờ xác nhận hoặc đã xác nhận");
+        if (!canShopCancel(order.getOrderStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Chỉ có thể hủy đơn trước khi shipper lấy hàng");
         }
         saveStatusChange(order, ownerId, OrderStatus.CANCELLED, "Shop hủy đơn hàng");
     }
@@ -93,6 +107,13 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         order.setOrderStatus(nextStatus);
         orderStatusHistoryRepository.save(new OrderStatusHistory(
                 null, order, userRepository.getReferenceById(ownerId), previousStatus, nextStatus, note, null));
+    }
+
+    private boolean canShopCancel(OrderStatus status) {
+        return status == OrderStatus.PENDING
+                || status == OrderStatus.CONFIRMED
+                || status == OrderStatus.PREPARING
+                || status == OrderStatus.READY;
     }
 
     private String statusLabel(OrderStatus status) {

@@ -46,6 +46,8 @@
 		<dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
+			<!-- Match the JDBC driver version that connects successfully in IntelliJ/DataGrip. -->
+			<version>13.2.1.jre11</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>

@@ -12,6 +12,8 @@ public record ShopOrderListItemResponse(
         String orderStatus,
         String orderStatusLabel,
         boolean canConfirm,
+        boolean canStartPreparing,
+        boolean canMarkReady,
         boolean canCancel,
         LocalDateTime createdAt
 ) {
