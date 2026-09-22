@@ -9,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -106,5 +108,24 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public long countRejected() {
         return productRepository.countByApprovalStatus(ProductApprovalStatus.REJECTED);
+    }
+
+    @Override
+    public Map<String, Object> getAdminProductPageData(String keyword, String tab) {
+        String currentTab = (tab != null && !tab.trim().isEmpty()) ? tab.trim().toUpperCase() : "ALL";
+        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
+        List<Product> products = searchProducts(cleanKeyword, currentTab);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("products", products);
+        data.put("currentTab", currentTab);
+        data.put("keyword", cleanKeyword);
+        data.put("totalCount", countTotal());
+        data.put("pendingCount", countPending());
+        data.put("activeCount", countActive());
+        data.put("hiddenCount", countHidden());
+        data.put("rejectedCount", countRejected());
+
+        return data;
     }
 }

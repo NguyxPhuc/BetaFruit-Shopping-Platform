@@ -14,4 +14,6 @@ public interface ShopService {
     void rejectShop(Integer shopId);
     long countByStatus(ShopApprovalStatus status);
     long countTotal();
+
+    java.util.Map<String, Object> getAdminShopPageData(String keyword, String statusStr);
 }

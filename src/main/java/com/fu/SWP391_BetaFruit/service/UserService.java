@@ -10,4 +10,5 @@ public interface UserService {
     User getUserById(Integer userId);
     void toggleUserStatus(Integer userId);
     void assignRolesToUser(Integer userId, List<Long> roleIds);
+    java.util.Map<String, Object> getAdminUserPageData(String keyword);
 }
