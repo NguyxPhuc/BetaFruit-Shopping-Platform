@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -62,7 +64,6 @@ public class ShopServiceImpl implements ShopService {
         Shop shop = getShopById(shopId);
         shop.setApprovalStatus(ShopApprovalStatus.APPROVED);
 
-        // Tự động cấp vai trò ShopOwner cho chủ cửa hàng nếu chưa có
         User owner = shop.getOwner();
         if (owner != null) {
             boolean hasShopOwnerRole = owner.getRoles() != null && owner.getRoles().stream()
@@ -97,5 +98,30 @@ public class ShopServiceImpl implements ShopService {
     @Override
     public long countTotal() {
         return shopRepository.count();
+    }
+
+    @Override
+    public Map<String, Object> getAdminShopPageData(String keyword, String statusStr) {
+        ShopApprovalStatus filterStatus = null;
+        if (statusStr != null && !statusStr.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusStr.trim())) {
+            try {
+                filterStatus = ShopApprovalStatus.valueOf(statusStr.trim().toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
+        String trimmedKeyword = keyword != null ? keyword.trim() : "";
+        List<Shop> shops = searchShops(trimmedKeyword, filterStatus);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("shops", shops);
+        data.put("currentStatus", filterStatus != null ? filterStatus.name() : "ALL");
+        data.put("keyword", trimmedKeyword);
+        data.put("totalCount", countTotal());
+        data.put("pendingCount", countByStatus(ShopApprovalStatus.PENDING));
+        data.put("approvedCount", countByStatus(ShopApprovalStatus.APPROVED));
+        data.put("rejectedCount", countByStatus(ShopApprovalStatus.REJECTED));
+
+        return data;
     }
 }

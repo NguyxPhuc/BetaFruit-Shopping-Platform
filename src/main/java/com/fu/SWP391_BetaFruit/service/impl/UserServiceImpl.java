@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -73,5 +75,19 @@ public class UserServiceImpl implements UserService {
 
         user.setRoles(roles);
         userRepository.save(user);
+    }
+
+    @Override
+    public Map<String, Object> getAdminUserPageData(String keyword) {
+        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
+        List<User> users = searchUsers(cleanKeyword);
+        List<Role> allRoles = roleRepository.findAll();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("users", users);
+        data.put("allRoles", allRoles);
+        data.put("keyword", cleanKeyword);
+
+        return data;
     }
 }

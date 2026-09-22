@@ -1,6 +1,6 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
-import com.fu.SWP391_BetaFruit.dto.admin.CategoryDto;
+import com.fu.SWP391_BetaFruit.dto.request.admin.CategoryRequest;
 import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 import com.fu.SWP391_BetaFruit.repository.MasterCategoryRepository;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,12 +39,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void createCategory(CategoryDto dto) {
-        if (dto.getCategoryName() == null || dto.getCategoryName().trim().isEmpty()) {
+    public void createCategory(CategoryRequest request) {
+        if (request.getCategoryName() == null || request.getCategoryName().trim().isEmpty()) {
             throw new IllegalArgumentException("Tên danh mục hoa quả không được để trống!");
         }
 
-        String trimmedName = dto.getCategoryName().trim();
+        String trimmedName = request.getCategoryName().trim();
         if (masterCategoryRepository.existsByCategoryNameIgnoreCase(trimmedName)) {
             throw new IllegalArgumentException("Danh mục hoa quả mang tên '" + trimmedName + "' đã tồn tại trong hệ thống!");
         }
@@ -55,12 +57,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void updateCategory(Integer id, CategoryDto dto) {
-        if (dto.getCategoryName() == null || dto.getCategoryName().trim().isEmpty()) {
+    public void updateCategory(Integer id, CategoryRequest request) {
+        if (request.getCategoryName() == null || request.getCategoryName().trim().isEmpty()) {
             throw new IllegalArgumentException("Tên danh mục hoa quả không được để trống!");
         }
 
-        String trimmedName = dto.getCategoryName().trim();
+        String trimmedName = request.getCategoryName().trim();
         if (masterCategoryRepository.existsByCategoryNameIgnoreCaseAndCategoryIdNot(trimmedName, id)) {
             throw new IllegalArgumentException("Tên danh mục hoa quả '" + trimmedName + "' đã được sử dụng bởi danh mục khác!");
         }
@@ -77,5 +79,18 @@ public class CategoryServiceImpl implements CategoryService {
         boolean currentStatus = category.getIsActive() != null && category.getIsActive();
         category.setIsActive(!currentStatus);
         masterCategoryRepository.save(category);
+    }
+
+    @Override
+    public Map<String, Object> getAdminCategoryPageData(String keyword) {
+        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
+        List<MasterCategory> categories = searchCategories(cleanKeyword);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("categories", categories);
+        data.put("newCategory", new CategoryRequest());
+        data.put("keyword", cleanKeyword);
+
+        return data;
     }
 }

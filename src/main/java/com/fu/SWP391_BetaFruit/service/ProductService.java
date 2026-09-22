@@ -16,4 +16,6 @@ public interface ProductService {
     long countActive();
     long countHidden();
     long countRejected();
+
+    java.util.Map<String, Object> getAdminProductPageData(String keyword, String tab);
 }
