@@ -47,7 +47,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
     private ShopOrderListItemResponse toListItem(Order order) {
         return new ShopOrderListItemResponse(
                 order.getOrderId(),
-                "#DH" + String.format("%04d", order.getOrderId()),
+                String.valueOf(order.getOrderId()),
                 order.getCustomer().getFullName(),
                 order.getFinalAmount(),
                 Boolean.TRUE.equals(order.getIsSettled()) ? order.getFinalAmount() : java.math.BigDecimal.ZERO,
