@@ -31,6 +31,8 @@ public class ShopOrderController {
             @RequestParam(defaultValue = "1") Integer ownerId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "false") boolean preview) {
@@ -42,7 +44,7 @@ public class ShopOrderController {
         if (preview) {
             model.addAttribute("orders", Page.empty());
         } else try {
-            model.addAttribute("orders", shopOrderService.getOrdersForShopOwner(shopOwnerId, keyword, status, page, size));
+            model.addAttribute("orders", shopOrderService.getOrdersForShopOwner(shopOwnerId, keyword, status, sortBy, sortDirection, page, size));
         } catch (Exception exception) {
             // Keep the page testable when the local SQL Server is not reachable.
             model.addAttribute("orders", Page.empty());
@@ -50,6 +52,8 @@ public class ShopOrderController {
         }
         model.addAttribute("keyword", keyword);
         model.addAttribute("selectedStatus", status);
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sortDirection", sortDirection);
         model.addAttribute("ownerId", shopOwnerId);
         model.addAttribute("shopOwnerName", "Chủ shop test");
         return "shop/orders";
@@ -89,8 +93,10 @@ public class ShopOrderController {
             @RequestParam(defaultValue = "1") Integer ownerId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return shopOrderService.getOrdersForShopOwner(ownerId, keyword, status, page, size);
+        return shopOrderService.getOrdersForShopOwner(ownerId, keyword, status, sortBy, sortDirection, page, size);
     }
 }

@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 
 public interface ShopOrderService {
     Page<ShopOrderListItemResponse> getOrdersForShopOwner(
-            Integer ownerId, String keyword, OrderStatus status, int page, int size);
+            Integer ownerId, String keyword, OrderStatus status, String sortBy, String sortDirection, int page, int size);
 
     void confirmOrder(Integer orderId, Integer ownerId);
 

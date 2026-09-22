@@ -13,12 +13,16 @@
         .page-heading { margin: 0 0 24px; }
         .page-heading h1 { margin: 0; color: #173149; font-size: clamp(28px, 3vw, 34px); letter-spacing: -.9px; line-height: 1.1; }
         .page-heading p { margin: 8px 0 0; color: #7690a6; font-size: 14px; }
-        .order-search { position: relative; max-width: 634px; margin-bottom: 29px; }
+        .order-filters { display: flex; align-items: center; gap: 14px; max-width: 1280px; margin-bottom: 29px; }
+        .order-search { position: relative; flex: 1; max-width: 634px; }
         .order-search svg { position: absolute; top: 50%; left: 15px; width: 19px; height: 19px; color: #7893a8; fill: none; stroke: currentColor; stroke-width: 2.2; transform: translateY(-50%); pointer-events: none; }
         .order-search input { width: 100%; height: 46px; padding: 0 17px 0 44px; border: 1px solid #d6e8f5; border-radius: 13px; outline: none; background: #fff; box-shadow: 0 1px 2px rgba(45, 94, 136, .03); color: #263f56; font: inherit; font-size: 14px; }
         .order-search input:focus { border-color: #3671ff; box-shadow: 0 0 0 3px rgba(54,113,255,.12); }
+        .sort-filter { display: flex; align-items: center; gap: 8px; color: #637f95; font-size: 13px; font-weight: 700; white-space: nowrap; }
+        .sort-filter select { height: 46px; padding: 0 35px 0 13px; border: 1px solid #d6e8f5; border-radius: 11px; outline: none; background: #fff; color: #29435a; font: inherit; font-size: 13px; cursor: pointer; }
+        .sort-filter select:focus { border-color: #3671ff; box-shadow: 0 0 0 3px rgba(54,113,255,.12); }
         .database-warning { max-width: 634px; margin: -13px 0 20px; padding: 11px 14px; border: 1px solid #ffd6ad; border-radius: 10px; background: #fff8ed; color: #a66316; font-size: 13px; line-height: 1.45; }
-        .order-card { overflow: hidden; max-width: 920px; border: 1px solid #d6e8f5; border-radius: 18px; background: #fff; box-shadow: 0 2px 6px rgba(34, 80, 115, .04); }
+        .order-card { overflow: hidden; width: 100%; max-width: 1280px; border: 1px solid #d6e8f5; border-radius: 18px; background: #fff; box-shadow: 0 2px 6px rgba(34, 80, 115, .04); }
         .order-table { width: 100%; border-collapse: collapse; text-align: left; }
         .order-table th { height: 50px; padding: 0 24px; border-bottom: 1px solid #dbeaf4; color: #748da0; font-size: 11px; font-weight: 700; white-space: nowrap; }
         .order-table td { height: 93px; padding: 9px 24px; border-bottom: 1px solid #dbeaf4; color: #29435a; font-size: 14px; font-weight: 600; }
@@ -27,7 +31,8 @@
         .order-customer { min-width: 104px; max-width: 150px; line-height: 1.45; }
         .order-money { white-space: nowrap; }
         .order-received { color: #526c81; font-weight: 500; white-space: nowrap; }
-        .order-status { display: inline-flex; align-items: center; gap: 7px; max-width: 91px; min-height: 41px; padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.2; }
+        .order-table th:nth-child(5), .order-table td:nth-child(5) { min-width: 158px; }
+        .order-status { display: inline-flex; align-items: center; gap: 7px; min-width: 136px; min-height: 41px; padding: 5px 13px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
         .order-status::before { width: 5px; height: 5px; flex: none; border-radius: 50%; background: currentColor; content: ""; }
         .order-status--pending { background: #fff7df; color: #d99010; }
         .order-status--confirmed { background: #e1f8f8; color: #10bfae; }
@@ -42,13 +47,19 @@
         .button--cancel:hover { background: #fff5f5; border-color: #efaaaa; }
         .order-actions form { margin: 0; }
         .empty-state { padding: 48px 24px; color: #7890a3; text-align: center; }
-        .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 7px; max-width: 920px; margin-top: 18px; }
+        .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 7px; max-width: 1280px; margin-top: 18px; }
+        .confirmation-dialog { width: min(420px, calc(100vw - 36px)); padding: 0; border: 0; border-radius: 16px; box-shadow: 0 18px 45px rgba(23, 49, 73, .25); color: #18334c; }
+        .confirmation-dialog::backdrop { background: rgba(19, 43, 63, .42); }
+        .confirmation-dialog__content { padding: 25px; }
+        .confirmation-dialog h2 { margin: 0; font-size: 20px; }
+        .confirmation-dialog p { margin: 11px 0 24px; color: #617d92; font-size: 14px; line-height: 1.5; }
+        .confirmation-dialog__actions { display: flex; justify-content: flex-end; gap: 10px; }
         .pagination__link { display: inline-flex; min-width: 36px; height: 36px; align-items: center; justify-content: center; padding: 0 10px; border: 1px solid #d6e8f5; border-radius: 8px; background: #fff; color: #30485c; font-size: 13px; font-weight: 600; text-decoration: none; }
         .pagination__link:hover { border-color: #8eb4ee; background: #f6faff; }
         .pagination__link--active { border-color: #3671ff; background: #3671ff; color: #fff; }
         .pagination__link--disabled { pointer-events: none; opacity: .45; }
-        @media (max-width: 1000px) { .shop-content { padding-inline: 28px; } .order-card { overflow-x: auto; } .order-table { min-width: 780px; } }
-        @media (max-width: 700px) { .shop-content { padding: 30px 18px; } .order-table th, .order-table td { padding-inline: 16px; } }
+        @media (max-width: 1000px) { .shop-content { padding-inline: 28px; } .order-card { overflow-x: auto; } .order-table { min-width: 1000px; } }
+        @media (max-width: 700px) { .shop-content { padding: 30px 18px; } .order-filters { align-items: stretch; flex-direction: column; } .sort-filter { flex-wrap: wrap; } .order-table th, .order-table td { padding-inline: 16px; } }
     </style>
 </head>
 <body>
@@ -61,11 +72,41 @@
             <p>Xem và xử lý các đơn hàng của khách</p>
         </header>
 
-        <form class="order-search" method="get" th:action="@{/shop/orders}">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"></circle><path d="m16 16 4 4"></path></svg>
-            <input type="search" name="keyword" th:value="${keyword}" placeholder="Tìm theo mã đơn, khách hàng" aria-label="Tìm đơn hàng">
+        <form class="order-filters" method="get" th:action="@{/shop/orders}">
+            <div class="order-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"></circle><path d="m16 16 4 4"></path></svg>
+                <input type="search" name="keyword" th:value="${keyword}" placeholder="Tìm theo mã đơn, khách hàng" aria-label="Tìm đơn hàng">
+            </div>
+            <label class="sort-filter">Sắp xếp theo
+                <select name="sortBy" aria-label="Sắp xếp theo">
+                    <option value="createdAt" th:selected="${sortBy == 'createdAt'}">Mới nhất</option>
+                    <option value="orderCode" th:selected="${sortBy == 'orderCode'}">Mã đơn</option>
+                    <option value="totalAmount" th:selected="${sortBy == 'totalAmount'}">Tổng tiền</option>
+                    <option value="receivedAmount" th:selected="${sortBy == 'receivedAmount'}">Tiền nhận</option>
+                </select>
+            </label>
+            <label class="sort-filter">Thứ tự
+                <select name="sortDirection" aria-label="Thứ tự sắp xếp">
+                    <option value="desc" th:selected="${sortDirection == 'desc'}">Giảm dần</option>
+                    <option value="asc" th:selected="${sortDirection == 'asc'}">Tăng dần</option>
+                </select>
+            </label>
+            <label class="sort-filter">Trạng thái
+                <select name="status" aria-label="Lọc theo trạng thái">
+                    <option value="" th:selected="${selectedStatus == null}">Tất cả</option>
+                    <option value="PENDING" th:selected="${selectedStatus != null and selectedStatus.name() == 'PENDING'}">Chờ xác nhận</option>
+                    <option value="CONFIRMED" th:selected="${selectedStatus != null and selectedStatus.name() == 'CONFIRMED'}">Đã xác nhận</option>
+                    <option value="PREPARING" th:selected="${selectedStatus != null and selectedStatus.name() == 'PREPARING'}">Đang chuẩn bị hàng</option>
+                    <option value="READY" th:selected="${selectedStatus != null and selectedStatus.name() == 'READY'}">Sẵn sàng giao</option>
+                    <option value="PICKED_UP" th:selected="${selectedStatus != null and selectedStatus.name() == 'PICKED_UP'}">Đã lấy hàng</option>
+                    <option value="DELIVERING" th:selected="${selectedStatus != null and selectedStatus.name() == 'DELIVERING'}">Đang giao hàng</option>
+                    <option value="SUCCESS" th:selected="${selectedStatus != null and selectedStatus.name() == 'SUCCESS'}">Giao thành công</option>
+                    <option value="FAILED" th:selected="${selectedStatus != null and selectedStatus.name() == 'FAILED'}">Giao thất bại</option>
+                    <option value="CANCELLED" th:selected="${selectedStatus != null and selectedStatus.name() == 'CANCELLED'}">Đã hủy</option>
+                    <option value="REJECTED" th:selected="${selectedStatus != null and selectedStatus.name() == 'REJECTED'}">Từ chối nhận đơn</option>
+                </select>
+            </label>
             <input type="hidden" name="ownerId" th:value="${ownerId}">
-            <input th:if="${selectedStatus != null}" type="hidden" name="status" th:value="${selectedStatus}">
         </form>
 
         <p class="database-warning" th:if="${orderLoadError}" th:text="${orderLoadError}">
@@ -89,7 +130,7 @@
                     <td class="order-code" th:text="${order.orderCode}">#DH1042</td>
                     <td class="order-customer" th:text="${order.customerName}">Ngọc Hà</td>
                     <td class="order-money" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">600.000đ</td>
-                    <td class="order-received">0đ</td>
+                    <td class="order-received" th:text="${#numbers.formatDecimal(order.receivedAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
                     <td>
                         <span class="order-status"
                               th:classappend="${order.orderStatus == 'PENDING'} ? ' order-status--pending' : (${order.orderStatus == 'CONFIRMED'} ? ' order-status--confirmed' : (${order.orderStatus == 'CANCELLED' || order.orderStatus == 'FAILED' || order.orderStatus == 'REJECTED'} ? ' order-status--cancelled' : ' order-status--other'))"
@@ -99,19 +140,19 @@
                         <div class="order-actions">
                             <!-- Trang chi tiết sẽ nối route thực tế sau. -->
                             <a class="button" href="#">Xem chi tiết</a>
-                            <form th:if="${order.canCancel}" method="post" th:action="@{/shop/orders/{id}/cancel(id=${order.orderId})}">
+                            <form th:if="${order.canCancel}" class="status-change-form" method="post" th:action="@{/shop/orders/{id}/cancel(id=${order.orderId})}" data-confirm-title="Hủy đơn hàng?" data-confirm-message="Bạn có chắc muốn hủy đơn hàng này không?">
                                 <input type="hidden" name="ownerId" th:value="${ownerId}">
-                                <button class="button button--cancel" type="submit" onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">Hủy đơn</button>
+                                <button class="button button--cancel" type="submit">Hủy đơn</button>
                             </form>
-                            <form th:if="${order.canConfirm}" method="post" th:action="@{/shop/orders/{id}/confirm(id=${order.orderId})}">
+                            <form th:if="${order.canConfirm}" class="status-change-form" method="post" th:action="@{/shop/orders/{id}/confirm(id=${order.orderId})}" data-confirm-title="Xác nhận đơn hàng?" data-confirm-message="Bạn có chắc muốn xác nhận đơn hàng này không?">
                                 <input type="hidden" name="ownerId" th:value="${ownerId}">
                                 <button class="button button--primary" type="submit">Xác nhận</button>
                             </form>
-                            <form th:if="${order.canStartPreparing}" method="post" th:action="@{/shop/orders/{id}/preparing(id=${order.orderId})}">
+                            <form th:if="${order.canStartPreparing}" class="status-change-form" method="post" th:action="@{/shop/orders/{id}/preparing(id=${order.orderId})}" data-confirm-title="Bắt đầu chuẩn bị hàng?" data-confirm-message="Bạn có chắc muốn chuyển đơn hàng sang trạng thái đang chuẩn bị không?">
                                 <input type="hidden" name="ownerId" th:value="${ownerId}">
                                 <button class="button button--primary" type="submit">Chuẩn bị hàng</button>
                             </form>
-                            <form th:if="${order.canMarkReady}" method="post" th:action="@{/shop/orders/{id}/ready(id=${order.orderId})}">
+                            <form th:if="${order.canMarkReady}" class="status-change-form" method="post" th:action="@{/shop/orders/{id}/ready(id=${order.orderId})}" data-confirm-title="Xác nhận đã chuẩn bị xong?" data-confirm-message="Bạn có chắc muốn chuyển đơn hàng sang trạng thái sẵn sàng giao không?">
                                 <input type="hidden" name="ownerId" th:value="${ownerId}">
                                 <button class="button button--primary" type="submit">Sẵn sàng giao</button>
                             </form>
@@ -128,17 +169,61 @@
         <nav class="pagination" th:if="${orders.totalPages > 1}" aria-label="Phân trang đơn hàng">
             <a class="pagination__link"
                th:classappend="${orders.first} ? ' pagination__link--disabled'"
-               th:href="@{/shop/orders(ownerId=${ownerId},keyword=${keyword},status=${selectedStatus},page=${orders.first ? 0 : orders.number - 1},size=${orders.size})}">Trước</a>
+               th:href="@{/shop/orders(ownerId=${ownerId},keyword=${keyword},status=${selectedStatus},sortBy=${sortBy},sortDirection=${sortDirection},page=${orders.first ? 0 : orders.number - 1},size=${orders.size})}">Trước</a>
             <a th:each="pageNumber : ${#numbers.sequence(0, orders.totalPages - 1)}"
                class="pagination__link"
                th:classappend="${pageNumber == orders.number} ? ' pagination__link--active'"
-               th:href="@{/shop/orders(ownerId=${ownerId},keyword=${keyword},status=${selectedStatus},page=${pageNumber},size=${orders.size})}"
+               th:href="@{/shop/orders(ownerId=${ownerId},keyword=${keyword},status=${selectedStatus},sortBy=${sortBy},sortDirection=${sortDirection},page=${pageNumber},size=${orders.size})}"
                th:text="${pageNumber + 1}">1</a>
             <a class="pagination__link"
                th:classappend="${orders.last} ? ' pagination__link--disabled'"
-               th:href="@{/shop/orders(ownerId=${ownerId},keyword=${keyword},status=${selectedStatus},page=${orders.last ? orders.number : orders.number + 1},size=${orders.size})}">Sau</a>
+               th:href="@{/shop/orders(ownerId=${ownerId},keyword=${keyword},status=${selectedStatus},sortBy=${sortBy},sortDirection=${sortDirection},page=${orders.last ? orders.number : orders.number + 1},size=${orders.size})}">Sau</a>
         </nav>
     </section>
 </main>
+<dialog class="confirmation-dialog" id="status-confirmation-dialog" aria-labelledby="confirmation-title">
+    <div class="confirmation-dialog__content">
+        <h2 id="confirmation-title">Xác nhận thao tác</h2>
+        <p id="confirmation-message">Bạn có chắc muốn tiếp tục?</p>
+        <div class="confirmation-dialog__actions">
+            <button class="button" type="button" id="confirmation-cancel">Quay lại</button>
+            <button class="button button--primary" type="button" id="confirmation-accept">Xác nhận</button>
+        </div>
+    </div>
+</dialog>
+<script>
+    (() => {
+        const dialog = document.getElementById('status-confirmation-dialog');
+        const title = document.getElementById('confirmation-title');
+        const message = document.getElementById('confirmation-message');
+        const cancel = document.getElementById('confirmation-cancel');
+        const accept = document.getElementById('confirmation-accept');
+        let pendingForm;
+
+        document.querySelectorAll('.order-filters select').forEach((select) => {
+            select.addEventListener('change', () => select.form.requestSubmit());
+        });
+
+        document.querySelectorAll('.status-change-form').forEach((form) => {
+            form.addEventListener('submit', (event) => {
+                if (form.dataset.confirmed === 'true') return;
+                event.preventDefault();
+                pendingForm = form;
+                title.textContent = form.dataset.confirmTitle;
+                message.textContent = form.dataset.confirmMessage;
+                dialog.showModal();
+            });
+        });
+
+        cancel.addEventListener('click', () => dialog.close());
+        accept.addEventListener('click', () => {
+            if (!pendingForm) return;
+            pendingForm.dataset.confirmed = 'true';
+            pendingForm.requestSubmit();
+            dialog.close();
+        });
+        dialog.addEventListener('close', () => { pendingForm = undefined; });
+    })();
+</script>
 </body>
 </html>

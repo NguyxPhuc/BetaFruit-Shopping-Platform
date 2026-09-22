@@ -34,11 +34,11 @@ public class ShopOrderServiceImpl implements ShopOrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<ShopOrderListItemResponse> getOrdersForShopOwner(
-            Integer ownerId, String keyword, OrderStatus status, int page, int size) {
+            Integer ownerId, String keyword, OrderStatus status, String sortBy, String sortDirection, int page, int size) {
         String normalizedKeyword = StringUtils.hasText(keyword) ? keyword.trim() : null;
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        PageRequest pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageRequest pageable = PageRequest.of(safePage, safeSize, buildSort(sortBy, sortDirection));
 
         return orderRepository.searchOrdersForShopOwner(ownerId, normalizedKeyword, status, pageable)
                 .map(this::toListItem);
@@ -50,6 +50,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 "#DH" + String.format("%04d", order.getOrderId()),
                 order.getCustomer().getFullName(),
                 order.getFinalAmount(),
+                Boolean.TRUE.equals(order.getIsSettled()) ? order.getFinalAmount() : java.math.BigDecimal.ZERO,
                 order.getOrderStatus() == null ? null : order.getOrderStatus().name(),
                 statusLabel(order.getOrderStatus()),
                 order.getOrderStatus() == OrderStatus.PENDING,
@@ -58,6 +59,19 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 canShopCancel(order.getOrderStatus()),
                 order.getCreatedAt()
         );
+    }
+
+    private Sort buildSort(String sortBy, String sortDirection) {
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection)
+                ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        return switch (sortBy == null ? "" : sortBy) {
+            case "orderCode" -> Sort.by(direction, "orderId");
+            case "totalAmount" -> Sort.by(direction, "finalAmount");
+            // Tiền nhận = FinalAmount khi đơn đã được đối soát, ngược lại là 0đ.
+            case "receivedAmount" -> Sort.by(direction, "isSettled").and(Sort.by(direction, "finalAmount"));
+            default -> Sort.by(Sort.Direction.DESC, "createdAt");
+        };
     }
 
     @Override

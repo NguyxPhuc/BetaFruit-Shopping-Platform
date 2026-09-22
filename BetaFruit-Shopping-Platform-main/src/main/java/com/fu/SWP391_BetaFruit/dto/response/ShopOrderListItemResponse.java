@@ -9,6 +9,7 @@ public record ShopOrderListItemResponse(
         String orderCode,
         String customerName,
         BigDecimal finalAmount,
+        BigDecimal receivedAmount,
         String orderStatus,
         String orderStatusLabel,
         boolean canConfirm,
