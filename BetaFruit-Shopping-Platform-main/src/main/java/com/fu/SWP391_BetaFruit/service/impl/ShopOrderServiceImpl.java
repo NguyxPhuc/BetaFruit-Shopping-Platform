@@ -1,6 +1,10 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.response.ShopOrderListItemResponse;
+import com.fu.SWP391_BetaFruit.dto.response.ShopOrderDetailResponse;
+import com.fu.SWP391_BetaFruit.repository.OrderItemRepository;
+import com.fu.SWP391_BetaFruit.repository.DeliveryAssignmentRepository;
+import com.fu.SWP391_BetaFruit.repository.PaymentTransactionRepository;
 import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.entity.OrderStatusHistory;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
@@ -22,13 +26,66 @@ public class ShopOrderServiceImpl implements ShopOrderService {
     private final OrderRepository orderRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final DeliveryAssignmentRepository deliveryAssignmentRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
 
     public ShopOrderServiceImpl(OrderRepository orderRepository,
                                 OrderStatusHistoryRepository orderStatusHistoryRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                OrderItemRepository orderItemRepository,
+                                DeliveryAssignmentRepository deliveryAssignmentRepository,
+                                PaymentTransactionRepository paymentTransactionRepository) {
         this.orderRepository = orderRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.userRepository = userRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.deliveryAssignmentRepository = deliveryAssignmentRepository;
+        this.paymentTransactionRepository = paymentTransactionRepository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ShopOrderDetailResponse getOrderDetailForShopOwner(Integer orderId, Integer ownerId) {
+        Order order = orderRepository.findDetailForShopOwner(orderId, ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy đơn hàng của cửa hàng này"));
+
+        var items = orderItemRepository.findByOrderOrderIdOrderByOrderItemIdAsc(orderId).stream()
+                .map(item -> new ShopOrderDetailResponse.Item(
+                        item.getOrderItemId(), item.getSnapshotProductName(), item.getSnapshotVariantName(),
+                        item.getQuantity(), item.getPriceSnapshot(),
+                        item.getPriceSnapshot().multiply(java.math.BigDecimal.valueOf(item.getQuantity()))))
+                .toList();
+        var history = orderStatusHistoryRepository.findByOrderOrderIdOrderByCreatedAtAscHistoryIdAsc(orderId).stream()
+                .map(entry -> new ShopOrderDetailResponse.StatusHistory(
+                        entry.getHistoryId(), enumName(entry.getStatusFrom()), statusLabel(entry.getStatusFrom()),
+                        enumName(entry.getStatusTo()), statusLabel(entry.getStatusTo()),
+                        entry.getNote(), entry.getUpdatedBy().getFullName(), entry.getCreatedAt()))
+                .toList();
+        var delivery = deliveryAssignmentRepository.findByOrderOrderId(orderId)
+                .map(assignment -> new ShopOrderDetailResponse.Delivery(
+                        assignment.getAssignmentId(), assignment.getShipper().getUserId(),
+                        assignment.getShipper().getUser().getFullName(),
+                        assignment.getShipper().getUser().getPhone(), assignment.getAssignedAt()))
+                .orElse(null);
+        var payments = paymentTransactionRepository.findByOrderOrderIdOrderByCreatedAtAscTransactionIdAsc(orderId).stream()
+                .map(payment -> new ShopOrderDetailResponse.Payment(
+                        payment.getTransactionId(), payment.getGateway(), payment.getTransactionRef(),
+                        payment.getAmount(), enumName(payment.getStatus()), payment.getCreatedAt()))
+                .toList();
+
+        return new ShopOrderDetailResponse(
+                toListItem(order), order.getShop().getShopId(), order.getShop().getShopName(),
+                order.getCustomer().getUserId(), order.getCustomer().getPhone(),
+                order.getSnapshotShippingAddress(), order.getTotalAmount(), order.getDiscountAmount(),
+                order.getShippingFee(), enumName(order.getPaymentMethod()), order.getIsSettled(),
+                order.getSettledAt(), order.getCoupon() == null ? null : order.getCoupon().getCouponCode(),
+                items, history, delivery, payments);
+    }
+
+    private String enumName(Enum<?> value) {
+        return value == null ? null : value.name();
     }
 
     @Override
@@ -50,7 +107,8 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 String.valueOf(order.getOrderId()),
                 order.getCustomer().getFullName(),
                 order.getFinalAmount(),
-                Boolean.TRUE.equals(order.getIsSettled()) ? order.getFinalAmount() : java.math.BigDecimal.ZERO,
+                order.getShopNetReceived(),
+                order.getShopNetReceived(),
                 order.getOrderStatus() == null ? null : order.getOrderStatus().name(),
                 statusLabel(order.getOrderStatus()),
                 order.getOrderStatus() == OrderStatus.PENDING,
@@ -68,8 +126,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         return switch (sortBy == null ? "" : sortBy) {
             case "orderCode" -> Sort.by(direction, "orderId");
             case "totalAmount" -> Sort.by(direction, "finalAmount");
-            // Tiền nhận = FinalAmount khi đơn đã được đối soát, ngược lại là 0đ.
-            case "receivedAmount" -> Sort.by(direction, "isSettled").and(Sort.by(direction, "finalAmount"));
+            case "receivedAmount", "shopNetReceived" -> Sort.by(direction, "shopNetReceived");
             default -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
     }

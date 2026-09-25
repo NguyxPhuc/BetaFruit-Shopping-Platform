@@ -82,7 +82,7 @@
                     <option value="createdAt" th:selected="${sortBy == 'createdAt'}">Mới nhất</option>
                     <option value="orderCode" th:selected="${sortBy == 'orderCode'}">Mã đơn</option>
                     <option value="totalAmount" th:selected="${sortBy == 'totalAmount'}">Tổng tiền</option>
-                    <option value="receivedAmount" th:selected="${sortBy == 'receivedAmount'}">Tiền nhận</option>
+                    <option value="shopNetReceived" th:selected="${sortBy == 'shopNetReceived' or sortBy == 'receivedAmount'}">Tiền nhận</option>
                 </select>
             </label>
             <label class="sort-filter">Thứ tự
@@ -130,7 +130,7 @@
                     <td class="order-code" th:text="${order.orderCode}">#DH1042</td>
                     <td class="order-customer" th:text="${order.customerName}">Ngọc Hà</td>
                     <td class="order-money" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">600.000đ</td>
-                    <td class="order-received" th:text="${#numbers.formatDecimal(order.receivedAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                    <td class="order-received" th:text="${#numbers.formatDecimal(order.shopNetReceived, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
                     <td>
                         <span class="order-status"
                               th:classappend="${order.orderStatus == 'PENDING'} ? ' order-status--pending' : (${order.orderStatus == 'CONFIRMED'} ? ' order-status--confirmed' : (${order.orderStatus == 'CANCELLED' || order.orderStatus == 'FAILED' || order.orderStatus == 'REJECTED'} ? ' order-status--cancelled' : ' order-status--other'))"

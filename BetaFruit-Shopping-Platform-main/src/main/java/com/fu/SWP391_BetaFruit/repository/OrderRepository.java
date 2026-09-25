@@ -32,4 +32,9 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     @EntityGraph(attributePaths = "customer")
     java.util.Optional<Order> findByOrderIdAndShopOwnerUserId(Integer orderId, Integer ownerId);
+
+    @EntityGraph(attributePaths = {"customer", "shop", "coupon"})
+    @Query("select o from CustomerOrder o where o.orderId = :orderId and o.shop.owner.userId = :ownerId")
+    java.util.Optional<Order> findDetailForShopOwner(
+            @Param("orderId") Integer orderId, @Param("ownerId") Integer ownerId);
 }

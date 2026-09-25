@@ -50,6 +50,9 @@ public class Order {
     @Column(name = "FinalAmount", nullable = false, precision = 18, scale = 2)
     private BigDecimal finalAmount;
 
+    @Column(name = "ShopNetReceived", nullable = false, precision = 18, scale = 2)
+    private BigDecimal shopNetReceived = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "PaymentMethod", nullable = false, length = 20)
     private PaymentMethod paymentMethod;

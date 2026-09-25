@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.response.ShopOrderListItemResponse;
+import com.fu.SWP391_BetaFruit.dto.response.ShopOrderDetailResponse;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.service.ShopOrderService;
 import org.springframework.stereotype.Controller;
@@ -98,5 +99,14 @@ public class ShopOrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return shopOrderService.getOrdersForShopOwner(ownerId, keyword, status, sortBy, sortDirection, page, size);
+    }
+
+    @GetMapping("/api/{orderId}")
+    @ResponseBody
+    public ShopOrderDetailResponse getOrderDetailApi(
+            @PathVariable Integer orderId,
+            @RequestParam(defaultValue = "1") Integer ownerId) {
+        // Same temporary owner parameter as the list; replace with session identity when login is connected.
+        return shopOrderService.getOrderDetailForShopOwner(orderId, ownerId);
     }
 }

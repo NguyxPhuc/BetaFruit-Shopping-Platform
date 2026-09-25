@@ -10,6 +10,7 @@ public record ShopOrderListItemResponse(
         String customerName,
         BigDecimal finalAmount,
         BigDecimal receivedAmount,
+        BigDecimal shopNetReceived,
         String orderStatus,
         String orderStatusLabel,
         boolean canConfirm,
