@@ -60,32 +60,45 @@ public class ShopOrderController {
         return "shop/orders";
     }
 
+    @GetMapping("/{orderId}")
+    public String orderDetail(@PathVariable Integer orderId,
+                              @RequestParam(defaultValue = "1") Integer ownerId,
+                              Model model) {
+        model.addAttribute("detail", shopOrderService.getOrderDetailForShopOwner(orderId, ownerId));
+        model.addAttribute("ownerId", ownerId);
+        model.addAttribute("shopOwnerName", "Chủ shop test");
+        return "shop/order-detail";
+    }
     @PostMapping("/{orderId}/confirm")
     public String confirmOrder(@PathVariable Integer orderId,
-                               @RequestParam(defaultValue = "1") Integer ownerId) {
+                               @RequestParam(defaultValue = "1") Integer ownerId,
+                               @RequestParam(defaultValue = "false") boolean returnToDetail) {
         shopOrderService.confirmOrder(orderId, ownerId);
-        return "redirect:/shop/orders?ownerId=" + ownerId;
+        return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "") + "?ownerId=" + ownerId;
     }
 
     @PostMapping("/{orderId}/preparing")
     public String startPreparingOrder(@PathVariable Integer orderId,
-                                      @RequestParam(defaultValue = "1") Integer ownerId) {
+                                      @RequestParam(defaultValue = "1") Integer ownerId,
+                               @RequestParam(defaultValue = "false") boolean returnToDetail) {
         shopOrderService.startPreparingOrder(orderId, ownerId);
-        return "redirect:/shop/orders?ownerId=" + ownerId;
+        return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "") + "?ownerId=" + ownerId;
     }
 
     @PostMapping("/{orderId}/ready")
     public String markOrderReady(@PathVariable Integer orderId,
-                                 @RequestParam(defaultValue = "1") Integer ownerId) {
+                                 @RequestParam(defaultValue = "1") Integer ownerId,
+                               @RequestParam(defaultValue = "false") boolean returnToDetail) {
         shopOrderService.markOrderReady(orderId, ownerId);
-        return "redirect:/shop/orders?ownerId=" + ownerId;
+        return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "") + "?ownerId=" + ownerId;
     }
 
     @PostMapping("/{orderId}/cancel")
     public String cancelOrder(@PathVariable Integer orderId,
-                              @RequestParam(defaultValue = "1") Integer ownerId) {
+                              @RequestParam(defaultValue = "1") Integer ownerId,
+                               @RequestParam(defaultValue = "false") boolean returnToDetail) {
         shopOrderService.cancelOrder(orderId, ownerId);
-        return "redirect:/shop/orders?ownerId=" + ownerId;
+        return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "") + "?ownerId=" + ownerId;
     }
 
     @GetMapping("/api")

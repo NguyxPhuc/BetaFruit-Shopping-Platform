@@ -138,8 +138,8 @@
                     </td>
                     <td>
                         <div class="order-actions">
-                            <!-- Trang chi tiết sẽ nối route thực tế sau. -->
-                            <a class="button" href="#">Xem chi tiết</a>
+
+                            <a class="button" th:href="@{/shop/orders/{id}(id=${order.orderId},ownerId=${ownerId})}">Xem chi tiết</a>
                             <form th:if="${order.canCancel}" class="status-change-form" method="post" th:action="@{/shop/orders/{id}/cancel(id=${order.orderId})}" data-confirm-title="Hủy đơn hàng?" data-confirm-message="Bạn có chắc muốn hủy đơn hàng này không?">
                                 <input type="hidden" name="ownerId" th:value="${ownerId}">
                                 <button class="button button--cancel" type="submit">Hủy đơn</button>
