@@ -23,6 +23,9 @@ public class AdminController {
     private final RoleService roleService;
 
     // ================= 1. QUẢN LÝ CỬA HÀNG (SHOPS) =================
+    /**
+     * Displays the list of shops with optional filtering by status and keyword.
+     */
     @GetMapping("/shops")
     public String listShops(@RequestParam(value = "status", required = false) String status,
                             @RequestParam(value = "keyword", required = false) String keyword,
@@ -31,6 +34,9 @@ public class AdminController {
         return "admin/shops/list";
     }
 
+    /**
+     * Approves a shop registration and grants selling permissions to the owner.
+     */
     @PostMapping("/shops/{id}/approve")
     public String approveShop(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
         shopService.approveShop(id);
@@ -38,6 +44,9 @@ public class AdminController {
         return "redirect:/admin/shops";
     }
 
+    /**
+     * Rejects a shop registration request.
+     */
     @PostMapping("/shops/{id}/reject")
     public String rejectShop(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
         shopService.rejectShop(id);
@@ -46,6 +55,9 @@ public class AdminController {
     }
 
     // ================= 2. QUẢN LÝ SẢN PHẨM (PRODUCTS) =================
+    /**
+     * Displays the list of products filtered by tab status and search keyword.
+     */
     @GetMapping("/products")
     public String listProducts(@RequestParam(value = "tab", required = false, defaultValue = "ALL") String tab,
                                @RequestParam(value = "keyword", required = false) String keyword,
@@ -54,6 +66,9 @@ public class AdminController {
         return "admin/products/list";
     }
 
+    /**
+     * Approves a fruit product and activates it for sale on the platform.
+     */
     @PostMapping("/products/{id}/approve")
     public String approveProduct(@PathVariable("id") Integer id,
                                  @RequestParam(value = "tab", required = false, defaultValue = "ALL") String tab,
@@ -63,6 +78,9 @@ public class AdminController {
         return "redirect:/admin/products?tab=" + tab;
     }
 
+    /**
+     * Rejects a fruit product moderation request.
+     */
     @PostMapping("/products/{id}/reject")
     public String rejectProduct(@PathVariable("id") Integer id,
                                 @RequestParam(value = "tab", required = false, defaultValue = "ALL") String tab,
@@ -72,6 +90,9 @@ public class AdminController {
         return "redirect:/admin/products?tab=" + tab;
     }
 
+    /**
+     * Toggles the display visibility status of a fruit product.
+     */
     @PostMapping("/products/{id}/toggle-visibility")
     public String toggleVisibility(@PathVariable("id") Integer id,
                                    @RequestParam(value = "tab", required = false, defaultValue = "ALL") String tab,
@@ -82,12 +103,18 @@ public class AdminController {
     }
 
     // ================= 3. QUẢN LÝ NGƯỜI DÙNG (USERS) =================
+    /**
+     * Displays the list of users with optional keyword searching.
+     */
     @GetMapping("/users")
     public String listUsers(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
         model.addAllAttributes(userService.getAdminUserPageData(keyword));
         return "admin/users/list";
     }
 
+    /**
+     * Toggles the active/blocked status of a user account.
+     */
     @PostMapping("/users/{id}/toggle-status")
     public String toggleStatus(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
         userService.toggleUserStatus(id);
@@ -95,6 +122,9 @@ public class AdminController {
         return "redirect:/admin/users";
     }
 
+    /**
+     * Assigns specified roles to a user account.
+     */
     @PostMapping("/users/assign-roles")
     public String assignRoles(@RequestParam("userId") Integer userId,
                               @RequestParam(value = "roleIds", required = false) List<Long> roleIds,
@@ -105,12 +135,18 @@ public class AdminController {
     }
 
     // ================= 4. QUẢN LÝ DANH MỤC (CATEGORIES) =================
+    /**
+     * Displays the list of fruit categories with optional keyword searching.
+     */
     @GetMapping("/categories")
     public String listCategories(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
         model.addAllAttributes(categoryService.getAdminCategoryPageData(keyword));
         return "admin/categories/list";
     }
 
+    /**
+     * Handles the creation of a new fruit category.
+     */
     @PostMapping("/categories/create")
     public String createCategory(@ModelAttribute("newCategory") CategoryRequest request, RedirectAttributes redirectAttributes) {
         categoryService.createCategory(request);
@@ -118,6 +154,9 @@ public class AdminController {
         return "redirect:/admin/categories";
     }
 
+    /**
+     * Updates an existing fruit category by ID.
+     */
     @PostMapping("/categories/edit/{id}")
     public String editCategory(@PathVariable("id") Integer id,
                                @ModelAttribute CategoryRequest request,
@@ -127,6 +166,9 @@ public class AdminController {
         return "redirect:/admin/categories";
     }
 
+    /**
+     * Toggles the active or display status of a category.
+     */
     @PostMapping("/categories/{id}/toggle-status")
     public String toggleCategoryStatus(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
         categoryService.toggleCategoryStatus(id);
@@ -135,12 +177,18 @@ public class AdminController {
     }
 
     // ================= 5. QUẢN LÝ VAI TRÒ (ROLES) =================
+    /**
+     * Displays the list of roles and permissions in the system.
+     */
     @GetMapping("/roles")
     public String listRoles(Model model) {
         model.addAllAttributes(roleService.getAdminRolePageData());
         return "admin/roles/list";
     }
 
+    /**
+     * Handles the creation of a new role.
+     */
     @PostMapping("/roles/create")
     public String createRole(@ModelAttribute("newRole") RoleRequest roleRequest, RedirectAttributes redirectAttributes) {
         roleService.createRole(roleRequest);
@@ -148,6 +196,9 @@ public class AdminController {
         return "redirect:/admin/roles";
     }
 
+    /**
+     * Updates an existing role and its permissions by ID.
+     */
     @PostMapping("/roles/edit/{id}")
     public String editRole(@PathVariable("id") Long id, @ModelAttribute RoleRequest roleRequest, RedirectAttributes redirectAttributes) {
         roleService.updateRole(id, roleRequest);
