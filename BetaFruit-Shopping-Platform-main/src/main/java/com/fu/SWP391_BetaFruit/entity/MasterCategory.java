@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "MasterCategory")
+@Table(name = "MasterCategory", uniqueConstraints =
+        @UniqueConstraint(name = "UQ_Category_Name", columnNames = "CategoryName"))
 @Getter
 @Setter
 @NoArgsConstructor

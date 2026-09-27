@@ -21,6 +21,23 @@ class ShopOrderDetailPageTests {
     @Autowired MockMvc mvc;
     @MockitoBean ShopOrderService service;
 
+    @Test void orderListLinksToSelectedOrderDetailForSameOwner() throws Exception {
+        var detail = fixture("PENDING", null);
+        when(service.getOrdersForShopOwner(7, null, null, "createdAt", "desc", 0, 10))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(detail.summary())));
+        when(service.getOrderDetailForShopOwner(12, 7)).thenReturn(detail);
+
+        mvc.perform(get("/shop/orders").param("ownerId", "7"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("href=\"/shop/orders/12?ownerId=7\"")));
+        mvc.perform(get("/shop/orders/12").param("ownerId", "7"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("shop/order-detail"))
+                .andExpect(model().attribute("detail", detail))
+                .andExpect(content().string(containsString("href=\"/shop/orders?ownerId=7\"")));
+        verify(service).getOrderDetailForShopOwner(12, 7);
+    }
+
     private ShopOrderDetailResponse fixture(String status, ShopOrderDetailResponse.Delivery delivery) {
         var summary = new ShopOrderListItemResponse(12, "12", "Nguyễn Ngọc Hà",
                 new BigDecimal("110000"), new BigDecimal("85000"), new BigDecimal("85000"),
@@ -31,7 +48,8 @@ class ShopOrderDetailPageTests {
                 "12 Nguyễn Huệ, Phường Sài Gòn, TP. Hồ Chí Minh", new BigDecimal("100000"),
                 new BigDecimal("10000"), new BigDecimal("20000"), "COD", false, null, "FRUIT10",
                 List.of(new ShopOrderDetailResponse.Item(1, "Táo Fuji Nhật Bản", "Hộp 1 kg", 2,
-                        new BigDecimal("50000"), new BigDecimal("100000"))), List.of(), delivery, List.of());
+                        new BigDecimal("50000"), new BigDecimal("100000"), new BigDecimal("30000"))),
+                List.of(), delivery, List.of(), new BigDecimal("5000"), false);
     }
 
     @Test void rendersItemsMoneyAndUnassignedShipper() throws Exception {

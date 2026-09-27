@@ -55,7 +55,8 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 .map(item -> new ShopOrderDetailResponse.Item(
                         item.getOrderItemId(), item.getSnapshotProductName(), item.getSnapshotVariantName(),
                         item.getQuantity(), item.getPriceSnapshot(),
-                        item.getPriceSnapshot().multiply(java.math.BigDecimal.valueOf(item.getQuantity()))))
+                        item.getPriceSnapshot().multiply(java.math.BigDecimal.valueOf(item.getQuantity())),
+                        item.getCostSnapshot()))
                 .toList();
         var history = orderStatusHistoryRepository.findByOrderOrderIdOrderByCreatedAtAscHistoryIdAsc(orderId).stream()
                 .map(entry -> new ShopOrderDetailResponse.StatusHistory(
@@ -81,7 +82,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 order.getSnapshotShippingAddress(), order.getTotalAmount(), order.getDiscountAmount(),
                 order.getShippingFee(), enumName(order.getPaymentMethod()), order.getIsSettled(),
                 order.getSettledAt(), order.getCoupon() == null ? null : order.getCoupon().getCouponCode(),
-                items, history, delivery, payments);
+                items, history, delivery, payments, order.getPlatformFee(), order.getIsCODRemitted());
     }
 
     private String enumName(Enum<?> value) {

@@ -1,6 +1,8 @@
 package com.fu.SWP391_BetaFruit.entity;
 
 import jakarta.persistence.*;
+import com.fu.SWP391_BetaFruit.enums.AddressType;
+import org.hibernate.annotations.Check;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,6 +10,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "[Address]")
+@Check(name = "CHK_Address_Type", constraints = "AddressType IN ('Shipping', 'Pickup', 'Return')")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,6 +42,10 @@ public class Address {
 
     @Column(name = "Ward", nullable = false, columnDefinition = "NVARCHAR(100)")
     private String ward;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "AddressType", length = 20)
+    private AddressType addressType = AddressType.Shipping;
 
     @Column(name = "IsDefault")
     private Boolean isDefault;

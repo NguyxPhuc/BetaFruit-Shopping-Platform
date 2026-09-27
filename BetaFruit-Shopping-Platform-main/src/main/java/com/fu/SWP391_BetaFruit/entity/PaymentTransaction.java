@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
         name = "PaymentTransaction",
         uniqueConstraints = @UniqueConstraint(columnNames = {"Gateway", "TransactionRef"})
 )
+@org.hibernate.annotations.Check(name = "CHK_PayTrans_Amount", constraints = "Amount > 0")
 @Getter
 @Setter
 @NoArgsConstructor

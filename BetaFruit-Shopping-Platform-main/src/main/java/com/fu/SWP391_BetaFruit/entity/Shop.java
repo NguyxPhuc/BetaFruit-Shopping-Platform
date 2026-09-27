@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Shop")
+@org.hibernate.annotations.Check(name = "CHK_Shop_Commission", constraints = "CommissionRate >= 0 AND CommissionRate <= 100")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -50,6 +51,9 @@ public class Shop {
 
     @Column(name = "AvailableBalance", precision = 18, scale = 2)
     private BigDecimal availableBalance;
+
+    @Column(name = "CommissionRate", precision = 5, scale = 2)
+    private BigDecimal commissionRate = new BigDecimal("5.00");
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ApprovalStatus", length = 20)

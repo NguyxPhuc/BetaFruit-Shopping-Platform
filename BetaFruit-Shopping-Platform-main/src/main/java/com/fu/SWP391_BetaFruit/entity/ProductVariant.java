@@ -9,7 +9,8 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "ProductVariant")
+@Table(name = "ProductVariant", uniqueConstraints =
+        @UniqueConstraint(name = "UQ_Product_Variant", columnNames = {"ProductId", "VariantName"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,6 +33,9 @@ public class ProductVariant {
 
     @Column(name = "SalePrice", precision = 18, scale = 2)
     private BigDecimal salePrice;
+
+    @Column(name = "CostPrice", precision = 18, scale = 2)
+    private BigDecimal costPrice = BigDecimal.ZERO;
 
     @Column(name = "StockQuantity", nullable = false)
     private Integer stockQuantity;

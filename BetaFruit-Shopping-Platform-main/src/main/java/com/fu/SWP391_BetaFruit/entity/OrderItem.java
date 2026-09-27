@@ -10,6 +10,8 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "OrderItem")
+@org.hibernate.annotations.Check(name = "CHK_OrderItem_Valid",
+        constraints = "Quantity > 0 AND PriceSnapshot >= 0 AND CostSnapshot >= 0")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,6 +35,9 @@ public class OrderItem {
 
     @Column(name = "PriceSnapshot", nullable = false, precision = 18, scale = 2)
     private BigDecimal priceSnapshot;
+
+    @Column(name = "CostSnapshot", nullable = false, precision = 18, scale = 2)
+    private BigDecimal costSnapshot = BigDecimal.ZERO;
 
     @Column(name = "SnapshotProductName", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String snapshotProductName;

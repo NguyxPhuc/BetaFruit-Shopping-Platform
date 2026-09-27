@@ -22,10 +22,13 @@ public record ShopOrderDetailResponse(
         List<Item> items,
         List<StatusHistory> statusHistory,
         Delivery delivery,
-        List<Payment> payments
+        List<Payment> payments,
+        BigDecimal platformFee,
+        Boolean isCODRemitted
 ) {
     public record Item(Integer orderItemId, String productName, String variantName,
-                       Integer quantity, BigDecimal unitPrice, BigDecimal lineTotal) {}
+                       Integer quantity, BigDecimal unitPrice, BigDecimal lineTotal,
+                       BigDecimal costSnapshot) {}
 
     public record StatusHistory(Integer historyId, String statusFrom, String statusFromLabel,
                                 String statusTo, String statusToLabel, String note,

@@ -50,6 +50,12 @@ public class Order {
     @Column(name = "FinalAmount", nullable = false, precision = 18, scale = 2)
     private BigDecimal finalAmount;
 
+    @Column(name = "PlatformFee", nullable = false, precision = 18, scale = 2)
+    private BigDecimal platformFee = BigDecimal.ZERO;
+
+    @Column(name = "IsCODRemitted")
+    private Boolean isCODRemitted = false;
+
     @Column(name = "ShopNetReceived", nullable = false, precision = 18, scale = 2)
     private BigDecimal shopNetReceived = BigDecimal.ZERO;
 

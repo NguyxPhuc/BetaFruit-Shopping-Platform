@@ -50,12 +50,15 @@ class ShopOrderDetailServiceTests {
         order.setFinalAmount(new BigDecimal("100000.00"));
         order.setShopNetReceived(new BigDecimal("85000.25"));
         order.setIsSettled(false);
+        order.setPlatformFee(new BigDecimal("4250.00"));
+        order.setIsCODRemitted(true);
         OrderItem item = new OrderItem();
         item.setOrderItemId(1);
         item.setSnapshotProductName("Product at checkout");
         item.setSnapshotVariantName("Variant at checkout");
         item.setQuantity(3);
         item.setPriceSnapshot(new BigDecimal("12500.50"));
+        item.setCostSnapshot(new BigDecimal("8000.00"));
         // No current product/variant is needed to render the purchased item.
         when(orders.findDetailForShopOwner(12, 3)).thenReturn(Optional.of(order));
         when(items.findByOrderOrderIdOrderByOrderItemIdAsc(12)).thenReturn(List.of(item));
@@ -70,6 +73,9 @@ class ShopOrderDetailServiceTests {
         assertEquals("Product at checkout", result.items().getFirst().productName());
         assertEquals("Variant at checkout", result.items().getFirst().variantName());
         assertEquals(new BigDecimal("37501.50"), result.items().getFirst().lineTotal());
+        assertEquals(new BigDecimal("4250.00"), result.platformFee());
+        assertEquals(Boolean.TRUE, result.isCODRemitted());
+        assertEquals(new BigDecimal("8000.00"), result.items().getFirst().costSnapshot());
         assertNull(result.couponCode());
         assertNull(result.delivery());
         assertTrue(result.payments().isEmpty());
