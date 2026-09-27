@@ -29,7 +29,7 @@
                     </div>
                     <div>
                         <div class="text-muted small">Tổng danh mục</div>
-                        <h4 class="fw-bold mb-0 text-dark" th:text="${#lists.size(categories)}">0</h4>
+                        <h4 class="fw-bold mb-0 text-dark" th:text="${totalCount}">0</h4>
                     </div>
                 </div>
             </div>
@@ -42,7 +42,7 @@
                     </div>
                     <div>
                         <div class="text-muted small">Đang kích hoạt</div>
-                        <h4 class="fw-bold mb-0 text-success" th:text="${#lists.size(categories.?[isActive == true])}">0</h4>
+                        <h4 class="fw-bold mb-0 text-success" th:text="${activeCount}">0</h4>
                     </div>
                 </div>
             </div>
@@ -55,7 +55,7 @@
                     </div>
                     <div>
                         <div class="text-muted small">Đang tạm ẩn</div>
-                        <h4 class="fw-bold mb-0 text-secondary" th:text="${#lists.size(categories.?[isActive != true])}">0</h4>
+                        <h4 class="fw-bold mb-0 text-secondary" th:text="${hiddenCount}">0</h4>
                     </div>
                 </div>
             </div>
@@ -96,16 +96,22 @@
             <h6 class="m-0 fw-bold text-dark">
                 <i class="bi bi-list-ul me-2"></i>Danh Sách Danh Mục Gốc
             </h6>
-            <span class="badge bg-light text-secondary border" th:text="${categories.size()} + ' danh mục'">0 danh mục</span>
+            <span class="badge bg-light text-secondary border" th:text="${pageData != null ? pageData.totalElements : 0} + ' danh mục'">0 danh mục</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th class="ps-4" style="width: 100px;">Mã (ID)</th>
-                        <th>Tên Danh Mục Hoa Quả</th>
-                        <th style="width: 180px;">Trạng Thái Hiển Thị</th>
+                        <th class="ps-4" style="width: 120px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Mã (ID)', field='categoryId', baseUrl='/admin/categories')}"></th:block>
+                        </th>
+                        <th>
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Tên Danh Mục Hoa Quả', field='categoryName', baseUrl='/admin/categories')}"></th:block>
+                        </th>
+                        <th style="width: 200px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Trạng Thái', field='isActive', baseUrl='/admin/categories')}"></th:block>
+                        </th>
                         <th class="text-end pe-4" style="width: 200px;">Thao Tác</th>
                     </tr>
                     </thead>
@@ -172,6 +178,9 @@
                 </table>
             </div>
         </div>
+
+        <!-- Pagination Component Dùng Chung -->
+        <div th:replace="~{admin/fragments/pagination :: pager(pageData=${pageData}, baseUrl='/admin/categories')}"></div>
     </div>
 
     <!-- Modal Thêm Danh Mục Mới -->

@@ -81,14 +81,14 @@
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'ALL'} ? 'active bg-success' : 'text-dark'"
-                           th:href="@{/admin/shops(status='ALL', keyword=${keyword})}">
+                           th:href="@{/admin/shops(status='ALL', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             Tất cả (<span th:text="${totalCount}">0</span>)
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'PENDING'} ? 'active bg-warning text-dark' : 'text-dark'"
-                           th:href="@{/admin/shops(status='PENDING', keyword=${keyword})}">
+                           th:href="@{/admin/shops(status='PENDING', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-clock me-1"></i>Chờ duyệt 
                             <span class="badge bg-warning text-dark border ms-1" th:text="${pendingCount}">0</span>
                         </a>
@@ -96,14 +96,14 @@
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'APPROVED'} ? 'active bg-success' : 'text-dark'"
-                           th:href="@{/admin/shops(status='APPROVED', keyword=${keyword})}">
+                           th:href="@{/admin/shops(status='APPROVED', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-check-circle me-1"></i>Đã duyệt (<span th:text="${approvedCount}">0</span>)
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'REJECTED'} ? 'active bg-danger' : 'text-dark'"
-                           th:href="@{/admin/shops(status='REJECTED', keyword=${keyword})}">
+                           th:href="@{/admin/shops(status='REJECTED', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-x-circle me-1"></i>Đã từ chối (<span th:text="${rejectedCount}">0</span>)
                         </a>
                     </li>
@@ -112,6 +112,8 @@
                 <!-- Search Input Form -->
                 <form th:action="@{/admin/shops}" method="get" class="d-flex gap-2">
                     <input type="hidden" name="status" th:value="${currentStatus}" />
+                    <input type="hidden" name="sortBy" th:value="${sortBy}" />
+                    <input type="hidden" name="sortDir" th:value="${sortDir}" />
                     <div class="input-group" style="min-width: 280px;">
                         <input type="text" name="keyword" th:value="${keyword}" 
                                class="form-control form-control-sm" 
@@ -121,7 +123,7 @@
                         </button>
                     </div>
                     <a th:if="${keyword != null and !#strings.isEmpty(keyword)}" 
-                       th:href="@{/admin/shops(status=${currentStatus})}" 
+                       th:href="@{/admin/shops(status=${currentStatus}, sortBy=${sortBy}, sortDir=${sortDir})}" 
                        class="btn btn-sm btn-outline-secondary" title="Xóa lọc">
                         <i class="bi bi-x"></i>
                     </a>
@@ -136,24 +138,33 @@
             <h6 class="m-0 fw-bold text-dark">
                 <i class="bi bi-list-ul me-2"></i>Danh Sách Cửa Hàng
             </h6>
-            <span class="badge bg-light text-secondary border" th:text="${shops.size()} + ' kết quả'">0 kết quả</span>
+            <span class="badge bg-light text-secondary border" th:text="${pageData != null ? pageData.totalElements : 0} + ' kết quả'">0 kết quả</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th class="ps-4" style="width: 70px;">ID</th>
-                        <th>Thông Tin Cửa Hàng</th>
+                        <th class="ps-4" style="width: 90px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='ID', field='shopId', baseUrl='/admin/shops')}"></th:block>
+                        </th>
+                        <th>
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Thông Tin Cửa Hàng', field='shopName', baseUrl='/admin/shops')}"></th:block>
+                        </th>
                         <th>Chủ Sở Hữu</th>
                         <th>Tài Khoản Nhận Doanh Thu</th>
-                        <th style="width: 150px;">Trạng Thái</th>
+                        <th style="width: 140px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Phí Sàn', field='commissionRate', baseUrl='/admin/shops')}"></th:block>
+                        </th>
+                        <th style="width: 160px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Trạng Thái', field='approvalStatus', baseUrl='/admin/shops')}"></th:block>
+                        </th>
                         <th class="text-end pe-4" style="width: 250px;">Thao Tác</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(shops)}">
-                        <td colspan="6" class="text-center py-5 text-muted">
+                        <td colspan="7" class="text-center py-5 text-muted">
                             <i class="bi bi-shop-window fs-1 d-block mb-2 text-secondary opacity-50"></i>
                             <span th:if="${keyword != null and !#strings.isEmpty(keyword)}">
                                 Không tìm thấy cửa hàng nào với từ khóa: "<strong th:text="${keyword}"></strong>"
@@ -215,6 +226,21 @@
                             </span>
                         </td>
                         <td>
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fw-bold fs-6">
+                                    <span th:text="${s.commissionRate != null ? s.commissionRate : '5.00'}">5.00</span>%
+                                </span>
+                                <button type="button" class="btn btn-sm btn-link text-primary p-0 edit-commission-btn" 
+                                        data-bs-toggle="modal" data-bs-target="#commissionModal"
+                                        th:data-id="${s.shopId}"
+                                        th:data-name="${s.shopName}"
+                                        th:data-rate="${s.commissionRate != null ? s.commissionRate : '5.00'}"
+                                        title="Chỉnh sửa tỷ lệ phí sàn">
+                                    <i class="bi bi-pencil-square fs-6"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td>
                             <span th:if="${s.approvalStatus != null and s.approvalStatus.name() == 'PENDING'}" 
                                   class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill">
                                 <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
@@ -237,6 +263,7 @@
                                         th:data-name="${s.shopName}"
                                         th:data-desc="${s.shopDescription != null ? s.shopDescription : 'Chưa có mô tả chi tiết.'}"
                                         th:data-logo="${s.logoUrl != null ? s.logoUrl : ''}"
+                                        th:data-commission="${s.commissionRate != null ? s.commissionRate : '5.00'}"
                                         th:data-owner-name="${s.owner != null ? s.owner.fullName : 'N/A'}"
                                         th:data-owner-user="${s.owner != null ? s.owner.username : 'N/A'}"
                                         th:data-owner-email="${s.owner != null ? s.owner.email : 'N/A'}"
@@ -255,6 +282,8 @@
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn PHÊ DUYỆT cửa hàng [' + s.shopName + '] không? Chủ shop sẽ được kích hoạt quyền đăng bán hoa quả.'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
+                                    <input type="hidden" name="page" th:value="${pageData != null ? pageData.number + 1 : 1}" />
+                                    <input type="hidden" name="status" th:value="${currentStatus}" />
                                     <button type="submit" class="btn btn-sm btn-success d-flex align-items-center" title="Phê duyệt cửa hàng">
                                         <i class="bi bi-check-lg me-1"></i> Duyệt
                                     </button>
@@ -266,6 +295,8 @@
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn TỪ CHỐI hồ sơ cửa hàng [' + s.shopName + '] không?'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
+                                    <input type="hidden" name="page" th:value="${pageData != null ? pageData.number + 1 : 1}" />
+                                    <input type="hidden" name="status" th:value="${currentStatus}" />
                                     <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center" title="Từ chối mở shop">
                                         <i class="bi bi-x-lg me-1"></i> Từ chối
                                     </button>
@@ -277,6 +308,9 @@
                 </table>
             </div>
         </div>
+
+        <!-- Pagination Component Dùng Chung -->
+        <div th:replace="~{admin/fragments/pagination :: pager(pageData=${pageData}, baseUrl='/admin/shops')}"></div>
     </div>
 
     <!-- Modal Xem Chi Tiết Cửa Hàng -->
@@ -324,6 +358,12 @@
                                 <div class="mb-2"><strong>Ngân hàng:</strong> <span id="modalBankName" class="text-secondary">-</span></div>
                                 <div class="mb-2"><strong>Số tài khoản:</strong> <span id="modalBankAcc" class="text-dark fw-bold">-</span></div>
                                 <div class="mb-2"><strong>Tên chủ thẻ:</strong> <span id="modalBankOwner" class="text-secondary text-uppercase">-</span></div>
+                                <div class="mt-2 pt-2 border-top">
+                                    <strong>Tỷ lệ phí sàn:</strong> 
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fw-bold">
+                                        <span id="modalShopCommission">5.00</span>%
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
@@ -345,11 +385,49 @@
         </div>
     </div>
 
-    <!-- JavaScript tự động binding thông tin vào Detail Modal -->
+    <!-- Modal Cấu Hình Tỷ Lệ Phí Sàn (Commission Rate) -->
+    <div class="modal fade" id="commissionModal" tabindex="-1" aria-labelledby="commissionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <form id="commissionForm" method="post">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title fw-bold" id="commissionModalLabel">
+                            <i class="bi bi-percent me-2"></i>Cấu Hình Tỷ Lệ Phí Sàn
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Cửa hàng áp dụng:</label>
+                            <div class="fw-bold text-dark fs-6" id="commissionShopName">Tên Shop</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="commissionRateInput" class="form-label fw-bold">Tỷ lệ chiết khấu phí sàn (%) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" min="0" max="100" class="form-control" id="commissionRateInput" name="commissionRate" required placeholder="5.00">
+                                <span class="input-group-text fw-bold">%</span>
+                            </div>
+                            <div class="form-text text-muted">
+                                Tỷ lệ phần trăm doanh thu sàn trích lại trên mỗi đơn hàng hoàn thành của cửa hàng này (từ 0.00% đến 100.00%).
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary fw-medium">
+                            <i class="bi bi-check2-circle me-1"></i> Lưu Cấu Hình
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript tự động binding thông tin vào Detail Modal và Commission Modal -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            // Binding Detail Modal
             const detailButtons = document.querySelectorAll(".detail-shop-btn");
-
             detailButtons.forEach(button => {
                 button.addEventListener("click", function () {
                     const name = this.getAttribute("data-name");
@@ -363,6 +441,7 @@
                     const bankAcc = this.getAttribute("data-bank-acc");
                     const bankOwner = this.getAttribute("data-bank-owner");
                     const status = this.getAttribute("data-status");
+                    const commission = this.getAttribute("data-commission");
 
                     document.getElementById("modalShopName").textContent = name;
                     document.getElementById("modalShopDesc").textContent = desc;
@@ -373,6 +452,7 @@
                     document.getElementById("modalBankName").textContent = bankName;
                     document.getElementById("modalBankAcc").textContent = bankAcc;
                     document.getElementById("modalBankOwner").textContent = bankOwner;
+                    document.getElementById("modalShopCommission").textContent = commission ? commission : '5.00';
 
                     // Logo avatar
                     const logoContainer = document.getElementById("modalShopLogoContainer");
@@ -395,6 +475,24 @@
                         statusBadge.className = 'badge bg-warning text-dark';
                         statusBadge.textContent = 'Chờ xét duyệt';
                     }
+                });
+            });
+
+            // Binding Commission Modal
+            const commissionButtons = document.querySelectorAll(".edit-commission-btn");
+            const commissionForm = document.getElementById("commissionForm");
+            const commissionShopName = document.getElementById("commissionShopName");
+            const commissionRateInput = document.getElementById("commissionRateInput");
+
+            commissionButtons.forEach(button => {
+                button.addEventListener("click", function () {
+                    const shopId = this.getAttribute("data-id");
+                    const shopName = this.getAttribute("data-name");
+                    const rate = this.getAttribute("data-rate");
+
+                    commissionShopName.textContent = shopName + " (ID: #" + shopId + ")";
+                    commissionRateInput.value = rate ? rate : "5.00";
+                    commissionForm.action = "/admin/shops/" + shopId + "/commission";
                 });
             });
         });

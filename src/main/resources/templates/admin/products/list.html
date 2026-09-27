@@ -81,14 +81,14 @@
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentTab == 'ALL'} ? 'active bg-success' : 'text-dark'"
-                           th:href="@{/admin/products(tab='ALL', keyword=${keyword})}">
+                           th:href="@{/admin/products(tab='ALL', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             Tất cả (<span th:text="${totalCount}">0</span>)
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentTab == 'PENDING'} ? 'active bg-warning text-dark' : 'text-dark'"
-                           th:href="@{/admin/products(tab='PENDING', keyword=${keyword})}">
+                           th:href="@{/admin/products(tab='PENDING', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-clock me-1"></i>Chờ duyệt 
                             <span class="badge bg-warning text-dark border ms-1" th:text="${pendingCount}">0</span>
                         </a>
@@ -96,21 +96,21 @@
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentTab == 'ACTIVE'} ? 'active bg-success' : 'text-dark'"
-                           th:href="@{/admin/products(tab='ACTIVE', keyword=${keyword})}">
+                           th:href="@{/admin/products(tab='ACTIVE', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-check-circle me-1"></i>Đang mở bán (<span th:text="${activeCount}">0</span>)
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentTab == 'HIDDEN'} ? 'active bg-secondary' : 'text-dark'"
-                           th:href="@{/admin/products(tab='HIDDEN', keyword=${keyword})}">
+                           th:href="@{/admin/products(tab='HIDDEN', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-eye-slash me-1"></i>Đang ẩn (<span th:text="${hiddenCount}">0</span>)
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentTab == 'REJECTED'} ? 'active bg-danger' : 'text-dark'"
-                           th:href="@{/admin/products(tab='REJECTED', keyword=${keyword})}">
+                           th:href="@{/admin/products(tab='REJECTED', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-x-circle me-1"></i>Đã từ chối (<span th:text="${rejectedCount}">0</span>)
                         </a>
                     </li>
@@ -119,6 +119,8 @@
                 <!-- Search Input Form -->
                 <form th:action="@{/admin/products}" method="get" class="d-flex gap-2">
                     <input type="hidden" name="tab" th:value="${currentTab}" />
+                    <input type="hidden" name="sortBy" th:value="${sortBy}" />
+                    <input type="hidden" name="sortDir" th:value="${sortDir}" />
                     <div class="input-group" style="min-width: 280px;">
                         <input type="text" name="keyword" th:value="${keyword}" 
                                class="form-control form-control-sm" 
@@ -128,7 +130,7 @@
                         </button>
                     </div>
                     <a th:if="${keyword != null and !#strings.isEmpty(keyword)}" 
-                       th:href="@{/admin/products(tab=${currentTab})}" 
+                       th:href="@{/admin/products(tab=${currentTab}, sortBy=${sortBy}, sortDir=${sortDir})}" 
                        class="btn btn-sm btn-outline-secondary" title="Xóa lọc">
                         <i class="bi bi-x"></i>
                     </a>
@@ -143,19 +145,27 @@
             <h6 class="m-0 fw-bold text-dark">
                 <i class="bi bi-list-ul me-2"></i>Danh Sách Sản Phẩm Hoa Quả
             </h6>
-            <span class="badge bg-light text-secondary border" th:text="${products.size()} + ' sản phẩm'">0 sản phẩm</span>
+            <span class="badge bg-light text-secondary border" th:text="${pageData != null ? pageData.totalElements : 0} + ' sản phẩm'">0 sản phẩm</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th class="ps-4" style="width: 70px;">ID</th>
-                        <th>Thông Tin Hoa Quả</th>
+                        <th class="ps-4" style="width: 90px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='ID', field='productId', baseUrl='/admin/products')}"></th:block>
+                        </th>
+                        <th>
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Thông Tin Hoa Quả', field='productName', baseUrl='/admin/products')}"></th:block>
+                        </th>
                         <th>Cửa Hàng Đăng Bán</th>
                         <th>Danh Mục Gốc</th>
-                        <th style="width: 140px;">Kiểm Duyệt</th>
-                        <th style="width: 130px;">Hiển Thị Sàn</th>
+                        <th style="width: 150px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Kiểm Duyệt', field='approvalStatus', baseUrl='/admin/products')}"></th:block>
+                        </th>
+                        <th style="width: 150px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Hiển Thị Sàn', field='visibilityStatus', baseUrl='/admin/products')}"></th:block>
+                        </th>
                         <th class="text-end pe-4" style="width: 260px;">Thao Tác</th>
                     </tr>
                     </thead>
@@ -248,7 +258,7 @@
 
                                 <!-- Nút Phê Duyệt (Dành cho hoa quả chưa duyệt) -->
                                 <form th:if="${p.approvalStatus == null or p.approvalStatus.name() != 'APPROVED'}"
-                                      th:action="@{/admin/products/{id}/approve(id=${p.productId}, tab=${currentTab})}" 
+                                      th:action="@{/admin/products/{id}/approve(id=${p.productId}, tab=${currentTab}, page=${pageData != null ? pageData.number + 1 : 1})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn PHÊ DUYỆT hoa quả [' + p.productName + '] không? Sản phẩm sẽ được kích hoạt mở bán trên sàn.'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
@@ -259,7 +269,7 @@
 
                                 <!-- Nút Từ Chối (Dành cho hoa quả chưa từ chối) -->
                                 <form th:if="${p.approvalStatus == null or p.approvalStatus.name() != 'REJECTED'}"
-                                      th:action="@{/admin/products/{id}/reject(id=${p.productId}, tab=${currentTab})}" 
+                                      th:action="@{/admin/products/{id}/reject(id=${p.productId}, tab=${currentTab}, page=${pageData != null ? pageData.number + 1 : 1})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn TỪ CHỐI hoa quả [' + p.productName + '] không?'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
@@ -270,7 +280,7 @@
 
                                 <!-- Nút Ẩn / Mở bán lại (Dành cho hoa quả đã được duyệt) -->
                                 <form th:if="${p.approvalStatus != null and p.approvalStatus.name() == 'APPROVED'}"
-                                      th:action="@{/admin/products/{id}/toggle-visibility(id=${p.productId}, tab=${currentTab})}" 
+                                      th:action="@{/admin/products/{id}/toggle-visibility(id=${p.productId}, tab=${currentTab}, page=${pageData != null ? pageData.number + 1 : 1})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${p.visibilityStatus != null and p.visibilityStatus.name() == 'ACTIVE' ? 
                                                        'Bạn có chắc chắn muốn ẨN sản phẩm [' + p.productName + '] khỏi sàn không? Khách hàng sẽ không thể nhìn thấy hoặc mua sản phẩm này.' : 
@@ -291,6 +301,9 @@
                 </table>
             </div>
         </div>
+
+        <!-- Pagination Component Dùng Chung -->
+        <div th:replace="~{admin/fragments/pagination :: pager(pageData=${pageData}, baseUrl='/admin/products')}"></div>
     </div>
 
     <!-- Modal Xem Chi Tiết Hoa Quả -->

@@ -5,12 +5,17 @@ import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 import com.fu.SWP391_BetaFruit.repository.MasterCategoryRepository;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -81,15 +86,62 @@ public class CategoryServiceImpl implements CategoryService {
         masterCategoryRepository.save(category);
     }
 
+    private static final Set<String> ALLOWED_CATEGORY_SORT_FIELDS = Set.of(
+            "categoryId", "categoryName", "isActive"
+    );
+
+    @Override
+    public Page<MasterCategory> getAdminCategoryPage(String keyword, int page, int size) {
+        return getAdminCategoryPage(keyword, page, size, "categoryId", "desc");
+    }
+
+    @Override
+    public Page<MasterCategory> getAdminCategoryPage(String keyword, int page, int size, String sortBy, String sortDir) {
+        int pageIndex = Math.max(0, page - 1);
+        int pageSize = size > 0 ? size : 5;
+
+        String safeSortBy = (sortBy != null && ALLOWED_CATEGORY_SORT_FIELDS.contains(sortBy.trim()))
+                ? sortBy.trim() : "categoryId";
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
+
+        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
+        if (cleanKeyword.isEmpty()) {
+            return masterCategoryRepository.findAll(pageable);
+        }
+        return masterCategoryRepository.findByCategoryNameContainingIgnoreCase(cleanKeyword, pageable);
+    }
+
     @Override
     public Map<String, Object> getAdminCategoryPageData(String keyword) {
+        return getAdminCategoryPageData(keyword, 1, 5, "categoryId", "desc");
+    }
+
+    @Override
+    public Map<String, Object> getAdminCategoryPageData(String keyword, int page, int size) {
+        return getAdminCategoryPageData(keyword, page, size, "categoryId", "desc");
+    }
+
+    @Override
+    public Map<String, Object> getAdminCategoryPageData(String keyword, int page, int size, String sortBy, String sortDir) {
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
-        List<MasterCategory> categories = searchCategories(cleanKeyword);
+        String safeSortBy = (sortBy != null && ALLOWED_CATEGORY_SORT_FIELDS.contains(sortBy.trim()))
+                ? sortBy.trim() : "categoryId";
+        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+
+        Page<MasterCategory> categoryPage = getAdminCategoryPage(cleanKeyword, page, size, safeSortBy, safeSortDir);
 
         Map<String, Object> data = new HashMap<>();
-        data.put("categories", categories);
+        data.put("categories", categoryPage.getContent());
+        data.put("categoryPage", categoryPage);
+        data.put("pageData", categoryPage);
         data.put("newCategory", new CategoryRequest());
         data.put("keyword", cleanKeyword);
+        data.put("sortBy", safeSortBy);
+        data.put("sortDir", safeSortDir);
+        data.put("totalCount", masterCategoryRepository.count());
+        data.put("activeCount", masterCategoryRepository.countByIsActive(true));
+        data.put("hiddenCount", masterCategoryRepository.countByIsActive(false));
 
         return data;
     }

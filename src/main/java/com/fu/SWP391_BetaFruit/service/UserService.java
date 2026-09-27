@@ -10,5 +10,9 @@ public interface UserService {
     User getUserById(Integer userId);
     void toggleUserStatus(Integer userId);
     void assignRolesToUser(Integer userId, List<Long> roleIds);
+    org.springframework.data.domain.Page<User> getAdminUserPage(String keyword, int page, int size);
+    org.springframework.data.domain.Page<User> getAdminUserPage(String keyword, int page, int size, String sortBy, String sortDir);
     java.util.Map<String, Object> getAdminUserPageData(String keyword);
+    java.util.Map<String, Object> getAdminUserPageData(String keyword, int page, int size);
+    java.util.Map<String, Object> getAdminUserPageData(String keyword, int page, int size, String sortBy, String sortDir);
 }

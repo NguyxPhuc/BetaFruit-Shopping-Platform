@@ -8,13 +8,19 @@ import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.ShopService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -127,6 +133,24 @@ public class ShopServiceImpl implements ShopService {
     }
 
     /**
+     * Updates the platform commission rate for a specific shop.
+     *
+     * @param shopId         the ID of the shop to update
+     * @param commissionRate the new commission rate percentage (0.00 to 100.00)
+     * @throws IllegalArgumentException if the commission rate is null or out of range [0, 100]
+     */
+    @Override
+    @Transactional
+    public void updateCommissionRate(Integer shopId, BigDecimal commissionRate) {
+        if (commissionRate == null || commissionRate.compareTo(BigDecimal.ZERO) < 0 || commissionRate.compareTo(new BigDecimal("100")) > 0) {
+            throw new IllegalArgumentException("Tỷ lệ chiết khấu phí sàn phải nằm trong khoảng từ 0% đến 100%!");
+        }
+        Shop shop = getShopById(shopId);
+        shop.setCommissionRate(commissionRate);
+        shopRepository.save(shop);
+    }
+
+    /**
      * Counts the total number of shops filtered by approval status.
      *
      * @param status the approval status to count
@@ -155,8 +179,52 @@ public class ShopServiceImpl implements ShopService {
      * @param statusStr the string representation of the approval status filter (ALL, PENDING, APPROVED, REJECTED)
      * @return a map containing shops list, current status string, keyword, and counts for total, pending, approved, and rejected shops
      */
+    private static final Set<String> ALLOWED_SHOP_SORT_FIELDS = Set.of(
+            "shopId", "shopName", "approvalStatus", "commissionRate"
+    );
+
+    @Override
+    public Page<Shop> searchShopsPaginated(String keyword, ShopApprovalStatus status, int page, int size) {
+        return searchShopsPaginated(keyword, status, page, size, "shopId", "desc");
+    }
+
+    @Override
+    public Page<Shop> searchShopsPaginated(String keyword, ShopApprovalStatus status, int page, int size, String sortBy, String sortDir) {
+        int pageIndex = Math.max(0, page - 1);
+        int pageSize = size > 0 ? size : 5;
+
+        String safeSortBy = (sortBy != null && ALLOWED_SHOP_SORT_FIELDS.contains(sortBy.trim()))
+                ? sortBy.trim() : "shopId";
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
+
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+        String cleanKeyword = hasKeyword ? keyword.trim() : "";
+
+        if (!hasKeyword && status == null) {
+            return shopRepository.findAll(pageable);
+        }
+        if (!hasKeyword) {
+            return shopRepository.findByApprovalStatus(status, pageable);
+        }
+        if (status == null) {
+            return shopRepository.searchShops(cleanKeyword, pageable);
+        }
+        return shopRepository.searchShopsByStatus(cleanKeyword, status, pageable);
+    }
+
     @Override
     public Map<String, Object> getAdminShopPageData(String keyword, String statusStr) {
+        return getAdminShopPageData(keyword, statusStr, 1, 5, "shopId", "desc");
+    }
+
+    @Override
+    public Map<String, Object> getAdminShopPageData(String keyword, String statusStr, int page, int size) {
+        return getAdminShopPageData(keyword, statusStr, page, size, "shopId", "desc");
+    }
+
+    @Override
+    public Map<String, Object> getAdminShopPageData(String keyword, String statusStr, int page, int size, String sortBy, String sortDir) {
         ShopApprovalStatus filterStatus = null;
         if (statusStr != null && !statusStr.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusStr.trim())) {
             try {
@@ -166,12 +234,20 @@ public class ShopServiceImpl implements ShopService {
         }
 
         String trimmedKeyword = keyword != null ? keyword.trim() : "";
-        List<Shop> shops = searchShops(trimmedKeyword, filterStatus);
+        String safeSortBy = (sortBy != null && ALLOWED_SHOP_SORT_FIELDS.contains(sortBy.trim()))
+                ? sortBy.trim() : "shopId";
+        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+
+        Page<Shop> shopPage = searchShopsPaginated(trimmedKeyword, filterStatus, page, size, safeSortBy, safeSortDir);
 
         Map<String, Object> data = new HashMap<>();
-        data.put("shops", shops);
+        data.put("shops", shopPage.getContent());
+        data.put("shopPage", shopPage);
+        data.put("pageData", shopPage);
         data.put("currentStatus", filterStatus != null ? filterStatus.name() : "ALL");
         data.put("keyword", trimmedKeyword);
+        data.put("sortBy", safeSortBy);
+        data.put("sortDir", safeSortDir);
         data.put("totalCount", countTotal());
         data.put("pendingCount", countByStatus(ShopApprovalStatus.PENDING));
         data.put("approvedCount", countByStatus(ShopApprovalStatus.APPROVED));
