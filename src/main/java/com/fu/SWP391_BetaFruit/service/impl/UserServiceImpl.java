@@ -88,11 +88,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Page<User> getAdminUserPage(String keyword, int page, int size) {
-        return getAdminUserPage(keyword, page, size, "userId", "desc");
+        return getAdminUserPage(keyword, null, null, page, size, "userId", "desc");
     }
 
     @Override
     public Page<User> getAdminUserPage(String keyword, int page, int size, String sortBy, String sortDir) {
+        return getAdminUserPage(keyword, null, null, page, size, sortBy, sortDir);
+    }
+
+    @Override
+    public Page<User> getAdminUserPage(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
         int pageSize = size > 0 ? size : 5;
 
@@ -102,30 +107,68 @@ public class UserServiceImpl implements UserService {
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
-        if (cleanKeyword.isEmpty()) {
+        UserStatus filterStatus = parseUserStatus(status);
+        Long validRoleId = (roleId != null && roleId > 0) ? roleId : null;
+
+        boolean hasKeyword = !cleanKeyword.isEmpty();
+        boolean hasRole = (validRoleId != null);
+        boolean hasStatus = (filterStatus != null);
+
+        if (!hasKeyword && !hasRole && !hasStatus) {
             return userRepository.findAll(pageable);
         }
-        return userRepository.searchUsers(cleanKeyword, pageable);
+
+        return userRepository.filterUsers(
+                hasKeyword ? cleanKeyword : null,
+                validRoleId,
+                filterStatus,
+                pageable
+        );
+    }
+
+    private UserStatus parseUserStatus(String statusStr) {
+        if (statusStr == null || statusStr.trim().isEmpty() || "ALL".equalsIgnoreCase(statusStr.trim())) {
+            return null;
+        }
+        String clean = statusStr.trim();
+        try {
+            return UserStatus.valueOf(clean.toUpperCase());
+        } catch (IllegalArgumentException ignored) {
+            if ("active".equalsIgnoreCase(clean)) {
+                return UserStatus.ACTIVE;
+            }
+            if ("deactivated".equalsIgnoreCase(clean) || "locked".equalsIgnoreCase(clean)) {
+                return UserStatus.DEACTIVATED;
+            }
+        }
+        return null;
     }
 
     @Override
     public Map<String, Object> getAdminUserPageData(String keyword) {
-        return getAdminUserPageData(keyword, 1, 5, "userId", "desc");
+        return getAdminUserPageData(keyword, null, null, 1, 5, "userId", "desc");
     }
 
     @Override
     public Map<String, Object> getAdminUserPageData(String keyword, int page, int size) {
-        return getAdminUserPageData(keyword, page, size, "userId", "desc");
+        return getAdminUserPageData(keyword, null, null, page, size, "userId", "desc");
     }
 
     @Override
     public Map<String, Object> getAdminUserPageData(String keyword, int page, int size, String sortBy, String sortDir) {
+        return getAdminUserPageData(keyword, null, null, page, size, sortBy, sortDir);
+    }
+
+    @Override
+    public Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
         String safeSortBy = (sortBy != null && ALLOWED_USER_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "userId";
         String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+        Long validRoleId = (roleId != null && roleId > 0) ? roleId : null;
+        UserStatus filterStatus = parseUserStatus(status);
 
-        Page<User> userPage = getAdminUserPage(cleanKeyword, page, size, safeSortBy, safeSortDir);
+        Page<User> userPage = getAdminUserPage(cleanKeyword, validRoleId, status, page, size, safeSortBy, safeSortDir);
         List<Role> allRoles = roleRepository.findAll();
 
         Map<String, Object> data = new HashMap<>();
@@ -134,6 +177,8 @@ public class UserServiceImpl implements UserService {
         data.put("pageData", userPage);
         data.put("allRoles", allRoles);
         data.put("keyword", cleanKeyword);
+        data.put("currentRoleId", validRoleId);
+        data.put("currentStatus", filterStatus != null ? filterStatus.name() : "ALL");
         data.put("sortBy", safeSortBy);
         data.put("sortDir", safeSortDir);
         data.put("totalCount", userRepository.count());

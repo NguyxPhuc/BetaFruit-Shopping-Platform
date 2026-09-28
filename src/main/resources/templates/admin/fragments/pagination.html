@@ -30,7 +30,7 @@
             <!-- Nút về trang đầu (First) -->
             <li class="page-item" th:classappend="${pageData.first} ? 'disabled' : ''">
                 <a class="page-link text-dark" 
-                   th:href="@{${baseUrl}(page=1, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, sortBy=${sortBy}, sortDir=${sortDir})}" 
+                   th:href="@{${baseUrl}(page=1, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, roleId=${currentRoleId}, sortBy=${sortBy}, sortDir=${sortDir})}" 
                    title="Trang đầu">
                     <i class="bi bi-chevron-double-left"></i>
                 </a>
@@ -39,7 +39,7 @@
             <!-- Nút trang trước (Previous) -->
             <li class="page-item" th:classappend="${!pageData.hasPrevious()} ? 'disabled' : ''">
                 <a class="page-link text-dark" 
-                   th:href="@{${baseUrl}(page=${pageData.number}, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, sortBy=${sortBy}, sortDir=${sortDir})}" 
+                   th:href="@{${baseUrl}(page=${pageData.number}, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, roleId=${currentRoleId}, sortBy=${sortBy}, sortDir=${sortDir})}" 
                    title="Trang trước">
                     <i class="bi bi-chevron-left"></i>
                 </a>
@@ -61,7 +61,7 @@
                     th:classappend="${i == pageData.number} ? 'active' : ''">
                     <a class="page-link" 
                        th:classappend="${i == pageData.number} ? 'bg-success border-success text-white fw-bold' : 'text-dark'"
-                       th:href="@{${baseUrl}(page=${i + 1}, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                       th:href="@{${baseUrl}(page=${i + 1}, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, roleId=${currentRoleId}, sortBy=${sortBy}, sortDir=${sortDir})}"
                        th:text="${i + 1}">1</a>
                 </li>
 
@@ -74,7 +74,7 @@
             <!-- Nút trang kế tiếp (Next) -->
             <li class="page-item" th:classappend="${!pageData.hasNext()} ? 'disabled' : ''">
                 <a class="page-link text-dark" 
-                   th:href="@{${baseUrl}(page=${pageData.number + 2}, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, sortBy=${sortBy}, sortDir=${sortDir})}" 
+                   th:href="@{${baseUrl}(page=${pageData.number + 2}, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, roleId=${currentRoleId}, sortBy=${sortBy}, sortDir=${sortDir})}" 
                    title="Trang kế tiếp">
                     <i class="bi bi-chevron-right"></i>
                 </a>
@@ -83,7 +83,7 @@
             <!-- Nút đến trang cuối (Last) -->
             <li class="page-item" th:classappend="${pageData.last} ? 'disabled' : ''">
                 <a class="page-link text-dark" 
-                   th:href="@{${baseUrl}(page=${pageData.totalPages}, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, sortBy=${sortBy}, sortDir=${sortDir})}" 
+                   th:href="@{${baseUrl}(page=${pageData.totalPages}, size=${pageData.size}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, roleId=${currentRoleId}, sortBy=${sortBy}, sortDir=${sortDir})}" 
                    title="Trang cuối">
                     <i class="bi bi-chevron-double-right"></i>
                 </a>

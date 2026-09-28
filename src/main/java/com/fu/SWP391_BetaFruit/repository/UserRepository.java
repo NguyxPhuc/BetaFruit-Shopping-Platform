@@ -36,5 +36,26 @@ public interface UserRepository extends JpaRepository<User, Integer> {
            "(u.phone IS NOT NULL AND LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<User> searchUsers(@Param("keyword") String keyword, Pageable pageable);
 
+    @Query(value = "SELECT DISTINCT u FROM User u LEFT JOIN u.roles r WHERE " +
+           "(:status IS NULL OR u.status = :status) AND " +
+           "(:roleId IS NULL OR r.roleId = :roleId) AND " +
+           "(:keyword IS NULL OR :keyword = '' OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "(u.phone IS NOT NULL AND LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))))",
+           countQuery = "SELECT COUNT(DISTINCT u) FROM User u LEFT JOIN u.roles r WHERE " +
+           "(:status IS NULL OR u.status = :status) AND " +
+           "(:roleId IS NULL OR r.roleId = :roleId) AND " +
+           "(:keyword IS NULL OR :keyword = '' OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "(u.phone IS NOT NULL AND LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%'))))")
+    Page<User> filterUsers(@Param("keyword") String keyword,
+                           @Param("roleId") Long roleId,
+                           @Param("status") UserStatus status,
+                           Pageable pageable);
+
     long countByStatus(UserStatus status);
 }

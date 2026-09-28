@@ -14,7 +14,7 @@
                        isAsc=${isCurrent and sortDir != null and sortDir.equalsIgnoreCase('asc')},
                        isDesc=${isCurrent and sortDir != null and sortDir.equalsIgnoreCase('desc')},
                        nextDir=${isAsc ? 'desc' : 'asc'}">
-        <a th:href="@{${baseUrl}(page=1, size=${pageData != null ? pageData.size : 5}, sortBy=${field}, sortDir=${nextDir}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null})}"
+        <a th:href="@{${baseUrl}(page=1, size=${pageData != null ? pageData.size : 5}, sortBy=${field}, sortDir=${nextDir}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, roleId=${currentRoleId})}"
            class="text-decoration-none text-dark d-inline-flex align-items-center user-select-none"
            th:title="${isCurrent ? (isAsc ? 'Đang xếp tăng dần (Click để xếp giảm dần)' : 'Đang xếp giảm dần (Click để xếp tăng dần)') : 'Click để sắp xếp theo cột này'}">
             <span class="fw-bold" th:text="${title}">Tiêu đề</span>

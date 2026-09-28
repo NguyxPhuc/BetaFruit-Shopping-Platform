@@ -142,16 +142,18 @@ public class AdminController {
 
     // ================= 3. QUẢN LÝ NGƯỜI DÙNG (USERS) =================
     /**
-     * Displays the list of users with optional keyword searching, pagination, and sorting.
+     * Displays the list of users with optional keyword searching, role/status filtering, pagination, and sorting.
      */
     @GetMapping("/users")
     public String listUsers(@RequestParam(value = "keyword", required = false) String keyword,
+                            @RequestParam(value = "roleId", required = false) Long roleId,
+                            @RequestParam(value = "status", required = false) String status,
                             @RequestParam(value = "page", defaultValue = "1") int page,
                             @RequestParam(value = "size", defaultValue = "5") int size,
                             @RequestParam(value = "sortBy", defaultValue = "userId") String sortBy,
                             @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
                             Model model) {
-        model.addAllAttributes(userService.getAdminUserPageData(keyword, page, size, sortBy, sortDir));
+        model.addAllAttributes(userService.getAdminUserPageData(keyword, roleId, status, page, size, sortBy, sortDir));
         return "admin/users/list";
     }
 
@@ -162,14 +164,22 @@ public class AdminController {
     public String toggleStatus(@PathVariable("id") Integer id,
                                @RequestParam(value = "page", defaultValue = "1") int page,
                                @RequestParam(value = "keyword", required = false) String keyword,
+                               @RequestParam(value = "roleId", required = false) Long roleId,
+                               @RequestParam(value = "status", required = false) String status,
                                RedirectAttributes redirectAttributes) {
         userService.toggleUserStatus(id);
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái tài khoản thành công!");
-        String redirectUrl = "redirect:/admin/users?page=" + page;
+        StringBuilder redirectUrl = new StringBuilder("redirect:/admin/users?page=").append(page);
         if (keyword != null && !keyword.trim().isEmpty()) {
-            redirectUrl += "&keyword=" + keyword.trim();
+            redirectUrl.append("&keyword=").append(keyword.trim());
         }
-        return redirectUrl;
+        if (roleId != null && roleId > 0) {
+            redirectUrl.append("&roleId=").append(roleId);
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            redirectUrl.append("&status=").append(status.trim());
+        }
+        return redirectUrl.toString();
     }
 
     /**
@@ -179,10 +189,23 @@ public class AdminController {
     public String assignRoles(@RequestParam("userId") Integer userId,
                               @RequestParam(value = "roleIds", required = false) List<Long> roleIds,
                               @RequestParam(value = "page", defaultValue = "1") int page,
+                              @RequestParam(value = "keyword", required = false) String keyword,
+                              @RequestParam(value = "roleId", required = false) Long roleId,
+                              @RequestParam(value = "status", required = false) String status,
                               RedirectAttributes redirectAttributes) {
         userService.assignRolesToUser(userId, roleIds);
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật phân quyền vai trò thành công!");
-        return "redirect:/admin/users?page=" + page;
+        StringBuilder redirectUrl = new StringBuilder("redirect:/admin/users?page=").append(page);
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            redirectUrl.append("&keyword=").append(keyword.trim());
+        }
+        if (roleId != null && roleId > 0) {
+            redirectUrl.append("&roleId=").append(roleId);
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            redirectUrl.append("&status=").append(status.trim());
+        }
+        return redirectUrl.toString();
     }
 
     // ================= 4. QUẢN LÝ DANH MỤC (CATEGORIES) =================
