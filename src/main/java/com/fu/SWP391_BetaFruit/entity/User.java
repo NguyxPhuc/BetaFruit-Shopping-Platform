@@ -41,7 +41,7 @@ public class User {
     @Column(name = "AvatarUrl", columnDefinition = "NVARCHAR(MAX)")
     private String avatarUrl;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = com.fu.SWP391_BetaFruit.converter.UserStatusConverter.class)
     @Column(name = "Status", length = 20)
     private UserStatus status;
 
@@ -56,4 +56,12 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "RoleId")
     )
     private List<Role> roles = new ArrayList<>();
+
+    public List<Long> getRoleIds() {
+        if (roles == null) {
+            return java.util.Collections.emptyList();
+        }
+        return roles.stream().map(Role::getRoleId).toList();
+    }
+
 }

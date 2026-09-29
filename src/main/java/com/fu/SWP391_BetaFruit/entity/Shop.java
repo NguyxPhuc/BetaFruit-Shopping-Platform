@@ -51,7 +51,7 @@ public class Shop {
     @Column(name = "AvailableBalance", precision = 18, scale = 2)
     private BigDecimal availableBalance;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = com.fu.SWP391_BetaFruit.converter.ShopApprovalStatusConverter.class)
     @Column(name = "ApprovalStatus", length = 20)
     private ShopApprovalStatus approvalStatus;
 
