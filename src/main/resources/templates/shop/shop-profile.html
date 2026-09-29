@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hồ sơ cửa hàng đối tác - BetaFruit Nông sản tươi sạch">
+    <title>Hồ sơ cửa hàng | BetaFruit</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+
+    <!-- Global & Page CSS -->
+    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
+    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
+</head>
+<body class="shop-theme">
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<main class="profile-page">
+    <!-- Hero Banner Section -->
+    <section class="profile-hero">
+        <div class="container profile-hero-content">
+            <div class="hero-identity">
+                <!-- Shop Avatar with initial -->
+                <div class="hero-avatar"
+                     th:text="${shopProfileResponse?.shopName != null && !shopProfileResponse.shopName.isEmpty() ? #strings.substring(shopProfileResponse.shopName, 0, 1) : 'S'}">
+                    S
+                </div>
+                <div class="hero-info">
+                    <h1>
+                        <span th:text="${shopProfileResponse?.shopName ?: 'Cửa hàng BetaFruit'}">Nông Sản Sạch Đà Lạt</span>
+                        <span class="hero-badge badge-verified">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            <span>Đối tác chính thức</span>
+                        </span>
+                    </h1>
+                    <p>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <span th:text="${shopProfileResponse?.email ?: 'shop@betafruit.vn'}">shop@betafruit.vn</span>
+                        <span>•</span>
+                        <span th:text="${shopProfileResponse?.phone ?: '0901234567'}">0901234567</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Stat Highlight -->
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Trạng thái Shop</span>
+                    <span class="stat-val accent">Đang hoạt động</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Tài khoản nhận tiền</span>
+                    <span class="stat-val"
+                          th:text="${shopProfileResponse?.bankAccountNumber != null ? 'Đã xác thực' : 'Chưa cập nhật'}">
+                        Đã xác thực
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <div class="container profile-main-grid">
+        <!-- Sidebar Navigation -->
+        <aside class="profile-sidebar">
+            <nav class="sidebar-card" aria-label="Menu quản lý cửa hàng">
+                <ul class="sidebar-nav">
+                    <li>
+                        <a th:href="@{/shop/profile}" href="/shop/profile" class="active">
+                            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                            <span>Hồ sơ cửa hàng</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/shop/products}" href="#">
+                            <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                            <span>Quản lý sản phẩm</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/shop/orders}" href="#">
+                            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            <span>Đơn hàng nhận được</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/shop/finance}" href="#">
+                            <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                            <span>Doanh thu & Đối soát</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a th:href="@{/auth/logout}" href="#">
+                            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Đăng xuất</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Seller Support Card -->
+            <div class="sidebar-promo-card">
+                <h4>Hỗ trợ chủ cửa hàng</h4>
+                <p>Cần hỗ trợ cập nhật thông tin pháp lý hoặc tài khoản nhận tiền? Liên hệ ngay Hotline hỗ trợ đối tác.</p>
+                <a href="tel:19001234" class="btn btn-outline" style="width: 100%; font-size: 13px;">Hotline: 1900 1234</a>
+            </div>
+        </aside>
+
+        <!-- Right: Shop Profile Form Card -->
+        <section class="profile-content-card">
+            <!-- Header bar with Title and Action Buttons -->
+            <div class="card-header-bar">
+                <div>
+                    <h2>Thông tin hồ sơ cửa hàng</h2>
+                    <p>Thông tin hiển thị cho khách hàng và tài khoản nhận thanh toán doanh thu</p>
+                </div>
+                <div class="card-header-actions">
+                    <!-- Toggle Edit Button -->
+                    <button type="button" class="btn btn-outline btn-view-mode" id="btnEnableEdit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        <span>Chỉnh sửa thông tin Shop</span>
+                    </button>
+                    <!-- Cancel Button for Edit Mode -->
+                    <button type="button" class="btn btn-secondary btn-edit-mode" id="btnCancelEdit">
+                        <span>Hủy bỏ</span>
+                    </button>
+                    <!-- Submit Button for Edit Mode -->
+                    <button type="submit" form="shopProfileForm" class="btn btn-primary btn-edit-mode">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        <span>Lưu thay đổi</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Server Notifications -->
+            <div class="profile-alert alert-success" th:if="${successMessage}" role="alert">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <span th:text="${successMessage}">Cập nhật thông tin cửa hàng thành công!</span>
+            </div>
+
+            <div class="profile-alert alert-warning" th:if="${errorMessage}" role="alert">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span th:text="${errorMessage}">Đã xảy ra lỗi.</span>
+            </div>
+
+            <!-- Form Body -->
+            <form id="shopProfileForm"
+                  class="profile-form"
+                  th:action="@{/shop/profile/edit}"
+                  th:object="${shopProfileResponse}"
+                  method="post">
+
+                <!-- Alert bar while in editing mode -->
+                <div class="editing-banner" id="editingNotice">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>Bạn đang ở chế độ chỉnh sửa thông tin cửa hàng. Kiểm tra kỹ thông tin tài khoản ngân hàng trước khi lưu.</span>
+                </div>
+
+                <!-- SECTION 1: Thông tin thương hiệu & Cửa hàng -->
+                <div class="form-section-group">
+                    <h3 class="section-title">
+                        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        <span>Thông tin thương hiệu</span>
+                    </h3>
+
+                    <div class="form-grid-full">
+                        <!-- Shop Name -->
+                        <div class="form-group">
+                            <label class="form-label" for="shopName">
+                                <span>Tên cửa hàng</span>
+                                <span class="label-badge">Có thể sửa</span>
+                            </label>
+                            <div class="input-container">
+                                <svg class="input-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                                <input type="text"
+                                       id="shopName"
+                                       name="shopName"
+                                       class="form-input editable-field"
+                                       th:field="*{shopName}"
+                                       placeholder="Ví dụ: Vườn Cam Xã Đoài Sạch"
+                                       readonly
+                                       required>
+                            </div>
+                            <span class="input-helper">Tên hiển thị công khai với người mua hàng trên website</span>
+                        </div>
+
+                        <!-- Shop Description -->
+                        <div class="form-group">
+                            <label class="form-label" for="shopDescription">
+                                <span>Mô tả giới thiệu cửa hàng</span>
+                                <span class="label-badge">Có thể sửa</span>
+                            </label>
+                            <textarea id="shopDescription"
+                                      name="shopDescription"
+                                      class="form-textarea editable-field"
+                                      th:field="*{shopDescription}"
+                                      placeholder="Giới thiệu về nguồn gốc xuất xứ trái cây, quy trình canh tác và cam kết chất lượng..."
+                                      readonly></textarea>
+                            <span class="input-helper">Giúp người mua hiểu rõ nguồn gốc và độ tươi sạch của nông sản</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: Thông tin liên hệ cửa hàng -->
+                <div class="form-section-group">
+                    <h3 class="section-title">
+                        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        <span>Thông tin liên hệ kinh doanh</span>
+                    </h3>
+
+                    <div class="form-grid-2">
+                        <!-- Email (Read-only / Bound to user account) -->
+                        <div class="form-group">
+                            <label class="form-label" for="email">
+                                <span>Email chủ shop / Quản lý</span>
+                                <span class="label-badge verified">Tài khoản chính</span>
+                            </label>
+                            <div class="input-container">
+                                <svg class="input-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                <input type="email"
+                                       id="email"
+                                       name="email"
+                                       class="form-input readonly-locked"
+                                       th:field="*{email}"
+                                       readonly>
+                            </div>
+                            <span class="input-helper">Địa chỉ nhận thông báo đơn hàng và báo cáo doanh thu</span>
+                        </div>
+
+                        <!-- Phone Hotline (editable) -->
+                        <div class="form-group">
+                            <label class="form-label" for="phone">
+                                <span>Số điện thoại / Hotline cửa hàng</span>
+                                <span class="label-badge">Có thể sửa</span>
+                            </label>
+                            <div class="input-container">
+                                <svg class="input-icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                <input type="tel"
+                                       id="phone"
+                                       name="phone"
+                                       class="form-input editable-field"
+                                       th:field="*{phone}"
+                                       placeholder="0912345678"
+                                       pattern="^[0-9]{10,11}$"
+                                       readonly
+                                       required>
+                            </div>
+                            <span class="input-helper">Dành cho bộ phận vận hành và khách hàng liên hệ tư vấn</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: Thông tin nhận thanh toán & Tài khoản ngân hàng -->
+                <div class="form-section-group">
+                    <h3 class="section-title">
+                        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        <span>Tài khoản ngân hàng nhận tiền quyết toán</span>
+                    </h3>
+
+                    <div class="bank-account-box">
+                        <div class="bank-icon">
+                            <svg viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4"></path></svg>
+                        </div>
+                        <div class="bank-info-text">
+                            <p class="bank-title" th:text="${shopProfileResponse?.bankName ?: 'Chưa thiết lập ngân hàng'}">Vietcombank</p>
+                            <p class="bank-sub">
+                                STK: <strong th:text="${shopProfileResponse?.bankAccountNumber ?: '---'}">123456789</strong> • 
+                                Chủ TK: <strong th:text="${shopProfileResponse?.accountName ?: '---'}">NGUYEN VAN A</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2" style="margin-top: 20px;">
+                        <!-- Bank Name -->
+                        <div class="form-group">
+                            <label class="form-label" for="bankName">
+                                <span>Tên ngân hàng</span>
+                                <span class="label-badge">Có thể sửa</span>
+                            </label>
+                            <div class="input-container">
+                                <svg class="input-icon" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4"></path></svg>
+                                <input type="text"
+                                       id="bankName"
+                                       name="bankName"
+                                       class="form-input editable-field"
+                                       th:field="*{bankName}"
+                                       placeholder="Ví dụ: Vietcombank, MBBank, Techcombank..."
+                                       readonly
+                                       required>
+                            </div>
+                            <span class="input-helper">Ngân hàng phát hành tài khoản</span>
+                        </div>
+
+                        <!-- Bank Account Number -->
+                        <div class="form-group">
+                            <label class="form-label" for="bankAccountNumber">
+                                <span>Số tài khoản</span>
+                                <span class="label-badge">Có thể sửa</span>
+                            </label>
+                            <div class="input-container">
+                                <svg class="input-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                <input type="text"
+                                       id="bankAccountNumber"
+                                       name="bankAccountNumber"
+                                       class="form-input editable-field"
+                                       th:field="*{bankAccountNumber}"
+                                       placeholder="Số tài khoản ngân hàng"
+                                       readonly
+                                       required>
+                            </div>
+                            <span class="input-helper">Số tài khoản chính xác để nhận tiền doanh thu</span>
+                        </div>
+
+                        <!-- Account Name -->
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label" for="accountName">
+                                <span>Tên chủ tài khoản (In hoa không dấu)</span>
+                                <span class="label-badge">Có thể sửa</span>
+                            </label>
+                            <div class="input-container">
+                                <svg class="input-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                <input type="text"
+                                       id="accountName"
+                                       name="accountName"
+                                       class="form-input editable-field"
+                                       th:field="*{accountName}"
+                                       placeholder="NGUYEN VAN A"
+                                       style="text-transform: uppercase;"
+                                       readonly
+                                       required>
+                            </div>
+                            <span class="input-helper">Phải trùng khớp với tên trên thẻ / tài khoản ngân hàng</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Actions (Visible in Edit Mode) -->
+                <div class="form-actions-footer btn-edit-mode">
+                    <button type="button" class="btn btn-secondary" id="btnCancelEditBottom">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        <span>Lưu thông tin Shop</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+</main>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- ═══════════════ JAVASCRIPT LOGIC ═══════════════ -->
+<script>
+    (function () {
+        const btnEnableEdit = document.getElementById('btnEnableEdit');
+        const btnCancelEdit = document.getElementById('btnCancelEdit');
+        const btnCancelEditBottom = document.getElementById('btnCancelEditBottom');
+        const form = document.getElementById('shopProfileForm');
+        const editableFields = document.querySelectorAll('.editable-field');
+
+        // Store initial values for cancel restoration
+        const initialValues = {};
+        editableFields.forEach(field => {
+            initialValues[field.id] = field.value;
+        });
+
+        function setEditMode(isEditing) {
+            if (isEditing) {
+                document.body.classList.add('is-editing');
+                editableFields.forEach(field => {
+                    field.removeAttribute('readonly');
+                });
+                if (editableFields.length > 0) {
+                    editableFields[0].focus();
+                }
+            } else {
+                document.body.classList.remove('is-editing');
+                editableFields.forEach(field => {
+                    field.setAttribute('readonly', 'true');
+                    if (initialValues[field.id] !== undefined) {
+                        field.value = initialValues[field.id];
+                    }
+                });
+            }
+        }
+
+        if (btnEnableEdit) {
+            btnEnableEdit.addEventListener('click', function () {
+                setEditMode(true);
+            });
+        }
+
+        if (btnCancelEdit) {
+            btnCancelEdit.addEventListener('click', function () {
+                setEditMode(false);
+            });
+        }
+
+        if (btnCancelEditBottom) {
+            btnCancelEditBottom.addEventListener('click', function () {
+                setEditMode(false);
+            });
+        }
+    })();
+</script>
+
+</body>
+</html>

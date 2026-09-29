@@ -10,27 +10,26 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "CODCollection")
+@Table(name = "ImportNote")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CODCollection {
+public class ImportNote {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "CollectionId")
-    private Integer collectionId;
+    @Column(name = "ImportId")
+    private Integer importId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ShipperId", nullable = false)
-    private Shipper shipper;
+    @JoinColumn(name = "ShopId", nullable = false)
+    private Shop shop;
 
-    @Column(name = "AmountCollected", nullable = false, precision = 18, scale = 2)
-    private BigDecimal amountCollected;
+    @Column(name = "TotalCost", nullable = false, precision = 18, scale = 2)
+    private BigDecimal totalCost;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "CollectedBy", nullable = false)
-    private User collectedBy;
+    @Column(name = "Note", columnDefinition = "NVARCHAR(255)")
+    private String note;
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private LocalDateTime createdAt;

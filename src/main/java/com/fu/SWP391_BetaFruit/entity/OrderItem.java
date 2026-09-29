@@ -34,6 +34,9 @@ public class OrderItem {
     @Column(name = "PriceSnapshot", nullable = false, precision = 18, scale = 2)
     private BigDecimal priceSnapshot;
 
+    @Column(name = "CostSnapshot", nullable = false, precision = 18, scale = 2)
+    private BigDecimal costSnapshot;
+
     @Column(name = "SnapshotProductName", nullable = false, columnDefinition = "NVARCHAR(255)")
     private String snapshotProductName;
 

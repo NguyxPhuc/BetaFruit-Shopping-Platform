@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -54,7 +55,7 @@ public class User {
             joinColumns = @JoinColumn(name = "UserId"),
             inverseJoinColumns = @JoinColumn(name = "RoleId")
     )
-    private List<Role> roles;
+    private List<Role> roles = new ArrayList<>();
 
     public List<Long> getRoleIds() {
         if (roles == null) {
@@ -62,4 +63,5 @@ public class User {
         }
         return roles.stream().map(Role::getRoleId).toList();
     }
+
 }
