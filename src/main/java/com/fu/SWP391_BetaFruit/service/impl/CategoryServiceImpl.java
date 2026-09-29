@@ -1,6 +1,6 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
-import com.fu.SWP391_BetaFruit.dto.request.admin.CategoryRequest;
+import com.fu.SWP391_BetaFruit.dto.request.CategoryRequest;
 import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 import com.fu.SWP391_BetaFruit.repository.MasterCategoryRepository;
 import com.fu.SWP391_BetaFruit.service.CategoryService;

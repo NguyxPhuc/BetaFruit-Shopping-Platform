@@ -1,6 +1,6 @@
 package com.fu.SWP391_BetaFruit.service;
 
-import com.fu.SWP391_BetaFruit.dto.request.admin.CategoryRequest;
+import com.fu.SWP391_BetaFruit.dto.request.CategoryRequest;
 import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 
 import java.util.List;

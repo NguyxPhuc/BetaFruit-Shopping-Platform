@@ -40,7 +40,7 @@ public class User {
     @Column(name = "AvatarUrl", columnDefinition = "NVARCHAR(MAX)")
     private String avatarUrl;
 
-    @Convert(converter = com.fu.SWP391_BetaFruit.converter.UserStatusConverter.class)
+    @Enumerated(EnumType.STRING)
     @Column(name = "Status", length = 20)
     private UserStatus status;
 

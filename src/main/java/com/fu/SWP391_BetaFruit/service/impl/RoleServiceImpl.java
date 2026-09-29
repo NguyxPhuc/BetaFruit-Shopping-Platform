@@ -1,6 +1,6 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
-import com.fu.SWP391_BetaFruit.dto.request.admin.RoleRequest;
+import com.fu.SWP391_BetaFruit.dto.request.RoleRequest;
 import com.fu.SWP391_BetaFruit.entity.Role;
 import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.service.RoleService;
