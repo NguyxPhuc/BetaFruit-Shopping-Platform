@@ -33,6 +33,9 @@ public class ProductVariant {
     @Column(name = "SalePrice", precision = 18, scale = 2)
     private BigDecimal salePrice;
 
+    @Column(name = "CostPrice", nullable = false, precision = 18, scale = 2)
+    private BigDecimal costPrice;
+
     @Column(name = "StockQuantity", nullable = false)
     private Integer stockQuantity;
 

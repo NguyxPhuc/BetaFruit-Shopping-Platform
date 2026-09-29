@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.entity;
 
+import com.fu.SWP391_BetaFruit.enums.AddressType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -45,4 +46,8 @@ public class Address {
 
     @Column(name = "IsActive")
     private Boolean isActive;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "AddressType", length = 20)
+    private AddressType addressType;
 }

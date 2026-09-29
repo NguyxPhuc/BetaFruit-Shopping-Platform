@@ -50,6 +50,12 @@ public class Order {
     @Column(name = "FinalAmount", nullable = false, precision = 18, scale = 2)
     private BigDecimal finalAmount;
 
+    @Column(name = "PlatformFee", nullable = false, precision = 18, scale = 2)
+    private BigDecimal platformFee;
+
+    @Column(name = "ShopNetReceived", nullable = false, precision = 18, scale = 2)
+    private BigDecimal shopNetReceived;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "PaymentMethod", nullable = false, length = 20)
     private PaymentMethod paymentMethod;
@@ -60,6 +66,9 @@ public class Order {
 
     @Column(name = "IsSettled")
     private Boolean isSettled;
+
+    @Column(name = "IsCODRemitted")
+    private Boolean isCodRemitted;
 
     @Column(name = "SettledAt")
     private LocalDateTime settledAt;

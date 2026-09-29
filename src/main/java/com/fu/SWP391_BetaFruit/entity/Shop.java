@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Shop {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ShopId")
@@ -51,7 +50,10 @@ public class Shop {
     @Column(name = "AvailableBalance", precision = 18, scale = 2)
     private BigDecimal availableBalance;
 
-    @Convert(converter = com.fu.SWP391_BetaFruit.converter.ShopApprovalStatusConverter.class)
+    @Column(name = "CommissionRate", precision = 5, scale = 2)
+    private BigDecimal commissionRate;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "ApprovalStatus", length = 20)
     private ShopApprovalStatus approvalStatus;
 
