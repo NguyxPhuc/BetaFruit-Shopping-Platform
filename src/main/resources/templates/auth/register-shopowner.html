@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Đăng ký tài khoản chủ cửa hàng tại BetaFruit - Bán hàng nông sản trực tuyến">
+    <title>Đăng ký chủ cửa hàng | BetaFruit</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="stylesheet" th:href="@{/css/register.css}">
+    <link rel="stylesheet" th:href="@{/css/register-shopowner.css}">
+</head>
+<body>
+
+<!-- ═══════ HEADER ═══════ -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- ═══════ MAIN ═══════ -->
+<main class="register-main register-main--shop">
+    <!-- Decorative background elements -->
+    <div class="register-bg-decor" aria-hidden="true">
+        <div class="bg-circle bg-circle-1"></div>
+        <div class="bg-circle bg-circle-2"></div>
+        <div class="bg-circle bg-circle-3"></div>
+    </div>
+
+    <div class="container register-container">
+        <!-- Left: Branding panel -->
+        <aside class="register-aside register-aside--shop">
+            <div class="aside-content">
+                <h2 class="aside-title">Trở thành đối tác<br>của <span>BetaFruit</span></h2>
+                <p class="aside-desc">Mở cửa hàng trực tuyến và tiếp cận hàng ngàn khách hàng yêu thích nông sản tươi ngon trên toàn quốc!</p>
+                <ul class="aside-features">
+                    <li>Quản lý cửa hàng dễ dàng</li>
+                    <li>Tiếp cận hàng ngàn khách hàng</li>
+                    <li>Hỗ trợ vận chuyển &amp; thanh toán</li>
+                    <li>Miễn phí đăng ký, chỉ tính phí khi bán</li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Right: Registration form -->
+        <section class="register-form-section">
+            <div class="form-card">
+                <div class="form-header">
+                    <div class="form-header__badge">Dành cho chủ cửa hàng</div>
+                    <h1>Đăng ký bán hàng</h1>
+                    <p>Điền thông tin bên dưới để tạo tài khoản chủ cửa hàng</p>
+                </div>
+
+                <!-- Server-side error message -->
+                <div class="alert alert-error" th:if="${errorMessage}" role="alert">
+                    <svg class="alert-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 8v4m0 4h.01"></path>
+                    </svg>
+                    <span th:text="${errorMessage}">Lỗi</span>
+                </div>
+
+                <form th:action="@{/auth/register-shopowner}" th:object="${registerRequest}" method="post" novalidate id="registerShopOwnerForm">
+
+                    <!-- Full Name -->
+                    <div class="form-group" th:classappend="${#fields.hasErrors('fullName')} ? 'has-error' : ''">
+                        <label for="fullName">
+                            Họ và tên <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="text" id="fullName" th:field="*{fullName}"
+                                   placeholder="Nguyễn Văn A" maxlength="100" autocomplete="name">
+                            <span class="input-focus-ring"></span>
+                        </div>
+                        <p class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">Lỗi</p>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="form-group" th:classappend="${#fields.hasErrors('username')} ? 'has-error' : ''">
+                        <label for="username">
+                            Tên đăng nhập <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="text" id="username" th:field="*{username}"
+                                   placeholder="username123" maxlength="50" autocomplete="username">
+                            <span class="input-focus-ring"></span>
+                        </div>
+                        <p class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Lỗi</p>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group" th:classappend="${#fields.hasErrors('email')} ? 'has-error' : ''">
+                        <label for="email">
+                            Email <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="email" id="email" th:field="*{email}"
+                                   placeholder="shop@email.com" maxlength="100" autocomplete="email">
+                            <span class="input-focus-ring"></span>
+                        </div>
+                        <p class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Lỗi</p>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="form-group" th:classappend="${#fields.hasErrors('phone')} ? 'has-error' : ''">
+                        <label for="phone">
+                            Số điện thoại
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="tel" id="phone" th:field="*{phone}"
+                                   placeholder="0912345678" maxlength="20" autocomplete="tel">
+                            <span class="input-focus-ring"></span>
+                        </div>
+                        <p class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">Lỗi</p>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group" th:classappend="${#fields.hasErrors('password')} ? 'has-error' : ''">
+                        <label for="password">
+                            Mật khẩu <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper password-wrapper">
+                            <input type="password" id="password" th:field="*{password}"
+                                   placeholder="Tối thiểu 6 ký tự" minlength="6" maxlength="20" autocomplete="new-password">
+                            <button type="button" class="toggle-password" onclick="togglePassword()" aria-label="Hiện/Ẩn mật khẩu">
+                                <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true" style="display:none">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                            </button>
+                            <span class="input-focus-ring"></span>
+                        </div>
+                        <p class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Lỗi</p>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn-register btn-register--shop" id="btnRegisterShop">
+                        <span class="btn-text">Đăng ký bán hàng</span>
+                    </button>
+                </form>
+
+                <div class="form-footer">
+                    <p>Bạn là khách hàng? <a th:href="@{/auth/register}" href="/auth/register" class="link-login">Đăng ký mua hàng</a></p>
+                    <p>Bạn đã có tài khoản? <a th:href="@{/auth/login}" href="/auth/login" class="link-login">Đăng nhập ngay</a></p>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<!-- ═══════ FOOTER ═══════ -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- Toggle password visibility -->
+<script>
+    function togglePassword() {
+        const input = document.getElementById('password');
+        const eyeOpen = document.querySelector('.eye-open');
+        const eyeClosed = document.querySelector('.eye-closed');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eyeOpen.style.display = 'none';
+            eyeClosed.style.display = 'block';
+        } else {
+            input.type = 'password';
+            eyeOpen.style.display = 'block';
+            eyeClosed.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
