@@ -3,12 +3,16 @@ package com.fu.SWP391_BetaFruit.service.impl;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.CustomerMembership;
+import com.fu.SWP391_BetaFruit.entity.Role;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
+import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import com.fu.SWP391_BetaFruit.repository.CustomerMembershipRepository;
+import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +30,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ShopRepository shopRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Autowired
     private CustomerMembershipRepository customerMembershipRepository;

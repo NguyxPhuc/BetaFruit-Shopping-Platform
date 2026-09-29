@@ -1,6 +1,8 @@
 package com.fu.SWP391_BetaFruit.service;
 
 
+import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
+import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.User;
 import java.util.Map;
 import java.util.List;
