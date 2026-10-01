@@ -38,3 +38,7 @@ build/
 # Markdown files
 *.md
 !README.md
+
+# Mock Data / Database scripts
+mock_data_full.sql
+
