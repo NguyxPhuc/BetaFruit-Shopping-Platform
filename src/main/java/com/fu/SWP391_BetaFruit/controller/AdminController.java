@@ -23,6 +23,15 @@ public class AdminController {
     private final CategoryService categoryService;
     private final RoleService roleService;
 
+    // ================= 0. TỔNG QUAN (DASHBOARD) =================
+    /**
+     * Displays the Admin Dashboard overview page.
+     */
+    @GetMapping({"", "/", "/dashboard"})
+    public String dashboard(Model model) {
+        return "admin/admin-dashboard";
+    }
+
     // ================= 1. QUẢN LÝ CỬA HÀNG (SHOPS) =================
     /**
      * Displays the list of shops with optional filtering by status, keyword, pagination, and sorting.
