@@ -223,12 +223,13 @@ public class AdminController {
      */
     @GetMapping("/categories")
     public String listCategories(@RequestParam(value = "keyword", required = false) String keyword,
+                                 @RequestParam(value = "status", required = false, defaultValue = "ALL") String status,
                                  @RequestParam(value = "page", defaultValue = "1") int page,
                                  @RequestParam(value = "size", defaultValue = "5") int size,
                                  @RequestParam(value = "sortBy", defaultValue = "categoryId") String sortBy,
                                  @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
                                  Model model) {
-        model.addAllAttributes(categoryService.getAdminCategoryPageData(keyword, page, size, sortBy, sortDir));
+        model.addAllAttributes(categoryService.getAdminCategoryPageData(keyword, status, page, size, sortBy, sortDir));
         return "admin/categories/list";
     }
 
@@ -258,10 +259,21 @@ public class AdminController {
      * Toggles the active or display status of a category.
      */
     @PostMapping("/categories/{id}/toggle-status")
-    public String toggleCategoryStatus(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
+    public String toggleCategoryStatus(@PathVariable("id") Integer id,
+                                       @RequestParam(value = "page", defaultValue = "1") int page,
+                                       @RequestParam(value = "keyword", required = false) String keyword,
+                                       @RequestParam(value = "status", required = false) String status,
+                                       RedirectAttributes redirectAttributes) {
         categoryService.toggleCategoryStatus(id);
         redirectAttributes.addFlashAttribute("successMessage", "Thay đổi trạng thái hiển thị danh mục thành công!");
-        return "redirect:/admin/categories";
+        StringBuilder redirectUrl = new StringBuilder("redirect:/admin/categories?page=").append(page);
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            redirectUrl.append("&keyword=").append(keyword.trim());
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            redirectUrl.append("&status=").append(status.trim());
+        }
+        return redirectUrl.toString();
     }
 
     // ================= 5. QUẢN LÝ VAI TRÒ (ROLES) =================

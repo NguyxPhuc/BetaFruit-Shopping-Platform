@@ -86,17 +86,36 @@ public class CategoryServiceImpl implements CategoryService {
         masterCategoryRepository.save(category);
     }
 
+    private Boolean parseActiveStatus(String statusStr) {
+        if (statusStr == null || statusStr.trim().isEmpty() || "ALL".equalsIgnoreCase(statusStr.trim())) {
+            return null;
+        }
+        String clean = statusStr.trim();
+        if ("ACTIVE".equalsIgnoreCase(clean) || "TRUE".equalsIgnoreCase(clean)) {
+            return Boolean.TRUE;
+        }
+        if ("HIDDEN".equalsIgnoreCase(clean) || "INACTIVE".equalsIgnoreCase(clean) || "FALSE".equalsIgnoreCase(clean)) {
+            return Boolean.FALSE;
+        }
+        return null;
+    }
+
     private static final Set<String> ALLOWED_CATEGORY_SORT_FIELDS = Set.of(
             "categoryId", "categoryName", "isActive"
     );
 
     @Override
     public Page<MasterCategory> getAdminCategoryPage(String keyword, int page, int size) {
-        return getAdminCategoryPage(keyword, page, size, "categoryId", "desc");
+        return getAdminCategoryPage(keyword, "ALL", page, size, "categoryId", "desc");
     }
 
     @Override
     public Page<MasterCategory> getAdminCategoryPage(String keyword, int page, int size, String sortBy, String sortDir) {
+        return getAdminCategoryPage(keyword, "ALL", page, size, sortBy, sortDir);
+    }
+
+    @Override
+    public Page<MasterCategory> getAdminCategoryPage(String keyword, String status, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
         int pageSize = size > 0 ? size : 5;
 
@@ -106,30 +125,37 @@ public class CategoryServiceImpl implements CategoryService {
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
-        if (cleanKeyword.isEmpty()) {
-            return masterCategoryRepository.findAll(pageable);
-        }
-        return masterCategoryRepository.findByCategoryNameContainingIgnoreCase(cleanKeyword, pageable);
+        Boolean isActive = parseActiveStatus(status);
+
+        return masterCategoryRepository.filterCategories(cleanKeyword, isActive, pageable);
     }
 
     @Override
     public Map<String, Object> getAdminCategoryPageData(String keyword) {
-        return getAdminCategoryPageData(keyword, 1, 5, "categoryId", "desc");
+        return getAdminCategoryPageData(keyword, "ALL", 1, 5, "categoryId", "desc");
     }
 
     @Override
     public Map<String, Object> getAdminCategoryPageData(String keyword, int page, int size) {
-        return getAdminCategoryPageData(keyword, page, size, "categoryId", "desc");
+        return getAdminCategoryPageData(keyword, "ALL", page, size, "categoryId", "desc");
     }
 
     @Override
     public Map<String, Object> getAdminCategoryPageData(String keyword, int page, int size, String sortBy, String sortDir) {
+        return getAdminCategoryPageData(keyword, "ALL", page, size, sortBy, sortDir);
+    }
+
+    @Override
+    public Map<String, Object> getAdminCategoryPageData(String keyword, String status, int page, int size, String sortBy, String sortDir) {
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
         String safeSortBy = (sortBy != null && ALLOWED_CATEGORY_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "categoryId";
         String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
 
-        Page<MasterCategory> categoryPage = getAdminCategoryPage(cleanKeyword, page, size, safeSortBy, safeSortDir);
+        Boolean parsedStatus = parseActiveStatus(status);
+        String currentStatus = (parsedStatus == null) ? "ALL" : (parsedStatus ? "ACTIVE" : "HIDDEN");
+
+        Page<MasterCategory> categoryPage = getAdminCategoryPage(cleanKeyword, currentStatus, page, size, safeSortBy, safeSortDir);
 
         Map<String, Object> data = new HashMap<>();
         data.put("categories", categoryPage.getContent());
@@ -137,6 +163,7 @@ public class CategoryServiceImpl implements CategoryService {
         data.put("pageData", categoryPage);
         data.put("newCategory", new CategoryRequest());
         data.put("keyword", cleanKeyword);
+        data.put("currentStatus", currentStatus);
         data.put("sortBy", safeSortBy);
         data.put("sortDir", safeSortDir);
         data.put("totalCount", masterCategoryRepository.count());
