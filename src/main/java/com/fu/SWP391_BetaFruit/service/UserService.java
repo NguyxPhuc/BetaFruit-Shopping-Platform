@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.service;
 
 
+import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.User;
@@ -17,4 +18,6 @@ public interface UserService {
     void toggleUserStatus(Integer userId);
     void assignRolesToUser(Integer userId, List<Long> roleIds);
     Map<String, Object> getAdminUserPageData(String keyword);
+
+    void changePassword(Integer userId, ChangePasswordRequest changePasswordRequest) throws Exception;
 }

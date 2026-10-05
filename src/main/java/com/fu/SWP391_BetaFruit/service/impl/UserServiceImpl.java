@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
+import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.CustomerMembership;
@@ -13,6 +14,7 @@ import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -147,5 +149,21 @@ public class UserServiceImpl implements UserService {
         data.put("keyword", cleanKeyword);
 
         return data;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changePassword(Integer userId, ChangePasswordRequest changePasswordRequest) throws Exception {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy người dùng."));
+
+        if (!BCrypt.checkpw(changePasswordRequest.getOldPassword(), user.getPasswordHash())) {
+            throw new Exception("Mật khẩu cũ không chính xác.");
+        }
+        if (!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getNewPasswordConfirm())) {
+            throw new Exception("Mật khẩu xác nhận không trùng khớp.");
+        }
+
+        user.setPasswordHash(BCrypt.hashpw(changePasswordRequest.getNewPassword(), BCrypt.gensalt()));
     }
 }
