@@ -24,7 +24,9 @@ public record ShopOrderDetailResponse(
         Delivery delivery,
         List<Payment> payments,
         BigDecimal platformFee,
-        Boolean isCODRemitted
+        Boolean isCODRemitted,
+        BigDecimal totalCost,
+        BigDecimal estimatedProfit
 ) {
     public record Item(Integer orderItemId, String productName, String variantName,
                        Integer quantity, BigDecimal unitPrice, BigDecimal lineTotal,

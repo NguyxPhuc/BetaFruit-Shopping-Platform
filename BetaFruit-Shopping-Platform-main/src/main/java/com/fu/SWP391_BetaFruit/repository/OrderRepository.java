@@ -30,7 +30,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             Pageable pageable
     );
 
-    @EntityGraph(attributePaths = "customer")
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     java.util.Optional<Order> findByOrderIdAndShopOwnerUserId(Integer orderId, Integer ownerId);
 
     @EntityGraph(attributePaths = {"customer", "shop", "coupon"})

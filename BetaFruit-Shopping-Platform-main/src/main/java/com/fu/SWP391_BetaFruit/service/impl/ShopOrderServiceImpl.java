@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,19 +30,22 @@ public class ShopOrderServiceImpl implements ShopOrderService {
     private final OrderItemRepository orderItemRepository;
     private final DeliveryAssignmentRepository deliveryAssignmentRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final OrderStockService orderStockService;
 
     public ShopOrderServiceImpl(OrderRepository orderRepository,
                                 OrderStatusHistoryRepository orderStatusHistoryRepository,
                                 UserRepository userRepository,
                                 OrderItemRepository orderItemRepository,
                                 DeliveryAssignmentRepository deliveryAssignmentRepository,
-                                PaymentTransactionRepository paymentTransactionRepository) {
+                                PaymentTransactionRepository paymentTransactionRepository,
+                                OrderStockService orderStockService) {
         this.orderRepository = orderRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.userRepository = userRepository;
         this.orderItemRepository = orderItemRepository;
         this.deliveryAssignmentRepository = deliveryAssignmentRepository;
         this.paymentTransactionRepository = paymentTransactionRepository;
+        this.orderStockService = orderStockService;
     }
 
     @Override
@@ -76,13 +80,24 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                         payment.getAmount(), enumName(payment.getStatus()), payment.getCreatedAt()))
                 .toList();
 
+        // Historical cost belongs to the order item, not the current variant.
+        // Missing lines/costs must not turn into a misleading zero-cost profit.
+        BigDecimal totalCost = items.isEmpty() || items.stream().anyMatch(item -> item.costSnapshot() == null)
+                ? null
+                : items.stream()
+                        .map(item -> item.costSnapshot().multiply(BigDecimal.valueOf(item.quantity())))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal estimatedProfit = totalCost == null || order.getShopNetReceived() == null
+                ? null : order.getShopNetReceived().subtract(totalCost);
+
         return new ShopOrderDetailResponse(
                 toListItem(order), order.getShop().getShopId(), order.getShop().getShopName(),
                 order.getCustomer().getUserId(), order.getCustomer().getPhone(),
                 order.getSnapshotShippingAddress(), order.getTotalAmount(), order.getDiscountAmount(),
                 order.getShippingFee(), enumName(order.getPaymentMethod()), order.getIsSettled(),
                 order.getSettledAt(), order.getCoupon() == null ? null : order.getCoupon().getCouponCode(),
-                items, history, delivery, payments, order.getPlatformFee(), order.getIsCODRemitted());
+                items, history, delivery, payments, order.getPlatformFee(), order.getIsCODRemitted(),
+                totalCost, estimatedProfit);
     }
 
     private String enumName(Enum<?> value) {
@@ -157,6 +172,9 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         if (!canShopCancel(order.getOrderStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Chỉ có thể hủy đơn trước khi shipper lấy hàng");
         }
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            orderStockService.restore(order, ownerId);
+        }
         saveStatusChange(order, ownerId, OrderStatus.CANCELLED, "Shop hủy đơn hàng");
     }
 
@@ -165,6 +183,9 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         Order order = getOwnedOrder(orderId, ownerId);
         if (order.getOrderStatus() != expectedStatus) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Trạng thái đơn hàng không hợp lệ cho thao tác này");
+        }
+        if (expectedStatus == OrderStatus.PENDING && nextStatus == OrderStatus.CONFIRMED) {
+            orderStockService.deduct(order, ownerId);
         }
         saveStatusChange(order, ownerId, nextStatus, note);
     }

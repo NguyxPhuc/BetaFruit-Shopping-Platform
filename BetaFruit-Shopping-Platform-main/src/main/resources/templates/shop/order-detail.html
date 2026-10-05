@@ -164,9 +164,9 @@
                             <tbody>
                                 <tr th:each="item : ${detail.items}">
                                     <td><span class="item-name" th:text="${item.productName}"></span><span class="variant" th:text="'Biến thể: ' + ${item.variantName}"></span></td>
-                                    <td class="money" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                                    <td class="money" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', (item.unitPrice != null and item.unitPrice.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
                                     <td th:text="${item.quantity}"></td>
-                                    <td class="money" th:text="${#numbers.formatDecimal(item.lineTotal, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                                    <td class="money" th:text="${#numbers.formatDecimal(item.lineTotal, 0, 'COMMA', (item.lineTotal != null and item.lineTotal.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(detail.items)}"><td colspan="4" class="empty-state">Đơn hàng chưa có thông tin sản phẩm.</td></tr>
                             </tbody>
@@ -186,15 +186,29 @@
             </div>
             <div class="detail-stack">
                 <section class="detail-card">
-                    <div class="total-label">Tổng tiền đơn hàng</div>
-                    <strong class="total-value" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></strong>
+                    <h2>Khách thanh toán</h2>
+                    <div class="total-label">Tổng thanh toán</div>
+                    <strong class="total-value" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', (order.finalAmount != null and order.finalAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></strong>
                     <dl class="money-lines">
-                        <div><dt>Giá sản phẩm</dt><dd th:text="${#numbers.formatDecimal(detail.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
-                        <div><dt>+ Phí vận chuyển</dt><dd th:text="${#numbers.formatDecimal(detail.shippingFee ?: 0, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
-                        <div><dt>− Giảm từ voucher<span class="voucher-code" th:if="${detail.couponCode != null}" th:text="${detail.couponCode}"></span></dt><dd th:text="${#numbers.formatDecimal(detail.discountAmount ?: 0, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
+                        <div><dt>Giá sản phẩm</dt><dd th:text="${#numbers.formatDecimal(detail.totalAmount, 0, 'COMMA', (detail.totalAmount != null and detail.totalAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                        <div><dt>+ Phí vận chuyển</dt><dd th:text="${#numbers.formatDecimal(detail.shippingFee ?: 0, 0, 'COMMA', (detail.shippingFee != null and detail.shippingFee.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                        <div><dt>− Giảm từ voucher<span class="voucher-code" th:if="${detail.couponCode != null}" th:text="${detail.couponCode}"></span></dt><dd th:text="${#numbers.formatDecimal(detail.discountAmount ?: 0, 0, 'COMMA', (detail.discountAmount != null and detail.discountAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
                     </dl>
-                    <div class="net-received"><span>Shop thực nhận</span><strong th:text="${#numbers.formatDecimal(order.shopNetReceived, 0, 'COMMA', 0, 'POINT')} + 'đ'"></strong></div>
-                    <p class="payment-note" th:text="${detail.isSettled == true ? 'Đã đối soát' : 'Chưa đối soát'}"></p>
+                    <p class="payment-note">Tổng thanh toán gồm tiền sản phẩm, phí vận chuyển và giảm giá của đơn hàng.</p>
+                </section>
+                <section class="detail-card">
+                    <h2>Thu nhập của shop</h2>
+                    <dl class="money-lines">
+                        <div><dt>Phí sàn đã khấu trừ</dt><dd th:text="${#numbers.formatDecimal(detail.platformFee, 0, 'COMMA', (detail.platformFee != null and detail.platformFee.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                    </dl>
+                    <div class="net-received"><span>Shop thực nhận (sau phí sàn)</span><strong th:text="${#numbers.formatDecimal(order.shopNetReceived, 0, 'COMMA', (order.shopNetReceived != null and order.shopNetReceived.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></strong></div>
+                    <dl class="money-lines" style="margin-top: 20px">
+                        <div><dt>Tổng giá vốn</dt><dd th:text="${detail.totalCost != null ? #numbers.formatDecimal(detail.totalCost, 0, 'COMMA', (detail.totalCost != null and detail.totalCost.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT') + 'đ' : 'Chưa đủ dữ liệu'}"></dd></div>
+                        <div><dt>Lợi nhuận dự kiến</dt><dd th:text="${detail.estimatedProfit != null ? #numbers.formatDecimal(detail.estimatedProfit, 0, 'COMMA', (detail.estimatedProfit != null and detail.estimatedProfit.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT') + 'đ' : 'Chưa đủ dữ liệu'}"></dd></div>
+                    </dl>
+                    <p class="payment-note">Lợi nhuận dự kiến = tiền shop thực nhận − tổng giá vốn tại lúc đặt hàng. Chưa bao gồm các chi phí khác.</p>
+                    <p class="payment-note" th:text="${detail.isSettled == true ? 'Đã đối soát với shop' : 'Chưa đối soát với shop'}"></p>
+                    <p class="payment-note" th:if="${detail.paymentMethod == 'COD'}" th:text="${detail.isCODRemitted == null ? 'Chưa có thông tin nộp tiền COD' : (detail.isCODRemitted ? 'Đã nộp tiền COD' : 'Chưa nộp tiền COD')}"></p>
                     <p class="payment-note" th:if="${detail.settledAt != null}" th:text="'Thời gian đối soát: ' + ${#temporals.format(detail.settledAt, 'HH:mm dd/MM/yyyy')}"></p>
                 </section>
                 <section class="detail-card">

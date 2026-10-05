@@ -39,6 +39,11 @@ class ShopOrderDetailPageTests {
     }
 
     private ShopOrderDetailResponse fixture(String status, ShopOrderDetailResponse.Delivery delivery) {
+        return fixture(status, delivery, "COD", false, new BigDecimal("60000"), new BigDecimal("25000"));
+    }
+
+    private ShopOrderDetailResponse fixture(String status, ShopOrderDetailResponse.Delivery delivery,
+            String paymentMethod, Boolean remitted, BigDecimal totalCost, BigDecimal profit) {
         var summary = new ShopOrderListItemResponse(12, "12", "Nguyễn Ngọc Hà",
                 new BigDecimal("110000"), new BigDecimal("85000"), new BigDecimal("85000"),
                 status, status, status.equals("PENDING"), status.equals("CONFIRMED"),
@@ -46,10 +51,10 @@ class ShopOrderDetailPageTests {
                 LocalDateTime.of(2026, 9, 26, 9, 30));
         return new ShopOrderDetailResponse(summary, 2, "BetaFruit", 3, "0901234567",
                 "12 Nguyễn Huệ, Phường Sài Gòn, TP. Hồ Chí Minh", new BigDecimal("100000"),
-                new BigDecimal("10000"), new BigDecimal("20000"), "COD", false, null, "FRUIT10",
+                new BigDecimal("10000"), new BigDecimal("20000"), paymentMethod, false, null, "FRUIT10",
                 List.of(new ShopOrderDetailResponse.Item(1, "Táo Fuji Nhật Bản", "Hộp 1 kg", 2,
                         new BigDecimal("50000"), new BigDecimal("100000"), new BigDecimal("30000"))),
-                List.of(), delivery, List.of(), new BigDecimal("5000"), false);
+                List.of(), delivery, List.of(), new BigDecimal("5000"), remitted, totalCost, profit);
     }
 
     @Test void rendersItemsMoneyAndUnassignedShipper() throws Exception {
@@ -60,6 +65,10 @@ class ShopOrderDetailPageTests {
                 .andExpect(content().string(containsString("Hộp 1 kg")))
                 .andExpect(content().string(containsString("110,000đ")))
                 .andExpect(content().string(containsString("85,000đ")))
+                .andExpect(content().string(containsString("5,000đ")))
+                .andExpect(content().string(containsString("60,000đ")))
+                .andExpect(content().string(containsString("25,000đ")))
+                .andExpect(content().string(containsString("Chưa nộp tiền COD")))
                 .andExpect(content().string(containsString("/shop/orders/12/confirm")))
                 .andExpect(content().string(not(containsString("/shop/orders/12/ready"))))
                 .andReturn().getResponse().getContentAsString();
@@ -92,5 +101,25 @@ class ShopOrderDetailPageTests {
         mvc.perform(post("/shop/orders/12/cancel").param("ownerId", "1"))
                 .andExpect(redirectedUrl("/shop/orders?ownerId=1"));
         verify(service).cancelOrder(12, 1);
+    }
+
+    @Test void rendersFractionalCostsAndNegativeProfitForRemittedCod() throws Exception {
+        when(service.getOrderDetailForShopOwner(12, 1)).thenReturn(fixture(
+                "SUCCESS", null, "COD", true, new BigDecimal("85012.80"), new BigDecimal("-12.80")));
+        mvc.perform(get("/shop/orders/12").param("ownerId", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("85,012.80đ")))
+                .andExpect(content().string(containsString("-12.80đ")))
+                .andExpect(content().string(containsString("Đã nộp tiền COD")))
+                .andExpect(content().string(containsString("Chưa đối soát với shop")));
+    }
+
+    @Test void rendersUnknownCostsAndHidesCodForOnlinePayment() throws Exception {
+        when(service.getOrderDetailForShopOwner(12, 1)).thenReturn(fixture(
+                "PENDING", null, "ONLINE", null, null, null));
+        mvc.perform(get("/shop/orders/12").param("ownerId", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Chưa đủ dữ liệu")))
+                .andExpect(content().string(not(containsString("nộp tiền COD"))));
     }
 }
