@@ -1,10 +1,232 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'staff-dashboard', ~{::content})}">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Bàn Làm Việc Vận Hành - BetaFruit Staff</title>
 </head>
 <body>
+<div th:fragment="content">
+    <!-- Welcome Banner cho Nhân viên Vận hành -->
+    <div class="card border-0 text-white mb-4 overflow-hidden position-relative"
+         style="background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);">
+        <div class="card-body p-4 position-relative" style="z-index: 2;">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <span class="badge bg-warning text-dark px-3 py-1 mb-2 fw-bold" style="font-size: 0.75rem;">
+                        <i class="bi bi-person-badge-fill me-1"></i>OPERATIONS HUB (NHÂN VIÊN VẬN HÀNH)
+                    </span>
+                    <h2 class="fw-bold text-white mb-2">Bàn Làm Việc Vận Hành & Kiểm Duyệt</h2>
+                    <p class="mb-0 text-white-50" style="max-width: 650px;">
+                        Chào mừng bạn đến ca làm việc! Hãy ưu tiên xử lý các yêu cầu đăng ký mở cửa hàng mới và kiểm duyệt hoa quả tươi để đảm bảo chất lượng hàng hóa trên sàn BetaFruit.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <a th:href="@{/staff/shops(status='PENDING')}" href="/staff/shops?status=PENDING" class="btn btn-warning shadow-sm me-2">
+                        <i class="bi bi-clock-history me-1"></i> Duyệt Shop Chờ
+                    </a>
+                    <a th:href="@{/staff/products(tab='PENDING')}" href="/staff/products?tab=PENDING" class="btn btn-outline-light">
+                        <i class="bi bi-apple me-1"></i> Duyệt Hoa Quả
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Hiệu ứng đồ họa vòng tròn mờ nền -->
+        <div class="position-absolute rounded-circle" style="width: 220px; height: 220px; background: rgba(245, 158, 54, 0.15); top: -60px; right: 5%; filter: blur(40px);"></div>
+        <div class="position-absolute rounded-circle" style="width: 180px; height: 180px; background: rgba(82, 183, 136, 0.2); bottom: -60px; right: 30%; filter: blur(50px);"></div>
+    </div>
 
+    <!-- Quick Stats Cards Row -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Shop chờ duyệt -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100 p-3 bg-white rounded-3 shadow-sm border">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Cửa Hàng Chờ Duyệt</span>
+                    <div class="rounded-circle bg-warning-subtle text-warning p-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                        <i class="bi bi-shop fs-5"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline justify-content-between">
+                    <h3 class="fw-bold mb-0 text-dark" th:text="${pendingShopsCount}">0</h3>
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Cần xử lý</span>
+                </div>
+                <div class="mt-3 pt-2 border-top">
+                    <a th:href="@{/staff/shops(status='PENDING')}" class="small text-decoration-none text-success fw-bold d-flex align-items-center justify-content-between">
+                        <span>Xử lý danh sách chờ</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Hoa quả chờ duyệt -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100 p-3 bg-white rounded-3 shadow-sm border">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Hoa Quả Chờ Duyệt</span>
+                    <div class="rounded-circle bg-info-subtle text-info p-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                        <i class="bi bi-apple fs-5"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline justify-content-between">
+                    <h3 class="fw-bold mb-0 text-dark" th:text="${pendingProductsCount}">0</h3>
+                    <span class="badge bg-info-subtle text-info border border-info-subtle">Cần kiểm định</span>
+                </div>
+                <div class="mt-3 pt-2 border-top">
+                    <a th:href="@{/staff/products(tab='PENDING')}" class="small text-decoration-none text-success fw-bold d-flex align-items-center justify-content-between">
+                        <span>Kiểm duyệt hoa quả</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Điều phối vận chuyển (FE-12.3) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100 p-3 bg-white rounded-3 shadow-sm border">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Điều Phối Shipper</span>
+                    <div class="rounded-circle bg-primary-subtle text-primary p-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                        <i class="bi bi-truck fs-5"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline justify-content-between">
+                    <h3 class="fw-bold mb-0 text-dark">FE-12.3</h3>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Sắp ra mắt</span>
+                </div>
+                <div class="mt-3 pt-2 border-top">
+                    <span class="small text-muted d-flex align-items-center justify-content-between">
+                        <span>Gán đơn theo khu vực</span>
+                        <i class="bi bi-lock-fill text-secondary"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Đối soát COD & Payout (FE-12.4) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100 p-3 bg-white rounded-3 shadow-sm border">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Tài Chính Vận Hành</span>
+                    <div class="rounded-circle bg-success-subtle text-success p-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                        <i class="bi bi-cash-stack fs-5"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-baseline justify-content-between">
+                    <h3 class="fw-bold mb-0 text-dark">FE-12.4</h3>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Sắp ra mắt</span>
+                </div>
+                <div class="mt-3 pt-2 border-top">
+                    <span class="small text-muted d-flex align-items-center justify-content-between">
+                        <span>Thu COD & Duyệt Payout</span>
+                        <i class="bi bi-lock-fill text-secondary"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hướng dẫn & Quy trình kiểm duyệt chuẩn (SOP) -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h5 class="card-title fw-bold mb-0 text-dark d-flex align-items-center">
+                        <i class="bi bi-shield-check text-success me-2 fs-5"></i>
+                        Quy Trình Kiểm Duyệt Tiêu Chuẩn (SOP)
+                    </h5>
+                    <span class="badge bg-success-subtle text-success">BetaFruit Guidelines</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="timeline-wrapper">
+                        <!-- Bước 1 -->
+                        <div class="d-flex mb-4">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px;">1</div>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark">Kiểm tra thông tin Cửa hàng đăng ký (FE-12.1)</h6>
+                                <p class="text-secondary small mb-2">
+                                    Xác thực tên shop, địa chỉ kho hàng, thông tin liên hệ và số điện thoại chủ shop. Đảm bảo cửa hàng cam kết cung cấp hoa quả đạt chuẩn an toàn vệ sinh thực phẩm.
+                                </p>
+                                <a th:href="@{/staff/shops}" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>Vào bàn duyệt Cửa hàng
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Bước 2 -->
+                        <div class="d-flex mb-4">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px;">2</div>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark">Kiểm duyệt Sản phẩm hoa quả mới (FE-12.2)</h6>
+                                <p class="text-secondary small mb-2">
+                                    Đánh giá hình ảnh thực tế của trái cây (rõ nét, không vi phạm bản quyền), mô tả nguồn gốc xuất xứ, hạn sử dụng và phân loại danh mục chính xác.
+                                </p>
+                                <a th:href="@{/staff/products}" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>Vào bàn kiểm duyệt Hoa quả
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Bước 3 -->
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px;">3</div>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark">Giám sát & Xử lý vi phạm chất lượng</h6>
+                                <p class="text-secondary small mb-0">
+                                    Khi nhận phản ánh hoa quả hỏng hoặc kém chất lượng từ người tiêu dùng, nhân viên có quyền sử dụng tính năng <strong>"Ẩn sản phẩm"</strong> ngay lập tức để bảo vệ quyền lợi người mua.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Thông tin liên hệ hỗ trợ ca trực -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-3 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="card-title fw-bold mb-0 text-dark">
+                        <i class="bi bi-headset text-primary me-2"></i>Kênh Hỗ Trợ Ca Trực
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <ul class="list-unstyled mb-0">
+                        <li class="py-2 border-bottom d-flex align-items-center justify-content-between">
+                            <span class="small text-muted"><i class="bi bi-shield-lock me-2 text-danger"></i>Hỗ trợ phân quyền:</span>
+                            <span class="small fw-bold">Admin System</span>
+                        </li>
+                        <li class="py-2 border-bottom d-flex align-items-center justify-content-between">
+                            <span class="small text-muted"><i class="bi bi-envelope me-2 text-primary"></i>Email khẩn cấp:</span>
+                            <span class="small fw-bold">admin@betafruit.vn</span>
+                        </li>
+                        <li class="py-2 d-flex align-items-center justify-content-between">
+                            <span class="small text-muted"><i class="bi bi-clock me-2 text-warning"></i>Thời gian phản hồi:</span>
+                            <span class="small badge bg-success-subtle text-success">Dưới 15 phút</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card border-0 bg-primary-subtle text-primary p-3 rounded-3 shadow-sm">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill fs-3 me-3"></i>
+                    <div>
+                        <h6 class="fw-bold mb-1">Quyền hạn của Staff</h6>
+                        <p class="small mb-0 text-primary-emphasis">
+                            Staff có toàn quyền duyệt thông tin hàng hóa nhưng không thể thay đổi phần trăm phí sàn hoặc cấu hình hệ thống.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

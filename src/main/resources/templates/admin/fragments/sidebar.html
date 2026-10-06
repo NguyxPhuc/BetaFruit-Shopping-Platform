@@ -23,6 +23,13 @@
         <div class="admin-nav-category">Vận hành & Kiểm duyệt</div>
         <ul class="admin-nav mb-3">
             <li class="admin-nav-item">
+                <a th:href="@{/staff/dashboard}" href="/staff/dashboard" class="admin-nav-link"
+                   th:classappend="${activeMenu == 'staff-dashboard'} ? 'active' : ''">
+                    <i class="bi bi-speedometer"></i>
+                    <span>Bàn làm việc (Dashboard)</span>
+                </a>
+            </li>
+            <li class="admin-nav-item">
                 <a th:href="@{/staff/shops}" href="/staff/shops" class="admin-nav-link"
                    th:classappend="${activeMenu == 'shops'} ? 'active' : ''">
                     <i class="bi bi-shop"></i>

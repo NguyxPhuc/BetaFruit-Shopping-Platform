@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.controller;
 
+import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
 import com.fu.SWP391_BetaFruit.service.ProductService;
 import com.fu.SWP391_BetaFruit.service.ShopService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,11 @@ public class StaffController {
 
     // ================= 0. TRANG TỔNG QUAN VẬN HÀNH (DASHBOARD) =================
     @GetMapping("/staff/dashboard")
-    public String staffDashboard() {
+    public String staffDashboard(Model model) {
+        model.addAttribute("pendingShopsCount", shopService.countByStatus(ShopApprovalStatus.PENDING));
+        model.addAttribute("totalShopsCount", shopService.countTotal());
+        model.addAttribute("pendingProductsCount", productService.countPending());
+        model.addAttribute("totalProductsCount", productService.countTotal());
         return "operations-staff/operation-staff-dashboard";
     }
 
