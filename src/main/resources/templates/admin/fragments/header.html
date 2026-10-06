@@ -27,8 +27,8 @@
             <div class="d-flex align-items-center ps-2 border-start border-2">
                 <span class="text-secondary small me-1">Xin chào,</span>
                 <span class="fw-bold text-dark" th:text="${session.LOGGED_IN_FULLNAME ?: session.LOGGED_IN_USERNAME ?: 'Quản trị viên'}">Khải</span>
-                <span class="text-muted small ms-1" th:if="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN)}">(Admin)</span>
-                <span class="text-muted small ms-1" th:if="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).STAFF) and !session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN)}">(Nhân viên Vận hành)</span>
+                <span class="text-muted small ms-1" th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">(Admin)</span>
+                <span class="text-muted small ms-1" th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'STAFF') and !#strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">(Nhân viên Vận hành)</span>
             </div>
         </div>
     </div>

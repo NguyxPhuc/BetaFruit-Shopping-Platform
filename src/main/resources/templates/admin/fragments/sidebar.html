@@ -3,7 +3,7 @@
 <div th:fragment="sidebar(activeMenu)" class="admin-sidebar">
     <!-- Brand Logo Section -->
     <div class="admin-sidebar-brand">
-        <a th:href="@{${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN) ? '/admin/dashboard' : '/staff/dashboard'}}"
+        <a th:href="@{${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN') ? '/admin/dashboard' : '/staff/dashboard'}}"
            class="text-decoration-none d-block">
             <div class="admin-logo-wrapper">
                 <img th:src="@{/images/betafruit-logo.png}" src="/images/betafruit-logo.png" alt="BetaFruit" class="admin-logo-img">
@@ -11,7 +11,7 @@
         </a>
         <div class="d-flex align-items-center justify-content-between mt-2 px-1">
             <span class="badge bg-white-subtle text-white-50 border border-secondary-subtle" style="font-size: 0.68rem; letter-spacing: 0.5px;"
-                  th:text="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN) ? 'ADMIN PANEL' : 'STAFF PORTAL'}">
+                  th:text="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN') ? 'ADMIN PANEL' : 'STAFF PORTAL'}">
                 ADMIN PANEL
             </span>
             <span class="small text-white-50" style="font-size: 0.7rem;">v1.0</span>
@@ -22,7 +22,7 @@
     <div class="flex-grow-1 overflow-auto py-3">
 
         <!-- ================= TRƯỜNG HỢP 1: TÀI KHOẢN LÀ ADMIN ================= -->
-        <th:block th:if="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN)}">
+        <th:block th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">
             <!-- Giám sát tối cao -->
             <div class="admin-nav-category">Giám sát Tối cao</div>
             <ul class="admin-nav mb-3">
@@ -93,7 +93,7 @@
         </th:block>
 
         <!-- ================= TRƯỜNG HỢP 2: TÀI KHOẢN CHỈ LÀ STAFF (KHÔNG PHẢI ADMIN) ================= -->
-        <th:block th:unless="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN)}">
+        <th:block th:unless="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">
             <!-- Bàn làm việc vận hành -->
             <div class="admin-nav-category">Bàn làm việc</div>
             <ul class="admin-nav mb-3">
@@ -172,7 +172,7 @@
                         KhaiDQ
                     </div>
                     <div class="text-white-50 small" style="font-size: 0.75rem;"
-                         th:text="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN) ? 'Quản trị viên hệ thống' : 'Nhân viên vận hành'}">
+                         th:text="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN') ? 'Quản trị viên hệ thống' : 'Nhân viên vận hành'}">
                         Quản trị viên
                     </div>
                 </div>

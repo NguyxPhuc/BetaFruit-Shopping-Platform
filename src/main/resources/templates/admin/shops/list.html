@@ -231,7 +231,7 @@
                                     <span th:text="${s.commissionRate != null ? s.commissionRate : '5.00'}">5.00</span>%
                                 </span>
                                 <!-- Nút Sửa Phí Sàn: Chỉ Admin mới có quyền sửa theo FE-12.1 -->
-                                <th:block th:if="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN)}">
+                                <th:block th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">
                                     <button type="button" class="btn btn-sm btn-link text-primary p-0 edit-commission-btn" 
                                             data-bs-toggle="modal" data-bs-target="#commissionModal"
                                             th:data-id="${s.shopId}"
@@ -241,7 +241,7 @@
                                         <i class="bi bi-pencil-square fs-6"></i>
                                     </button>
                                 </th:block>
-                                <span th:unless="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN)}"
+                                <span th:unless="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}"
                                       class="text-muted small ms-1" title="Cố định bởi Admin (Staff không có quyền thay đổi)">
                                     <i class="bi bi-lock-fill text-secondary"></i>
                                 </span>
@@ -393,7 +393,7 @@
     </div>
 
     <!-- Modal Cấu Hình Tỷ Lệ Phí Sàn (Commission Rate - Chỉ Admin) -->
-    <th:block th:if="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN)}">
+    <th:block th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">
         <div class="modal fade" id="commissionModal" tabindex="-1" aria-labelledby="commissionModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow">
