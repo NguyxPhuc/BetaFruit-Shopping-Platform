@@ -4,9 +4,12 @@ import com.fu.SWP391_BetaFruit.dto.request.LoginRequest;
 import com.fu.SWP391_BetaFruit.dto.request.RegisterRequest;
 import com.fu.SWP391_BetaFruit.dto.response.LoginResponse;
 import com.fu.SWP391_BetaFruit.entity.*;
+import com.fu.SWP391_BetaFruit.enums.NotificationType;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import com.fu.SWP391_BetaFruit.repository.*;
 import com.fu.SWP391_BetaFruit.service.AuthService;
+import com.fu.SWP391_BetaFruit.service.EmailService;
+import com.fu.SWP391_BetaFruit.service.NotificationService;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private CustomerMembershipRepository membershipRepository;
+
+    @Autowired
+    private EmailService  emailService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -70,9 +79,18 @@ public class AuthServiceImpl implements AuthService {
             customerMembership.setTotalCumulativeSpend(BigDecimal.ZERO);
             membershipRepository.save(customerMembership);
         }
+
+        emailService.sendWelcomeEmail(registerRequest.getEmail(), registerRequest.getFullName());
+        notificationService.createBaseNotification(
+                newUser,
+                "Chào mừng đến với BetaFruit",
+                "Tài khoản khách hàng của bạn đã sẵn sàng. Khám phá các loại trái cây tươi ngon ngay hôm nay!",
+                NotificationType.SYSTEM_ALERT,
+                "/");
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void registerForShopOwner(RegisterRequest registerRequest) throws Exception {
         if(userRepository.existsByUsername(registerRequest.getUsername())) {
             throw new Exception("Username đã tồn tại trong hệ thống. Vui lòng đặt username khác.");
@@ -95,6 +113,15 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy quyền trong hệ thống."));
         newUser.getRoles().add(ownerRole);
         userRepository.save(newUser);
+
+        emailService.sendWelcomeEmail(registerRequest.getEmail(), registerRequest.getFullName());
+        notificationService.createBaseNotification(
+                newUser,
+                "Chào mừng Đối tác BetaFruit",
+                "Tài khoản chủ cửa hàng đã được tạo. Hãy hoàn thiện hồ sơ để bắt đầu đăng bán nông sản nhé!",
+                NotificationType.SYSTEM_ALERT,
+                "/shop/profile"
+        );
     }
 
     @Override

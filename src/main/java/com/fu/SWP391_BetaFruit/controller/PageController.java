@@ -16,5 +16,8 @@ public class PageController {
         return "index";
     }
 
-
+    @GetMapping
+    public String notFound() {
+        return "error/404";
+    }
 }
