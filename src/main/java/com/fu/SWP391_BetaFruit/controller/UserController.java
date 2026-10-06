@@ -85,6 +85,7 @@ public class UserController {
             return "auth/change-password";
         }
         try {
+            userService.changePassword(userId, request);
             redirectAttributes.addFlashAttribute("successMessage", "Đổi mật khẩu thành công!");
             return "redirect:/change-password";
         } catch (Exception e) {

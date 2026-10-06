@@ -5,6 +5,7 @@ import com.fu.SWP391_BetaFruit.dto.request.RegisterRequest;
 import com.fu.SWP391_BetaFruit.dto.response.LoginResponse;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.NotificationType;
+import com.fu.SWP391_BetaFruit.enums.RoleName;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import com.fu.SWP391_BetaFruit.repository.*;
 import com.fu.SWP391_BetaFruit.service.AuthService;
@@ -38,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
     private CustomerMembershipRepository membershipRepository;
 
     @Autowired
-    private EmailService  emailService;
+    private EmailService emailService;
 
     @Autowired
     private NotificationService notificationService;
@@ -62,7 +63,7 @@ public class AuthServiceImpl implements AuthService {
 
         newUser = userRepository.save(newUser);
 
-        Role customerRole = roleRepository.findByRoleName("Customer")
+        Role customerRole = roleRepository.findByRoleName(RoleName.CUSTOMER)
                 .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm quyền trong hệ thống."));
         newUser.getRoles().add(customerRole);
         userRepository.save(newUser);
@@ -109,7 +110,7 @@ public class AuthServiceImpl implements AuthService {
 
         newUser = userRepository.save(newUser);
 
-        Role ownerRole = roleRepository.findByRoleName("ShopOwner")
+        Role ownerRole = roleRepository.findByRoleName(RoleName.SHOP_OWNER)
                 .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy quyền trong hệ thống."));
         newUser.getRoles().add(ownerRole);
         userRepository.save(newUser);
@@ -137,7 +138,7 @@ public class AuthServiceImpl implements AuthService {
             throw new Exception("Tài khoản của bạn đã bị khóa hoặc chưa kích hoạt. Vui lòng liên hệ Admin.");
         }
 
-        List<String> roles = new ArrayList<>();
+        List<RoleName> roles = new ArrayList<>();
         for(Role role : user.getRoles()) {
             roles.add(role.getRoleName());
         }

@@ -3,6 +3,7 @@ package com.fu.SWP391_BetaFruit.controller;
 import com.fu.SWP391_BetaFruit.dto.request.LoginRequest;
 import com.fu.SWP391_BetaFruit.dto.request.RegisterRequest;
 import com.fu.SWP391_BetaFruit.dto.response.LoginResponse;
+import com.fu.SWP391_BetaFruit.enums.RoleName;
 import com.fu.SWP391_BetaFruit.service.AuthService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -79,16 +80,20 @@ public class AuthController {
         }
         try{
             LoginResponse loginResponse = authService.login(loginRequest);
-            List<String> roles = loginResponse.getRoles();
+            List<RoleName> roles = loginResponse.getRoles();
 
             session.setAttribute("LOGGED_IN_USER_ID", loginResponse.getUserId());
             session.setAttribute("LOGGED_IN_USERNAME", loginResponse.getUsername());
             session.setAttribute("LOGGED_IN_FULLNAME", loginResponse.getFullName());
             session.setAttribute("LOGGED_IN_ROLES", loginResponse.getRoles());
-            if (roles.contains("Admin")) {
+            if (roles != null && roles.contains(RoleName.ADMIN)) {
                 return "redirect:/admin/dashboard";
+            } else if (roles != null && roles.contains(RoleName.STAFF)) {
+                return "redirect:/staff/dashboard";
+            } else if (roles != null && roles.contains(RoleName.DELIVERY_STAFF)) {
+                return "redirect:/shipper/dashboard";
             } else {
-                return "redirect:/home";
+                return "redirect:/";
             }
         }catch (Exception e){
             e.printStackTrace();

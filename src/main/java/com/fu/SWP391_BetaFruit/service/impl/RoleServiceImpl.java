@@ -2,6 +2,7 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.admin.RoleRequest;
 import com.fu.SWP391_BetaFruit.entity.Role;
+import com.fu.SWP391_BetaFruit.enums.RoleName;
 import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.service.RoleService;
 import lombok.RequiredArgsConstructor;
@@ -38,11 +39,17 @@ public class RoleServiceImpl implements RoleService {
             throw new IllegalArgumentException("Tên vai trò không được để trống!");
         }
         String cleanRoleName = roleRequest.getRoleName().trim();
-        if (roleRepository.existsByRoleName(cleanRoleName)) {
-            throw new IllegalArgumentException("Tên vai trò '" + cleanRoleName + "' đã tồn tại trong hệ thống!");
+        RoleName roleNameEnum;
+        try {
+            roleNameEnum = RoleName.valueOf(cleanRoleName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Tên vai trò không hợp lệ trong hệ thống: " + cleanRoleName);
+        }
+        if (roleRepository.existsByRoleName(roleNameEnum)) {
+            throw new IllegalArgumentException("Tên vai trò '" + roleNameEnum + "' đã tồn tại trong hệ thống!");
         }
         Role role = new Role();
-        role.setRoleName(cleanRoleName);
+        role.setRoleName(roleNameEnum);
         roleRepository.save(role);
     }
 
@@ -54,10 +61,16 @@ public class RoleServiceImpl implements RoleService {
             throw new IllegalArgumentException("Tên vai trò không được để trống!");
         }
         String cleanRoleName = roleRequest.getRoleName().trim();
-        if (!role.getRoleName().equalsIgnoreCase(cleanRoleName) && roleRepository.existsByRoleName(cleanRoleName)) {
-            throw new IllegalArgumentException("Tên vai trò '" + cleanRoleName + "' đã tồn tại!");
+        RoleName roleNameEnum;
+        try {
+            roleNameEnum = RoleName.valueOf(cleanRoleName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Tên vai trò không hợp lệ trong hệ thống: " + cleanRoleName);
         }
-        role.setRoleName(cleanRoleName);
+        if (role.getRoleName() != roleNameEnum && roleRepository.existsByRoleName(roleNameEnum)) {
+            throw new IllegalArgumentException("Tên vai trò '" + roleNameEnum + "' đã tồn tại!");
+        }
+        role.setRoleName(roleNameEnum);
         roleRepository.save(role);
     }
 

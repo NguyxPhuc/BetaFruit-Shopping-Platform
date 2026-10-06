@@ -161,7 +161,7 @@
                         </a>
 
                         <!-- Nếu tài khoản có quyền ShopOwner thì hiển thị link chuyển sang Kênh Người Bán -->
-                        <a th:if="${session.LOGGED_IN_ROLES != null && session.LOGGED_IN_ROLES.contains('ShopOwner')}"
+                        <a th:if="${session.LOGGED_IN_ROLES != null && (#lists.contains(session.LOGGED_IN_ROLES, T(com.fu.SWP391_BetaFruit.enums.RoleName).SHOP_OWNER) || session.LOGGED_IN_ROLES.contains('ShopOwner') || session.LOGGED_IN_ROLES.contains('SHOP_OWNER'))}"
                            class="dropdown-item seller-switch" th:href="@{/shop/profile}" href="/shop/profile" role="menuitem">
                             <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                             <span>Kênh người bán</span>
