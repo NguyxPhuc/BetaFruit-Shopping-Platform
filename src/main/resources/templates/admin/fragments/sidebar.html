@@ -3,7 +3,8 @@
 <div th:fragment="sidebar(activeMenu)" class="admin-sidebar">
     <!-- Brand Logo Section -->
     <div class="admin-sidebar-brand">
-        <a th:href="@{/staff/shops}" href="/staff/shops" class="text-decoration-none d-block">
+        <a th:href="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN) ? '/admin/dashboard' : '/staff/dashboard'}"
+           class="text-decoration-none d-block">
             <div class="admin-logo-wrapper">
                 <img th:src="@{/images/betafruit-logo.png}" src="/images/betafruit-logo.png" alt="BetaFruit" class="admin-logo-img">
             </div>
@@ -19,64 +20,40 @@
 
     <!-- Navigation Menu -->
     <div class="flex-grow-1 overflow-auto py-3">
-        <!-- ================= NHÓM 1: VẬN HÀNH & KIỂM DUYỆT (STAFF & ADMIN) ================= -->
-        <div class="admin-nav-category">Vận hành & Kiểm duyệt</div>
-        <ul class="admin-nav mb-3">
-            <li class="admin-nav-item">
-                <a th:href="@{/staff/dashboard}" href="/staff/dashboard" class="admin-nav-link"
-                   th:classappend="${activeMenu == 'staff-dashboard'} ? 'active' : ''">
-                    <i class="bi bi-speedometer"></i>
-                    <span>Bàn làm việc (Dashboard)</span>
-                </a>
-            </li>
-            <li class="admin-nav-item">
-                <a th:href="@{/staff/shops}" href="/staff/shops" class="admin-nav-link"
-                   th:classappend="${activeMenu == 'shops'} ? 'active' : ''">
-                    <i class="bi bi-shop"></i>
-                    <span>Duyệt Cửa hàng</span>
-                </a>
-            </li>
-            <li class="admin-nav-item">
-                <a th:href="@{/staff/products}" href="/staff/products" class="admin-nav-link"
-                   th:classappend="${activeMenu == 'products'} ? 'active' : ''">
-                    <i class="bi bi-apple"></i>
-                    <span>Kiểm duyệt Hoa quả</span>
-                </a>
-            </li>
-        </ul>
 
-        <!-- ================= NHÓM 2: QUẢN TRỊ CỐT LÕI (CHỈ ADMIN THẤY) ================= -->
+        <!-- ================= TRƯỜNG HỢP 1: TÀI KHOẢN LÀ ADMIN ================= -->
         <th:block th:if="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN)}">
-            <div class="admin-sidebar-divider"></div>
-
-            <div class="admin-nav-category">Hệ thống</div>
+            <!-- Giám sát tối cao -->
+            <div class="admin-nav-category">Giám sát Tối cao</div>
             <ul class="admin-nav mb-3">
                 <li class="admin-nav-item">
                     <a th:href="@{/admin/dashboard}" href="/admin/dashboard" class="admin-nav-link"
                        th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
                         <i class="bi bi-speedometer2"></i>
-                        <span>Tổng quan (Dashboard)</span>
+                        <span>Tổng quan Hệ thống</span>
                     </a>
                 </li>
             </ul>
 
             <div class="admin-sidebar-divider"></div>
 
-            <div class="admin-nav-category">Cấu hình Sàn</div>
+            <!-- Cấu hình sàn & Dòng tiền -->
+            <div class="admin-nav-category">Cấu hình Sàn & Dòng tiền</div>
             <ul class="admin-nav mb-3">
                 <li class="admin-nav-item">
                     <a th:href="@{/admin/categories}" href="/admin/categories" class="admin-nav-link"
                        th:classappend="${activeMenu == 'categories'} ? 'active' : ''">
                         <i class="bi bi-tags-fill"></i>
-                        <span>Danh mục gốc sàn</span>
+                        <span>Cây Danh mục gốc</span>
                     </a>
                 </li>
             </ul>
 
             <div class="admin-sidebar-divider"></div>
 
-            <div class="admin-nav-category">Tài khoản & Phân quyền</div>
-            <ul class="admin-nav">
+            <!-- Nhân sự & Phân quyền -->
+            <div class="admin-nav-category">Nhân sự & Phân quyền</div>
+            <ul class="admin-nav mb-3">
                 <li class="admin-nav-item">
                     <a th:href="@{/admin/users}" href="/admin/users" class="admin-nav-link"
                        th:classappend="${activeMenu == 'users'} ? 'active' : ''">
@@ -92,7 +69,93 @@
                     </a>
                 </li>
             </ul>
+
+            <div class="admin-sidebar-divider"></div>
+
+            <!-- Giám sát Vận hành (Toàn quyền) -->
+            <div class="admin-nav-category">Giám sát Vận hành</div>
+            <ul class="admin-nav">
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/shops}" href="/staff/shops" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'shops'} ? 'active' : ''">
+                        <i class="bi bi-shop"></i>
+                        <span>Duyệt & Quản lý Phí Shop</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/products}" href="/staff/products" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'products'} ? 'active' : ''">
+                        <i class="bi bi-apple"></i>
+                        <span>Kiểm duyệt & Ẩn Hoa quả</span>
+                    </a>
+                </li>
+            </ul>
         </th:block>
+
+        <!-- ================= TRƯỜNG HỢP 2: TÀI KHOẢN CHỈ LÀ STAFF (KHÔNG PHẢI ADMIN) ================= -->
+        <th:block th:unless="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN)}">
+            <!-- Bàn làm việc vận hành -->
+            <div class="admin-nav-category">Bàn làm việc</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/dashboard}" href="/staff/dashboard" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'staff-dashboard'} ? 'active' : ''">
+                        <i class="bi bi-speedometer"></i>
+                        <span>Bàn làm việc Vận hành</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="admin-sidebar-divider"></div>
+
+            <!-- Kiểm duyệt nội dung -->
+            <div class="admin-nav-category">Kiểm duyệt Nội dung</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/shops}" href="/staff/shops" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'shops'} ? 'active' : ''">
+                        <i class="bi bi-shop"></i>
+                        <span>Kiểm duyệt Cửa hàng</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/products}" href="/staff/products" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'products'} ? 'active' : ''">
+                        <i class="bi bi-apple"></i>
+                        <span>Kiểm duyệt Hoa quả</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="admin-sidebar-divider"></div>
+
+            <!-- Điều phối vận chuyển (FE-12.3) -->
+            <div class="admin-nav-category">Điều phối Vận chuyển</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item opacity-75">
+                    <a href="javascript:void(0)" class="admin-nav-link pe-none">
+                        <i class="bi bi-truck"></i>
+                        <span>Gán đơn cho Shipper</span>
+                        <span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.65rem;">Sắp ra mắt</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="admin-sidebar-divider"></div>
+
+            <!-- Tài chính vận hành (FE-12.4) -->
+            <div class="admin-nav-category">Tài chính Vận hành</div>
+            <ul class="admin-nav">
+                <li class="admin-nav-item opacity-75">
+                    <a href="javascript:void(0)" class="admin-nav-link pe-none">
+                        <i class="bi bi-cash-stack"></i>
+                        <span>Thu COD & Duyệt Payout</span>
+                        <span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.65rem;">Sắp ra mắt</span>
+                    </a>
+                </li>
+            </ul>
+        </th:block>
+
     </div>
 
     <!-- User Account Card at bottom -->
@@ -115,8 +178,7 @@
                 </div>
             </a>
             <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-                <li><a class="dropdown-item" th:href="@{/staff/shops}"><i class="bi bi-person me-2 text-success"></i>Bàn làm việc</a></li>
-                <li><a class="dropdown-item" th:href="@{/}" target="_blank"><i class="bi bi-globe me-2 text-info"></i>Xem sàn khách</a></li>
+                <li><a class="dropdown-item" th:href="@{/} target="_blank"><i class="bi bi-globe me-2 text-info"></i>Xem sàn khách</a></li>
                 <li><hr class="dropdown-divider border-secondary"></li>
                 <li><a class="dropdown-item text-danger" th:href="@{/auth/logout}" href="/"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
             </ul>

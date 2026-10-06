@@ -23,10 +23,13 @@
                 <i class="bi bi-box-arrow-up-right small text-muted"></i>
             </a>
 
-            <!-- Admin Greeting -->
+            <!-- User Role-based Greeting -->
             <div class="d-flex align-items-center ps-2 border-start border-2">
                 <span class="text-secondary small me-1">Xin chào,</span>
-                <span class="fw-bold text-dark">Khải (Admin)</span>
+                <span class="fw-bold text-dark"
+                      th:text="${(session.LOGGED_IN_FULLNAME ?: session.LOGGED_IN_USERNAME ?: 'Quản trị viên') + ' (' + (session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN) ? 'Admin' : (session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).STAFF) ? 'Nhân viên Vận hành' : 'Thành viên')) + ')'}">
+                    Khải (Admin)
+                </span>
             </div>
         </div>
     </div>

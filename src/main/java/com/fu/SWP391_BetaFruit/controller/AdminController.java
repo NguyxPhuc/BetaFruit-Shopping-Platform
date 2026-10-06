@@ -4,6 +4,7 @@ import com.fu.SWP391_BetaFruit.dto.request.CategoryRequest;
 import com.fu.SWP391_BetaFruit.dto.request.RoleRequest;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
 import com.fu.SWP391_BetaFruit.service.RoleService;
+import com.fu.SWP391_BetaFruit.service.ShopService;
 import com.fu.SWP391_BetaFruit.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -11,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Controller
@@ -20,6 +22,7 @@ public class AdminController {
     private final UserService userService;
     private final CategoryService categoryService;
     private final RoleService roleService;
+    private final ShopService shopService;
 
     // ================= 0. TỔNG QUAN (DASHBOARD) =================
     /**
@@ -28,6 +31,18 @@ public class AdminController {
     @GetMapping({"/admin", "/admin/", "/admin/dashboard"})
     public String dashboard(Model model) {
         return "admin/admin-dashboard";
+    }
+
+    /**
+     * Updates the platform commission rate for a specific shop (FE-12.1 - Admin only).
+     */
+    @PostMapping("/admin/shops/{id}/commission")
+    public String updateCommission(@PathVariable("id") Integer id,
+                                   @RequestParam("commissionRate") BigDecimal commissionRate,
+                                   RedirectAttributes redirectAttributes) {
+        shopService.updateCommissionRate(id, commissionRate);
+        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật tỷ lệ phí sàn thành công!");
+        return "redirect:/staff/shops";
     }
 
     // ================= 1. QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN (USERS) =================
