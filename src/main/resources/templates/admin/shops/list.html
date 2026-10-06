@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{admin/layout :: layout(~{::title}, 'shops', ~{::content})}">
 <head>
@@ -81,14 +81,14 @@
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'ALL'} ? 'active bg-success' : 'text-dark'"
-                           th:href="@{/admin/shops(status='ALL', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
+                           th:href="@{/staff/shops(status='ALL', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             Tất cả (<span th:text="${totalCount}">0</span>)
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'PENDING'} ? 'active bg-warning text-dark' : 'text-dark'"
-                           th:href="@{/admin/shops(status='PENDING', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
+                           th:href="@{/staff/shops(status='PENDING', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-clock me-1"></i>Chờ duyệt 
                             <span class="badge bg-warning text-dark border ms-1" th:text="${pendingCount}">0</span>
                         </a>
@@ -96,21 +96,21 @@
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'APPROVED'} ? 'active bg-success' : 'text-dark'"
-                           th:href="@{/admin/shops(status='APPROVED', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
+                           th:href="@{/staff/shops(status='APPROVED', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-check-circle me-1"></i>Đã duyệt (<span th:text="${approvedCount}">0</span>)
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'REJECTED'} ? 'active bg-danger' : 'text-dark'"
-                           th:href="@{/admin/shops(status='REJECTED', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
+                           th:href="@{/staff/shops(status='REJECTED', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-x-circle me-1"></i>Đã từ chối (<span th:text="${rejectedCount}">0</span>)
                         </a>
                     </li>
                 </ul>
 
                 <!-- Search Input Form -->
-                <form th:action="@{/admin/shops}" method="get" class="d-flex gap-2">
+                <form th:action="@{/staff/shops}" method="get" class="d-flex gap-2">
                     <input type="hidden" name="status" th:value="${currentStatus}" />
                     <input type="hidden" name="sortBy" th:value="${sortBy}" />
                     <input type="hidden" name="sortDir" th:value="${sortDir}" />
@@ -123,7 +123,7 @@
                         </button>
                     </div>
                     <a th:if="${keyword != null and !#strings.isEmpty(keyword)}" 
-                       th:href="@{/admin/shops(status=${currentStatus}, sortBy=${sortBy}, sortDir=${sortDir})}" 
+                       th:href="@{/staff/shops(status=${currentStatus}, sortBy=${sortBy}, sortDir=${sortDir})}" 
                        class="btn btn-sm btn-outline-secondary" title="Xóa lọc">
                         <i class="bi bi-x"></i>
                     </a>
@@ -146,18 +146,18 @@
                     <thead class="table-light">
                     <tr>
                         <th class="ps-4" style="width: 90px;">
-                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='ID', field='shopId', baseUrl='/admin/shops')}"></th:block>
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='ID', field='shopId', baseUrl='/staff/shops')}"></th:block>
                         </th>
                         <th>
-                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Thông Tin Cửa Hàng', field='shopName', baseUrl='/admin/shops')}"></th:block>
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Thông Tin Cửa Hàng', field='shopName', baseUrl='/staff/shops')}"></th:block>
                         </th>
                         <th>Chủ Sở Hữu</th>
                         <th>Tài Khoản Nhận Doanh Thu</th>
                         <th style="width: 140px;">
-                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Phí Sàn', field='commissionRate', baseUrl='/admin/shops')}"></th:block>
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Phí Sàn', field='commissionRate', baseUrl='/staff/shops')}"></th:block>
                         </th>
                         <th style="width: 160px;">
-                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Trạng Thái', field='approvalStatus', baseUrl='/admin/shops')}"></th:block>
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Trạng Thái', field='approvalStatus', baseUrl='/staff/shops')}"></th:block>
                         </th>
                         <th class="text-end pe-4" style="width: 250px;">Thao Tác</th>
                     </tr>
@@ -278,7 +278,7 @@
 
                                 <!-- Nút Phê Duyệt -->
                                 <form th:if="${s.approvalStatus == null or s.approvalStatus.name() != 'APPROVED'}"
-                                      th:action="@{/admin/shops/{id}/approve(id=${s.shopId})}" 
+                                      th:action="@{/staff/shops/{id}/approve(id=${s.shopId})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn PHÊ DUYỆT cửa hàng [' + s.shopName + '] không? Chủ shop sẽ được kích hoạt quyền đăng bán hoa quả.'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
@@ -291,7 +291,7 @@
 
                                 <!-- Nút Từ Chối -->
                                 <form th:if="${s.approvalStatus == null or s.approvalStatus.name() != 'REJECTED'}"
-                                      th:action="@{/admin/shops/{id}/reject(id=${s.shopId})}" 
+                                      th:action="@{/staff/shops/{id}/reject(id=${s.shopId})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn TỪ CHỐI hồ sơ cửa hàng [' + s.shopName + '] không?'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
@@ -310,7 +310,7 @@
         </div>
 
         <!-- Pagination Component Dùng Chung -->
-        <div th:replace="~{admin/fragments/pagination :: pager(pageData=${pageData}, baseUrl='/admin/shops')}"></div>
+        <div th:replace="~{admin/fragments/pagination :: pager(pageData=${pageData}, baseUrl='/staff/shops')}"></div>
     </div>
 
     <!-- Modal Xem Chi Tiết Cửa Hàng -->
@@ -492,7 +492,7 @@
 
                     commissionShopName.textContent = shopName + " (ID: #" + shopId + ")";
                     commissionRateInput.value = rate ? rate : "5.00";
-                    commissionForm.action = "/admin/shops/" + shopId + "/commission";
+                    commissionForm.action = "/staff/shops/" + shopId + "/commission";
                 });
             });
         });
@@ -500,3 +500,4 @@
 </div>
 </body>
 </html>
+
