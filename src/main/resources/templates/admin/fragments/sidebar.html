@@ -3,7 +3,7 @@
 <div th:fragment="sidebar(activeMenu)" class="admin-sidebar">
     <!-- Brand Logo Section -->
     <div class="admin-sidebar-brand">
-        <a th:href="${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN) ? '/admin/dashboard' : '/staff/dashboard'}"
+        <a th:href="@{${session.LOGGED_IN_ROLES != null and session.LOGGED_IN_ROLES.contains(T(com.fu.SWP391_BetaFruit.enums.RoleName).ADMIN) ? '/admin/dashboard' : '/staff/dashboard'}}"
            class="text-decoration-none d-block">
             <div class="admin-logo-wrapper">
                 <img th:src="@{/images/betafruit-logo.png}" src="/images/betafruit-logo.png" alt="BetaFruit" class="admin-logo-img">
@@ -178,7 +178,7 @@
                 </div>
             </a>
             <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-                <li><a class="dropdown-item" th:href="@{/} target="_blank"><i class="bi bi-globe me-2 text-info"></i>Xem sàn khách</a></li>
+                <li><a class="dropdown-item" th:href="@{/}" target="_blank"><i class="bi bi-globe me-2 text-info"></i>Xem sàn khách</a></li>
                 <li><hr class="dropdown-divider border-secondary"></li>
                 <li><a class="dropdown-item text-danger" th:href="@{/auth/logout}" href="/"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
             </ul>
