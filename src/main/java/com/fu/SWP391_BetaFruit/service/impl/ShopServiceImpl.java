@@ -2,6 +2,7 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
+import com.fu.SWP391_BetaFruit.enums.RoleName;
 import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
 import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
@@ -104,9 +105,9 @@ public class ShopServiceImpl implements ShopService {
         User owner = shop.getOwner();
         if (owner != null) {
             boolean hasShopOwnerRole = owner.getRoles() != null && owner.getRoles().stream()
-                    .anyMatch(r -> "ShopOwner".equalsIgnoreCase(r.getRoleName()));
+                    .anyMatch(r -> r.getRoleName() == RoleName.SHOP_OWNER);
             if (!hasShopOwnerRole) {
-                roleRepository.findByRoleName("ShopOwner").ifPresent(role -> {
+                roleRepository.findByRoleName(RoleName.SHOP_OWNER).ifPresent(role -> {
                     if (owner.getRoles() == null) {
                         owner.setRoles(new ArrayList<>());
                     }

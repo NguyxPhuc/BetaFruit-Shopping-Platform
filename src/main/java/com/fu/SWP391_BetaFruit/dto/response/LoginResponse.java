@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.dto.response;
 
+import com.fu.SWP391_BetaFruit.enums.RoleName;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,5 +16,5 @@ public class LoginResponse {
     private Integer userId;
     private String username;
     private String fullName;
-    private List<String> roles;
+    private List<RoleName> roles;
 }

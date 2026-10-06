@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.entity;
 
+import com.fu.SWP391_BetaFruit.enums.RoleName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,6 +19,6 @@ public class Role {
     @Column(name = "RoleId")
     private Long roleId;
 
-    @Column(name = "RoleName", nullable = false, unique = true, length = 50)
-    private String roleName;
+    @Enumerated(EnumType.STRING)
+    private RoleName roleName;
 }

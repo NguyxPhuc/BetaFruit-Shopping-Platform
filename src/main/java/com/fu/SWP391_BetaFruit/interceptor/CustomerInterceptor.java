@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.interceptor;
 
+import com.fu.SWP391_BetaFruit.enums.RoleName;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -19,8 +20,8 @@ public class CustomerInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        List<String> roles = (List<String>) session.getAttribute("LOGGED_IN_ROLES");
-        if (roles != null && roles.contains("Customer")) {
+        List<RoleName> roles = (List<RoleName>) session.getAttribute("LOGGED_IN_ROLES");
+        if (roles != null && roles.contains(RoleName.CUSTOMER)) {
             return true;
         }
 

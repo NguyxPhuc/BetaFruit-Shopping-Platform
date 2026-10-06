@@ -203,10 +203,10 @@
                                 </span>
                                 <th:block th:each="r : ${user.roles}">
                                     <span class="badge"
-                                          th:classappend="${r.roleName == 'Admin' ? 'bg-danger' : 
-                                                           (r.roleName == 'ShopOwner' ? 'bg-primary' : 
-                                                           (r.roleName == 'Delivery Staff' ? 'bg-warning text-dark' : 
-                                                           (r.roleName == 'Staff' ? 'bg-secondary' : 'bg-info text-dark')))}"
+                                          th:classappend="${(r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')) ? 'bg-danger' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')) ? 'bg-warning text-dark' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')) ? 'bg-secondary' : 'bg-info text-dark')))}"
                                           th:text="${r.roleName}">
                                         Customer
                                     </span>
@@ -317,18 +317,18 @@
                                        name="roleIds" th:value="${r.roleId}" th:id="${'role_' + r.roleId}">
                                 <label class="form-check-label w-100 cursor-pointer" th:for="${'role_' + r.roleId}">
                                     <span class="badge"
-                                          th:classappend="${r.roleName == 'Admin' ? 'bg-danger' : 
-                                                           (r.roleName == 'ShopOwner' ? 'bg-primary' : 
-                                                           (r.roleName == 'Delivery Staff' ? 'bg-warning text-dark' : 
-                                                           (r.roleName == 'Staff' ? 'bg-secondary' : 'bg-info text-dark')))}"
+                                          th:classappend="${(r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')) ? 'bg-danger' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')) ? 'bg-warning text-dark' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')) ? 'bg-secondary' : 'bg-info text-dark')))}"
                                           th:text="${r.roleName}">
                                         Role
                                     </span>
-                                    <span class="text-secondary small ms-2" th:if="${r.roleName == 'Admin'}">- Quản trị viên cao nhất hệ thống</span>
-                                    <span class="text-secondary small ms-2" th:if="${r.roleName == 'ShopOwner'}">- Chủ cửa hàng bán hoa quả</span>
-                                    <span class="text-secondary small ms-2" th:if="${r.roleName == 'Delivery Staff'}">- Nhân viên giao nhận hoa quả</span>
-                                    <span class="text-secondary small ms-2" th:if="${r.roleName == 'Customer'}">- Khách hàng mua sắm hoa quả</span>
-                                    <span class="text-secondary small ms-2" th:if="${r.roleName == 'Staff'}">- Nhân viên hỗ trợ & kiểm duyệt</span>
+                                    <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')}">- Quản trị viên cao nhất hệ thống</span>
+                                    <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')}">- Chủ cửa hàng bán hoa quả</span>
+                                    <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')}">- Nhân viên giao nhận hoa quả</span>
+                                    <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'CUSTOMER' or r.roleName == 'Customer')}">- Khách hàng mua sắm hoa quả</span>
+                                    <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')}">- Nhân viên hỗ trợ & kiểm duyệt</span>
                                 </label>
                             </div>
                         </div>

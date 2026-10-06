@@ -148,3 +148,611 @@ a { color: inherit; text-decoration: none; }
     .footer-bottom { flex-direction: column; justify-content: center; gap: 0; padding-block: 9px; text-align: center; }
     .footer-bottom p { margin: 2px 0; }
 }
+
+/* ==========================================================================
+   User Profile Dropdown & Shop Owner Header Styles
+   ========================================================================== */
+
+/* User Dropdown Container */
+.user-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.user-dropdown-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 14px 6px 6px;
+    border-radius: 28px;
+    border: 1px solid var(--border);
+    background: #fbfdfc;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all .2s ease;
+}
+
+.user-dropdown-btn:hover,
+.user-dropdown.is-open .user-dropdown-btn {
+    background: var(--green-100);
+    border-color: var(--green-600);
+    color: var(--green-900);
+}
+
+.user-avatar-mini {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #34875c, #1c5039);
+    color: var(--white);
+    font-size: 13px;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.user-display-name {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-chevron {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    fill: none;
+    transition: transform .25s ease;
+    flex-shrink: 0;
+}
+
+.user-dropdown:hover .dropdown-chevron,
+.user-dropdown.is-open .dropdown-chevron {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu (Dropbox) */
+.user-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 230px;
+    background: var(--white);
+    border: 1px solid rgba(20, 60, 44, 0.12);
+    border-radius: 14px;
+    box-shadow: 0 14px 38px rgba(20, 60, 44, 0.15);
+    padding: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 100;
+}
+
+.user-dropdown:hover .user-dropdown-menu,
+.user-dropdown.is-open .user-dropdown-menu,
+.user-dropdown:focus-within .user-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-header {
+    padding: 10px 14px 8px;
+}
+
+.dropdown-header strong {
+    display: block;
+    font-size: 14px;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-header .dropdown-sub {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #edf2ee;
+    margin: 6px 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #365348;
+    transition: all .15s ease;
+}
+
+.dropdown-item svg {
+    width: 17px;
+    height: 17px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+
+.dropdown-item:hover {
+    background: var(--green-100);
+    color: var(--green-700);
+    transform: translateX(2px);
+}
+
+.dropdown-item.seller-switch {
+    color: var(--orange-dark);
+}
+
+.dropdown-item.seller-switch:hover {
+    background: #fdf2e4;
+    color: #c9650d;
+}
+
+.dropdown-item.logout-item {
+    color: #c62828;
+}
+
+.dropdown-item.logout-item:hover {
+    background: #fde8e8;
+    color: #b71c1c;
+}
+
+/* ==========================================================================
+   Shop Owner Header Specifics
+   ========================================================================== */
+.site-header-shop {
+    position: relative;
+    z-index: 20;
+    background: rgba(255, 255, 255, .98);
+    border-bottom: 1px solid #fae8d4;
+    box-shadow: 0 4px 22px rgba(228, 126, 30, .07);
+}
+
+.header-accent-shop {
+    height: 4px;
+    background: linear-gradient(90deg, #f59e36, #e47e1e 52%, #c9650d);
+}
+
+.brand-shop-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.seller-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    background: #fff3e0;
+    color: var(--orange-dark);
+    border: 1px solid #ffd59e;
+}
+
+.shop-nav-links a::after {
+    background: var(--orange-dark);
+}
+
+.shop-nav-links a:hover {
+    color: var(--orange-dark);
+}
+
+.site-header-shop .user-avatar-mini {
+    background: linear-gradient(135deg, #f59e36, #d96918);
+}
+
+.site-header-shop .user-dropdown-btn:hover,
+.site-header-shop .user-dropdown.is-open .user-dropdown-btn {
+    background: #fdf5ec;
+    border-color: var(--orange);
+    color: #8c4200;
+}
+
+.site-header-shop .dropdown-item:hover {
+    background: #fdf5ec;
+    color: var(--orange-dark);
+}
+
+.btn-to-store {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #4a5c53;
+    background: #edf3ef;
+    transition: all .2s ease;
+}
+
+.btn-to-store:hover {
+    background: var(--green-100);
+    color: var(--green-700);
+    transform: translateY(-1px);
+}
+
+.btn-to-store svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+}
+
+/* ==========================================================================
+   Notification Bell & Dropdown Styles
+   ========================================================================== */
+
+.notif-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.notif-button {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.notif-button:hover,
+.notif-dropdown.is-open .notif-button {
+    background: var(--green-100);
+    color: var(--green-700);
+}
+
+.notif-button svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.site-header-shop .notif-button:hover,
+.site-header-shop .notif-dropdown.is-open .notif-button {
+    background: #fdf5ec;
+    color: var(--orange-dark);
+}
+
+.notif-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    display: grid;
+    place-items: center;
+    border: 2px solid white;
+    border-radius: 10px;
+    color: white;
+    background: #ef4444;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.notif-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    background: var(--white);
+    border: 1px solid rgba(20, 60, 44, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 16px 42px rgba(20, 60, 44, 0.16);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 120;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.notif-dropdown:hover .notif-menu,
+.notif-dropdown.is-open .notif-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.notif-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 18px;
+    background: #fbfdfb;
+    border-bottom: 1px solid #edf2ee;
+}
+
+.notif-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notif-title-wrap h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.notif-chip {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Notification List with smooth scrolling */
+.notif-list {
+    max-height: 330px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transition: max-height 0.3s ease;
+}
+
+.notif-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.notif-list::-webkit-scrollbar-track {
+    background: #f1f5f2;
+}
+
+.notif-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.notif-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Expanded list when user clicks view all */
+.notif-menu.expanded .notif-list {
+    max-height: 480px;
+}
+
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid #f1f5f2;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    position: relative;
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+.notif-item:hover {
+    background: #f7faf8;
+}
+
+.notif-item.is-unread {
+    background: #f1f8f3;
+}
+
+.notif-item.is-unread:hover {
+    background: #e9f4eb;
+}
+
+.notif-icon-box {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #e6f2e9;
+    color: var(--green-700);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.notif-item.is-unread .notif-icon-box {
+    background: var(--green-700);
+    color: white;
+}
+
+.notif-icon-box svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+.notif-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+
+.notif-item-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notif-time {
+    font-size: 11px;
+    color: #8da196;
+    flex-shrink: 0;
+}
+
+.notif-item-msg {
+    font-size: 12px;
+    color: #4b6355;
+    line-height: 1.45;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.notif-unread-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    flex-shrink: 0;
+    margin-top: 8px;
+}
+
+/* Empty State */
+.notif-empty {
+    padding: 36px 20px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.notif-empty svg {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 8px;
+    opacity: 0.45;
+    color: #8fa097;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+}
+
+.notif-empty p {
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Footer / Expand All Button */
+.notif-footer {
+    padding: 10px 18px;
+    background: #fbfdfb;
+    border-top: 1px solid #edf2ee;
+    text-align: center;
+}
+
+.btn-view-all-notifs {
+    background: transparent;
+    border: none;
+    color: var(--green-700);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.btn-view-all-notifs:hover {
+    color: var(--green-800);
+    transform: translateY(-1px);
+}
+
+.btn-view-all-notifs svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+}
+
+/* ==========================================================================
+   Password Input with Toggle Eye Button & Field Error Styles
+   ========================================================================== */
+
+.input-container .toggle-password-btn {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #8fa097;
+    display: grid;
+    place-items: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.15s ease;
+}
+
+.input-container .toggle-password-btn:hover {
+    color: var(--ink);
+}
+
+.input-container .toggle-password-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+}
+
+.field-error {
+    font-size: 12px;
+    color: #dc2626;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+
+
