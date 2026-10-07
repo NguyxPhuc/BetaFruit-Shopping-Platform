@@ -33,19 +33,47 @@ public class AdminController {
         return "admin/admin-dashboard";
     }
 
+    // ================= 1. CẤU HÌNH PHÍ SÀN CỬA HÀNG (FE-12.1) =================
+    /**
+     * Displays the shop commission configuration page (Admin only).
+     * Only displays APPROVED shops and supports filtering by owner account status and commission tier.
+     */
+    @GetMapping("/admin/shops/commission")
+    public String shopCommissions(@RequestParam(value = "keyword", required = false) String keyword,
+                                  @RequestParam(value = "ownerStatus", defaultValue = "ALL") String ownerStatus,
+                                  @RequestParam(value = "commissionTier", defaultValue = "ALL") String commissionTier,
+                                  @RequestParam(value = "page", defaultValue = "1") int page,
+                                  @RequestParam(value = "size", defaultValue = "5") int size,
+                                  @RequestParam(value = "sortBy", defaultValue = "shopId") String sortBy,
+                                  @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
+                                  Model model) {
+        model.addAllAttributes(shopService.getAdminCommissionPageData(keyword, ownerStatus, commissionTier, page, size, sortBy, sortDir));
+        return "admin/commission/shops";
+    }
+
     /**
      * Updates the platform commission rate for a specific shop (FE-12.1 - Admin only).
      */
     @PostMapping("/admin/shops/{id}/commission")
     public String updateCommission(@PathVariable("id") Integer id,
                                    @RequestParam("commissionRate") BigDecimal commissionRate,
+                                   @RequestParam(value = "page", defaultValue = "1") int page,
+                                   @RequestParam(value = "keyword", required = false) String keyword,
+                                   @RequestParam(value = "ownerStatus", defaultValue = "ALL") String ownerStatus,
+                                   @RequestParam(value = "commissionTier", defaultValue = "ALL") String commissionTier,
                                    RedirectAttributes redirectAttributes) {
         shopService.updateCommissionRate(id, commissionRate);
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật tỷ lệ phí sàn thành công!");
-        return "redirect:/staff/shops";
+        redirectAttributes.addAttribute("page", page);
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            redirectAttributes.addAttribute("keyword", keyword.trim());
+        }
+        redirectAttributes.addAttribute("ownerStatus", ownerStatus);
+        redirectAttributes.addAttribute("commissionTier", commissionTier);
+        return "redirect:/admin/shops/commission";
     }
 
-    // ================= 1. QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN (USERS) =================
+    // ================= 2. QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN (USERS) =================
     /**
      * Displays the list of users with optional keyword searching, role/status filtering, pagination, and sorting.
      */

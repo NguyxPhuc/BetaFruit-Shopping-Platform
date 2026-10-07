@@ -153,9 +153,6 @@
                         </th>
                         <th>Chủ Sở Hữu</th>
                         <th>Tài Khoản Nhận Doanh Thu</th>
-                        <th style="width: 140px;">
-                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Phí Sàn', field='commissionRate', baseUrl='/staff/shops')}"></th:block>
-                        </th>
                         <th style="width: 160px;">
                             <th:block th:replace="~{admin/fragments/sort-header :: column(title='Trạng Thái', field='approvalStatus', baseUrl='/staff/shops')}"></th:block>
                         </th>
@@ -164,7 +161,7 @@
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(shops)}">
-                        <td colspan="7" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="bi bi-shop-window fs-1 d-block mb-2 text-secondary opacity-50"></i>
                             <span th:if="${keyword != null and !#strings.isEmpty(keyword)}">
                                 Không tìm thấy cửa hàng nào với từ khóa: "<strong th:text="${keyword}"></strong>"
@@ -183,7 +180,7 @@
                                      class="rounded-circle me-3 object-fit-cover shadow-sm border" 
                                      style="width: 42px; height: 42px;">
                                 <div th:unless="${s.logoUrl != null and !#strings.isEmpty(s.logoUrl)}" 
-                                     class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold shadow-sm"
+                                     class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold shadow-sm" 
                                      style="width: 42px; height: 42px; font-size: 16px;"
                                      th:text="${#strings.substring(s.shopName, 0, 1).toUpperCase()}">
                                     S
@@ -224,28 +221,6 @@
                             <span th:unless="${s.bankName != null or s.bankAccountNumber != null}" class="text-muted small">
                                 Chưa cập nhật ngân hàng
                             </span>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center gap-1">
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fw-bold fs-6">
-                                    <span th:text="${s.commissionRate != null ? s.commissionRate : '5.00'}">5.00</span>%
-                                </span>
-                                <!-- Nút Sửa Phí Sàn: Chỉ Admin mới có quyền sửa theo FE-12.1 -->
-                                <th:block th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">
-                                    <button type="button" class="btn btn-sm btn-link text-primary p-0 edit-commission-btn" 
-                                            data-bs-toggle="modal" data-bs-target="#commissionModal"
-                                            th:data-id="${s.shopId}"
-                                            th:data-name="${s.shopName}"
-                                            th:data-rate="${s.commissionRate != null ? s.commissionRate : '5.00'}"
-                                            title="Chỉnh sửa tỷ lệ phí sàn (Chỉ Admin)">
-                                        <i class="bi bi-pencil-square fs-6"></i>
-                                    </button>
-                                </th:block>
-                                <span th:unless="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}"
-                                      class="text-muted small ms-1" title="Cố định bởi Admin (Staff không có quyền thay đổi)">
-                                    <i class="bi bi-lock-fill text-secondary"></i>
-                                </span>
-                            </div>
                         </td>
                         <td>
                             <span th:if="${s.approvalStatus != null and s.approvalStatus.name() == 'PENDING'}" 
@@ -392,50 +367,9 @@
         </div>
     </div>
 
-    <!-- Modal Cấu Hình Tỷ Lệ Phí Sàn (Commission Rate - Chỉ Admin) -->
-    <th:block th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">
-        <div class="modal fade" id="commissionModal" tabindex="-1" aria-labelledby="commissionModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow">
-                    <form id="commissionForm" method="post">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title fw-bold" id="commissionModalLabel">
-                                <i class="bi bi-percent me-2"></i>Cấu Hình Tỷ Lệ Phí Sàn
-                            </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body p-4">
-                            <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold mb-1">Cửa hàng áp dụng:</label>
-                                <div class="fw-bold text-dark fs-6" id="commissionShopName">Tên Shop</div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="commissionRateInput" class="form-label fw-bold">Tỷ lệ chiết khấu phí sàn (%) <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <input type="number" step="0.01" min="0" max="100" class="form-control" id="commissionRateInput" name="commissionRate" required placeholder="5.00">
-                                    <span class="input-group-text fw-bold">%</span>
-                                </div>
-                                <div class="form-text text-muted">
-                                    Tỷ lệ phần trăm doanh thu sàn trích lại trên mỗi đơn hàng hoàn thành của cửa hàng này (từ 0.00% đến 100.00%).
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer bg-light">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                            <button type="submit" class="btn btn-primary fw-medium">
-                                <i class="bi bi-check2-circle me-1"></i> Lưu Cấu Hình
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </th:block>
-
-    <!-- JavaScript tự động binding thông tin vào Detail Modal và Commission Modal -->
+    <!-- JavaScript tự động binding thông tin vào Detail Modal -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // Binding Detail Modal
             const detailButtons = document.querySelectorAll(".detail-shop-btn");
             detailButtons.forEach(button => {
                 button.addEventListener("click", function () {
@@ -450,7 +384,6 @@
                     const bankAcc = this.getAttribute("data-bank-acc");
                     const bankOwner = this.getAttribute("data-bank-owner");
                     const status = this.getAttribute("data-status");
-                    const commission = this.getAttribute("data-commission");
 
                     document.getElementById("modalShopName").textContent = name;
                     document.getElementById("modalShopDesc").textContent = desc;
@@ -461,7 +394,6 @@
                     document.getElementById("modalBankName").textContent = bankName;
                     document.getElementById("modalBankAcc").textContent = bankAcc;
                     document.getElementById("modalBankOwner").textContent = bankOwner;
-                    document.getElementById("modalShopCommission").textContent = commission ? commission : '5.00';
 
                     // Logo avatar
                     const logoContainer = document.getElementById("modalShopLogoContainer");
@@ -484,24 +416,6 @@
                         statusBadge.className = 'badge bg-warning text-dark';
                         statusBadge.textContent = 'Chờ xét duyệt';
                     }
-                });
-            });
-
-            // Binding Commission Modal
-            const commissionButtons = document.querySelectorAll(".edit-commission-btn");
-            const commissionForm = document.getElementById("commissionForm");
-            const commissionShopName = document.getElementById("commissionShopName");
-            const commissionRateInput = document.getElementById("commissionRateInput");
-
-            commissionButtons.forEach(button => {
-                button.addEventListener("click", function () {
-                    const shopId = this.getAttribute("data-id");
-                    const shopName = this.getAttribute("data-name");
-                    const rate = this.getAttribute("data-rate");
-
-                    commissionShopName.textContent = shopName + " (ID: #" + shopId + ")";
-                    commissionRateInput.value = rate ? rate : "5.00";
-                    commissionForm.action = "/admin/shops/" + shopId + "/commission";
                 });
             });
         });

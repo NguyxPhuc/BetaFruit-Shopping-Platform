@@ -47,6 +47,13 @@
                         <span>Cây Danh mục gốc</span>
                     </a>
                 </li>
+                <li class="admin-nav-item">
+                    <a th:href="@{/admin/shops/commission}" href="/admin/shops/commission" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'shop-commissions'} ? 'active' : ''">
+                        <i class="bi bi-percent"></i>
+                        <span>Cấu hình Phí sàn Cửa hàng</span>
+                    </a>
+                </li>
             </ul>
 
             <div class="admin-sidebar-divider"></div>
@@ -66,27 +73,6 @@
                        th:classappend="${activeMenu == 'roles'} ? 'active' : ''">
                         <i class="bi bi-shield-lock-fill"></i>
                         <span>Quản lý Vai trò</span>
-                    </a>
-                </li>
-            </ul>
-
-            <div class="admin-sidebar-divider"></div>
-
-            <!-- Giám sát Vận hành (Toàn quyền) -->
-            <div class="admin-nav-category">Giám sát Vận hành</div>
-            <ul class="admin-nav">
-                <li class="admin-nav-item">
-                    <a th:href="@{/staff/shops}" href="/staff/shops" class="admin-nav-link"
-                       th:classappend="${activeMenu == 'shops'} ? 'active' : ''">
-                        <i class="bi bi-shop"></i>
-                        <span>Duyệt & Quản lý Phí Shop</span>
-                    </a>
-                </li>
-                <li class="admin-nav-item">
-                    <a th:href="@{/staff/products}" href="/staff/products" class="admin-nav-link"
-                       th:classappend="${activeMenu == 'products'} ? 'active' : ''">
-                        <i class="bi bi-apple"></i>
-                        <span>Kiểm duyệt & Ẩn Hoa quả</span>
                     </a>
                 </li>
             </ul>

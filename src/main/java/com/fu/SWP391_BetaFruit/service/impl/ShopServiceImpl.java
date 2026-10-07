@@ -256,4 +256,41 @@ public class ShopServiceImpl implements ShopService {
 
         return data;
     }
+
+    @Override
+    public Map<String, Object> getAdminCommissionPageData(String keyword, String ownerStatus, String commissionTier, int page, int size, String sortBy, String sortDir) {
+        int pageIndex = Math.max(0, page - 1);
+        int pageSize = size > 0 ? size : 5;
+
+        String safeSortBy = (sortBy != null && ALLOWED_SHOP_SORT_FIELDS.contains(sortBy.trim()))
+                ? sortBy.trim() : "shopId";
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
+
+        String trimmedKeyword = keyword != null ? keyword.trim() : "";
+        String safeOwnerStatus = (ownerStatus != null && !ownerStatus.trim().isEmpty()) ? ownerStatus.trim().toUpperCase() : "ALL";
+        String safeCommissionTier = (commissionTier != null && !commissionTier.trim().isEmpty()) ? commissionTier.trim().toUpperCase() : "ALL";
+        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+
+        Page<Shop> shopPage = shopRepository.searchApprovedShopsForCommission(trimmedKeyword, safeOwnerStatus, safeCommissionTier, pageable);
+
+        long approvedTotal = countByStatus(ShopApprovalStatus.APPROVED);
+        long activeCount = shopRepository.countApprovedActiveOwnerShops();
+        long deactivatedCount = shopRepository.countApprovedDeactivatedOwnerShops();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("shops", shopPage.getContent());
+        data.put("shopPage", shopPage);
+        data.put("pageData", shopPage);
+        data.put("keyword", trimmedKeyword);
+        data.put("ownerStatus", safeOwnerStatus);
+        data.put("commissionTier", safeCommissionTier);
+        data.put("sortBy", safeSortBy);
+        data.put("sortDir", safeSortDir);
+        data.put("approvedTotal", approvedTotal);
+        data.put("activeCount", activeCount);
+        data.put("deactivatedCount", deactivatedCount);
+
+        return data;
+    }
 }

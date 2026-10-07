@@ -20,4 +20,5 @@ public interface ShopService {
     java.util.Map<String, Object> getAdminShopPageData(String keyword, String statusStr);
     java.util.Map<String, Object> getAdminShopPageData(String keyword, String statusStr, int page, int size);
     java.util.Map<String, Object> getAdminShopPageData(String keyword, String statusStr, int page, int size, String sortBy, String sortDir);
+    java.util.Map<String, Object> getAdminCommissionPageData(String keyword, String ownerStatus, String commissionTier, int page, int size, String sortBy, String sortDir);
 }
