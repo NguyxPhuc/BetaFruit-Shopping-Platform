@@ -34,4 +34,6 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
            "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<Shop> searchShopsByStatus(@Param("keyword") String keyword, @Param("status") ShopApprovalStatus status);
+
+    Optional<Shop> findByShopId(Integer shopId);
 }

@@ -1,11 +1,10 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
+import com.fu.SWP391_BetaFruit.dto.request.CustomerProfileRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
-import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.CustomerMembership;
 import com.fu.SWP391_BetaFruit.entity.Role;
-import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import com.fu.SWP391_BetaFruit.repository.CustomerMembershipRepository;
@@ -59,27 +58,6 @@ public class UserServiceImpl implements UserService {
         return customerProfileResponse;
     }
 
-    @Override
-    public ShopProfileResponse getShopProfile(Integer id) throws Exception {
-        ShopProfileResponse shopProfileResponse = new ShopProfileResponse();
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin người dùng."));
-
-        shopProfileResponse.setEmail(user.getEmail());
-        shopProfileResponse.setPhone(user.getPhone());
-
-        Shop shop = shopRepository.findByOwner(user)
-                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin shop."));
-
-        shopProfileResponse.setShopName(shop.getShopName());
-        shopProfileResponse.setShopDescription(shop.getShopDescription());
-        shopProfileResponse.setBankName(shop.getBankName());
-        shopProfileResponse.setBankAccountNumber(shop.getBankAccountNumber());
-        shopProfileResponse.setAccountName(shop.getAccountName());
-
-
-        return shopProfileResponse;
-    }
   
     @Override
     public List<User> getAllUsers() {
@@ -155,7 +133,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(rollbackFor = Exception.class)
     public void changePassword(Integer userId, ChangePasswordRequest changePasswordRequest) throws Exception {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy người dùng."));
+                .orElseThrow(() -> new Exception("Lỗi: Không tìm thấy người dùng trong hệ thống."));
 
         if (!BCrypt.checkpw(changePasswordRequest.getOldPassword(), user.getPasswordHash())) {
             throw new Exception("Mật khẩu cũ không chính xác.");
@@ -165,5 +143,27 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setPasswordHash(BCrypt.hashpw(changePasswordRequest.getNewPassword(), BCrypt.gensalt()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void editCustomerProfile(Integer userId, CustomerProfileRequest customerProfileRequest) throws Exception {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new Exception("Lỗi: Không tìm thấy người dùng trong hệ thống."));
+        if(!user.getEmail().equalsIgnoreCase(customerProfileRequest.getEmail())) {
+            if(userRepository.existsByEmail(customerProfileRequest.getEmail())) {
+                throw new Exception("Email đã tồn tại trong hệ thống.");
+            }
+            user.setEmail(customerProfileRequest.getEmail());
+        }
+        if(!user.getUsername().equalsIgnoreCase(customerProfileRequest.getUsername())) {
+            if(userRepository.existsByUsername(customerProfileRequest.getUsername())) {
+                throw new Exception("Username đã tồn tại trong hệ thống.");
+            }
+            user.setUsername(customerProfileRequest.getUsername());
+        }
+        user.setFullName(customerProfileRequest.getFullName());
+        user.setPhone(customerProfileRequest.getPhone());
+        userRepository.save(user);
     }
 }

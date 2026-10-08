@@ -2,7 +2,7 @@ package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
-import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
+import com.fu.SWP391_BetaFruit.service.ShopService;
 import com.fu.SWP391_BetaFruit.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -27,12 +27,9 @@ public class UserController {
         return "index";
     }
 
-    @GetMapping("/profile")
+    @GetMapping("/customer/profile")
     public String getCustomerProfile(Model model, HttpSession session) throws Exception {
         Integer id = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
-        if (id == null) {
-            return "redirect:/auth/login";
-        }
         try {
             CustomerProfileResponse customerProfileResponse = userService.getCustomerProfile(id);
             model.addAttribute("customerProfileResponse", customerProfileResponse);
@@ -44,22 +41,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/shop/profile")
-    public String getShopProfile(Model model, HttpSession session) throws Exception {
-        Integer id = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
-        if (id == null) {
-            return "redirect:/auth/login";
-        }
-        try {
-            ShopProfileResponse shopProfileResponse = userService.getShopProfile(id);
-            model.addAttribute("shopProfileResponse", shopProfileResponse);
-            return "shop/shop-profile";
-        } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("errorMessage", e.getMessage());
-            return "index";
-        }
-    }
 
     @GetMapping("/change-password")
     public String showChangePasswordForm(Model model, HttpSession session) {

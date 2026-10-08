@@ -1,5 +1,7 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
+import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
+import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.RoleName;
@@ -124,5 +126,48 @@ public class ShopServiceImpl implements ShopService {
         data.put("rejectedCount", countByStatus(ShopApprovalStatus.REJECTED));
 
         return data;
+    }
+
+    @Override
+    public ShopProfileResponse getShopProfile(Integer id) throws Exception {
+        ShopProfileResponse shopProfileResponse = new ShopProfileResponse();
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin người dùng."));
+
+        shopProfileResponse.setEmail(user.getEmail());
+        shopProfileResponse.setPhone(user.getPhone());
+
+        Shop shop = shopRepository.findByOwner(user)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin shop."));
+
+        shopProfileResponse.setShopName(shop.getShopName());
+        shopProfileResponse.setShopDescription(shop.getShopDescription());
+        shopProfileResponse.setBankName(shop.getBankName());
+        shopProfileResponse.setBankAccountNumber(shop.getBankAccountNumber());
+        shopProfileResponse.setAccountName(shop.getAccountName());
+        return shopProfileResponse;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void editShopProfile(Integer id, ShopProfileRequest shopProfileRequest) throws Exception {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin người dùng."));
+        Shop shop = shopRepository.findByOwner(user)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin shop."));
+        if(!user.getEmail().equalsIgnoreCase(shopProfileRequest.getEmail())) {
+            if(userRepository.existsByEmail(shopProfileRequest.getEmail())) {
+                throw new Exception("Email đã tồn tại trong hệ thống.");
+            }
+            user.setEmail(shopProfileRequest.getEmail());
+        }
+        user.setPhone(shopProfileRequest.getPhone());
+        shop.setShopName(shopProfileRequest.getShopName());
+        shop.setShopDescription(shopProfileRequest.getShopDescription());
+        shop.setBankName(shopProfileRequest.getBankName());
+        shop.setBankAccountNumber(shopProfileRequest.getBankAccountNumber());
+        shop.setAccountName(shopProfileRequest.getAccountName());
+        userRepository.save(user);
+        shopRepository.save(shop);
     }
 }

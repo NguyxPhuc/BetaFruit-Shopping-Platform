@@ -1,9 +1,6 @@
 package com.fu.SWP391_BetaFruit.config;
 
-import com.fu.SWP391_BetaFruit.interceptor.AdminInterceptor;
-import com.fu.SWP391_BetaFruit.interceptor.CustomerInterceptor;
-import com.fu.SWP391_BetaFruit.interceptor.ShipperInterceptor;
-import com.fu.SWP391_BetaFruit.interceptor.ShopOwnerInterceptor;
+import com.fu.SWP391_BetaFruit.interceptor.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -23,6 +20,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private ShipperInterceptor shipperInterceptor;
 
+    @Autowired
+    private StaffInterceptor staffInterceptor;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
 
@@ -30,13 +30,15 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/admin/**");
 
         registry.addInterceptor(shopOwnerInterceptor)
-                .addPathPatterns("/shop/**")
-                .excludePathPatterns("/shop/public/**");
+                .addPathPatterns("/shop/**");
 
         registry.addInterceptor(customerInterceptor)
                 .addPathPatterns("/customer/**");
 
         registry.addInterceptor(shipperInterceptor)
                 .addPathPatterns("/shipper/**");
+
+        registry.addInterceptor(staffInterceptor)
+                .addPathPatterns("/staff/**");
     }
 }

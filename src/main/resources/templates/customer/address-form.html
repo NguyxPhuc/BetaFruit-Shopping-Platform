@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Thêm và cập nhật địa chỉ nhận hàng - BetaFruit Nông sản tươi sạch">
+    <title th:text="${isEditMode} ? 'Cập nhật địa chỉ nhận hàng | BetaFruit' : 'Thêm địa chỉ nhận hàng mới | BetaFruit'">Địa chỉ nhận hàng | BetaFruit</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
+    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
+    <link rel="stylesheet" th:href="@{/css/address.css}" href="/css/address.css">
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<main class="address-page">
+    <div class="address-container">
+
+        <!-- Breadcrumb / Back Navigation -->
+        <div style="margin-bottom: 18px;">
+            <a th:href="@{/{role}/address(role=${role})}" style="display: inline-flex; align-items: center; font-size: 13px; color: #4b5563; text-decoration: none; font-weight: 500;">
+                Quay lại Danh sách địa chỉ
+            </a>
+        </div>
+
+        <!-- Form Card Container -->
+        <div class="address-form-card">
+            <div class="form-card-title">
+                <span th:text="${isEditMode} ? 'Chỉnh sửa địa chỉ nhận hàng' : 'Thêm địa chỉ nhận hàng mới'">Thêm địa chỉ nhận hàng</span>
+            </div>
+
+            <!-- Error Banner from BE -->
+            <div class="address-alert address-alert-error" th:if="${errorMessage}">
+                <span th:text="${errorMessage}">Đã xảy ra lỗi</span>
+            </div>
+
+            <form th:action="${isEditMode} ? @{/{role}/address/edit/{id}(role=${role}, id=${editAddressId})} : @{/{role}/address/create(role=${role})}"
+                  th:object="${addressRequest}"
+                  method="post"
+                  id="customerAddressForm"
+                  onsubmit="return validateAddressForm()">
+
+                <!-- Row 1: Receiver Name & Receiver Phone -->
+                <div class="form-grid-row">
+                    <div class="form-group">
+                        <label class="form-label" for="receiverName">
+                            Họ và tên người nhận <span class="required">*</span>
+                        </label>
+                        <input type="text"
+                               id="receiverName"
+                               th:field="*{receiverName}"
+                               class="form-control-input"
+                               placeholder="Ví dụ: Nguyễn Văn A"
+                               required
+                               maxlength="100" />
+                        <span class="field-error-msg" th:if="${#fields.hasErrors('receiverName')}" th:errors="*{receiverName}"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="receiverPhone">
+                            Số điện thoại nhận hàng <span class="required">*</span>
+                        </label>
+                        <input type="tel"
+                               id="receiverPhone"
+                               th:field="*{receiverPhone}"
+                               class="form-control-input"
+                               placeholder="Ví dụ: 0912345678"
+                               required
+                               maxlength="20" />
+                        <span class="field-error-msg" id="phoneErrorClient" style="display: none;">Số điện thoại không hợp lệ (10 chữ số).</span>
+                        <span class="field-error-msg" th:if="${#fields.hasErrors('receiverPhone')}" th:errors="*{receiverPhone}"></span>
+                    </div>
+                </div>
+
+                <!-- Row 2: City / District / Ward -->
+                <div class="form-grid-row-3">
+                    <div class="form-group">
+                        <label class="form-label" for="city">
+                            Tỉnh / Thành phố <span class="required">*</span>
+                        </label>
+                        <input type="text"
+                               id="city"
+                               th:field="*{city}"
+                               class="form-control-input"
+                               placeholder="Ví dụ: Hà Nội"
+                               required
+                               maxlength="100" />
+                        <span class="field-error-msg" th:if="${#fields.hasErrors('city')}" th:errors="*{city}"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="district">
+                            Quận / Huyện <span class="required">*</span>
+                        </label>
+                        <input type="text"
+                               id="district"
+                               th:field="*{district}"
+                               class="form-control-input"
+                               placeholder="Ví dụ: Cầu Giấy"
+                               required
+                               maxlength="100" />
+                        <span class="field-error-msg" th:if="${#fields.hasErrors('district')}" th:errors="*{district}"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ward">
+                            Phường / Xã <span class="required">*</span>
+                        </label>
+                        <input type="text"
+                               id="ward"
+                               th:field="*{ward}"
+                               class="form-control-input"
+                               placeholder="Ví dụ: Quan Hoa"
+                               required
+                               maxlength="100" />
+                        <span class="field-error-msg" th:if="${#fields.hasErrors('ward')}" th:errors="*{ward}"></span>
+                    </div>
+                </div>
+
+                <!-- Row 3: Address Line -->
+                <div class="form-group">
+                    <label class="form-label" for="addressLine">
+                        Địa chỉ chi tiết (Số nhà, tên ngõ, tên đường, tòa nhà) <span class="required">*</span>
+                    </label>
+                    <textarea id="addressLine"
+                              th:field="*{addressLine}"
+                              class="form-control-input"
+                              placeholder="Ví dụ: Số 25, Ngõ 102 Cầu Giấy..."
+                              rows="3"
+                              required
+                              maxlength="255"></textarea>
+                    <span class="field-error-msg" th:if="${#fields.hasErrors('addressLine')}" th:errors="*{addressLine}"></span>
+                </div>
+
+                <!-- Checkbox: Is Default -->
+                <label class="checkbox-toggle-wrap">
+                    <input type="checkbox" id="isDefault" th:field="*{isDefault}" />
+                    <span>Đặt làm địa chỉ giao hàng mặc định</span>
+                </label>
+
+                <!-- Actions Bar -->
+                <div class="form-actions-bar">
+                    <a th:href="@{/{role}/address(role=${role})}" class="btn-secondary-action">
+                        Hủy bỏ
+                    </a>
+                    <button type="submit" class="btn-primary-action">
+                        <span th:text="${isEditMode} ? 'Lưu thay đổi' : 'Thêm địa chỉ'">Lưu địa chỉ</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</main>
+
+<!-- Client validation script -->
+<script>
+    function validateAddressForm() {
+        const phoneInput = document.getElementById('receiverPhone');
+        const phoneError = document.getElementById('phoneErrorClient');
+        const phoneRegex = /^(0|84)(3|5|7|8|9)[0-9]{8}$/;
+
+        const cleanPhone = phoneInput.value.trim().replace(/\s+/g, '');
+        if (!phoneRegex.test(cleanPhone)) {
+            phoneError.style.display = 'block';
+            phoneInput.focus();
+            return false;
+        } else {
+            phoneError.style.display = 'none';
+        }
+        return true;
+    }
+</script>
+
+</body>
+</html>

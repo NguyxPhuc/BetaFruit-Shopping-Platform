@@ -1,7 +1,10 @@
 package com.fu.SWP391_BetaFruit.service;
 
+import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
+import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,4 +19,9 @@ public interface ShopService {
     long countTotal();
 
     java.util.Map<String, Object> getAdminShopPageData(String keyword, String statusStr);
+
+    ShopProfileResponse getShopProfile(Integer id) throws Exception;
+
+    @Transactional(rollbackFor = Exception.class)
+    void editShopProfile(Integer id, ShopProfileRequest shopProfileRequest) throws Exception;
 }

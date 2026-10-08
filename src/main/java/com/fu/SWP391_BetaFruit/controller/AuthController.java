@@ -93,7 +93,7 @@ public class AuthController {
             } else if (roles != null && roles.contains(RoleName.DELIVERY_STAFF)) {
                 return "redirect:/shipper/dashboard";
             } else {
-                return "redirect:/";
+                return "redirect:/customer/profile";
             }
         }catch (Exception e){
             e.printStackTrace();
