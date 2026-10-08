@@ -28,9 +28,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private ShipperInterceptor shipperInterceptor;
 
-    @Autowired
-    private StaffInterceptor staffInterceptor;
-
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
 
@@ -48,8 +45,5 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addInterceptor(shipperInterceptor)
                 .addPathPatterns("/shipper/**");
-
-        registry.addInterceptor(staffInterceptor)
-                .addPathPatterns("/staff/**");
     }
 }
