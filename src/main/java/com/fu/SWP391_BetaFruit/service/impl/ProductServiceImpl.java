@@ -6,12 +6,17 @@ import com.fu.SWP391_BetaFruit.enums.ProductVisibility;
 import com.fu.SWP391_BetaFruit.repository.ProductRepository;
 import com.fu.SWP391_BetaFruit.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -110,16 +115,76 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.countByApprovalStatus(ProductApprovalStatus.REJECTED);
     }
 
+    private static final Set<String> ALLOWED_PRODUCT_SORT_FIELDS = Set.of(
+            "productId", "productName", "approvalStatus", "visibilityStatus"
+    );
+
+    @Override
+    public Page<Product> searchProductsPaginated(String keyword, String tab, int page, int size) {
+        return searchProductsPaginated(keyword, tab, page, size, "productId", "desc");
+    }
+
+    @Override
+    public Page<Product> searchProductsPaginated(String keyword, String tab, int page, int size, String sortBy, String sortDir) {
+        int pageIndex = Math.max(0, page - 1);
+        int pageSize = size > 0 ? size : 5;
+
+        String safeSortBy = (sortBy != null && ALLOWED_PRODUCT_SORT_FIELDS.contains(sortBy.trim()))
+                ? sortBy.trim() : "productId";
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
+
+        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
+        boolean hasKeyword = !cleanKeyword.isEmpty();
+        String currentTab = (tab != null && !tab.trim().isEmpty()) ? tab.trim().toUpperCase() : "ALL";
+
+        return switch (currentTab) {
+            case "PENDING" -> hasKeyword
+                    ? productRepository.searchByApprovalStatus(cleanKeyword, ProductApprovalStatus.PENDING, pageable)
+                    : productRepository.findByApprovalStatus(ProductApprovalStatus.PENDING, pageable);
+            case "ACTIVE" -> hasKeyword
+                    ? productRepository.searchByApprovalAndVisibility(cleanKeyword, ProductApprovalStatus.APPROVED, ProductVisibility.ACTIVE, pageable)
+                    : productRepository.findByApprovalStatusAndVisibilityStatus(ProductApprovalStatus.APPROVED, ProductVisibility.ACTIVE, pageable);
+            case "HIDDEN" -> hasKeyword
+                    ? productRepository.searchByApprovalAndVisibility(cleanKeyword, ProductApprovalStatus.APPROVED, ProductVisibility.HIDDEN, pageable)
+                    : productRepository.findByApprovalStatusAndVisibilityStatus(ProductApprovalStatus.APPROVED, ProductVisibility.HIDDEN, pageable);
+            case "REJECTED" -> hasKeyword
+                    ? productRepository.searchByApprovalStatus(cleanKeyword, ProductApprovalStatus.REJECTED, pageable)
+                    : productRepository.findByApprovalStatus(ProductApprovalStatus.REJECTED, pageable);
+            default -> hasKeyword
+                    ? productRepository.searchAll(cleanKeyword, pageable)
+                    : productRepository.findAll(pageable);
+        };
+    }
+
     @Override
     public Map<String, Object> getAdminProductPageData(String keyword, String tab) {
+        return getAdminProductPageData(keyword, tab, 1, 5, "productId", "desc");
+    }
+
+    @Override
+    public Map<String, Object> getAdminProductPageData(String keyword, String tab, int page, int size) {
+        return getAdminProductPageData(keyword, tab, page, size, "productId", "desc");
+    }
+
+    @Override
+    public Map<String, Object> getAdminProductPageData(String keyword, String tab, int page, int size, String sortBy, String sortDir) {
         String currentTab = (tab != null && !tab.trim().isEmpty()) ? tab.trim().toUpperCase() : "ALL";
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
-        List<Product> products = searchProducts(cleanKeyword, currentTab);
+        String safeSortBy = (sortBy != null && ALLOWED_PRODUCT_SORT_FIELDS.contains(sortBy.trim()))
+                ? sortBy.trim() : "productId";
+        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+
+        Page<Product> productPage = searchProductsPaginated(cleanKeyword, currentTab, page, size, safeSortBy, safeSortDir);
 
         Map<String, Object> data = new HashMap<>();
-        data.put("products", products);
+        data.put("products", productPage.getContent());
+        data.put("productPage", productPage);
+        data.put("pageData", productPage);
         data.put("currentTab", currentTab);
         data.put("keyword", cleanKeyword);
+        data.put("sortBy", safeSortBy);
+        data.put("sortDir", safeSortDir);
         data.put("totalCount", countTotal());
         data.put("pendingCount", countPending());
         data.put("activeCount", countActive());

@@ -1,10 +1,225 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'dashboard', ~{::content})}">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Tổng Quan Hệ Thống - BetaFruit Admin</title>
 </head>
 <body>
+<div th:fragment="content">
+    <!-- Welcome Banner -->
+    <div class="card border-0 text-white mb-4 overflow-hidden position-relative" style="background: linear-gradient(135deg, var(--admin-green-900) 0%, var(--admin-green-700) 100%);">
+        <div class="card-body p-4 position-relative" style="z-index: 2;">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <span class="badge bg-warning text-dark px-3 py-1 mb-2 fw-bold" style="font-size: 0.75rem;">TRANG QUẢN TRỊ VIÊN</span>
+                    <h2 class="fw-bold text-white mb-2">Chào mừng trở lại, Ban Quản Trị BetaFruit!</h2>
+                    <p class="mb-0 text-white-50" style="max-width: 600px;">
+                        Hệ thống sàn giao dịch hoa quả tươi BetaFruit hoạt động ổn định. Theo dõi tình trạng các cửa hàng, kiểm duyệt sản phẩm và phân quyền người dùng tập trung tại đây.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <a th:href="@{/staff/shops(status='PENDING')}" href="/staff/shops?status=PENDING" class="btn btn-warning shadow-sm me-2">
+                        <i class="bi bi-clock-history me-1"></i> Shop chờ duyệt
+                    </a>
+                    <a th:href="@{/staff/products}" href="/staff/products" class="btn btn-outline-light">
+                        <i class="bi bi-apple me-1"></i> Quản lý hoa quả
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Decorative blurred circles -->
+        <div class="position-absolute rounded-circle" style="width: 220px; height: 220px; background: rgba(245, 158, 54, 0.15); top: -60px; right: 5%; filter: blur(40px);"></div>
+        <div class="position-absolute rounded-circle" style="width: 180px; height: 180px; background: rgba(130, 184, 77, 0.2); bottom: -60px; right: 30%; filter: blur(50px);"></div>
+    </div>
 
+    <!-- Quick Stats Cards Row -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Shops -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-semibold text-uppercase">Cửa Hàng</span>
+                    <div class="admin-stat-icon icon-box-orange">
+                        <i class="bi bi-shop"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" th:text="${shopCount != null ? shopCount : '5+'}">5+</h3>
+                <div class="d-flex align-items-center justify-content-between small">
+                    <span class="text-muted">Kiểm duyệt đăng ký mới</span>
+                    <a th:href="@{/staff/shops}" href="/staff/shops" class="fw-bold text-success text-decoration-none">
+                        Xem danh sách <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Products -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-semibold text-uppercase">Hoa Quả Đăng Bán</span>
+                    <div class="admin-stat-icon icon-box-primary">
+                        <i class="bi bi-apple"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" th:text="${productCount != null ? productCount : '100+'}">100+</h3>
+                <div class="d-flex align-items-center justify-content-between small">
+                    <span class="text-muted">Duyệt & kiểm soát chất lượng</span>
+                    <a th:href="@{/staff/products}" href="/staff/products" class="fw-bold text-success text-decoration-none">
+                        Kiểm tra <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Categories -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-semibold text-uppercase">Danh Mục Gốc</span>
+                    <div class="admin-stat-icon icon-box-primary">
+                        <i class="bi bi-tags-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" th:text="${categoryCount != null ? categoryCount : '10+'}">10+</h3>
+                <div class="d-flex align-items-center justify-content-between small">
+                    <span class="text-muted">Phân loại hoa quả toàn sàn</span>
+                    <a th:href="@{/admin/categories}" href="/admin/categories" class="fw-bold text-success text-decoration-none">
+                        Cấu hình <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Users -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-semibold text-uppercase">Tài Khoản</span>
+                    <div class="admin-stat-icon icon-box-secondary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" th:text="${userCount != null ? userCount : '50+'}">50+</h3>
+                <div class="d-flex align-items-center justify-content-between small">
+                    <span class="text-muted">Phân quyền & giám sát</span>
+                    <a th:href="@{/admin/users}" href="/admin/users" class="fw-bold text-success text-decoration-none">
+                        Quản lý <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Navigation Panels Row -->
+    <div class="row g-4">
+        <!-- Panel 1: Fast Operations -->
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-grid-fill text-success"></i>
+                        <span>Thao Tác Quản Trị Thường Dùng</span>
+                    </div>
+                    <span class="badge bg-light text-muted border">Phím tắt nhanh</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a th:href="@{/staff/shops}" href="/staff/shops" class="text-decoration-none">
+                                <div class="p-3 border rounded-3 h-100 bg-light-subtle hover-shadow transition-all d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-success text-white p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-patch-check-fill fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">Xét Duyệt Cửa Hàng</h6>
+                                        <p class="text-muted small mb-0">Xác nhận hồ sơ kinh doanh và cấp quyền bán hàng cho Shop</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a th:href="@{/admin/categories}" href="/admin/categories" class="text-decoration-none">
+                                <div class="p-3 border rounded-3 h-100 bg-light-subtle hover-shadow transition-all d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-warning text-white p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-plus-square-fill fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">Thêm Danh Mục Gốc</h6>
+                                        <p class="text-muted small mb-0">Tạo mới các nhóm trái cây tươi, trái cây nhập khẩu toàn sàn</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a th:href="@{/staff/products}" href="/staff/products" class="text-decoration-none">
+                                <div class="p-3 border rounded-3 h-100 bg-light-subtle hover-shadow transition-all d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-danger text-white p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-eye-slash-fill fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">Kiểm Soát Sản Phẩm</h6>
+                                        <p class="text-muted small mb-0">Tạm ẩn các mặt hàng vi phạm quy định sàn hoặc hết hạn dùng</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a th:href="@{/admin/users}" href="/admin/users" class="text-decoration-none">
+                                <div class="p-3 border rounded-3 h-100 bg-light-subtle hover-shadow transition-all d-flex align-items-center gap-3">
+                                    <div class="rounded-circle bg-primary text-white p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-shield-shaded fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">Cấp Quyền & Vai Trò</h6>
+                                        <p class="text-muted small mb-0">Phân vai trò Quản trị viên, Nhân viên, Chủ shop và Người giao hàng</p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 2: System Health & Brand Info -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle-fill text-success"></i>
+                    <span>Thông Tin Nền Tảng</span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-3" style="background: var(--admin-green-50); border: 1px solid var(--admin-border);">
+                        <img th:src="@{/images/betafruit-logo.png}" src="/images/betafruit-logo.png" alt="BetaFruit" style="height: 38px;">
+                        <div>
+                            <div class="fw-bold text-success">BetaFruit Platform</div>
+                            <div class="text-muted small">Sàn Mua Sắm Hoa Quả Trực Tuyến</div>
+                        </div>
+                    </div>
+
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span class="text-muted">Phiên bản ứng dụng:</span>
+                            <span class="badge bg-light text-dark border">v1.0.0-SNAPSHOT</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span class="text-muted">Cơ sở dữ liệu:</span>
+                            <span class="text-dark fw-semibold">SQL Server (JPA/Hibernate)</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span class="text-muted">Template Engine:</span>
+                            <span class="text-dark fw-semibold">Thymeleaf 3.x</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <span class="text-muted">Giao diện (UI Framework):</span>
+                            <span class="text-dark fw-semibold">Bootstrap 5.3.3 + Custom CSS</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

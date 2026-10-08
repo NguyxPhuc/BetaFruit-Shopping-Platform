@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<!--
+    REUSABLE SORT HEADER COMPONENT FOR BETAFRUIT ADMIN
+    Usage in table <th>:
+    <th:block th:replace="~{admin/fragments/sort-header :: column(title='Tên Đăng Nhập', field='username', baseUrl='/admin/users')}"></th:block>
+-->
+<th:block th:fragment="column(title, field, baseUrl)">
+    <th:block th:with="isCurrent=${sortBy != null and sortBy.equalsIgnoreCase(field)},
+                       isAsc=${isCurrent and sortDir != null and sortDir.equalsIgnoreCase('asc')},
+                       isDesc=${isCurrent and sortDir != null and sortDir.equalsIgnoreCase('desc')},
+                       nextDir=${isAsc ? 'desc' : 'asc'}">
+        <a th:href="@{${baseUrl}(page=1, size=${pageData != null ? pageData.size : 5}, sortBy=${field}, sortDir=${nextDir}, keyword=${(keyword != null and !#strings.isEmpty(keyword)) ? keyword : null}, tab=${(currentTab != null and currentTab != 'ALL') ? currentTab : null}, status=${(currentStatus != null and currentStatus != 'ALL') ? currentStatus : null}, roleId=${currentRoleId})}"
+           class="text-decoration-none text-dark d-inline-flex align-items-center user-select-none"
+           th:title="${isCurrent ? (isAsc ? 'Đang xếp tăng dần (Click để xếp giảm dần)' : 'Đang xếp giảm dần (Click để xếp tăng dần)') : 'Click để sắp xếp theo cột này'}">
+            <span class="fw-bold" th:text="${title}">Tiêu đề</span>
+            
+            <!-- Icon trạng thái sắp xếp -->
+            <span class="ms-1 d-inline-flex align-items-center">
+                <i th:if="${isAsc}" class="bi bi-sort-down-alt text-success fw-bold"></i>
+                <i th:if="${isDesc}" class="bi bi-sort-down text-success fw-bold"></i>
+                <i th:if="${!isCurrent}" class="bi bi-arrow-down-up text-secondary opacity-50 small"></i>
+            </span>
+        </a>
+    </th:block>
+</th:block>
+</body>
+</html>

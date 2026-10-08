@@ -1,64 +1,174 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<div th:fragment="sidebar(activeMenu)" class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark shadow" style="width: 260px; min-height: 100vh;">
-    <a href="/admin/roles" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-        <i class="bi bi-basket2-fill fs-3 text-warning me-2"></i>
-        <span class="fs-4 fw-bold text-success">Beta<span class="text-warning">Fruit</span></span>
-    </a>
-    <hr class="border-secondary">
-    
-    <div class="px-2 py-1 mb-2 text-uppercase text-secondary small fw-semibold">Phân quyền & Tài khoản</div>
-    <ul class="nav nav-pills flex-column mb-auto">
-        <li class="nav-item mb-1">
-            <a href="/admin/roles" class="nav-link text-white d-flex align-items-center" 
-               th:classappend="${activeMenu == 'roles'} ? 'active bg-success' : 'hover-item'">
-                <i class="bi bi-shield-lock-fill me-2 fs-5"></i>
-                <span>Quản lý Vai trò (Roles)</span>
-            </a>
-        </li>
-        <li class="nav-item mb-1">
-            <a href="/admin/users" class="nav-link text-white d-flex align-items-center"
-               th:classappend="${activeMenu == 'users'} ? 'active bg-success' : 'hover-item'">
-                <i class="bi bi-people-fill me-2 fs-5"></i>
-                <span>Quản lý Người dùng</span>
-            </a>
-        </li>
-        
-        <div class="px-2 py-1 mt-3 mb-2 text-uppercase text-secondary small fw-semibold">Quản lý Sản phẩm & Shop</div>
-        <li class="nav-item mb-1">
-            <a href="/admin/categories" class="nav-link text-white d-flex align-items-center"
-               th:classappend="${activeMenu == 'categories'} ? 'active bg-success' : 'hover-item'">
-                <i class="bi bi-tags-fill me-2 fs-5"></i>
-                <span>Danh mục gốc (Categories)</span>
-            </a>
-        </li>
-        <li class="nav-item mb-1">
-            <a href="/admin/shops" class="nav-link text-white d-flex align-items-center"
-               th:classappend="${activeMenu == 'shops'} ? 'active bg-success' : 'hover-item'">
-                <i class="bi bi-shop me-2 fs-5"></i>
-                <span>Duyệt Cửa hàng (Shops)</span>
-            </a>
-        </li>
-        <li class="nav-item mb-1">
-            <a href="/admin/products" class="nav-link text-white d-flex align-items-center"
-               th:classappend="${activeMenu == 'products'} ? 'active bg-success' : 'hover-item'">
-                <i class="bi bi-apple me-2 fs-5"></i>
-                <span>Duyệt & Ẩn Hoa quả</span>
-            </a>
-        </li>
-    </ul>
-    
-    <hr class="border-secondary">
-    <div class="dropdown">
-        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-2 text-white fw-bold" style="width: 34px; height: 34px;">K</div>
-            <strong>KhaiDQ (Admin)</strong>
+<div th:fragment="sidebar(activeMenu)" class="admin-sidebar">
+    <!-- Brand Logo Section -->
+    <div class="admin-sidebar-brand">
+        <a th:href="@{${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN') ? '/admin/dashboard' : '/staff/dashboard'}}"
+           class="text-decoration-none d-block">
+            <div class="admin-logo-wrapper">
+                <img th:src="@{/images/betafruit-logo.png}" src="/images/betafruit-logo.png" alt="BetaFruit" class="admin-logo-img">
+            </div>
         </a>
-        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-            <li><a class="dropdown-item" href="/admin/roles"><i class="bi bi-person me-2"></i>Hồ sơ</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="/"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
-        </ul>
+        <div class="d-flex align-items-center justify-content-between mt-2 px-1">
+            <span class="badge bg-white-subtle text-white-50 border border-secondary-subtle" style="font-size: 0.68rem; letter-spacing: 0.5px;"
+                  th:text="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN') ? 'ADMIN PANEL' : 'STAFF PORTAL'}">
+                ADMIN PANEL
+            </span>
+            <span class="small text-white-50" style="font-size: 0.7rem;">v1.0</span>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="flex-grow-1 overflow-auto py-3">
+
+        <!-- ================= TRƯỜNG HỢP 1: TÀI KHOẢN LÀ ADMIN ================= -->
+        <th:block th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">
+            <!-- Giám sát tối cao -->
+            <div class="admin-nav-category">Giám sát Tối cao</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item">
+                    <a th:href="@{/admin/dashboard}" href="/admin/dashboard" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Tổng quan Hệ thống</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="admin-sidebar-divider"></div>
+
+            <!-- Cấu hình sàn & Dòng tiền -->
+            <div class="admin-nav-category">Cấu hình Sàn & Dòng tiền</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item">
+                    <a th:href="@{/admin/categories}" href="/admin/categories" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'categories'} ? 'active' : ''">
+                        <i class="bi bi-tags-fill"></i>
+                        <span>Cây Danh mục gốc</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a th:href="@{/admin/shops/commission}" href="/admin/shops/commission" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'shop-commissions'} ? 'active' : ''">
+                        <i class="bi bi-percent"></i>
+                        <span>Cấu hình Phí sàn Cửa hàng</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="admin-sidebar-divider"></div>
+
+            <!-- Nhân sự & Phân quyền -->
+            <div class="admin-nav-category">Nhân sự & Phân quyền</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item">
+                    <a th:href="@{/admin/users}" href="/admin/users" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'users'} ? 'active' : ''">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Quản lý Người dùng</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a th:href="@{/admin/roles}" href="/admin/roles" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'roles'} ? 'active' : ''">
+                        <i class="bi bi-shield-lock-fill"></i>
+                        <span>Quản lý Vai trò</span>
+                    </a>
+                </li>
+            </ul>
+        </th:block>
+
+        <!-- ================= TRƯỜNG HỢP 2: TÀI KHOẢN CHỈ LÀ STAFF (KHÔNG PHẢI ADMIN) ================= -->
+        <th:block th:unless="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">
+            <!-- Bàn làm việc vận hành -->
+            <div class="admin-nav-category">Bàn làm việc</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/dashboard}" href="/staff/dashboard" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'staff-dashboard'} ? 'active' : ''">
+                        <i class="bi bi-speedometer"></i>
+                        <span>Bàn làm việc Vận hành</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="admin-sidebar-divider"></div>
+
+            <!-- Kiểm duyệt nội dung -->
+            <div class="admin-nav-category">Kiểm duyệt Nội dung</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/shops}" href="/staff/shops" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'shops'} ? 'active' : ''">
+                        <i class="bi bi-shop"></i>
+                        <span>Kiểm duyệt Cửa hàng</span>
+                    </a>
+                </li>
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/products}" href="/staff/products" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'products'} ? 'active' : ''">
+                        <i class="bi bi-apple"></i>
+                        <span>Kiểm duyệt Hoa quả</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="admin-sidebar-divider"></div>
+
+            <!-- Điều phối vận chuyển (FE-12.3) -->
+            <div class="admin-nav-category">Điều phối Vận chuyển</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item opacity-75">
+                    <a href="javascript:void(0)" class="admin-nav-link pe-none">
+                        <i class="bi bi-truck"></i>
+                        <span>Gán đơn cho Shipper</span>
+                        <span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.65rem;">Sắp ra mắt</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="admin-sidebar-divider"></div>
+
+            <!-- Tài chính vận hành (FE-12.4) -->
+            <div class="admin-nav-category">Tài chính Vận hành</div>
+            <ul class="admin-nav">
+                <li class="admin-nav-item opacity-75">
+                    <a href="javascript:void(0)" class="admin-nav-link pe-none">
+                        <i class="bi bi-cash-stack"></i>
+                        <span>Thu COD & Duyệt Payout</span>
+                        <span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.65rem;">Sắp ra mắt</span>
+                    </a>
+                </li>
+            </ul>
+        </th:block>
+
+    </div>
+
+    <!-- User Account Card at bottom -->
+    <div class="mt-auto border-top border-white-10">
+        <div class="dropdown">
+            <a href="#" class="admin-user-card dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="admin-avatar-circle"
+                     th:text="${session.LOGGED_IN_FULLNAME != null and !#strings.isEmpty(session.LOGGED_IN_FULLNAME) ? #strings.substring(session.LOGGED_IN_FULLNAME, 0, 1) : (session.LOGGED_IN_USERNAME != null ? #strings.substring(session.LOGGED_IN_USERNAME, 0, 1) : 'U')}">
+                    U
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="fw-bold text-truncate" style="font-size: 0.875rem;"
+                         th:text="${session.LOGGED_IN_FULLNAME ?: session.LOGGED_IN_USERNAME ?: 'Quản trị viên'}">
+                        KhaiDQ
+                    </div>
+                    <div class="text-white-50 small" style="font-size: 0.75rem;"
+                         th:text="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN') ? 'Quản trị viên hệ thống' : 'Nhân viên vận hành'}">
+                        Quản trị viên
+                    </div>
+                </div>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                <li><a class="dropdown-item" th:href="@{/}" target="_blank"><i class="bi bi-globe me-2 text-info"></i>Xem sàn khách</a></li>
+                <li><hr class="dropdown-divider border-secondary"></li>
+                <li><a class="dropdown-item text-danger" th:href="@{/auth/logout}" href="/"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+            </ul>
+        </div>
     </div>
 </div>
 </html>
