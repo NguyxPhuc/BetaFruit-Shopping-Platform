@@ -81,14 +81,14 @@
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'ALL'} ? 'active bg-success' : 'text-dark'"
-                           th:href="@{/admin/shops(status='ALL', keyword=${keyword})}">
+                           th:href="@{/staff/shops(status='ALL', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             Tất cả (<span th:text="${totalCount}">0</span>)
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'PENDING'} ? 'active bg-warning text-dark' : 'text-dark'"
-                           th:href="@{/admin/shops(status='PENDING', keyword=${keyword})}">
+                           th:href="@{/staff/shops(status='PENDING', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-clock me-1"></i>Chờ duyệt 
                             <span class="badge bg-warning text-dark border ms-1" th:text="${pendingCount}">0</span>
                         </a>
@@ -96,22 +96,24 @@
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'APPROVED'} ? 'active bg-success' : 'text-dark'"
-                           th:href="@{/admin/shops(status='APPROVED', keyword=${keyword})}">
+                           th:href="@{/staff/shops(status='APPROVED', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-check-circle me-1"></i>Đã duyệt (<span th:text="${approvedCount}">0</span>)
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link px-3 py-2 fw-medium" 
                            th:classappend="${currentStatus == 'REJECTED'} ? 'active bg-danger' : 'text-dark'"
-                           th:href="@{/admin/shops(status='REJECTED', keyword=${keyword})}">
+                           th:href="@{/staff/shops(status='REJECTED', keyword=${keyword}, sortBy=${sortBy}, sortDir=${sortDir})}">
                             <i class="bi bi-x-circle me-1"></i>Đã từ chối (<span th:text="${rejectedCount}">0</span>)
                         </a>
                     </li>
                 </ul>
 
                 <!-- Search Input Form -->
-                <form th:action="@{/admin/shops}" method="get" class="d-flex gap-2">
+                <form th:action="@{/staff/shops}" method="get" class="d-flex gap-2">
                     <input type="hidden" name="status" th:value="${currentStatus}" />
+                    <input type="hidden" name="sortBy" th:value="${sortBy}" />
+                    <input type="hidden" name="sortDir" th:value="${sortDir}" />
                     <div class="input-group" style="min-width: 280px;">
                         <input type="text" name="keyword" th:value="${keyword}" 
                                class="form-control form-control-sm" 
@@ -121,7 +123,7 @@
                         </button>
                     </div>
                     <a th:if="${keyword != null and !#strings.isEmpty(keyword)}" 
-                       th:href="@{/admin/shops(status=${currentStatus})}" 
+                       th:href="@{/staff/shops(status=${currentStatus}, sortBy=${sortBy}, sortDir=${sortDir})}" 
                        class="btn btn-sm btn-outline-secondary" title="Xóa lọc">
                         <i class="bi bi-x"></i>
                     </a>
@@ -136,18 +138,24 @@
             <h6 class="m-0 fw-bold text-dark">
                 <i class="bi bi-list-ul me-2"></i>Danh Sách Cửa Hàng
             </h6>
-            <span class="badge bg-light text-secondary border" th:text="${shops.size()} + ' kết quả'">0 kết quả</span>
+            <span class="badge bg-light text-secondary border" th:text="${pageData != null ? pageData.totalElements : 0} + ' kết quả'">0 kết quả</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th class="ps-4" style="width: 70px;">ID</th>
-                        <th>Thông Tin Cửa Hàng</th>
+                        <th class="ps-4" style="width: 90px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='ID', field='shopId', baseUrl='/staff/shops')}"></th:block>
+                        </th>
+                        <th>
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Thông Tin Cửa Hàng', field='shopName', baseUrl='/staff/shops')}"></th:block>
+                        </th>
                         <th>Chủ Sở Hữu</th>
                         <th>Tài Khoản Nhận Doanh Thu</th>
-                        <th style="width: 150px;">Trạng Thái</th>
+                        <th style="width: 160px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Trạng Thái', field='approvalStatus', baseUrl='/staff/shops')}"></th:block>
+                        </th>
                         <th class="text-end pe-4" style="width: 250px;">Thao Tác</th>
                     </tr>
                     </thead>
@@ -172,7 +180,7 @@
                                      class="rounded-circle me-3 object-fit-cover shadow-sm border" 
                                      style="width: 42px; height: 42px;">
                                 <div th:unless="${s.logoUrl != null and !#strings.isEmpty(s.logoUrl)}" 
-                                     class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold shadow-sm"
+                                     class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold shadow-sm" 
                                      style="width: 42px; height: 42px; font-size: 16px;"
                                      th:text="${#strings.substring(s.shopName, 0, 1).toUpperCase()}">
                                     S
@@ -237,6 +245,7 @@
                                         th:data-name="${s.shopName}"
                                         th:data-desc="${s.shopDescription != null ? s.shopDescription : 'Chưa có mô tả chi tiết.'}"
                                         th:data-logo="${s.logoUrl != null ? s.logoUrl : ''}"
+                                        th:data-commission="${s.commissionRate != null ? s.commissionRate : '5.00'}"
                                         th:data-owner-name="${s.owner != null ? s.owner.fullName : 'N/A'}"
                                         th:data-owner-user="${s.owner != null ? s.owner.username : 'N/A'}"
                                         th:data-owner-email="${s.owner != null ? s.owner.email : 'N/A'}"
@@ -251,10 +260,12 @@
 
                                 <!-- Nút Phê Duyệt -->
                                 <form th:if="${s.approvalStatus == null or s.approvalStatus.name() != 'APPROVED'}"
-                                      th:action="@{/admin/shops/{id}/approve(id=${s.shopId})}" 
+                                      th:action="@{/staff/shops/{id}/approve(id=${s.shopId})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn PHÊ DUYỆT cửa hàng [' + s.shopName + '] không? Chủ shop sẽ được kích hoạt quyền đăng bán hoa quả.'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
+                                    <input type="hidden" name="page" th:value="${pageData != null ? pageData.number + 1 : 1}" />
+                                    <input type="hidden" name="status" th:value="${currentStatus}" />
                                     <button type="submit" class="btn btn-sm btn-success d-flex align-items-center" title="Phê duyệt cửa hàng">
                                         <i class="bi bi-check-lg me-1"></i> Duyệt
                                     </button>
@@ -262,10 +273,12 @@
 
                                 <!-- Nút Từ Chối -->
                                 <form th:if="${s.approvalStatus == null or s.approvalStatus.name() != 'REJECTED'}"
-                                      th:action="@{/admin/shops/{id}/reject(id=${s.shopId})}" 
+                                      th:action="@{/staff/shops/{id}/reject(id=${s.shopId})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn TỪ CHỐI hồ sơ cửa hàng [' + s.shopName + '] không?'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
+                                    <input type="hidden" name="page" th:value="${pageData != null ? pageData.number + 1 : 1}" />
+                                    <input type="hidden" name="status" th:value="${currentStatus}" />
                                     <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center" title="Từ chối mở shop">
                                         <i class="bi bi-x-lg me-1"></i> Từ chối
                                     </button>
@@ -277,6 +290,9 @@
                 </table>
             </div>
         </div>
+
+        <!-- Pagination Component Dùng Chung -->
+        <div th:replace="~{admin/fragments/pagination :: pager(pageData=${pageData}, baseUrl='/staff/shops')}"></div>
     </div>
 
     <!-- Modal Xem Chi Tiết Cửa Hàng -->
@@ -324,6 +340,12 @@
                                 <div class="mb-2"><strong>Ngân hàng:</strong> <span id="modalBankName" class="text-secondary">-</span></div>
                                 <div class="mb-2"><strong>Số tài khoản:</strong> <span id="modalBankAcc" class="text-dark fw-bold">-</span></div>
                                 <div class="mb-2"><strong>Tên chủ thẻ:</strong> <span id="modalBankOwner" class="text-secondary text-uppercase">-</span></div>
+                                <div class="mt-2 pt-2 border-top">
+                                    <strong>Tỷ lệ phí sàn:</strong> 
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fw-bold">
+                                        <span id="modalShopCommission">5.00</span>%
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
@@ -349,7 +371,6 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const detailButtons = document.querySelectorAll(".detail-shop-btn");
-
             detailButtons.forEach(button => {
                 button.addEventListener("click", function () {
                     const name = this.getAttribute("data-name");
@@ -402,3 +423,4 @@
 </div>
 </body>
 </html>
+

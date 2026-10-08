@@ -1,4 +1,4 @@
-package com.fu.SWP391_BetaFruit.dto.request.admin;
+package com.fu.SWP391_BetaFruit.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package com.fu.SWP391_BetaFruit.dto.response.admin;
+package com.fu.SWP391_BetaFruit.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CategoryResponse {
-    private Integer categoryId;
-    private String categoryName;
-    private Boolean isActive;
+public class RoleResponse {
+    private Long roleId;
+    private String roleName;
 }

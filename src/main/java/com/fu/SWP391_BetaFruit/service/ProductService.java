@@ -16,6 +16,9 @@ public interface ProductService {
     long countActive();
     long countHidden();
     long countRejected();
-
+    org.springframework.data.domain.Page<Product> searchProductsPaginated(String keyword, String tab, int page, int size);
+    org.springframework.data.domain.Page<Product> searchProductsPaginated(String keyword, String tab, int page, int size, String sortBy, String sortDir);
     java.util.Map<String, Object> getAdminProductPageData(String keyword, String tab);
+    java.util.Map<String, Object> getAdminProductPageData(String keyword, String tab, int page, int size);
+    java.util.Map<String, Object> getAdminProductPageData(String keyword, String tab, int page, int size, String sortBy, String sortDir);
 }

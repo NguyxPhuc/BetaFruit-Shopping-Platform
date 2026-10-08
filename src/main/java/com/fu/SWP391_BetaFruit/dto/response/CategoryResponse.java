@@ -1,6 +1,7 @@
-package com.fu.SWP391_BetaFruit.dto.request.admin;
+package com.fu.SWP391_BetaFruit.dto.response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,7 +10,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CategoryRequest {
+@Builder
+public class CategoryResponse {
     private Integer categoryId;
     private String categoryName;
     private Boolean isActive;

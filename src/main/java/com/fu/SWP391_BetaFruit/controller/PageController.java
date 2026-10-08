@@ -16,7 +16,7 @@ public class PageController {
         return "index";
     }
 
-    @GetMapping
+    @GetMapping("/404")
     public String notFound() {
         return "error/404";
     }
