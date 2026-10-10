@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'membership-tiers', ~{::content})}">
+<head>
+    <title>Quản Lý Hạng Thành Viên & Đặc Quyền - BetaFruit Admin</title>
+</head>
+<body>
+<div th:fragment="content">
+    <!-- Header Section -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">
+                <i class="bi bi-award-fill text-warning me-2"></i>Quản Lý Hạng Thành Viên (Membership Tiers)
+            </h3>
+            <p class="text-secondary small mb-0">Cấu hình các ngưỡng chi tiêu tích lũy và tỷ lệ chiết khấu giảm giá đặc quyền cho khách hàng</p>
+        </div>
+        <button type="button" class="btn btn-success shadow-sm d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createTierModal">
+            <i class="bi bi-plus-circle me-2"></i> Thêm Hạng Thành Viên
+        </button>
+    </div>
+
+    <!-- Alert Messages -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm bg-white p-3 h-100 border-start border-warning border-4">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-warning-subtle text-warning p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-trophy fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Tổng số cấp bậc</div>
+                        <h4 class="fw-bold mb-0 text-dark" th:text="${totalTiers}">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-8">
+            <div class="card border-0 shadow-sm bg-white p-3 h-100 border-start border-info border-4">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-info-subtle text-info p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-shield-check fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Quy tắc định cấu hình (BR-LY-02)</div>
+                        <div class="small text-secondary mb-0">Ngưỡng chi tiêu tích lũy không âm, không trùng và tăng dần theo cấp bậc.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 fw-bold text-dark">
+                <i class="bi bi-list-stars me-2 text-primary"></i>Danh Sách Cấp Bậc Thành Viên
+            </h6>
+            <span class="badge bg-secondary-subtle text-secondary" th:text="'Tổng cộng: ' + ${totalTiers} + ' cấp'">Tổng cộng: 0 cấp</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-secondary small">
+                    <tr>
+                        <th class="ps-3" style="width: 80px;">Mã Cấp</th>
+                        <th style="min-width: 180px;">Tên Hạng Thành Viên</th>
+                        <th style="min-width: 200px;">Chi Tiêu Tích Lũy Yêu Cầu</th>
+                        <th style="min-width: 150px;">Chiết Khấu Đơn Hàng (%)</th>
+                        <th class="text-end pe-3" style="width: 160px;">Thao Tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${tiers == null or tiers.isEmpty()}">
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                            Chưa có cấp bậc thành viên nào được thiết lập. Hãy bấm nút "Thêm Hạng Thành Viên" để tạo mới!
+                        </td>
+                    </tr>
+                    <tr th:each="tier : ${tiers}">
+                        <td class="ps-3 fw-semibold text-secondary" th:text="'#' + ${tier.tierId}">#1</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-pill px-3 py-2 fs-6"
+                                      th:classappend="${#strings.containsIgnoreCase(tier.tierName, 'kim cương') ? 'bg-info-subtle text-info border border-info' :
+                                                      (#strings.containsIgnoreCase(tier.tierName, 'vàng') ? 'bg-warning-subtle text-warning-emphasis border border-warning' :
+                                                      (#strings.containsIgnoreCase(tier.tierName, 'bạc') ? 'bg-secondary-subtle text-secondary border' :
+                                                      'bg-light text-dark border'))}">
+                                    <i class="bi bi-star-fill me-1"></i>
+                                    <span th:text="${tier.tierName}">Đồng</span>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">
+                                <span th:text="${#numbers.formatDecimal(tier.minSpentRequired, 0, 'COMMA', 0, 'POINT')}">0</span> ₫
+                            </div>
+                            <small class="text-muted">Tổng chi tiêu đơn giao thành công</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success fs-6 px-3 py-2 border border-success-subtle">
+                                <i class="bi bi-percent me-1"></i>
+                                <span th:text="${tier.discountPercent}">0</span>%
+                            </span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="'#editTierModal' + ${tier.tierId}">
+                                <i class="bi bi-pencil-square"></i> Sửa
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="'#deleteTierModal' + ${tier.tierId}">
+                                <i class="bi bi-trash"></i> Xóa
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Thêm Hạng Thành Viên Mới -->
+    <div class="modal fade" id="createTierModal" tabindex="-1" aria-labelledby="createTierModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <form th:action="@{/admin/membership-tiers/create}" th:object="${newTier}" method="post">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title fw-bold" id="createTierModalLabel">
+                            <i class="bi bi-plus-circle me-2"></i>Thêm Hạng Thành Viên Mới
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label for="createTierName" class="form-label fw-semibold">Tên Hạng Thành Viên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="createTierName" name="tierName"
+                                   placeholder="Ví dụ: Đồng, Bạc, Vàng, Kim Cương..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createMinSpent" class="form-label fw-semibold">Chi Tiêu Tích Lũy Yêu Cầu (VNĐ) <span class="text-danger">*</span></label>
+                            <input type="number" step="1000" min="0" class="form-control" id="createMinSpent" name="minSpentRequired"
+                                   placeholder="Ví dụ: 0, 2000000, 5000000..." required>
+                            <div class="form-text">Mức chi tiêu tối thiểu từ các đơn giao thành công để đạt hạng này.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="createDiscountPercent" class="form-label fw-semibold">Tỷ Lệ Giảm Giá Đơn Hàng (%) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.1" min="0" max="100" class="form-control" id="createDiscountPercent" name="discountPercent"
+                                   placeholder="Ví dụ: 0, 3, 5, 10..." required>
+                            <div class="form-text">Tỷ lệ chiết khấu tự động giảm khi khách hàng thuộc hạng này thanh toán.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="submit" class="btn btn-success fw-semibold">
+                            <i class="bi bi-save me-1"></i> Lưu Hạng Thành Viên
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS: Sửa và Xóa cho từng Tier -->
+    <th:block th:each="tier : ${tiers}">
+        <!-- Modal Sửa -->
+        <div class="modal fade" th:id="'editTierModal' + ${tier.tierId}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <form th:action="@{'/admin/membership-tiers/edit/' + ${tier.tierId}}" method="post">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title fw-bold">
+                                <i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa Hạng: <span th:text="${tier.tierName}"></span>
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Tên Hạng Thành Viên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="tierName" th:value="${tier.tierName}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Chi Tiêu Tích Lũy Yêu Cầu (VNĐ) <span class="text-danger">*</span></label>
+                                <input type="number" step="1000" min="0" class="form-control" name="minSpentRequired" th:value="${tier.minSpentRequired}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Tỷ Lệ Giảm Giá Đơn Hàng (%) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.1" min="0" max="100" class="form-control" name="discountPercent" th:value="${tier.discountPercent}" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                            <button type="submit" class="btn btn-primary fw-semibold">
+                                <i class="bi bi-check-lg me-1"></i> Cập Nhật
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Xóa -->
+        <div class="modal fade" th:id="'deleteTierModal' + ${tier.tierId}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <form th:action="@{'/admin/membership-tiers/delete/' + ${tier.tierId}}" method="post">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title fw-bold">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>Xác Nhận Xóa Hạng Thành Viên
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4 text-center">
+                            <p class="fs-6 mb-2">Bạn có chắc chắn muốn xóa hạng thành viên:</p>
+                            <h5 class="fw-bold text-danger mb-3" th:text="${tier.tierName}"></h5>
+                            <p class="small text-muted mb-0">
+                                Lưu ý: Hệ thống sẽ chặn xóa nếu đang có khách hàng thuộc hạng thành viên này.
+                            </p>
+                        </div>
+                        <div class="modal-footer bg-light justify-content-center">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-danger fw-semibold">
+                                <i class="bi bi-trash me-1"></i> Đồng Ý Xóa
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</div>
+</body>
+</html>
