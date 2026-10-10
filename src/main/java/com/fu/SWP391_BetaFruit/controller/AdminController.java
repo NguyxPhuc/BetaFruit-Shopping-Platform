@@ -2,6 +2,8 @@ package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.CategoryRequest;
 import com.fu.SWP391_BetaFruit.dto.request.RoleRequest;
+import com.fu.SWP391_BetaFruit.dto.request.MembershipTierRequest;
+import com.fu.SWP391_BetaFruit.service.MembershipTierService;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
 import com.fu.SWP391_BetaFruit.service.RoleService;
 import com.fu.SWP391_BetaFruit.service.ShopService;
@@ -23,6 +25,7 @@ public class AdminController {
     private final CategoryService categoryService;
     private final RoleService roleService;
     private final ShopService shopService;
+    private final MembershipTierService membershipTierService;
 
     // ================= 0. TỔNG QUAN (DASHBOARD) =================
     /**
@@ -228,5 +231,61 @@ public class AdminController {
         roleService.updateRole(id, roleRequest);
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật vai trò thành công!");
         return "redirect:/admin/roles";
+    }
+
+    // ================= 4. QUẢN LÝ HẠNG THÀNH VIÊN (FE-12.5 & BR-LY-02) =================
+    /**
+     * Hiển thị danh sách các hạng thành viên (Admin).
+     */
+    @GetMapping("/admin/membership-tiers")
+    public String listMembershipTiers(Model model) {
+        model.addAllAttributes(membershipTierService.getAdminMembershipPageData());
+        return "admin/membership/list";
+    }
+
+    /**
+     * Tạo mới hạng thành viên (Admin).
+     */
+    @PostMapping("/admin/membership-tiers/create")
+    public String createMembershipTier(@ModelAttribute("newTier") MembershipTierRequest request,
+                                       RedirectAttributes redirectAttributes) {
+        try {
+            membershipTierService.createTier(request);
+            redirectAttributes.addFlashAttribute("successMessage", "Tạo hạng thành viên mới thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/membership-tiers";
+    }
+
+    /**
+     * Cập nhật hạng thành viên (Admin).
+     */
+    @PostMapping("/admin/membership-tiers/edit/{id}")
+    public String editMembershipTier(@PathVariable("id") Integer id,
+                                     @ModelAttribute MembershipTierRequest request,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            membershipTierService.updateTier(id, request);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hạng thành viên thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/membership-tiers";
+    }
+
+    /**
+     * Xóa hạng thành viên (Admin).
+     */
+    @PostMapping("/admin/membership-tiers/delete/{id}")
+    public String deleteMembershipTier(@PathVariable("id") Integer id,
+                                       RedirectAttributes redirectAttributes) {
+        try {
+            membershipTierService.deleteTier(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa hạng thành viên thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/membership-tiers";
     }
 }
