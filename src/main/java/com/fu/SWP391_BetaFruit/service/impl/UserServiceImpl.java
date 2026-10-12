@@ -85,19 +85,6 @@ public class UserServiceImpl implements UserService {
 
         return shopProfileResponse;
     }
-  
-    @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    @Override
-    public List<User> searchUsers(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return userRepository.findAll();
-        }
-        return userRepository.searchUsers(keyword.trim());
-    }
 
     @Override
     public User getUserById(Integer userId) {
@@ -147,16 +134,6 @@ public class UserServiceImpl implements UserService {
     );
 
     @Override
-    public Page<User> getAdminUserPage(String keyword, int page, int size) {
-        return getAdminUserPage(keyword, null, null, page, size, "userId", "desc");
-    }
-
-    @Override
-    public Page<User> getAdminUserPage(String keyword, int page, int size, String sortBy, String sortDir) {
-        return getAdminUserPage(keyword, null, null, page, size, sortBy, sortDir);
-    }
-
-    @Override
     public Page<User> getAdminUserPage(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
         int pageSize = size > 0 ? size : 5;
@@ -202,21 +179,6 @@ public class UserServiceImpl implements UserService {
             }
         }
         return null;
-    }
-
-    @Override
-    public Map<String, Object> getAdminUserPageData(String keyword) {
-        return getAdminUserPageData(keyword, null, null, 1, 5, "userId", "desc");
-    }
-
-    @Override
-    public Map<String, Object> getAdminUserPageData(String keyword, int page, int size) {
-        return getAdminUserPageData(keyword, null, null, page, size, "userId", "desc");
-    }
-
-    @Override
-    public Map<String, Object> getAdminUserPageData(String keyword, int page, int size, String sortBy, String sortDir) {
-        return getAdminUserPageData(keyword, null, null, page, size, sortBy, sortDir);
     }
 
     @Override

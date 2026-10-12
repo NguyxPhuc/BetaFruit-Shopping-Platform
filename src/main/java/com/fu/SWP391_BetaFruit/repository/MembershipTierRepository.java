@@ -9,8 +9,4 @@ public interface MembershipTierRepository extends JpaRepository<MembershipTier, 
     MembershipTier findTopByOrderByMinSpentRequiredAsc();
 
     java.util.List<MembershipTier> findAllByOrderByMinSpentRequiredAsc();
-
-    boolean existsByTierNameIgnoreCase(String tierName);
-
-    boolean existsByMinSpentRequired(java.math.BigDecimal minSpentRequired);
 }

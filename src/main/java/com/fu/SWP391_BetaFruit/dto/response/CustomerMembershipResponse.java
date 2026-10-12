@@ -1,7 +1,6 @@
 package com.fu.SWP391_BetaFruit.dto.response;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,7 +12,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class CustomerMembershipResponse {
     // Thông tin khách hàng & chi tiêu tích lũy
     private Integer userId;
@@ -42,7 +40,6 @@ public class CustomerMembershipResponse {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    @Builder
     public static class TierDetail {
         private Integer tierId;
         private String tierName;

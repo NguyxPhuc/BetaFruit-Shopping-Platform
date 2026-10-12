@@ -25,36 +25,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
 
     @Override
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
-    }
-
-    @Override
-    public List<Product> searchProducts(String keyword, String tab) {
-        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
-        boolean hasKeyword = !cleanKeyword.isEmpty();
-        String currentTab = (tab != null && !tab.trim().isEmpty()) ? tab.trim().toUpperCase() : "ALL";
-
-        return switch (currentTab) {
-            case "PENDING" -> hasKeyword
-                    ? productRepository.searchByApprovalStatus(cleanKeyword, ProductApprovalStatus.PENDING)
-                    : productRepository.findByApprovalStatus(ProductApprovalStatus.PENDING);
-            case "ACTIVE" -> hasKeyword
-                    ? productRepository.searchByApprovalAndVisibility(cleanKeyword, ProductApprovalStatus.APPROVED, ProductVisibility.ACTIVE)
-                    : productRepository.findByApprovalStatusAndVisibilityStatus(ProductApprovalStatus.APPROVED, ProductVisibility.ACTIVE);
-            case "HIDDEN" -> hasKeyword
-                    ? productRepository.searchByApprovalAndVisibility(cleanKeyword, ProductApprovalStatus.APPROVED, ProductVisibility.HIDDEN)
-                    : productRepository.findByApprovalStatusAndVisibilityStatus(ProductApprovalStatus.APPROVED, ProductVisibility.HIDDEN);
-            case "REJECTED" -> hasKeyword
-                    ? productRepository.searchByApprovalStatus(cleanKeyword, ProductApprovalStatus.REJECTED)
-                    : productRepository.findByApprovalStatus(ProductApprovalStatus.REJECTED);
-            default -> hasKeyword
-                    ? productRepository.searchAll(cleanKeyword)
-                    : productRepository.findAll();
-        };
-    }
-
-    @Override
     public Product getProductById(Integer productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm hoa quả với mã ID: " + productId));
@@ -120,11 +90,6 @@ public class ProductServiceImpl implements ProductService {
     );
 
     @Override
-    public Page<Product> searchProductsPaginated(String keyword, String tab, int page, int size) {
-        return searchProductsPaginated(keyword, tab, page, size, "productId", "desc");
-    }
-
-    @Override
     public Page<Product> searchProductsPaginated(String keyword, String tab, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
         int pageSize = size > 0 ? size : 5;
@@ -155,16 +120,6 @@ public class ProductServiceImpl implements ProductService {
                     ? productRepository.searchAll(cleanKeyword, pageable)
                     : productRepository.findAll(pageable);
         };
-    }
-
-    @Override
-    public Map<String, Object> getAdminProductPageData(String keyword, String tab) {
-        return getAdminProductPageData(keyword, tab, 1, 5, "productId", "desc");
-    }
-
-    @Override
-    public Map<String, Object> getAdminProductPageData(String keyword, String tab, int page, int size) {
-        return getAdminProductPageData(keyword, tab, page, size, "productId", "desc");
     }
 
     @Override

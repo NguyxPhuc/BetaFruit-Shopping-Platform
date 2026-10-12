@@ -14,8 +14,6 @@ import java.util.List;
 public interface MasterCategoryRepository extends JpaRepository<MasterCategory, Integer> {
     boolean existsByCategoryNameIgnoreCase(String categoryName);
     boolean existsByCategoryNameIgnoreCaseAndCategoryIdNot(String categoryName, Integer categoryId);
-    List<MasterCategory> findByCategoryNameContainingIgnoreCase(String keyword);
-    Page<MasterCategory> findByCategoryNameContainingIgnoreCase(String keyword, Pageable pageable);
     long countByIsActive(Boolean isActive);
 
     @Query("SELECT c FROM MasterCategory c WHERE " +

@@ -24,19 +24,6 @@ public class CategoryServiceImpl implements CategoryService {
     private final MasterCategoryRepository masterCategoryRepository;
 
     @Override
-    public List<MasterCategory> getAllCategories() {
-        return masterCategoryRepository.findAll();
-    }
-
-    @Override
-    public List<MasterCategory> searchCategories(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return masterCategoryRepository.findAll();
-        }
-        return masterCategoryRepository.findByCategoryNameContainingIgnoreCase(keyword.trim());
-    }
-
-    @Override
     public MasterCategory getCategoryById(Integer id) {
         return masterCategoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục hoa quả với mã ID: " + id));
@@ -105,16 +92,6 @@ public class CategoryServiceImpl implements CategoryService {
     );
 
     @Override
-    public Page<MasterCategory> getAdminCategoryPage(String keyword, int page, int size) {
-        return getAdminCategoryPage(keyword, "ALL", page, size, "categoryId", "desc");
-    }
-
-    @Override
-    public Page<MasterCategory> getAdminCategoryPage(String keyword, int page, int size, String sortBy, String sortDir) {
-        return getAdminCategoryPage(keyword, "ALL", page, size, sortBy, sortDir);
-    }
-
-    @Override
     public Page<MasterCategory> getAdminCategoryPage(String keyword, String status, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
         int pageSize = size > 0 ? size : 5;
@@ -128,21 +105,6 @@ public class CategoryServiceImpl implements CategoryService {
         Boolean isActive = parseActiveStatus(status);
 
         return masterCategoryRepository.filterCategories(cleanKeyword, isActive, pageable);
-    }
-
-    @Override
-    public Map<String, Object> getAdminCategoryPageData(String keyword) {
-        return getAdminCategoryPageData(keyword, "ALL", 1, 5, "categoryId", "desc");
-    }
-
-    @Override
-    public Map<String, Object> getAdminCategoryPageData(String keyword, int page, int size) {
-        return getAdminCategoryPageData(keyword, "ALL", page, size, "categoryId", "desc");
-    }
-
-    @Override
-    public Map<String, Object> getAdminCategoryPageData(String keyword, int page, int size, String sortBy, String sortDir) {
-        return getAdminCategoryPageData(keyword, "ALL", page, size, sortBy, sortDir);
     }
 
     @Override

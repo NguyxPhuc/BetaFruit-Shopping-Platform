@@ -91,32 +91,32 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         List<CustomerMembershipResponse.TierDetail> tierDetails = new ArrayList<>();
         for (MembershipTier t : sortedTiers) {
             boolean isCur = (currentTier != null && Objects.equals(t.getTierId(), currentTier.getTierId()));
-            tierDetails.add(CustomerMembershipResponse.TierDetail.builder()
-                    .tierId(t.getTierId())
-                    .tierName(t.getTierName())
-                    .minSpentRequired(t.getMinSpentRequired())
-                    .discountPercent(t.getDiscountPercent())
-                    .isCurrent(isCur)
-                    .build());
+            tierDetails.add(new CustomerMembershipResponse.TierDetail(
+                    t.getTierId(),
+                    t.getTierName(),
+                    t.getMinSpentRequired(),
+                    t.getDiscountPercent(),
+                    isCur
+            ));
         }
 
-        return CustomerMembershipResponse.builder()
-                .userId(user.getUserId())
-                .fullName(user.getFullName())
-                .username(user.getUsername())
-                .totalCumulativeSpend(totalSpent)
-                .currentTierId(currentTier != null ? currentTier.getTierId() : null)
-                .currentTierName(currentTier != null ? currentTier.getTierName() : "Thành viên")
-                .currentDiscountPercent(currentTier != null ? currentTier.getDiscountPercent() : BigDecimal.ZERO)
-                .currentMinSpent(currentTier != null ? currentTier.getMinSpentRequired() : BigDecimal.ZERO)
-                .hasNextTier(hasNextTier)
-                .nextTierId(nextTier != null ? nextTier.getTierId() : null)
-                .nextTierName(nextTier != null ? nextTier.getTierName() : null)
-                .nextMinSpent(nextTier != null ? nextTier.getMinSpentRequired() : null)
-                .amountNeeded(amountNeeded)
-                .progressPercentage(progressPercentage)
-                .allTiers(tierDetails)
-                .build();
+        return new CustomerMembershipResponse(
+                user.getUserId(),
+                user.getFullName(),
+                user.getUsername(),
+                totalSpent,
+                currentTier != null ? currentTier.getTierId() : null,
+                currentTier != null ? currentTier.getTierName() : "Thành viên",
+                currentTier != null ? currentTier.getDiscountPercent() : BigDecimal.ZERO,
+                currentTier != null ? currentTier.getMinSpentRequired() : BigDecimal.ZERO,
+                hasNextTier,
+                nextTier != null ? nextTier.getTierId() : null,
+                nextTier != null ? nextTier.getTierName() : null,
+                nextTier != null ? nextTier.getMinSpentRequired() : null,
+                amountNeeded,
+                progressPercentage,
+                tierDetails
+        );
     }
 
     // =========================================================================
