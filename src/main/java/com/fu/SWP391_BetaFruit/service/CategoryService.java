@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface CategoryService {
     List<MasterCategory> getAllCategories();
+    List<MasterCategory> getActiveCategories();
     List<MasterCategory> searchCategories(String keyword);
     MasterCategory getCategoryById(Integer id);
     void createCategory(CategoryRequest request);

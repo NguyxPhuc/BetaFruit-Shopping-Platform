@@ -15,7 +15,7 @@ public interface MasterCategoryRepository extends JpaRepository<MasterCategory, 
     boolean existsByCategoryNameIgnoreCase(String categoryName);
     boolean existsByCategoryNameIgnoreCaseAndCategoryIdNot(String categoryName, Integer categoryId);
     List<MasterCategory> findByCategoryNameContainingIgnoreCase(String keyword);
-    Page<MasterCategory> findByCategoryNameContainingIgnoreCase(String keyword, Pageable pageable);
+    List<MasterCategory> findByIsActiveTrue();
     long countByIsActive(Boolean isActive);
 
     @Query("SELECT c FROM MasterCategory c WHERE " +
