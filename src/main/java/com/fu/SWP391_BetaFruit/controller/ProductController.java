@@ -27,6 +27,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final CategoryService categoryService;
+    private final com.fu.SWP391_BetaFruit.service.InventoryService inventoryService;
 
     // =========================================================================
     // 1. DANH SÁCH HOA QUẢ CỦA CỬA HÀNG (SHOP OWNER)
@@ -46,6 +47,7 @@ public class ProductController {
         try {
             Shop shop = productService.getShopByUserId(userId);
             Page<Product> productPage = productService.getShopProductsPaginated(userId, keyword, page, size);
+            long lowStockCount = inventoryService.countLowStockVariants(userId);
 
             model.addAttribute("shop", shop);
             model.addAttribute("products", productPage.getContent());
@@ -54,6 +56,8 @@ public class ProductController {
             model.addAttribute("totalPages", productPage.getTotalPages());
             model.addAttribute("totalItems", productPage.getTotalElements());
             model.addAttribute("keyword", keyword != null ? keyword.trim() : "");
+            model.addAttribute("lowStockCount", lowStockCount);
+            model.addAttribute("lowStockVariants", inventoryService.getLowStockVariants(userId));
 
             return "shop/products/list";
         } catch (IllegalArgumentException ex) {
