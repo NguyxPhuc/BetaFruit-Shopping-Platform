@@ -1,9 +1,10 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
-import com.fu.SWP391_BetaFruit.entity.Product;
-import com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus;
-import com.fu.SWP391_BetaFruit.enums.ProductVisibility;
-import com.fu.SWP391_BetaFruit.repository.ProductRepository;
+import com.fu.SWP391_BetaFruit.dto.request.ProductCreateRequest;
+import com.fu.SWP391_BetaFruit.entity.*;
+import com.fu.SWP391_BetaFruit.enums.*;
+import com.fu.SWP391_BetaFruit.repository.*;
+import com.fu.SWP391_BetaFruit.service.NotificationService;
 import com.fu.SWP391_BetaFruit.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +25,12 @@ import java.util.Set;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductVariantRepository productVariantRepository;
+    private final ProductImageRepository productImageRepository;
+    private final ShopRepository shopRepository;
+    private final UserRepository userRepository;
+    private final MasterCategoryRepository masterCategoryRepository;
+    private final NotificationService notificationService;
 
     @Override
     public List<Product> getAllProducts() {
@@ -192,5 +200,98 @@ public class ProductServiceImpl implements ProductService {
         data.put("rejectedCount", countRejected());
 
         return data;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Shop getShopByUserId(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin tài khoản người dùng!"));
+        return shopRepository.findByOwner(user)
+                .orElseThrow(() -> new IllegalArgumentException("Tài khoản của bạn chưa được liên kết với cửa hàng nào!"));
+    }
+
+    @Override
+    @Transactional
+    public Product createProductForShop(Integer userId, ProductCreateRequest request) {
+        Shop shop = getShopByUserId(userId);
+
+        if (shop.getApprovalStatus() == ShopApprovalStatus.REJECTED) {
+            throw new IllegalArgumentException("Cửa hàng của bạn đã bị từ chối hoạt động. Không thể đăng bán hoa quả mới!");
+        }
+
+        MasterCategory category = masterCategoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục hoa quả đã chọn!"));
+
+        if (Boolean.FALSE.equals(category.getIsActive())) {
+            throw new IllegalArgumentException("Danh mục hoa quả này hiện đang tạm đóng, vui lòng chọn danh mục khác!");
+        }
+
+        // 1. Lưu Thực thể Product (Hoa quả)
+        Product product = new Product();
+        product.setShop(shop);
+        product.setCategory(category);
+        product.setProductName(request.getProductName().trim());
+        product.setDescription(request.getDescription().trim());
+        // Mặc định hoa quả mới đăng ký: chờ kiểm duyệt chất lượng (PENDING) và tạm ẩn (HIDDEN)
+        product.setApprovalStatus(ProductApprovalStatus.PENDING);
+        product.setVisibilityStatus(ProductVisibility.HIDDEN);
+
+        Product savedProduct = productRepository.save(product);
+
+        // 2. Lưu các Thực thể ProductVariant (Hỗ trợ nhiều quy cách đóng gói & Giá bán)
+        java.util.List<com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest> variantList = request.getEffectiveVariants();
+        if (variantList.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập ít nhất 1 thực thể (biến thể) cho hoa quả!");
+        }
+
+        for (com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest vReq : variantList) {
+            ProductVariant variant = new ProductVariant();
+            variant.setProduct(savedProduct);
+            variant.setVariantName(vReq.getVariantName().trim());
+            variant.setOriginalPrice(vReq.getOriginalPrice());
+            // Mặc định hoa quả mới không có khuyến mãi, để NULL để thỏa mãn ràng buộc CHECK (SalePrice IS NULL OR SalePrice < OriginalPrice)
+            variant.setSalePrice(null);
+            variant.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
+            variant.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
+            variant.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
+            variant.setIsAvailable(true);
+
+            productVariantRepository.save(variant);
+        }
+
+        // 3. Lưu Thực thể ProductImage (Ảnh đại diện hoa quả)
+        ProductImage image = new ProductImage();
+        image.setProduct(savedProduct);
+        image.setImageUrl(request.getImageUrl().trim());
+        image.setIsPrimary(true);
+
+        productImageRepository.save(image);
+
+        // 4. Tạo thông báo hệ thống gửi đến tài khoản chủ Shop
+        try {
+            notificationService.createBaseNotification(
+                    shop.getOwner(),
+                    "Đăng ký hoa quả mới thành công",
+                    "Sản phẩm '" + savedProduct.getProductName() + "' đã gửi kiểm duyệt thành công và đang chờ ban quản trị phê duyệt.",
+                    NotificationType.SYSTEM_ALERT,
+                    "/shop/products"
+            );
+        } catch (Exception ignored) {
+            // Không làm gián đoạn luồng chính nếu có lỗi nhỏ khi tạo thông báo
+        }
+
+        return savedProduct;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Product> getShopProductsPaginated(Integer userId, String keyword, int page, int size) {
+        Shop shop = getShopByUserId(userId);
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), size, Sort.by(Sort.Direction.DESC, "productId"));
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return productRepository.findByShop_ShopIdAndProductNameContainingIgnoreCase(shop.getShopId(), keyword.trim(), pageable);
+        }
+        return productRepository.findByShop_ShopId(shop.getShopId(), pageable);
     }
 }

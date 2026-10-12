@@ -85,4 +85,10 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
                                                 @Param("approvalStatus") ProductApprovalStatus approvalStatus,
                                                 @Param("visibilityStatus") ProductVisibility visibilityStatus,
                                                 Pageable pageable);
+
+    Page<Product> findByShop_ShopId(Integer shopId, Pageable pageable);
+
+    Page<Product> findByShop_ShopIdAndProductNameContainingIgnoreCase(Integer shopId, String keyword, Pageable pageable);
+
+    long countByShop_ShopId(Integer shopId);
 }
