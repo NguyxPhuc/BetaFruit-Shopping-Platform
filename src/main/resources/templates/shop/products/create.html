@@ -1358,6 +1358,7 @@
         const index = container.children.length;
         const vName = data.variantName || '';
         const oPrice = data.originalPrice !== null && data.originalPrice !== undefined ? data.originalPrice : '';
+        const sPrice = data.salePrice !== null && data.salePrice !== undefined ? data.salePrice : '';
         const cPrice = data.costPrice !== null && data.costPrice !== undefined ? data.costPrice : '';
         const sQty = data.stockQuantity !== null && data.stockQuantity !== undefined ? data.stockQuantity : '';
         const lowThresh = data.lowStockThreshold !== null && data.lowStockThreshold !== undefined ? data.lowStockThreshold : 5;
@@ -1381,7 +1382,7 @@
             </div>
 
             <div class="row g-2">
-                <div class="col-12 col-md-7">
+                <div class="col-12 col-md-6">
                     <label class="form-label small fw-bold mb-1">
                         <span>Tên thực thể (Quy cách) <span class="required-badge">*</span></span>
                     </label>
@@ -1394,9 +1395,9 @@
                            oninput="handleVariantNameChange(this)">
                 </div>
 
-                <div class="col-12 col-md-5">
+                <div class="col-12 col-md-6">
                     <label class="form-label small fw-bold mb-1">
-                        <span>Giá niêm yết (Giá bán) <span class="required-badge">*</span></span>
+                        <span>Giá niêm yết (Giá gốc) <span class="required-badge">*</span></span>
                     </label>
                     <div class="input-group input-group-sm">
                         <input type="number"
@@ -1412,7 +1413,41 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <label class="form-label small fw-bold mb-0">
+                            <span>Giá khuyến mãi (Sale)</span>
+                        </label>
+                        <span class="badge bg-danger text-white variant-discount-badge" style="font-size: 0.68rem; display: none;">-0%</span>
+                    </div>
+                    <div class="input-group input-group-sm">
+                        <input type="number"
+                               name="variants[${index}].salePrice"
+                               value="${sPrice}"
+                               class="form-control form-control-sm variant-input-sale-price"
+                               placeholder="Để trống nếu không giảm"
+                               min="1000"
+                               step="1000"
+                               oninput="handleSalePriceChange(this)">
+                        <span class="input-group-text">VNĐ</span>
+                    </div>
+                    <div class="sale-price-feedback text-danger" style="display: none; font-size: 0.75rem; margin-top: 2px;"></div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-bold mb-1">
+                        <span>Tồn kho ban đầu <span class="required-badge">*</span></span>
+                    </label>
+                    <input type="number"
+                           name="variants[${index}].stockQuantity"
+                           value="${sQty}"
+                           class="form-control form-control-sm"
+                           placeholder="VD: 100"
+                           min="0"
+                           required>
+                </div>
+
+                <div class="col-12 col-md-6">
                     <label class="form-label small fw-semibold text-muted mb-1">
                         <span>Giá vốn <small>(Nội bộ)</small></span>
                     </label>
@@ -1428,20 +1463,7 @@
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4">
-                    <label class="form-label small fw-bold mb-1">
-                        <span>Tồn kho ban đầu <span class="required-badge">*</span></span>
-                    </label>
-                    <input type="number"
-                           name="variants[${index}].stockQuantity"
-                           value="${sQty}"
-                           class="form-control form-control-sm"
-                           placeholder="VD: 100"
-                           min="0"
-                           required>
-                </div>
-
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6">
                     <label class="form-label small fw-semibold text-muted mb-1">
                         <span>Báo sắp hết</span>
                     </label>
@@ -1457,6 +1479,12 @@
 
         container.appendChild(card);
         reindexVariants();
+
+        // Kích hoạt tính toán giảm giá nếu có dữ liệu giá sale ban đầu
+        const saleInput = card.querySelector('.variant-input-sale-price');
+        if (saleInput && sPrice) {
+            handleSalePriceChange(saleInput);
+        }
 
         if (!data.variantName) {
             const input = card.querySelector('.variant-input-name');
@@ -1503,6 +1531,9 @@
             const priceInput = card.querySelector('input[name*="originalPrice"]');
             if (priceInput) priceInput.name = `variants[${i}].originalPrice`;
 
+            const saleInput = card.querySelector('input[name*="salePrice"]');
+            if (saleInput) saleInput.name = `variants[${i}].salePrice`;
+
             const costInput = card.querySelector('input[name*="costPrice"]');
             if (costInput) costInput.name = `variants[${i}].costPrice`;
 
@@ -1531,18 +1562,94 @@
     }
 
     function handlePriceChange(input) {
+        const card = input.closest('.variant-item-card');
+        if (card) {
+            const saleInput = card.querySelector('.variant-input-sale-price');
+            if (saleInput && saleInput.value) {
+                handleSalePriceChange(saleInput);
+            }
+        }
+        updateSummaryMinPrice();
+    }
+
+    function handleSalePriceChange(input) {
+        const card = input.closest('.variant-item-card');
+        if (!card) return;
+
+        const priceInput = card.querySelector('.variant-input-price');
+        const badge = card.querySelector('.variant-discount-badge');
+        const feedback = card.querySelector('.sale-price-feedback');
+
+        const oPrice = parseFloat(priceInput ? priceInput.value : '');
+        const sPrice = parseFloat(input.value);
+
+        if (!input.value || isNaN(sPrice)) {
+            input.classList.remove('is-invalid');
+            if (badge) badge.style.display = 'none';
+            if (feedback) feedback.style.display = 'none';
+            updateSummaryMinPrice();
+            return;
+        }
+
+        if (sPrice <= 0) {
+            input.classList.add('is-invalid');
+            if (badge) badge.style.display = 'none';
+            if (feedback) {
+                feedback.textContent = 'Giá khuyến mãi phải lớn hơn 0.';
+                feedback.style.display = 'block';
+            }
+            updateSummaryMinPrice();
+            return;
+        }
+
+        if (!isNaN(oPrice) && oPrice > 0 && sPrice >= oPrice) {
+            input.classList.add('is-invalid');
+            if (badge) badge.style.display = 'none';
+            if (feedback) {
+                feedback.textContent = 'Giá khuyến mãi phải nhỏ hơn giá gốc (' + formatVND(oPrice) + ')!';
+                feedback.style.display = 'block';
+            }
+            updateSummaryMinPrice();
+            return;
+        }
+
+        // Hợp lệ: sPrice < oPrice
+        input.classList.remove('is-invalid');
+        if (feedback) feedback.style.display = 'none';
+
+        if (!isNaN(oPrice) && oPrice > 0) {
+            const discountPercent = Math.round((1 - (sPrice / oPrice)) * 100);
+            if (badge) {
+                badge.textContent = '-' + discountPercent + '%';
+                badge.style.display = 'inline-block';
+            }
+        } else {
+            if (badge) badge.style.display = 'none';
+        }
+
         updateSummaryMinPrice();
     }
 
     function updateSummaryMinPrice() {
         const container = document.getElementById('variantsContainer');
         if (!container) return;
-        const priceInputs = container.querySelectorAll('.variant-input-price');
+        const cards = container.querySelectorAll('.variant-item-card');
         let min = null;
-        priceInputs.forEach(inp => {
-            const val = parseFloat(inp.value);
-            if (!isNaN(val) && val > 0) {
-                if (min === null || val < min) min = val;
+        cards.forEach(card => {
+            const priceInput = card.querySelector('.variant-input-price');
+            const saleInput = card.querySelector('.variant-input-sale-price');
+            const oVal = priceInput ? parseFloat(priceInput.value) : NaN;
+            const sVal = saleInput && saleInput.value ? parseFloat(saleInput.value) : NaN;
+
+            let effectiveVal = NaN;
+            if (!isNaN(sVal) && sVal > 0 && (!isNaN(oVal) ? sVal < oVal : true)) {
+                effectiveVal = sVal;
+            } else if (!isNaN(oVal) && oVal > 0) {
+                effectiveVal = oVal;
+            }
+
+            if (!isNaN(effectiveVal)) {
+                if (min === null || effectiveVal < min) min = effectiveVal;
             }
         });
         const summaryMin = document.getElementById('summaryMinPrice');
@@ -1664,6 +1771,26 @@
                 for (let c of variantCards) {
                     const name = c.querySelector('.variant-input-name');
                     const price = c.querySelector('.variant-input-price');
+                    const sale = c.querySelector('.variant-input-sale-price');
+
+                    const oVal = price ? parseFloat(price.value) : NaN;
+                    const sVal = sale && sale.value ? parseFloat(sale.value) : NaN;
+
+                    if (sale && sale.value) {
+                        if (isNaN(sVal) || sVal <= 0) {
+                            e.preventDefault();
+                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải lớn hơn 0!');
+                            if (sale) sale.focus();
+                            return false;
+                        }
+                        if (!isNaN(oVal) && sVal >= oVal) {
+                            e.preventDefault();
+                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải nhỏ hơn giá gốc (' + formatVND(oVal) + ')!');
+                            if (sale) sale.focus();
+                            return false;
+                        }
+                    }
+
                     if (name && name.value.trim() && price && parseFloat(price.value) >= 1000) {
                         validVariants++;
                     }

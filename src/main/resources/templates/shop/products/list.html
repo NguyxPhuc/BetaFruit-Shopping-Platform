@@ -543,21 +543,43 @@
 
                         <!-- Thực thể & Giá (Hiển thị đầy đủ tất cả thực thể đã tạo) -->
                         <td>
-                            <div th:if="${prod.variants != null && !prod.variants.empty}" class="d-flex flex-column gap-2" style="min-width: 170px; max-width: 240px;">
+                            <div th:if="${prod.variants != null && !prod.variants.empty}" class="d-flex flex-column gap-2" style="min-width: 175px; max-width: 250px;">
                                 <div th:each="v, vStat : ${prod.variants}"
                                      class="p-2 rounded-2 border bg-white shadow-xs">
                                     <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                                         <span class="fw-semibold text-dark small text-truncate" th:text="${v.variantName}">Hộp 1kg</span>
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-0 px-1"
-                                              style="font-size: 0.7rem;"
-                                              th:if="${prod.variants.size() > 1}"
-                                              th:text="'#' + ${vStat.count}">#1</span>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <!-- Huy hiệu giảm giá nếu có SalePrice -->
+                                            <span class="badge bg-danger text-white rounded-pill py-0 px-1"
+                                                  style="font-size: 0.65rem;"
+                                                  th:if="${v.salePrice != null && v.salePrice > 0 && v.salePrice < v.originalPrice}"
+                                                  th:text="'-' + ${#numbers.formatInteger((1.0 - (v.salePrice.doubleValue() / v.originalPrice.doubleValue())) * 100, 0)} + '%'">-10%</span>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-0 px-1"
+                                                  style="font-size: 0.7rem;"
+                                                  th:if="${prod.variants.size() > 1}"
+                                                  th:text="'#' + ${vStat.count}">#1</span>
+                                        </div>
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between gap-2">
-                                        <span class="small text-danger fw-bold"
-                                              th:text="${#numbers.formatDecimal(v.salePrice != null ? v.salePrice : v.originalPrice, 0, 'POINT', 0, 'COMMA')} + ' đ'">
-                                            50,000 đ
-                                        </span>
+                                        <!-- Nếu có giá khuyến mãi hợp lệ -->
+                                        <div th:if="${v.salePrice != null && v.salePrice > 0 && v.salePrice < v.originalPrice}"
+                                             class="d-flex align-items-baseline gap-1">
+                                            <span class="small text-danger fw-bold"
+                                                  th:text="${#numbers.formatDecimal(v.salePrice, 0, 'POINT', 0, 'COMMA')} + ' đ'">
+                                                45,000 đ
+                                            </span>
+                                            <span class="text-muted text-decoration-line-through" style="font-size: 0.7rem;"
+                                                  th:text="${#numbers.formatDecimal(v.originalPrice, 0, 'POINT', 0, 'COMMA')} + ' đ'">
+                                                50,000 đ
+                                            </span>
+                                        </div>
+                                        <!-- Nếu không có giá khuyến mãi -->
+                                        <div th:unless="${v.salePrice != null && v.salePrice > 0 && v.salePrice < v.originalPrice}">
+                                            <span class="small text-danger fw-bold"
+                                                  th:text="${#numbers.formatDecimal(v.originalPrice, 0, 'POINT', 0, 'COMMA')} + ' đ'">
+                                                50,000 đ
+                                            </span>
+                                        </div>
                                         <span class="text-muted" style="font-size: 0.75rem;">
                                             Kho: <strong class="text-dark" th:text="${v.stockQuantity}">100</strong>
                                         </span>
@@ -583,23 +605,44 @@
                             </span>
                         </td>
 
-                        <!-- Trạng thái hiển thị -->
+                        <!-- Trạng thái hiển thị (Chỉ hoa quả Đã duyệt mới bấm chuyển đổi được) -->
                         <td>
-                            <span th:if="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE}"
-                                  class="badge-status badge-active">
-                                <i class="bi bi-eye-fill"></i> Đang bán
-                            </span>
-                            <span th:if="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).HIDDEN}"
-                                  class="badge-status badge-hidden">
-                                <i class="bi bi-eye-slash-fill"></i> Tạm ẩn
-                            </span>
+                            <!-- Nếu ĐÃ DUYỆT: Cho phép bấm đổi trạng thái -->
+                            <form th:if="${prod.approvalStatus == T(com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus).APPROVED}"
+                                  th:action="@{/shop/products/{id}/toggle-visibility(id=${prod.productId})}" method="post" class="d-inline">
+                                <button type="submit" 
+                                        class="btn btn-sm rounded-pill py-1 px-2 border-0 fw-semibold text-start d-inline-flex align-items-center gap-1 shadow-xs"
+                                        th:classappend="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'btn-outline-success bg-success-subtle text-success' : 'btn-outline-secondary bg-secondary-subtle text-secondary'"
+                                        th:title="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'Hoa quả đang hiển thị. Bấm để Tạm Ẩn.' : 'Hoa quả đang tạm ẩn. Bấm để Mở Bán lại.'">
+                                    <i th:class="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                                    <span th:text="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'Đang bán' : 'Tạm ẩn'">Đang bán</span>
+                                </button>
+                            </form>
+
+                            <!-- Nếu CHỜ DUYỆT hoặc TỪ CHỐI: Không bấm được (Hiển thị badge khóa) -->
+                            <div th:unless="${prod.approvalStatus == T(com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus).APPROVED}" class="d-inline-block">
+                                <span class="badge rounded-pill py-1 px-2 border text-muted bg-light d-inline-flex align-items-center gap-1"
+                                      style="cursor: not-allowed; opacity: 0.75;"
+                                      th:title="${prod.approvalStatus == T(com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus).PENDING} ? 'Hoa quả đang chờ duyệt, chưa thể bật/tắt hiển thị' : 'Hoa quả bị từ chối, không thể thay đổi hiển thị'">
+                                    <i th:class="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                                    <span th:text="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'Đang bán' : 'Tạm ẩn'">Tạm ẩn</span>
+                                    <i class="bi bi-lock-fill ms-1" style="font-size: 0.65rem;"></i>
+                                </span>
+                            </div>
                         </td>
 
                         <!-- Thao tác -->
                         <td class="text-end">
-                            <a th:href="@{/shop/products/create}" class="btn btn-sm btn-light text-success" title="Đăng thêm biến thể hoặc hoa quả khác">
-                                <i class="bi bi-plus-circle"></i> Thêm
-                            </a>
+                            <div class="d-inline-flex align-items-center gap-1">
+                                <a th:href="@{/shop/products/{id}/edit(id=${prod.productId})}" 
+                                   class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 fw-semibold d-inline-flex align-items-center gap-1"
+                                   title="Chỉnh sửa thông tin hoa quả">
+                                    <i class="bi bi-pencil-square"></i> Sửa
+                                </a>
+                                <a th:href="@{/shop/products/create}" class="btn btn-sm btn-light text-success rounded-pill px-2 py-1" title="Đăng thêm hoa quả khác">
+                                    <i class="bi bi-plus-circle"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

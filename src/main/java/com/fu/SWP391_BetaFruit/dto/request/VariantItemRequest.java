@@ -18,6 +18,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class VariantItemRequest {
 
+    private Integer variantId;
+    private Boolean isAvailable = true;
+
     @NotBlank(message = "Tên thực thể không được để trống (VD: Hộp 500g, Thùng 2kg, Quả 1.5kg).")
     @Size(max = 100, message = "Tên thực thể tối đa 100 ký tự.")
     private String variantName;
@@ -26,6 +29,9 @@ public class VariantItemRequest {
     @DecimalMin(value = "1000", message = "Giá gốc phải từ 1,000 VNĐ trở lên.")
     private BigDecimal originalPrice;
 
+    @DecimalMin(value = "1000", message = "Giá khuyến mãi nếu có phải từ 1,000 VNĐ trở lên.")
+    private BigDecimal salePrice;
+
     private BigDecimal costPrice;
 
     @NotNull(message = "Số lượng tồn kho không được để trống.")
@@ -33,4 +39,13 @@ public class VariantItemRequest {
     private Integer stockQuantity;
 
     private Integer lowStockThreshold = 5;
+
+    public VariantItemRequest(String variantName, BigDecimal originalPrice, BigDecimal salePrice, BigDecimal costPrice, Integer stockQuantity, Integer lowStockThreshold) {
+        this.variantName = variantName;
+        this.originalPrice = originalPrice;
+        this.salePrice = salePrice;
+        this.costPrice = costPrice;
+        this.stockQuantity = stockQuantity;
+        this.lowStockThreshold = lowStockThreshold;
+    }
 }

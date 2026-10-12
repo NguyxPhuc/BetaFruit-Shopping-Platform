@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm Hoa Quả Mới | Kênh Người Bán BetaFruit</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans for Ultra Modern SaaS Look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Global CSS -->
+    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
+    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
+
+    <style>
+        :root {
+            --brand-green-primary: #059669;
+            --brand-green-hover: #047857;
+            --brand-green-active: #065f46;
+            --brand-green-light: #ecfdf5;
+            --brand-green-border: #a7f3d0;
+            --brand-green-glow: rgba(16, 185, 129, 0.16);
+
+            --brand-amber: #f59e0b;
+            --brand-amber-light: #fef3c7;
+            --brand-amber-border: #fde68a;
+
+            --surface-bg: #f8fafc;
+            --surface-card: #ffffff;
+            --surface-subtle: #f1f5f9;
+
+            --text-heading: #0f172a;
+            --text-body: #334155;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+
+            --border-default: #e2e8f0;
+            --border-focus: #10b981;
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --radius-full: 9999px;
+
+            --shadow-subtle: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+            --shadow-card: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
+            --shadow-float: 0 20px 35px -8px rgba(15, 23, 42, 0.08), 0 1px 3px 0 rgba(15, 23, 42, 0.02);
+            --shadow-cta: 0 10px 20px -3px rgba(5, 150, 105, 0.35);
+        }
+
+        body.shop-theme {
+            background-color: var(--surface-bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
+                radial-gradient(at 100% 20%, rgba(245, 158, 11, 0.04) 0px, transparent 40%),
+                radial-gradient(at 50% 100%, rgba(59, 130, 246, 0.03) 0px, transparent 50%);
+            background-attachment: fixed;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-body);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page-container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 1.75rem 1.25rem 6.5rem;
+        }
+
+        /* ══════════ BREADCRUMB ══════════ */
+        .breadcrumb-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.45rem 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-full);
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .breadcrumb-wrap a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: color 0.15s ease;
+        }
+
+        .breadcrumb-wrap a:hover {
+            color: var(--brand-green-primary);
+        }
+
+        .breadcrumb-separator {
+            font-size: 0.65rem;
+            color: var(--text-light);
+        }
+
+        /* ══════════ HERO TITLE & PROGRESS BAR ══════════ */
+        .page-header-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .page-header-title {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--text-heading);
+            margin: 0 0 0.35rem 0;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .page-header-desc {
+            color: var(--text-muted);
+            font-size: 0.9375rem;
+            margin: 0;
+        }
+
+        /* Checklist completion card */
+        .profile-progress-pill {
+            background: #ffffff;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            padding: 0.75rem 1.25rem;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 290px;
+        }
+
+        .progress-circle-wrap {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--brand-green-primary);
+        }
+
+        .progress-circle-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-circle-bg {
+            stroke: #e2e8f0;
+            stroke-width: 3.5;
+            fill: none;
+        }
+
+        .progress-circle-bar {
+            stroke: var(--brand-green-primary);
+            stroke-width: 3.5;
+            fill: none;
+            stroke-linecap: round;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 75;
+            transition: stroke-dashoffset 0.4s ease;
+        }
+
+        .progress-pill-info {
+            flex-grow: 1;
+        }
+
+        .progress-pill-title {
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin-bottom: 0.15rem;
+        }
+
+        .progress-pill-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* ══════════ SHOP IDENTITY BANNER ══════════ */
+        .shop-identity-card {
+            background: #ffffff;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-xl);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shop-identity-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--brand-green-primary), #10b981);
+        }
+
+        .shop-identity-main {
+            display: flex;
+            align-items: center;
+            gap: 1.15rem;
+        }
+
+        .shop-avatar-box {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            box-shadow: 0 6px 14px rgba(5, 150, 105, 0.25);
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .shop-meta-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.2rem;
+        }
+
+        .shop-meta-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .shop-meta-tags {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.65rem;
+            margin-top: 0.35rem;
+        }
+
+        .shop-tag-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.775rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: var(--surface-subtle);
+            padding: 0.2rem 0.65rem;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-default);
+        }
+
+        .shop-tag-pill strong {
+            color: var(--text-heading);
+        }
+
+        .shop-status-badge {
+            background: var(--brand-green-light);
+            border: 1px solid var(--brand-green-border);
+            color: var(--brand-green-primary);
+            padding: 0.45rem 0.95rem;
+            border-radius: var(--radius-full);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--brand-green-primary);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+            animation: pulseDot 2s infinite;
+        }
+
+        @keyframes pulseDot {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* ══════════ FORM CARDS ══════════ */
+        .form-card {
+            background: var(--surface-card);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border-default);
+            overflow: hidden;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .form-card-header {
+            padding: 1.25rem 1.5rem;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-default);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-icon-box {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+
+        .icon-box-emerald {
+            background: var(--brand-green-light);
+            color: var(--brand-green-primary);
+        }
+
+        .icon-box-amber {
+            background: var(--brand-amber-light);
+            color: var(--brand-amber);
+        }
+
+        .icon-box-purple {
+            background: #f3e8ff;
+            color: #7e22ce;
+        }
+
+        .form-card-header h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-heading);
+            letter-spacing: -0.01em;
+        }
+
+        .header-step-pill {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--surface-subtle);
+            padding: 0.25rem 0.65rem;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-default);
+        }
+
+        .form-card-body {
+            padding: 1.5rem;
+        }
+
+        /* Form Labels & Controls */
+        .form-label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-heading);
+            margin-bottom: 0.45rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .label-text-main {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .required-badge {
+            color: #ef4444;
+            font-size: 0.8125rem;
+            font-weight: 700;
+        }
+
+        .label-hint {
+            font-size: 0.775rem;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        .form-control, .form-select {
+            border: 1.5px solid #cbd5e1;
+            border-radius: var(--radius-md);
+            padding: 0.7rem 0.95rem;
+            font-size: 0.9375rem;
+            color: var(--text-heading);
+            background-color: #ffffff;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 4px var(--brand-green-glow);
+            background-color: #ffffff;
+        }
+
+        .input-group-text {
+            border: 1.5px solid #cbd5e1;
+            background-color: var(--surface-subtle);
+            color: var(--text-muted);
+            font-weight: 600;
+            border-radius: var(--radius-md);
+        }
+
+        .form-text {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+        }
+
+        /* Quick Suggestions Chips */
+        .quick-suggestion-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+
+        .quick-chip {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: var(--text-body);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.65rem;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .quick-chip:hover {
+            background: var(--brand-green-light);
+            border-color: var(--brand-green-border);
+            color: var(--brand-green-primary);
+            transform: translateY(-1px);
+        }
+
+        /* ══════════ IMAGE DROPZONE HERO ══════════ */
+        .image-upload-section {
+            position: relative;
+        }
+
+        .image-preview-wrapper {
+            width: 100%;
+            min-height: 230px;
+            border: 2px dashed #94a3b8;
+            border-radius: var(--radius-lg);
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .image-preview-wrapper:hover {
+            border-color: var(--brand-green-primary);
+            background: #f0fdf4;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.08);
+        }
+
+        .image-preview-wrapper.drag-over {
+            border-color: var(--brand-green-primary);
+            background: #dcfce7;
+            border-style: solid;
+            box-shadow: 0 0 0 4px var(--brand-green-glow);
+        }
+
+        .image-preview-wrapper.has-image {
+            border: 2px solid var(--brand-green-border);
+            background: #ffffff;
+            cursor: default;
+            padding: 0.5rem;
+            min-height: 250px;
+        }
+
+        .image-preview-wrapper.has-image:hover {
+            transform: none;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .upload-icon-graphic {
+            width: 64px;
+            height: 64px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--brand-green-primary);
+            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.12);
+            margin-bottom: 0.85rem;
+            transition: transform 0.25s ease;
+        }
+
+        .image-preview-wrapper:hover .upload-icon-graphic {
+            transform: scale(1.08);
+        }
+
+        .upload-cta-title {
+            font-size: 0.975rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin-bottom: 0.25rem;
+        }
+
+        .upload-cta-subtitle {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .upload-badge-pills {
+            display: inline-flex;
+            gap: 0.4rem;
+        }
+
+        .upload-pill {
+            font-size: 0.725rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: var(--radius-full);
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: var(--text-muted);
+        }
+
+        /* Image Display When Uploaded */
+        .preview-img {
+            max-width: 100%;
+            max-height: 260px;
+            object-fit: contain;
+            border-radius: var(--radius-md);
+            display: none;
+        }
+
+        .image-preview-actions-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8fafc;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 0.65rem 0.95rem;
+            margin-top: 0.75rem;
+        }
+
+        .image-preview-actions-bar.active {
+            display: flex;
+        }
+
+        .file-meta-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--brand-green-primary);
+            max-width: 65%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ══════════ MULTI-VARIANTS CARDS (THỰC THỂ) ══════════ */
+        .variant-presets-banner {
+            background: var(--surface-subtle);
+            border: 1px dashed #cbd5e1;
+            border-radius: var(--radius-md);
+            padding: 0.65rem 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .variant-presets-title {
+            font-size: 0.775rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .variant-item-card {
+            background: #ffffff !important;
+            border: 1.5px solid var(--border-default) !important;
+            border-radius: var(--radius-lg) !important;
+            padding: 1.15rem 1.25rem !important;
+            box-shadow: var(--shadow-subtle) !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .variant-item-card:hover {
+            border-color: var(--brand-green-border) !important;
+            box-shadow: 0 6px 18px rgba(5, 150, 105, 0.08) !important;
+            transform: translateY(-1px);
+        }
+
+        .variant-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.65rem;
+            border-bottom: 1px solid var(--surface-subtle);
+        }
+
+        .variant-number-badge {
+            background: var(--brand-green-light);
+            color: var(--brand-green-primary);
+            border: 1px solid var(--brand-green-border);
+            font-size: 0.775rem;
+            font-weight: 700;
+            padding: 0.2rem 0.65rem;
+            border-radius: var(--radius-full);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .variant-name-preview {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-heading);
+        }
+
+        .btn-remove-variant {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid transparent;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            padding: 0.2rem 0.65rem;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+        }
+
+        .btn-remove-variant:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #dc2626;
+        }
+
+        .price-currency-hint {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--brand-green-primary);
+            margin-top: 0.25rem;
+            display: block;
+            min-height: 1.1rem;
+        }
+
+        .profit-badge {
+            font-size: 0.725rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: var(--radius-full);
+            background: #dbeafe;
+            color: #1d4ed8;
+            display: inline-block;
+            margin-top: 0.25rem;
+        }
+
+        /* Nút thêm thực thể nét đứt lớn */
+        .btn-add-variant-dashed {
+            width: 100%;
+            background: #ffffff;
+            border: 2px dashed #a7f3d0;
+            border-radius: var(--radius-lg);
+            padding: 0.85rem;
+            font-weight: 700;
+            font-size: 0.9375rem;
+            color: var(--brand-green-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.25s ease;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .btn-add-variant-dashed:hover {
+            background: var(--brand-green-light);
+            border-color: var(--brand-green-primary);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(5, 150, 105, 0.12);
+        }
+
+        /* ══════════ FLOATING STICKY ACTION BAR ══════════ */
+        .sticky-action-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1020;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 -10px 25px rgba(15, 23, 42, 0.06);
+            padding: 0.85rem 1.25rem;
+        }
+
+        .sticky-action-inner {
+            max-width: 1240px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .action-summary-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .meta-counter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-body);
+            background: var(--surface-subtle);
+            padding: 0.35rem 0.85rem;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border-default);
+        }
+
+        .meta-counter-pill i {
+            color: var(--brand-green-primary);
+        }
+
+        .action-buttons-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-back-ghost {
+            background: #ffffff;
+            color: var(--text-muted);
+            border: 1.5px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 0.65rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back-ghost:hover {
+            background: var(--surface-subtle);
+            color: var(--text-heading);
+            border-color: #cbd5e1;
+        }
+
+        .btn-submit-hero {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.65rem 1.85rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            box-shadow: var(--shadow-cta);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .btn-submit-hero:hover {
+            background: linear-gradient(135deg, #047857 0%, #059669 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -4px rgba(5, 150, 105, 0.45);
+            color: #ffffff;
+        }
+
+        .btn-submit-hero:active {
+            transform: translateY(0);
+        }
+
+        /* ══════════ FLOATING TOAST JUMP IN ══════════ */
+        .floating-toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 99999;
+            max-width: 440px;
+            width: calc(100% - 48px);
+            animation: toastJumpIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes toastJumpIn {
+            0% {
+                opacity: 0;
+                transform: translate3d(80px, -20px, 0) scale(0.9);
+            }
+            60% {
+                opacity: 1;
+                transform: translate3d(-10px, 4px, 0) scale(1.02);
+            }
+            100% {
+                opacity: 1;
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+        }
+
+        @keyframes toastFadeOut {
+            0% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+            100% { opacity: 0; transform: translate3d(60px, 0, 0) scale(0.95); }
+        }
+
+        .floating-toast-card {
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16), 0 4px 16px rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(167, 243, 208, 0.9);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 6px;
+            background: linear-gradient(180deg, #059669, #10b981);
+        }
+
+        .toast-body-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.875rem;
+            padding: 1.15rem 1.25rem;
+        }
+
+        .toast-icon-wrap {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            background: var(--brand-green-light);
+            color: var(--brand-green-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+        }
+
+        .toast-progress-bar {
+            height: 3px;
+            background: linear-gradient(90deg, #059669, #34d399);
+            width: 100%;
+            animation: toastProgress 6s linear forwards;
+        }
+
+        @keyframes toastProgress {
+            0% { width: 100%; }
+            100% { width: 0%; }
+        }
+    </style>
+</head>
+<body class="shop-theme">
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div th:replace="~{shop/fragments/header :: header}"></div>
+
+<div class="page-container">
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb-wrap" aria-label="breadcrumb">
+        <a th:href="@{/shop/profile}">
+            <i class="bi bi-shop"></i> Kênh Người Bán
+        </a>
+        <i class="bi bi-chevron-right breadcrumb-separator"></i>
+        <a th:href="@{/shop/products}">
+            <i class="bi bi-basket2"></i> Quản Lý Hoa Quả
+        </a>
+        <i class="bi bi-chevron-right breadcrumb-separator"></i>
+        <span class="text-dark fw-bold">Thêm Hoa Quả Mới</span>
+    </nav>
+
+    <!-- Page Header & Progress -->
+    <div class="page-header-row mb-4">
+        <div>
+            <h1 class="page-header-title">
+                <span>Chỉnh Sửa Hoa Quả</span>
+                <span class="badge bg-primary-subtle text-primary fs-6 fw-bold rounded-pill px-3 py-1">Chỉnh Sửa Thông Tin</span>
+            </h1>
+            <p class="page-header-desc">
+                Cập nhật thông tin chi tiết, hình ảnh, thực thể đóng gói và giá bán của hoa quả trong gian hàng của bạn.
+            </p>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SHOP BANNER (CỬA HÀNG ĐĂNG BÁN) ═══════════════ -->
+    <div class="shop-identity-card">
+        <div class="shop-identity-main">
+            <div class="shop-avatar-box"
+                 th:text="${shop != null && shop.shopName != null && !shop.shopName.isEmpty() ? #strings.substring(shop.shopName, 0, 1) : 'S'}">
+                S
+            </div>
+            <div>
+                <h2 class="shop-meta-name">
+                    <span th:text="${shop != null ? shop.shopName : 'Cửa hàng BetaFruit'}">Vựa Nông Sản Đà Lạt</span>
+                </h2>
+            </div>
+        </div>
+
+        <div class="shop-status-badge">
+            <span class="status-dot"></span>
+            <span>Cửa hàng đang hoạt động</span>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TOAST THÔNG BÁO NHẢY GÓC MÀN HÌNH ═══════════════ -->
+    <div th:if="${successMessage != null}" id="floatingSuccessToast" class="floating-toast-container" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="floating-toast-card">
+            <div class="toast-indicator"></div>
+            <div class="toast-body-content">
+                <div class="toast-icon-wrap">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="toast-text-wrap flex-grow-1">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <strong class="text-dark fs-6">Đăng Bán Thành Công! 🎉</strong>
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" onclick="dismissToast()">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="text-muted small" th:text="${successMessage}">Đăng bán hoa quả thành công!</div>
+                </div>
+            </div>
+            <div class="toast-progress-bar" id="toastProgressBar"></div>
+        </div>
+    </div>
+
+    <!-- Alert Messages Khi Có Lỗi -->
+    <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center mb-4 rounded-4 shadow-sm border-danger-subtle" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
+        <div class="flex-grow-1">
+            <strong class="d-block mb-1">Không thể đăng bán hoa quả!</strong>
+            <span th:text="${errorMessage}">Đã xảy ra lỗi khi tạo sản phẩm!</span>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- ═══════════════ FORM ĐĂNG BÁN HOA QUẢ MỚI ═══════════════ -->
+    <form th:action="@{/shop/products/{id}/edit(id=${product.productId})}" th:object="${product}" method="post" enctype="multipart/form-data" novalidate id="createProductForm">
+        <input type="hidden" th:field="*{productId}">
+        <div class="row g-4">
+            
+            <!-- ════════ CỘT TRÁI: THÔNG TIN CƠ BẢN & ẢNH ĐẠI DIỆN ════════ -->
+            <div class="col-12 col-lg-6">
+                
+                <!-- THẺ 1: THÔNG TIN CƠ BẢN -->
+                <div class="form-card mb-4">
+                    <div class="form-card-header">
+                        <div class="header-title-wrap">
+                            <div class="header-icon-box icon-box-emerald">
+                                <i class="bi bi-info-circle-fill"></i>
+                            </div>
+                            <h2>Thông Tin Cơ Bản Về Hoa Quả</h2>
+                        </div>
+                    </div>
+                    <div class="form-card-body">
+                        
+                        <!-- Tên sản phẩm hoa quả -->
+                        <div class="mb-3">
+                            <label for="productName" class="form-label">
+                                <span class="label-text-main">
+                                    Tên hoa quả / nông sản <span class="required-badge">*</span>
+                                </span>
+                                <span class="label-hint" id="productNameCounter">0/120</span>
+                            </label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="productName"
+                                   maxlength="120"
+                                   th:field="*{productName}"
+                                   th:classappend="${#fields.hasErrors('productName')} ? 'is-invalid' : ''"
+                                   placeholder="VD: Xoài Cát Hòa Lộc Tiền Giang Hạng 1"
+                                   required
+                                   oninput="updateCompletionProgress(); updateNameCounter(this)">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('productName')}" th:errors="*{productName}">
+                                Tên hoa quả không được để trống.
+                            </div>
+                            <div class="form-text">Gợi ý: Đặt tên kèm chủng loại và xuất xứ (VD: Cam Sành Bến Tre, Bơ Sáp Đắk Lắk).</div>
+                        </div>
+
+                        <!-- Danh mục hoa quả -->
+                        <div class="mb-3">
+                            <label for="categoryId" class="form-label">
+                                <span class="label-text-main">
+                                    Danh mục hoa quả <span class="required-badge">*</span>
+                                </span>
+                            </label>
+                            <select class="form-select"
+                                    id="categoryId"
+                                    th:field="*{categoryId}"
+                                    th:classappend="${#fields.hasErrors('categoryId')} ? 'is-invalid' : ''"
+                                    required
+                                    onchange="updateCompletionProgress()">
+                                <option value="" disabled selected>-- Chọn danh mục phù hợp cho hoa quả --</option>
+                                <option th:each="cat : ${categories}"
+                                        th:value="${cat.categoryId}"
+                                        th:text="${cat.categoryName}">
+                                    Trái cây nhiệt đới
+                                </option>
+                            </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}">
+                                Vui lòng chọn danh mục hoa quả.
+                            </div>
+                        </div>
+
+                        <!-- Mô tả chi tiết hoa quả -->
+                        <div class="mb-2">
+                            <label for="description" class="form-label">
+                                <span class="label-text-main">
+                                    Mô tả chi tiết & Nguồn gốc <span class="required-badge">*</span>
+                                </span>
+                                <span class="label-hint">Tối thiểu 20 ký tự</span>
+                            </label>
+                            <textarea class="form-control"
+                                      id="description"
+                                      rows="4"
+                                      th:field="*{description}"
+                                      th:classappend="${#fields.hasErrors('description')} ? 'is-invalid' : ''"
+                                      placeholder="Mô tả hương vị ngọt thanh, độ tươi mới, quy trình canh tác (VietGAP, Organic), vụ mùa thu hoạch và hướng dẫn bảo quản..."
+                                      required
+                                      oninput="updateCompletionProgress()"></textarea>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">
+                                Mô tả hoa quả không được để trống.
+                            </div>
+                            
+                            <!-- Gợi ý từ khóa nhanh -->
+                            <div class="quick-suggestion-row">
+                                <span class="text-muted small fw-semibold me-1"><i class="bi bi-magic text-success"></i> Chèn nhanh:</span>
+                                <span class="quick-chip" onclick="insertKeyword('Tiêu chuẩn VietGAP sạch an toàn')">+ VietGAP</span>
+                                <span class="quick-chip" onclick="insertKeyword('Vị ngọt thanh tự nhiên, mọng nước')">+ Vị ngọt thanh</span>
+                                <span class="quick-chip" onclick="insertKeyword('Thu hoạch chín cây tại vườn')">+ Chín cây</span>
+                                <span class="quick-chip" onclick="insertKeyword('Bảo quản ngăn mát 5-8°C')">+ Bảo quản mát</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- THẺ 2: HÌNH ẢNH ĐẠI DIỆN HOA QUẢ -->
+                <div class="form-card mb-4">
+                    <div class="form-card-header">
+                        <div class="header-title-wrap">
+                            <div class="header-icon-box icon-box-amber">
+                                <i class="bi bi-image-fill"></i>
+                            </div>
+                            <h2>Hình Ảnh Đại Diện Của Hoa Quả</h2>
+                        </div>
+                    </div>
+                    <div class="form-card-body">
+                        
+                        <!-- Lời nhắc -->
+                        <p class="text-muted small mb-3">
+                            Tải lên hình ảnh chụp thực tế rõ nét của hoa quả. Ảnh chất lượng cao giúp tăng tỷ lệ chốt đơn tới 70%.
+                        </p>
+
+                        <!-- Thông báo lỗi hình ảnh nếu chưa chọn -->
+                        <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3" th:if="${#fields.hasErrors('imageFile') || #fields.hasErrors('imageUrl')}">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <span>Vui lòng tải lên hình ảnh đại diện của hoa quả từ máy tính.</span>
+                        </div>
+
+                        <!-- Input file ẩn để chọn từ máy tính -->
+                        <input type="file"
+                               id="imageFileInput"
+                               name="imageFile"
+                               accept="image/*"
+                               class="d-none"
+                               onchange="handleFileSelect(this)">
+
+                        <!-- Input ẩn lưu giá trị imageUrl tương thích backend -->
+                        <input type="hidden" id="imageUrl" th:field="*{imageUrl}">
+
+                        <!-- Dropzone tải ảnh trực tiếp từ máy tính -->
+                        <div class="image-preview-wrapper" id="imagePreviewContainer" onclick="handleContainerClick()" title="Bấm vào đây để chọn ảnh từ máy tính">
+                            <img id="previewImg" class="preview-img" alt="Ảnh xem trước hoa quả">
+                            
+                            <div id="previewPlaceholder" class="preview-placeholder">
+                                <div class="upload-icon-graphic">
+                                    <i class="bi bi-cloud-arrow-up-fill"></i>
+                                </div>
+                                <div class="upload-cta-title">Bấm để tải ảnh từ máy tính hoặc kéo thả vào đây</div>
+                                <div class="upload-cta-subtitle">Hệ thống tối ưu hóa hiển thị ảnh tự động sắc nét</div>
+                                <div class="upload-badge-pills">
+                                    <span class="upload-pill">JPG, PNG, WEBP</span>
+                                    <span class="upload-pill">Tối đa 10MB</span>
+                                    <span class="upload-pill">Khuyên dùng tỷ lệ 1:1</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thanh thông tin và nút thao tác khi đã chọn ảnh -->
+                        <div id="fileUploadInfo" class="image-preview-actions-bar">
+                            <div class="file-meta-chip">
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                <span id="selectedFileName">hinh-anh-hoa-qua.jpg</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold" onclick="triggerFileInput()">
+                                    <i class="bi bi-arrow-repeat me-1"></i> Đổi ảnh
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" onclick="clearSelectedImage()">
+                                    <i class="bi bi-trash3 me-1"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ════════ CỘT PHẢI: THỰC THỂ, GIÁ & TỒN KHO ════════ -->
+            <div class="col-12 col-lg-6">
+                <div class="form-card mb-4">
+                    <div class="form-card-header">
+                        <div class="header-title-wrap">
+                            <div class="header-icon-box icon-box-purple">
+                                <i class="bi bi-boxes"></i>
+                            </div>
+                            <div>
+                                <h2 class="d-flex align-items-center gap-2">
+                                    <span>Thực Thể & Giá Bán</span>
+                                    <span class="badge bg-purple-subtle text-purple rounded-pill fs-7 fw-bold" id="variantCountBadge">1 Thực thể</span>
+                                </h2>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm d-inline-flex align-items-center gap-1 fw-bold" onclick="addNewVariantRow()">
+                            <i class="bi bi-plus-lg"></i> Thêm Thực Thể
+                        </button>
+                    </div>
+                    <div class="form-card-body">
+                        
+
+
+                        <!-- Thông báo lỗi danh sách biến thể nếu có -->
+                        <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 d-none" id="variantValidationErrorAlert">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <span id="variantValidationErrorMessage">Vui lòng nhập ít nhất 1 thực thể hợp lệ.</span>
+                        </div>
+
+                        <!-- Container chứa danh sách các thẻ biến thể -->
+                        <div id="variantsContainer" class="d-flex flex-column gap-3">
+                            <!-- Các thẻ biến thể sẽ được tạo tự động qua JavaScript -->
+                        </div>
+
+                        <!-- Nút bấm lớn thêm thực thể -->
+                        <div class="mt-3 pt-1">
+                            <button type="button" class="btn-add-variant-dashed" onclick="addNewVariantRow()">
+                                <i class="bi bi-plus-circle-fill fs-5"></i>
+                                <span>Thêm Thực Thể Khác (Đóng gói / Khối lượng)</span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ════════ STICKY BOTTOM ACTION BAR ════════ -->
+        <div class="sticky-action-container">
+            <div class="sticky-action-inner">
+                <div class="action-summary-meta">
+                    <div class="meta-counter-pill d-none d-md-inline-flex">
+                        <i class="bi bi-basket-fill"></i>
+                        <span id="summaryProductName">Chưa nhập tên hoa quả</span>
+                    </div>
+                    <div class="meta-counter-pill">
+                        <i class="bi bi-tags-fill"></i>
+                        <span id="summaryVariantCount">1 thực thể</span>
+                    </div>
+                    <div class="meta-counter-pill d-none d-sm-inline-flex">
+                        <i class="bi bi-cash-stack"></i>
+                        <span id="summaryMinPrice">Từ: 0 VNĐ</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons-group">
+                    <a th:href="@{/shop/products}" class="btn-back-ghost">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </a>
+                    <button type="submit" class="btn-submit-hero" id="submitProductBtn">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Lưu Thay Đổi & Cập Nhật</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const serverVariants = /*[[${product.variants}]]*/ [];
+    /*]]>*/
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // HÌNH ẢNH HOA QUẢ (DIRECT FILE UPLOAD ONLY)
+    // ══════════════════════════════════════════════════════════════════════════
+    function triggerFileInput() {
+        document.getElementById('imageFileInput').click();
+    }
+
+    function handleContainerClick() {
+        const container = document.getElementById('imagePreviewContainer');
+        if (!container.classList.contains('has-image')) {
+            triggerFileInput();
+        }
+    }
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const img = document.getElementById('previewImg');
+                const placeholder = document.getElementById('previewPlaceholder');
+                const container = document.getElementById('imagePreviewContainer');
+                const fileInfo = document.getElementById('fileUploadInfo');
+                const fileNameSpan = document.getElementById('selectedFileName');
+                const urlInput = document.getElementById('imageUrl');
+
+                if (urlInput) urlInput.value = 'local-upload:' + file.name;
+                if (fileNameSpan) fileNameSpan.textContent = file.name;
+                if (fileInfo) fileInfo.classList.add('active');
+
+                img.src = e.target.result;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+                container.style.borderColor = '';
+                container.style.backgroundColor = '';
+                container.classList.add('has-image');
+
+                updateCompletionProgress();
+            };
+
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function clearSelectedImage() {
+        const fileInput = document.getElementById('imageFileInput');
+        const urlInput = document.getElementById('imageUrl');
+        const img = document.getElementById('previewImg');
+        const placeholder = document.getElementById('previewPlaceholder');
+        const container = document.getElementById('imagePreviewContainer');
+        const fileInfo = document.getElementById('fileUploadInfo');
+
+        if (fileInput) fileInput.value = '';
+        if (urlInput) urlInput.value = '';
+        if (fileInfo) fileInfo.classList.remove('active');
+
+        img.src = '';
+        img.style.display = 'none';
+        placeholder.style.display = 'block';
+        container.classList.remove('has-image');
+
+        updateCompletionProgress();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // THỰC THỂ (VARIANTS) DYNAMIC
+    // ══════════════════════════════════════════════════════════════════════════
+    function addNewVariantRow(data = {}) {
+        const container = document.getElementById('variantsContainer');
+        if (!container) return;
+
+        const index = container.children.length;
+        const vName = data.variantName || '';
+        const oPrice = data.originalPrice !== null && data.originalPrice !== undefined ? data.originalPrice : '';
+        const sPrice = data.salePrice !== null && data.salePrice !== undefined ? data.salePrice : '';
+        const cPrice = data.costPrice !== null && data.costPrice !== undefined ? data.costPrice : '';
+        const sQty = data.stockQuantity !== null && data.stockQuantity !== undefined ? data.stockQuantity : '';
+        const lowThresh = data.lowStockThreshold !== null && data.lowStockThreshold !== undefined ? data.lowStockThreshold : 5;
+
+        const card = document.createElement('div');
+        card.className = 'variant-item-card';
+        card.dataset.variantIndex = index;
+
+        card.innerHTML = `
+            <input type="hidden" name="variants[${index}].variantId" value="${data.variantId || ''}">
+            <input type="hidden" name="variants[${index}].isAvailable" value="${data.isAvailable !== undefined ? data.isAvailable : true}">
+            <div class="variant-card-header">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="variant-number-badge">
+                        <i class="bi bi-tag-fill"></i>
+                        <span class="variant-badge-num">Thực thể #${index + 1}</span>
+                    </span>
+                    <span class="variant-name-preview text-truncate" style="max-width: 200px;">${vName ? ': ' + escapeHtml(vName) : ''}</span>
+                </div>
+                <button type="button" class="btn-remove-variant" onclick="removeVariantRow(this)" title="Xóa thực thể này">
+                    <i class="bi bi-trash3-fill me-1"></i> Xóa
+                </button>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-bold mb-1">
+                        <span>Tên thực thể (Quy cách) <span class="required-badge">*</span></span>
+                    </label>
+                    <input type="text"
+                           name="variants[${index}].variantName"
+                           value="${escapeHtml(vName)}"
+                           class="form-control form-control-sm variant-input-name"
+                           placeholder="VD: Hộp 1kg, Thùng 5kg..."
+                           required
+                           oninput="handleVariantNameChange(this)">
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-bold mb-1">
+                        <span>Giá niêm yết (Giá gốc) <span class="required-badge">*</span></span>
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <input type="number"
+                               name="variants[${index}].originalPrice"
+                               value="${oPrice}"
+                               class="form-control form-control-sm variant-input-price"
+                               placeholder="VD: 85000"
+                               min="1000"
+                               step="1000"
+                               required
+                               oninput="handlePriceChange(this)">
+                        <span class="input-group-text">VNĐ</span>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <label class="form-label small fw-bold mb-0">
+                            <span>Giá khuyến mãi (Sale)</span>
+                        </label>
+                        <span class="badge bg-danger text-white variant-discount-badge" style="font-size: 0.68rem; display: none;">-0%</span>
+                    </div>
+                    <div class="input-group input-group-sm">
+                        <input type="number"
+                               name="variants[${index}].salePrice"
+                               value="${sPrice}"
+                               class="form-control form-control-sm variant-input-sale-price"
+                               placeholder="Để trống nếu không giảm"
+                               min="1000"
+                               step="1000"
+                               oninput="handleSalePriceChange(this)">
+                        <span class="input-group-text">VNĐ</span>
+                    </div>
+                    <div class="sale-price-feedback text-danger" style="display: none; font-size: 0.75rem; margin-top: 2px;"></div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-bold mb-1">
+                        <span>Tồn kho ban đầu <span class="required-badge">*</span></span>
+                    </label>
+                    <input type="number"
+                           name="variants[${index}].stockQuantity"
+                           value="${sQty}"
+                           class="form-control form-control-sm"
+                           placeholder="VD: 100"
+                           min="0"
+                           required>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold text-muted mb-1">
+                        <span>Giá vốn <small>(Nội bộ)</small></span>
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <input type="number"
+                               name="variants[${index}].costPrice"
+                               value="${cPrice}"
+                               class="form-control form-control-sm variant-input-cost"
+                               placeholder="VD: 55000"
+                               min="0"
+                               step="1000">
+                        <span class="input-group-text">VNĐ</span>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <label class="form-label small fw-semibold text-muted mb-1">
+                        <span>Báo sắp hết</span>
+                    </label>
+                    <input type="number"
+                           name="variants[${index}].lowStockThreshold"
+                           value="${lowThresh}"
+                           class="form-control form-control-sm"
+                           placeholder="5"
+                           min="0">
+                </div>
+            </div>
+        `;
+
+        container.appendChild(card);
+        reindexVariants();
+
+        // Kích hoạt tính toán giảm giá nếu có dữ liệu giá sale ban đầu
+        const saleInput = card.querySelector('.variant-input-sale-price');
+        if (saleInput && sPrice) {
+            handleSalePriceChange(saleInput);
+        }
+
+        if (!data.variantName) {
+            const input = card.querySelector('.variant-input-name');
+            if (input) input.focus();
+        }
+    }
+
+    function removeVariantRow(btn) {
+        const container = document.getElementById('variantsContainer');
+        if (!container) return;
+
+        if (container.children.length <= 1) {
+            alert('Hoa quả phải có ít nhất 1 thực thể (biến thể)!');
+            return;
+        }
+
+        const card = btn.closest('.variant-item-card');
+        if (card) {
+            card.remove();
+            reindexVariants();
+        }
+    }
+
+    function reindexVariants() {
+        const container = document.getElementById('variantsContainer');
+        if (!container) return;
+
+        const cards = container.querySelectorAll('.variant-item-card');
+        const badgeTotal = document.getElementById('variantCountBadge');
+        const summaryBadge = document.getElementById('summaryVariantCount');
+
+        if (badgeTotal) badgeTotal.textContent = cards.length + ' Thực thể';
+        if (summaryBadge) summaryBadge.textContent = cards.length + ' thực thể';
+
+        cards.forEach((card, i) => {
+            card.dataset.variantIndex = i;
+
+            const badge = card.querySelector('.variant-badge-num');
+            if (badge) badge.textContent = 'Thực thể #' + (i + 1);
+
+            const idInput = card.querySelector('input[name*="variantId"]');
+            if (idInput) idInput.name = `variants[${i}].variantId`;
+
+            const availInput = card.querySelector('input[name*="isAvailable"]');
+            if (availInput) availInput.name = `variants[${i}].isAvailable`;
+
+            const nameInput = card.querySelector('input[name*="variantName"]');
+            if (nameInput) nameInput.name = `variants[${i}].variantName`;
+
+            const priceInput = card.querySelector('input[name*="originalPrice"]');
+            if (priceInput) priceInput.name = `variants[${i}].originalPrice`;
+
+            const saleInput = card.querySelector('input[name*="salePrice"]');
+            if (saleInput) saleInput.name = `variants[${i}].salePrice`;
+
+            const costInput = card.querySelector('input[name*="costPrice"]');
+            if (costInput) costInput.name = `variants[${i}].costPrice`;
+
+            const qtyInput = card.querySelector('input[name*="stockQuantity"]');
+            if (qtyInput) qtyInput.name = `variants[${i}].stockQuantity`;
+
+            const lowInput = card.querySelector('input[name*="lowStockThreshold"]');
+            if (lowInput) lowInput.name = `variants[${i}].lowStockThreshold`;
+
+            const delBtn = card.querySelector('.btn-remove-variant');
+            if (delBtn) {
+                delBtn.style.display = (cards.length > 1) ? 'inline-block' : 'none';
+            }
+        });
+
+        updateSummaryMinPrice();
+    }
+
+    function handleVariantNameChange(input) {
+        const card = input.closest('.variant-item-card');
+        if (!card) return;
+        const namePreview = card.querySelector('.variant-name-preview');
+        if (namePreview) {
+            namePreview.textContent = input.value ? ': ' + input.value : '';
+        }
+    }
+
+    function handlePriceChange(input) {
+        const card = input.closest('.variant-item-card');
+        if (card) {
+            const saleInput = card.querySelector('.variant-input-sale-price');
+            if (saleInput && saleInput.value) {
+                handleSalePriceChange(saleInput);
+            }
+        }
+        updateSummaryMinPrice();
+    }
+
+    function handleSalePriceChange(input) {
+        const card = input.closest('.variant-item-card');
+        if (!card) return;
+
+        const priceInput = card.querySelector('.variant-input-price');
+        const badge = card.querySelector('.variant-discount-badge');
+        const feedback = card.querySelector('.sale-price-feedback');
+
+        const oPrice = parseFloat(priceInput ? priceInput.value : '');
+        const sPrice = parseFloat(input.value);
+
+        if (!input.value || isNaN(sPrice)) {
+            input.classList.remove('is-invalid');
+            if (badge) badge.style.display = 'none';
+            if (feedback) feedback.style.display = 'none';
+            updateSummaryMinPrice();
+            return;
+        }
+
+        if (sPrice <= 0) {
+            input.classList.add('is-invalid');
+            if (badge) badge.style.display = 'none';
+            if (feedback) {
+                feedback.textContent = 'Giá khuyến mãi phải lớn hơn 0.';
+                feedback.style.display = 'block';
+            }
+            updateSummaryMinPrice();
+            return;
+        }
+
+        if (!isNaN(oPrice) && oPrice > 0 && sPrice >= oPrice) {
+            input.classList.add('is-invalid');
+            if (badge) badge.style.display = 'none';
+            if (feedback) {
+                feedback.textContent = 'Giá khuyến mãi phải nhỏ hơn giá gốc (' + formatVND(oPrice) + ')!';
+                feedback.style.display = 'block';
+            }
+            updateSummaryMinPrice();
+            return;
+        }
+
+        // Hợp lệ: sPrice < oPrice
+        input.classList.remove('is-invalid');
+        if (feedback) feedback.style.display = 'none';
+
+        if (!isNaN(oPrice) && oPrice > 0) {
+            const discountPercent = Math.round((1 - (sPrice / oPrice)) * 100);
+            if (badge) {
+                badge.textContent = '-' + discountPercent + '%';
+                badge.style.display = 'inline-block';
+            }
+        } else {
+            if (badge) badge.style.display = 'none';
+        }
+
+        updateSummaryMinPrice();
+    }
+
+    function updateSummaryMinPrice() {
+        const container = document.getElementById('variantsContainer');
+        if (!container) return;
+        const cards = container.querySelectorAll('.variant-item-card');
+        let min = null;
+        cards.forEach(card => {
+            const priceInput = card.querySelector('.variant-input-price');
+            const saleInput = card.querySelector('.variant-input-sale-price');
+            const oVal = priceInput ? parseFloat(priceInput.value) : NaN;
+            const sVal = saleInput && saleInput.value ? parseFloat(saleInput.value) : NaN;
+
+            let effectiveVal = NaN;
+            if (!isNaN(sVal) && sVal > 0 && (!isNaN(oVal) ? sVal < oVal : true)) {
+                effectiveVal = sVal;
+            } else if (!isNaN(oVal) && oVal > 0) {
+                effectiveVal = oVal;
+            }
+
+            if (!isNaN(effectiveVal)) {
+                if (min === null || effectiveVal < min) min = effectiveVal;
+            }
+        });
+        const summaryMin = document.getElementById('summaryMinPrice');
+        if (summaryMin) {
+            summaryMin.textContent = min !== null ? 'Từ: ' + formatVND(min) : 'Từ: 0 VNĐ';
+        }
+    }
+
+    function formatVND(number) {
+        return new Intl.NumberFormat('vi-VN').format(number) + ' đ';
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // TIỆN ÍCH MÔ TẢ & TIẾN ĐỘ HOÀN THÀNH
+    // ══════════════════════════════════════════════════════════════════════════
+    function insertKeyword(keyword) {
+        const desc = document.getElementById('description');
+        if (!desc) return;
+        if (desc.value.trim().length > 0) {
+            desc.value += ', ' + keyword;
+        } else {
+            desc.value = keyword;
+        }
+        desc.focus();
+        updateCompletionProgress();
+    }
+
+    function updateNameCounter(input) {
+        const counter = document.getElementById('productNameCounter');
+        if (counter) {
+            counter.textContent = input.value.length + '/120';
+        }
+        const summaryName = document.getElementById('summaryProductName');
+        if (summaryName) {
+            summaryName.textContent = input.value.trim() ? input.value.trim() : 'Chưa nhập tên hoa quả';
+        }
+    }
+
+    function updateCompletionProgress() {
+        // Đã lược bỏ thanh tiến độ hoàn thiện hồ sơ theo yêu cầu
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // KHỞI TẠO TRANG & SỰ KIỆN SUBMIT
+    // ══════════════════════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropArea = document.getElementById('imagePreviewContainer');
+        const fileInput = document.getElementById('imageFileInput');
+        const urlInput = document.getElementById('imageUrl');
+
+        
+        // Khởi tạo ảnh hiện tại nếu đang chỉnh sửa
+        const existingImageUrl = /*[[${product.imageUrl}]]*/ '';
+        if (existingImageUrl && existingImageUrl.trim() !== '') {
+            const img = document.getElementById('previewImg');
+            const placeholder = document.getElementById('previewPlaceholder');
+            const container = document.getElementById('imagePreviewContainer');
+            const fileInfo = document.getElementById('fileUploadInfo');
+            const fileNameSpan = document.getElementById('selectedFileName');
+
+            if (img && placeholder && container) {
+                img.src = existingImageUrl;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+                container.classList.add('has-image');
+                if (fileInfo && fileNameSpan) {
+                    fileNameSpan.textContent = 'Ảnh hiện tại: ' + existingImageUrl.substring(existingImageUrl.lastIndexOf('/') + 1);
+                    fileInfo.classList.add('active');
+                }
+            }
+        }
+
+        // 1. Khởi tạo danh sách variants
+        if (Array.isArray(serverVariants) && serverVariants.length > 0) {
+            serverVariants.forEach(v => {
+                if (v && (v.variantName || v.originalPrice !== null)) {
+                    addNewVariantRow(v);
+                }
+            });
+        }
+        const container = document.getElementById('variantsContainer');
+        if (container && container.children.length === 0) {
+            addNewVariantRow();
+        }
+
+        // 2. Drag & Drop ảnh từ máy tính
+        if (dropArea) {
+            ['dragenter', 'dragover'].forEach(name => {
+                dropArea.addEventListener(name, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropArea.classList.add('drag-over');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(name => {
+                dropArea.addEventListener(name, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropArea.classList.remove('drag-over');
+                }, false);
+            });
+
+            dropArea.addEventListener('drop', function(e) {
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length > 0) {
+                    fileInput.files = dt.files;
+                    handleFileSelect(fileInput);
+                }
+            }, false);
+        }
+
+        // 3. Form Submit Validation
+        const form = document.getElementById('createProductForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const currentUrl = urlInput ? urlInput.value : '';
+                if ((!fileInput || !fileInput.files || fileInput.files.length === 0) && (!currentUrl || currentUrl.trim() === '')) {
+                    e.preventDefault();
+                    if (dropArea) {
+                        dropArea.style.borderColor = '#ef4444';
+                        dropArea.style.backgroundColor = '#fef2f2';
+                        dropArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    alert('Vui lòng bấm vào khung để tải ảnh đại diện hoa quả từ máy tính của bạn!');
+                    return false;
+                }
+
+                // Kiểm tra variants
+                const variantCards = container.querySelectorAll('.variant-item-card');
+                let validVariants = 0;
+                for (let c of variantCards) {
+                    const name = c.querySelector('.variant-input-name');
+                    const price = c.querySelector('.variant-input-price');
+                    const sale = c.querySelector('.variant-input-sale-price');
+
+                    const oVal = price ? parseFloat(price.value) : NaN;
+                    const sVal = sale && sale.value ? parseFloat(sale.value) : NaN;
+
+                    if (sale && sale.value) {
+                        if (isNaN(sVal) || sVal <= 0) {
+                            e.preventDefault();
+                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải lớn hơn 0!');
+                            if (sale) sale.focus();
+                            return false;
+                        }
+                        if (!isNaN(oVal) && sVal >= oVal) {
+                            e.preventDefault();
+                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải nhỏ hơn giá gốc (' + formatVND(oVal) + ')!');
+                            if (sale) sale.focus();
+                            return false;
+                        }
+                    }
+
+                    if (name && name.value.trim() && price && parseFloat(price.value) >= 1000) {
+                        validVariants++;
+                    }
+                }
+
+                if (validVariants === 0) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập đầy đủ tên và giá bán (từ 1,000 VNĐ) cho ít nhất 1 thực thể!');
+                    return false;
+                }
+
+                reindexVariants();
+
+                // Loading animation trên nút submit
+                const btn = document.getElementById('submitProductBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Đang Gửi Kiểm Duyệt...`;
+                    form.submit();
+                }
+            });
+        }
+
+        // 4. Toast Thông Báo Tự Động Biến Mất
+        const toast = document.getElementById('floatingSuccessToast');
+        if (toast) {
+            setTimeout(function() {
+                dismissToast();
+            }, 6000);
+        }
+
+        updateCompletionProgress();
+    });
+
+    function dismissToast() {
+        const toast = document.getElementById('floatingSuccessToast');
+        if (toast) {
+            toast.style.animation = 'toastFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+            setTimeout(() => toast.remove(), 400);
+        }
+    }
+</script>
+
+</body>
+</html>

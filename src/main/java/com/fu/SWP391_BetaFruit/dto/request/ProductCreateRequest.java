@@ -41,6 +41,7 @@ public class ProductCreateRequest {
     // Các trường dự phòng tương thích ngược đơn lẻ
     private String variantName;
     private BigDecimal originalPrice;
+    private BigDecimal salePrice;
     private BigDecimal costPrice;
     private Integer stockQuantity;
     private Integer lowStockThreshold = 5;
@@ -58,7 +59,7 @@ public class ProductCreateRequest {
             }
         }
         if (list.isEmpty() && variantName != null && !variantName.trim().isEmpty()) {
-            VariantItemRequest fallback = new VariantItemRequest(variantName, originalPrice, costPrice, stockQuantity, lowStockThreshold);
+            VariantItemRequest fallback = new VariantItemRequest(variantName, originalPrice, salePrice, costPrice, stockQuantity, lowStockThreshold);
             list.add(fallback);
         }
         return list;

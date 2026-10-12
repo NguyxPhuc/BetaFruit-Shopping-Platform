@@ -250,8 +250,17 @@ public class ProductServiceImpl implements ProductService {
             variant.setProduct(savedProduct);
             variant.setVariantName(vReq.getVariantName().trim());
             variant.setOriginalPrice(vReq.getOriginalPrice());
-            // Mặc định hoa quả mới không có khuyến mãi, để NULL để thỏa mãn ràng buộc CHECK (SalePrice IS NULL OR SalePrice < OriginalPrice)
-            variant.setSalePrice(null);
+            
+            // Xử lý giá khuyến mãi (SalePrice): phải > 0 và < OriginalPrice để thỏa mãn CHECK constraint
+            if (vReq.getSalePrice() != null) {
+                if (vReq.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0) {
+                    throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName() + "' phải lớn hơn 0 và nhỏ hơn giá niêm yết (" + vReq.getOriginalPrice() + " đ)!");
+                }
+                variant.setSalePrice(vReq.getSalePrice());
+            } else {
+                variant.setSalePrice(null);
+            }
+
             variant.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
             variant.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
             variant.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
@@ -293,5 +302,144 @@ public class ProductServiceImpl implements ProductService {
             return productRepository.findByShop_ShopIdAndProductNameContainingIgnoreCase(shop.getShopId(), keyword.trim(), pageable);
         }
         return productRepository.findByShop_ShopId(shop.getShopId(), pageable);
+    }
+
+    @Override
+    @Transactional
+    public void toggleProductVisibilityForShop(Integer userId, Integer productId) {
+        Shop shop = getShopByUserId(userId);
+        Product product = getProductById(productId);
+        if (!product.getShop().getShopId().equals(shop.getShopId())) {
+            throw new IllegalArgumentException("Bạn không có quyền thao tác trên sản phẩm này!");
+        }
+        if (product.getApprovalStatus() != ProductApprovalStatus.APPROVED) {
+            throw new IllegalArgumentException("Hoa quả đang ở trạng thái '" 
+                    + (product.getApprovalStatus() == ProductApprovalStatus.PENDING ? "Chờ duyệt" : "Bị từ chối") 
+                    + "', chỉ hoa quả 'Đã duyệt' mới có thể thay đổi trạng thái hiển thị!");
+        }
+        if (product.getVisibilityStatus() == ProductVisibility.ACTIVE) {
+            product.setVisibilityStatus(ProductVisibility.HIDDEN);
+        } else {
+            product.setVisibilityStatus(ProductVisibility.ACTIVE);
+        }
+        productRepository.save(product);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Product getShopProductForEdit(Integer userId, Integer productId) {
+        Shop shop = getShopByUserId(userId);
+        Product product = getProductById(productId);
+        if (!product.getShop().getShopId().equals(shop.getShopId())) {
+            throw new IllegalArgumentException("Bạn không có quyền truy cập sản phẩm này!");
+        }
+        return product;
+    }
+
+    @Override
+    @Transactional
+    public Product updateProductForShop(Integer userId, Integer productId, com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest request) {
+        Shop shop = getShopByUserId(userId);
+        Product product = getProductById(productId);
+        if (!product.getShop().getShopId().equals(shop.getShopId())) {
+            throw new IllegalArgumentException("Bạn không có quyền chỉnh sửa sản phẩm này!");
+        }
+
+        MasterCategory category = masterCategoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục hoa quả với mã ID: " + request.getCategoryId()));
+
+        product.setProductName(request.getProductName().trim());
+        product.setCategory(category);
+        product.setDescription(request.getDescription().trim());
+
+        // Nếu sản phẩm từng bị từ chối phê duyệt, khi chủ shop chỉnh sửa xong thì gửi lại về trạng thái PENDING
+        if (product.getApprovalStatus() == ProductApprovalStatus.REJECTED) {
+            product.setApprovalStatus(ProductApprovalStatus.PENDING);
+        }
+
+        // Cập nhật ảnh đại diện nếu có
+        if (request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
+            String newImgUrl = request.getImageUrl().trim();
+            if (product.getImages() != null && !product.getImages().isEmpty()) {
+                ProductImage primaryImg = product.getImages().stream()
+                        .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+                        .findFirst()
+                        .orElse(product.getImages().get(0));
+                primaryImg.setImageUrl(newImgUrl);
+                productImageRepository.save(primaryImg);
+            } else {
+                ProductImage newImg = new ProductImage();
+                newImg.setProduct(product);
+                newImg.setImageUrl(newImgUrl);
+                newImg.setIsPrimary(true);
+                productImageRepository.save(newImg);
+            }
+        }
+
+        // Cập nhật thực thể (Variants)
+        List<com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest> reqVariants = request.getEffectiveVariants();
+        if (reqVariants.isEmpty()) {
+            throw new IllegalArgumentException("Hoa quả phải có ít nhất 1 thực thể!");
+        }
+
+        List<ProductVariant> existingVariants = productVariantRepository.findByProduct_ProductId(productId);
+        java.util.Set<Integer> keptVariantIds = new java.util.HashSet<>();
+
+        for (com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest vReq : reqVariants) {
+            if (vReq.getOriginalPrice() == null || vReq.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
+                throw new IllegalArgumentException("Thực thể '" + vReq.getVariantName() + "' phải có giá niêm yết từ 1,000 VNĐ trở lên.");
+            }
+            if (vReq.getSalePrice() != null) {
+                if (vReq.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0) {
+                    throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName() + "' phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
+                }
+            }
+
+            if (vReq.getVariantId() != null) {
+                // Sửa biến thể có sẵn
+                ProductVariant existing = existingVariants.stream()
+                        .filter(v -> v.getVariantId().equals(vReq.getVariantId()))
+                        .findFirst()
+                        .orElse(null);
+                if (existing != null) {
+                    existing.setVariantName(vReq.getVariantName().trim());
+                    existing.setOriginalPrice(vReq.getOriginalPrice());
+                    existing.setSalePrice(vReq.getSalePrice());
+                    existing.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
+                    existing.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
+                    existing.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
+                    existing.setIsAvailable(vReq.getIsAvailable() != null ? vReq.getIsAvailable() : true);
+                    productVariantRepository.save(existing);
+                    keptVariantIds.add(existing.getVariantId());
+                }
+            } else {
+                // Tạo biến thể mới thêm vào
+                ProductVariant newV = new ProductVariant();
+                newV.setProduct(product);
+                newV.setVariantName(vReq.getVariantName().trim());
+                newV.setOriginalPrice(vReq.getOriginalPrice());
+                newV.setSalePrice(vReq.getSalePrice());
+                newV.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
+                newV.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
+                newV.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
+                newV.setIsAvailable(true);
+                ProductVariant savedV = productVariantRepository.save(newV);
+                keptVariantIds.add(savedV.getVariantId());
+            }
+        }
+
+        // Với các biến thể đã bị người dùng xóa khỏi form: xóa hoặc soft-delete
+        for (ProductVariant existing : existingVariants) {
+            if (!keptVariantIds.contains(existing.getVariantId())) {
+                try {
+                    productVariantRepository.delete(existing);
+                } catch (Exception ex) {
+                    existing.setIsAvailable(false);
+                    productVariantRepository.save(existing);
+                }
+            }
+        }
+
+        return productRepository.save(product);
     }
 }
