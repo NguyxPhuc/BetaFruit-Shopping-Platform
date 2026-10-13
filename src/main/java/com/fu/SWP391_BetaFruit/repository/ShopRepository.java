@@ -17,6 +17,7 @@ import java.util.Optional;
 @Repository
 public interface ShopRepository extends JpaRepository<Shop, Integer> {
     Optional<Shop> findByOwner(User owner);
+    Optional<Shop> findByOwner_UserId(Integer userId);
 
     List<Shop> findByApprovalStatus(ShopApprovalStatus status);
 

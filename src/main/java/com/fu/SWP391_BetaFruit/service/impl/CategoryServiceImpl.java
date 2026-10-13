@@ -29,6 +29,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public List<MasterCategory> getActiveCategories() {
+        return masterCategoryRepository.findByIsActiveTrue();
+    }
+
+    @Override
     public List<MasterCategory> searchCategories(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return masterCategoryRepository.findAll();

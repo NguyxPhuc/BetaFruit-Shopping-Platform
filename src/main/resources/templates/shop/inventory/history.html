@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Biến Động Kho Hàng | BetaFruit</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Global CSS -->
+    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
+    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
+
+    <style>
+        :root {
+            --fruit-green: #15803d;
+            --fruit-green-hover: #166534;
+            --fruit-light: #f0fdf4;
+            --fruit-border: #bbf7d0;
+            --card-radius: 16px;
+        }
+
+        body.shop-theme {
+            background-color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem;
+        }
+
+        .breadcrumb-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            color: #64748b;
+        }
+
+        .breadcrumb-wrap a {
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+
+        .breadcrumb-wrap a:hover {
+            color: var(--fruit-green);
+        }
+
+        .breadcrumb-separator {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .content-card {
+            background: #ffffff;
+            border-radius: var(--card-radius);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .filter-tabs-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            overflow-x: auto;
+        }
+
+        .filter-tab-pill {
+            padding: 0.45rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: #64748b;
+            background: #f1f5f9;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            border: 1px solid transparent;
+        }
+
+        .filter-tab-pill:hover {
+            color: #0f172a;
+            background: #e2e8f0;
+        }
+
+        .filter-tab-pill.active {
+            color: #ffffff;
+            background: var(--fruit-green);
+            border-color: var(--fruit-green);
+        }
+
+        .table thead th {
+            background-color: #f8fafc !important;
+            color: #334155 !important;
+            font-size: 0.835rem !important;
+            font-weight: 700 !important;
+            padding: 0.95rem 1rem !important;
+            border-bottom: 1.5px solid #e2e8f0 !important;
+            white-space: nowrap !important;
+            vertical-align: middle !important;
+        }
+
+        .badge-tx-type {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35rem 0.65rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .badge-restock {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-order-deduct {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .badge-damage-adjust {
+            background-color: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+
+        .badge-cancel-refund {
+            background-color: #e0e7ff;
+            color: #4338ca;
+            border: 1px solid #c7d2fe;
+        }
+
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 3.5rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="shop-theme">
+
+<!-- HEADER -->
+<div th:replace="~{shop/fragments/header :: header}"></div>
+
+<div class="page-container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb-wrap" aria-label="breadcrumb">
+        <a th:href="@{/shop/profile}">Kênh Người Bán</a>
+        <i class="bi bi-chevron-right breadcrumb-separator"></i>
+        <a th:href="@{/shop/products}">Quản Lý Hoa Quả</a>
+        <i class="bi bi-chevron-right breadcrumb-separator"></i>
+        <span class="text-dark fw-medium">Lịch Sử Biến Động Kho</span>
+    </nav>
+
+    <!-- Page Header Banner -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-1">
+                <i class="bi bi-clock-history text-success me-2"></i>Lịch Sử Kho Hàng
+            </h1>
+            <p class="text-muted small mb-0">
+                Theo dõi chi tiết các giao dịch nhập hàng, xuất bán đơn hàng và điều chỉnh kiểm kê theo thời gian thực.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/shop/products}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại Danh Sách Hoa Quả
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert cảnh báo nếu có hàng sắp hết -->
+    <div th:if="${lowStockCount != null && lowStockCount > 0}" class="alert alert-warning d-flex align-items-center justify-content-between mb-4 rounded-4 shadow-sm py-2 px-3">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+            <div>
+                <strong>Cảnh báo tồn kho:</strong> Gian hàng hiện có <strong th:text="${lowStockCount}">0</strong> thực thể hoa quả có số lượng chạm ngưỡng sắp hết hoặc đã hết hàng!
+            </div>
+        </div>
+        <a th:href="@{/shop/products}" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3">
+            Kiểm tra ngay <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- CONTENT CARD -->
+    <div class="content-card">
+        <!-- Filter Tabs -->
+        <div class="filter-tabs-bar">
+            <a th:href="@{/shop/inventory/history}"
+               class="filter-tab-pill"
+               th:classappend="${selectedType == null} ? 'active' : ''">
+                Tất cả giao dịch
+            </a>
+            <a th:href="@{/shop/inventory/history(type='RESTOCK')}"
+               class="filter-tab-pill"
+               th:classappend="${selectedType == T(com.fu.SWP391_BetaFruit.enums.InventoryTransactionType).RESTOCK} ? 'active' : ''">
+                <i class="bi bi-box-arrow-in-down me-1"></i> Nhập thêm hàng (RESTOCK)
+            </a>
+            <a th:href="@{/shop/inventory/history(type='ORDER_DEDUCT')}"
+               class="filter-tab-pill"
+               th:classappend="${selectedType == T(com.fu.SWP391_BetaFruit.enums.InventoryTransactionType).ORDER_DEDUCT} ? 'active' : ''">
+                <i class="bi bi-cart-check me-1"></i> Bán hàng (ORDER_DEDUCT)
+            </a>
+            <a th:href="@{/shop/inventory/history(type='CANCEL_REFUND')}"
+               class="filter-tab-pill"
+               th:classappend="${selectedType == T(com.fu.SWP391_BetaFruit.enums.InventoryTransactionType).CANCEL_REFUND} ? 'active' : ''">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Hoàn kho hủy đơn
+            </a>
+        </div>
+
+        <!-- Bảng Lịch Sử Giao Dịch -->
+        <div class="table-responsive" th:if="${transactions != null && !transactions.empty}">
+            <table class="table align-middle table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Mã GD</th>
+                        <th>Thời Gian</th>
+                        <th>Hoa Quả &amp; Thực Thể</th>
+                        <th>Loại Biến Động</th>
+                        <th class="text-center">Thay Đổi</th>
+                        <th class="text-center">Tồn Trước &rarr; Sau</th>
+                        <th>Người Thực Hiện</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="tx : ${transactions}">
+                        <!-- Mã GD -->
+                        <td class="fw-bold text-muted small" th:text="'#' + ${tx.transactionId}">#1</td>
+
+                        <!-- Thời gian -->
+                        <td class="small text-muted"
+                            th:text="${tx.createdAt != null ? #temporals.format(tx.createdAt, 'HH:mm dd/MM/yyyy') : 'Vừa xong'}">
+                            14:30 12/10/2026
+                        </td>
+
+                        <!-- Sản phẩm & Biến thể -->
+                        <td>
+                            <div class="fw-bold text-dark small" th:text="${tx.variant != null && tx.variant.product != null ? tx.variant.product.productName : 'Sản phẩm'}">
+                                Xoài Cát Hòa Lộc
+                            </div>
+                            <div class="small text-muted" th:text="${tx.variant != null ? 'Quy cách: ' + tx.variant.variantName : ''}">
+                                Hộp 1kg
+                            </div>
+                        </td>
+
+                        <!-- Loại giao dịch -->
+                        <td>
+                            <span th:if="${tx.transactionType == T(com.fu.SWP391_BetaFruit.enums.InventoryTransactionType).RESTOCK}"
+                                  class="badge-tx-type badge-restock">
+                                <i class="bi bi-plus-circle-fill"></i> Nhập hàng
+                            </span>
+                            <span th:if="${tx.transactionType == T(com.fu.SWP391_BetaFruit.enums.InventoryTransactionType).ORDER_DEDUCT}"
+                                  class="badge-tx-type badge-order-deduct">
+                                <i class="bi bi-dash-circle-fill"></i> Xuất bán đơn
+                            </span>
+                            <span th:if="${tx.transactionType == T(com.fu.SWP391_BetaFruit.enums.InventoryTransactionType).DAMAGE_ADJUSTMENT}"
+                                  class="badge-tx-type badge-damage-adjust">
+                                <i class="bi bi-sliders"></i> Kiểm kê / Điều chỉnh
+                            </span>
+                            <span th:if="${tx.transactionType == T(com.fu.SWP391_BetaFruit.enums.InventoryTransactionType).CANCEL_REFUND}"
+                                  class="badge-tx-type badge-cancel-refund">
+                                <i class="bi bi-arrow-counterclockwise"></i> Hoàn kho hủy đơn
+                            </span>
+                        </td>
+
+                        <!-- Số lượng thay đổi -->
+                        <td class="text-center">
+                            <span th:if="${tx.quantityChanged > 0}" class="fw-bold text-success" th:text="'+' + ${tx.quantityChanged}">+50</span>
+                            <span th:if="${tx.quantityChanged < 0}" class="fw-bold text-danger" th:text="${tx.quantityChanged}">-5</span>
+                            <span th:if="${tx.quantityChanged == 0}" class="fw-bold text-muted">0</span>
+                        </td>
+
+                        <!-- Tồn trước -> sau -->
+                        <td class="text-center small">
+                            <span class="text-muted" th:text="${tx.previousStock}">20</span>
+                            <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                            <strong class="text-dark" th:text="${tx.newStock}">70</strong>
+                        </td>
+
+                        <!-- Người thực hiện -->
+                        <td class="small">
+                            <span class="fw-semibold text-secondary" th:text="${tx.user != null ? tx.user.fullName : 'Hệ thống'}">Chủ Cửa Hàng</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" th:if="${transactions == null || transactions.empty}">
+            <div class="empty-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h3 class="h5 fw-bold text-dark mb-2">Chưa Có Biến Động Kho Nào</h3>
+            <p class="text-secondary small mb-4">
+                Khi bạn nhập thêm hàng, điều chỉnh số lượng hoặc có khách đặt đơn, hệ thống sẽ tự động ghi lại lịch sử tại đây.
+            </p>
+            <a th:href="@{/shop/products}" class="btn btn-success px-4 py-2 rounded-pill fw-medium">
+                <i class="bi bi-arrow-left me-1"></i> Về Danh Sách Hoa Quả
+            </a>
+        </div>
+
+        <!-- Phân trang -->
+        <div class="p-3 border-top d-flex justify-content-between align-items-center" th:if="${totalPages > 1}">
+            <div class="small text-muted">
+                Trang <span th:text="${currentPage}">1</span> / <span th:text="${totalPages}">1</span> (Tổng <span th:text="${totalItems}">0</span> bản ghi)
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${currentPage <= 1} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/shop/inventory/history(page=${currentPage - 1}, type=${selectedType})}">Trước</a>
+                    </li>
+                    <li class="page-item"
+                        th:each="p : ${#numbers.sequence(1, totalPages)}"
+                        th:classappend="${p == currentPage} ? 'active' : ''">
+                        <a class="page-link" th:href="@{/shop/inventory/history(page=${p}, type=${selectedType})}" th:text="${p}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage >= totalPages} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/shop/inventory/history(page=${currentPage + 1}, type=${selectedType})}">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

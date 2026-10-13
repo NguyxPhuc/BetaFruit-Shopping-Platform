@@ -13,37 +13,37 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    @Autowired
-    private AdminInterceptor adminInterceptor;
+        @Autowired
+        private AdminInterceptor adminInterceptor;
 
-    @Autowired
-    private StaffInterceptor staffInterceptor;
+        @Autowired
+        private StaffInterceptor staffInterceptor;
 
-    @Autowired
-    private ShopOwnerInterceptor shopOwnerInterceptor;
+        @Autowired
+        private ShopOwnerInterceptor shopOwnerInterceptor;
 
-    @Autowired
-    private CustomerInterceptor customerInterceptor;
+        @Autowired
+        private CustomerInterceptor customerInterceptor;
 
-    @Autowired
-    private ShipperInterceptor shipperInterceptor;
+        @Autowired
+        private ShipperInterceptor shipperInterceptor;
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
 
-        registry.addInterceptor(adminInterceptor)
-                .addPathPatterns("/admin/**");
+                registry.addInterceptor(adminInterceptor)
+                                .addPathPatterns("/admin/**");
 
-        registry.addInterceptor(staffInterceptor)
-                .addPathPatterns("/staff/**");
+                registry.addInterceptor(staffInterceptor)
+                                .addPathPatterns("/staff/**");
 
-        registry.addInterceptor(shopOwnerInterceptor)
-                .addPathPatterns("/shop/**");
+                registry.addInterceptor(shopOwnerInterceptor)
+                                .addPathPatterns("/shop/**");
 
-        registry.addInterceptor(customerInterceptor)
-                .addPathPatterns("/customer/**");
+                registry.addInterceptor(customerInterceptor)
+                                .addPathPatterns("/customer/**");
 
-        registry.addInterceptor(shipperInterceptor)
-                .addPathPatterns("/shipper/**");
-    }
+                registry.addInterceptor(shipperInterceptor)
+                                .addPathPatterns("/shipper/**");
+        }
 }
