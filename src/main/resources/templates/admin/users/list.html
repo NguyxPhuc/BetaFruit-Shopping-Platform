@@ -260,8 +260,7 @@
                                     <button type="submit" 
                                             class="btn btn-sm d-flex align-items-center"
                                             th:classappend="${user.status != null and user.status.name() == 'ACTIVE' ? 'btn-outline-danger' : 'btn-outline-success'}"
-                                            th:disabled="${user.username == 'khaidq'}"
-                                            th:title="${user.username == 'khaidq' ? 'Không thể khóa tài khoản Admin chính' : (user.status != null and user.status.name() == 'ACTIVE' ? 'Khóa tài khoản này' : 'Mở khóa tài khoản này')}">
+                                            th:title="${user.status != null and user.status.name() == 'ACTIVE' ? 'Khóa tài khoản này' : 'Mở khóa tài khoản này'}">
                                         <i class="bi" th:classappend="${user.status != null and user.status.name() == 'ACTIVE' ? 'bi-lock-fill' : 'bi-unlock-fill'}"></i>
                                         <span class="ms-1" th:text="${user.status != null and user.status.name() == 'ACTIVE' ? 'Khóa' : 'Mở'}">Khóa</span>
                                     </button>

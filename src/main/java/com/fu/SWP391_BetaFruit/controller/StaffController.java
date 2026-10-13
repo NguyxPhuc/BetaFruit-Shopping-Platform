@@ -36,7 +36,7 @@ public class StaffController {
                             @RequestParam(value = "page", defaultValue = "1") int page,
                             @RequestParam(value = "size", defaultValue = "5") int size,
                             @RequestParam(value = "sortBy", defaultValue = "shopId") String sortBy,
-                            @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
+                            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                             Model model) {
         model.addAllAttributes(shopService.getAdminShopPageData(keyword, status, page, size, sortBy, sortDir));
         return "admin/shops/list";
@@ -85,7 +85,7 @@ public class StaffController {
                                @RequestParam(value = "page", defaultValue = "1") int page,
                                @RequestParam(value = "size", defaultValue = "5") int size,
                                @RequestParam(value = "sortBy", defaultValue = "productId") String sortBy,
-                               @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
+                               @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                                Model model) {
         model.addAllAttributes(productService.getAdminProductPageData(keyword, tab, page, size, sortBy, sortDir));
         return "admin/products/list";

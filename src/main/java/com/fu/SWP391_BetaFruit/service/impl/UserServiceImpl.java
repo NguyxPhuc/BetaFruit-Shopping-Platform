@@ -97,11 +97,6 @@ public class UserServiceImpl implements UserService {
     public void toggleUserStatus(Integer userId) {
         User user = getUserById(userId);
 
-        // Bảo vệ tài khoản quản trị viên chính không bị khóa ngoài ý muốn
-        if ("khaidq".equalsIgnoreCase(user.getUsername())) {
-            throw new IllegalStateException("Không thể khóa tài khoản quản trị viên hệ thống (khaidq)!");
-        }
-
         if (user.getStatus() == UserStatus.ACTIVE) {
             user.setStatus(UserStatus.DEACTIVATED);
         } else {
@@ -140,7 +135,7 @@ public class UserServiceImpl implements UserService {
 
         String safeSortBy = (sortBy != null && ALLOWED_USER_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "userId";
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
@@ -186,7 +181,7 @@ public class UserServiceImpl implements UserService {
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
         String safeSortBy = (sortBy != null && ALLOWED_USER_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "userId";
-        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+        String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
         Long validRoleId = (roleId != null && roleId > 0) ? roleId : null;
         UserStatus filterStatus = parseUserStatus(status);
 

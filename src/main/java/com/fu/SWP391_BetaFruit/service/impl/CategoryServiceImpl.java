@@ -103,7 +103,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         String safeSortBy = (sortBy != null && ALLOWED_CATEGORY_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "categoryId";
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
@@ -117,7 +117,7 @@ public class CategoryServiceImpl implements CategoryService {
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
         String safeSortBy = (sortBy != null && ALLOWED_CATEGORY_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "categoryId";
-        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+        String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
 
         Boolean parsedStatus = parseActiveStatus(status);
         String currentStatus = (parsedStatus == null) ? "ALL" : (parsedStatus ? "ACTIVE" : "HIDDEN");

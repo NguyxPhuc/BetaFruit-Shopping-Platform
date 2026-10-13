@@ -145,7 +145,7 @@ public class ShopServiceImpl implements ShopService {
 
         String safeSortBy = (sortBy != null && ALLOWED_SHOP_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "shopId";
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
         ShopApprovalStatus filterStatus = null;
@@ -157,7 +157,7 @@ public class ShopServiceImpl implements ShopService {
         }
 
         String trimmedKeyword = keyword != null ? keyword.trim() : "";
-        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+        String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
 
         Page<Shop> shopPage = shopRepository.searchShopsForAdmin(trimmedKeyword, filterStatus, pageable);
 
@@ -184,13 +184,13 @@ public class ShopServiceImpl implements ShopService {
 
         String safeSortBy = (sortBy != null && ALLOWED_SHOP_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "shopId";
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
         String trimmedKeyword = keyword != null ? keyword.trim() : "";
         String safeOwnerStatus = (ownerStatus != null && !ownerStatus.trim().isEmpty()) ? ownerStatus.trim().toUpperCase() : "ALL";
         String safeCommissionTier = (commissionTier != null && !commissionTier.trim().isEmpty()) ? commissionTier.trim().toUpperCase() : "ALL";
-        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+        String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
 
         Page<Shop> shopPage = shopRepository.searchApprovedShopsForCommission(trimmedKeyword, safeOwnerStatus, safeCommissionTier, pageable);
 

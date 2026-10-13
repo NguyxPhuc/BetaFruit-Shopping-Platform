@@ -104,7 +104,7 @@ public class ProductServiceImpl implements ProductService {
 
         String safeSortBy = (sortBy != null && ALLOWED_PRODUCT_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "productId";
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
@@ -136,7 +136,7 @@ public class ProductServiceImpl implements ProductService {
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
         String safeSortBy = (sortBy != null && ALLOWED_PRODUCT_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "productId";
-        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+        String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
 
         Page<Product> productPage = searchProductsPaginated(cleanKeyword, currentTab, page, size, safeSortBy, safeSortDir);
 

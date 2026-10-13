@@ -48,7 +48,7 @@ public class AdminController {
                                   @RequestParam(value = "page", defaultValue = "1") int page,
                                   @RequestParam(value = "size", defaultValue = "5") int size,
                                   @RequestParam(value = "sortBy", defaultValue = "shopId") String sortBy,
-                                  @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
+                                  @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                                   Model model) {
         model.addAllAttributes(shopService.getAdminCommissionPageData(keyword, ownerStatus, commissionTier, page, size, sortBy, sortDir));
         return "admin/commission/shops";
@@ -87,7 +87,7 @@ public class AdminController {
                             @RequestParam(value = "page", defaultValue = "1") int page,
                             @RequestParam(value = "size", defaultValue = "5") int size,
                             @RequestParam(value = "sortBy", defaultValue = "userId") String sortBy,
-                            @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
+                            @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                             Model model) {
         model.addAllAttributes(userService.getAdminUserPageData(keyword, roleId, status, page, size, sortBy, sortDir));
         return "admin/users/list";
@@ -154,7 +154,7 @@ public class AdminController {
                                  @RequestParam(value = "page", defaultValue = "1") int page,
                                  @RequestParam(value = "size", defaultValue = "5") int size,
                                  @RequestParam(value = "sortBy", defaultValue = "categoryId") String sortBy,
-                                 @RequestParam(value = "sortDir", defaultValue = "desc") String sortDir,
+                                 @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                                  Model model) {
         model.addAllAttributes(categoryService.getAdminCategoryPageData(keyword, status, page, size, sortBy, sortDir));
         return "admin/categories/list";
