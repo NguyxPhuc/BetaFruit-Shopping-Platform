@@ -16,4 +16,10 @@ public interface ProductService {
     long countRejected();
     org.springframework.data.domain.Page<Product> searchProductsPaginated(String keyword, String tab, int page, int size, String sortBy, String sortDir);
     java.util.Map<String, Object> getAdminProductPageData(String keyword, String tab, int page, int size, String sortBy, String sortDir);
+    Product createProductForShop(Integer userId, com.fu.SWP391_BetaFruit.dto.request.ProductCreateRequest request);
+    org.springframework.data.domain.Page<Product> getShopProductsPaginated(Integer userId, String keyword, int page, int size);
+    com.fu.SWP391_BetaFruit.entity.Shop getShopByUserId(Integer userId);
+    void toggleProductVisibilityForShop(Integer userId, Integer productId);
+    Product getShopProductForEdit(Integer userId, Integer productId);
+    Product updateProductForShop(Integer userId, Integer productId, com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest request);
 }

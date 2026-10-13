@@ -6,6 +6,7 @@ import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 import java.util.List;
 
 public interface CategoryService {
+    List<MasterCategory> getActiveCategories();
     MasterCategory getCategoryById(Integer id);
     void createCategory(CategoryRequest request);
     void updateCategory(Integer id, CategoryRequest request);

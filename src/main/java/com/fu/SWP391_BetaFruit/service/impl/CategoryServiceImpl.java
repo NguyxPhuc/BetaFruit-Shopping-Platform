@@ -24,6 +24,11 @@ public class CategoryServiceImpl implements CategoryService {
     private final MasterCategoryRepository masterCategoryRepository;
 
     @Override
+    public List<MasterCategory> getActiveCategories() {
+        return masterCategoryRepository.findByIsActiveTrue();
+    }
+
+    @Override
     public MasterCategory getCategoryById(Integer id) {
         return masterCategoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục hoa quả với mã ID: " + id));
