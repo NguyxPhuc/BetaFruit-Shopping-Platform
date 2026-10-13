@@ -33,6 +33,10 @@ public class AdminController {
      */
     @GetMapping({"/admin", "/admin/", "/admin/dashboard"})
     public String dashboard(Model model) {
+        model.addAttribute("categoryCount", categoryService.getAdminCategoryPage(null, "ALL", 1, 1, "categoryId", "asc").getTotalElements());
+        model.addAttribute("approvedShopCount", shopService.countByStatus(com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.APPROVED));
+        model.addAttribute("membershipTierCount", membershipTierService.getAllTiers().size());
+        model.addAttribute("userCount", userService.getAdminUserPage(null, null, null, 1, 1, "userId", "asc").getTotalElements());
         return "admin/admin-dashboard";
     }
 

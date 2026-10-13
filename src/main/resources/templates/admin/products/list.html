@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{admin/layout :: layout(~{::title}, 'products', ~{::content})}">
 <head>
@@ -152,26 +152,23 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th class="ps-4" style="width: 90px;">
+                        <th class="ps-4 text-nowrap" style="width: 60px;">
                             <th:block th:replace="~{admin/fragments/sort-header :: column(title='ID', field='productId', baseUrl='/staff/products')}"></th:block>
                         </th>
-                        <th>
+                        <th style="min-width: 240px;">
                             <th:block th:replace="~{admin/fragments/sort-header :: column(title='Thông Tin Hoa Quả', field='productName', baseUrl='/staff/products')}"></th:block>
                         </th>
-                        <th>Cửa Hàng Đăng Bán</th>
-                        <th>Danh Mục Gốc</th>
-                        <th style="width: 150px;">
-                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Kiểm Duyệt', field='approvalStatus', baseUrl='/staff/products')}"></th:block>
+                        <th class="text-nowrap" style="min-width: 200px; max-width: 240px;">Cửa Hàng Đăng Bán</th>
+                        <th class="text-nowrap">Danh Mục Gốc</th>
+                        <th class="text-nowrap" style="width: 175px;">
+                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Trạng Thái', field='approvalStatus', baseUrl='/staff/products')}"></th:block>
                         </th>
-                        <th style="width: 150px;">
-                            <th:block th:replace="~{admin/fragments/sort-header :: column(title='Hiển Thị Sàn', field='visibilityStatus', baseUrl='/staff/products')}"></th:block>
-                        </th>
-                        <th class="text-end pe-4" style="width: 260px;">Thao Tác</th>
+                        <th class="text-end pe-4 text-nowrap" style="width: 240px;">Thao Tác</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(products)}">
-                        <td colspan="7" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
                             <span th:if="${keyword != null and !#strings.isEmpty(keyword)}">
                                 Không tìm thấy hoa quả nào với từ khóa: "<strong th:text="${keyword}"></strong>"
@@ -185,12 +182,13 @@
                         <td class="ps-4 fw-bold text-secondary" th:text="${p.productId}">1</td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm"
+                                <div class="bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm flex-shrink-0"
                                      style="width: 40px; height: 40px; font-size: 18px;">
                                     <i class="bi bi-apple"></i>
                                 </div>
-                                <div>
-                                    <div class="fw-bold text-dark fs-6" th:text="${p.productName}">Sầu riêng Ri6</div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold text-dark fs-6 text-truncate" style="max-width: 260px;"
+                                         th:title="${p.productName}" th:text="${p.productName}">Sầu riêng Ri6</div>
                                     <div class="text-muted small text-truncate" style="max-width: 260px;" 
                                          th:text="${p.description != null ? p.description : 'Chưa có mô tả'}">
                                         Mô tả sản phẩm...
@@ -198,52 +196,56 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td style="min-width: 200px; max-width: 240px;">
                             <div th:if="${p.shop != null}">
-                                <div class="fw-semibold text-primary">
+                                <div class="fw-semibold text-primary text-truncate" style="max-width: 220px;"
+                                     th:title="${p.shop.shopName}">
                                     <i class="bi bi-shop me-1"></i><span th:text="${p.shop.shopName}">Shop Phúc Lộc</span>
                                 </div>
-                                <div class="small text-muted" th:if="${p.shop.owner != null}">
+                                <div class="small text-muted text-truncate" style="max-width: 220px;"
+                                     th:if="${p.shop.owner != null}"
+                                     th:title="${'Chủ shop: ' + p.shop.owner.fullName}">
                                     Chủ shop: <span th:text="${p.shop.owner.fullName}">Trần Văn Phúc</span>
                                 </div>
                             </div>
                             <span th:unless="${p.shop != null}" class="text-muted small">Chưa rõ</span>
                         </td>
-                        <td>
+                        <td class="text-nowrap">
                             <span th:if="${p.category != null}" class="badge bg-light text-dark border px-2 py-1">
                                 <i class="bi bi-tag-fill text-success me-1"></i>
                                 <span th:text="${p.category.categoryName}">Trái cây nội địa</span>
                             </span>
                             <span th:unless="${p.category != null}" class="text-muted small">Không rõ</span>
                         </td>
-                        <td>
-                            <span th:if="${p.approvalStatus != null and p.approvalStatus.name() == 'PENDING'}" 
-                                  class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 rounded-pill">
-                                <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
-                            </span>
-                            <span th:if="${p.approvalStatus != null and p.approvalStatus.name() == 'APPROVED'}" 
-                                  class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">
-                                <i class="bi bi-check-circle-fill me-1"></i>Đã duyệt
-                            </span>
-                            <span th:if="${p.approvalStatus != null and p.approvalStatus.name() == 'REJECTED'}" 
-                                  class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">
-                                <i class="bi bi-x-circle-fill me-1"></i>Đã từ chối
-                            </span>
+                        <td class="text-nowrap">
+                            <div class="d-inline-flex align-items-center gap-1 flex-nowrap">
+                                <span th:if="${p.approvalStatus != null and p.approvalStatus.name() == 'PENDING'}" 
+                                      class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 rounded-pill">
+                                    <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt
+                                </span>
+                                <span th:if="${p.approvalStatus != null and p.approvalStatus.name() == 'APPROVED'}" 
+                                      class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Đã duyệt
+                                </span>
+                                <span th:if="${p.approvalStatus != null and p.approvalStatus.name() == 'REJECTED'}" 
+                                      class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">
+                                    <i class="bi bi-x-circle-fill me-1"></i>Đã từ chối
+                                </span>
+
+                                <span th:if="${p.visibilityStatus != null and p.visibilityStatus.name() == 'ACTIVE'}" 
+                                      class="badge bg-success text-white px-2 py-1 rounded-pill">
+                                    <i class="bi bi-eye-fill me-1"></i>Đang bán
+                                </span>
+                                <span th:if="${p.visibilityStatus != null and p.visibilityStatus.name() == 'HIDDEN'}" 
+                                      class="badge bg-secondary text-white px-2 py-1 rounded-pill">
+                                    <i class="bi bi-eye-slash-fill me-1"></i>Đang ẩn
+                                </span>
+                            </div>
                         </td>
-                        <td>
-                            <span th:if="${p.visibilityStatus != null and p.visibilityStatus.name() == 'ACTIVE'}" 
-                                  class="badge bg-success text-white px-2 py-1 rounded-pill">
-                                <i class="bi bi-eye-fill me-1"></i>Đang bán
-                            </span>
-                            <span th:if="${p.visibilityStatus != null and p.visibilityStatus.name() == 'HIDDEN'}" 
-                                  class="badge bg-secondary text-white px-2 py-1 rounded-pill">
-                                <i class="bi bi-eye-slash-fill me-1"></i>Đang ẩn
-                            </span>
-                        </td>
-                        <td class="text-end pe-4">
-                            <div class="d-flex justify-content-end gap-1">
+                        <td class="text-end pe-4 text-nowrap" style="white-space: nowrap;">
+                            <div class="d-flex justify-content-end align-items-center gap-1 flex-nowrap">
                                 <!-- Nút Xem Chi Tiết (Modal) -->
-                                <button type="button" class="btn btn-sm btn-outline-info detail-product-btn d-flex align-items-center"
+                                <button type="button" class="btn btn-sm btn-outline-info detail-product-btn d-inline-flex align-items-center text-nowrap"
                                         data-bs-toggle="modal" data-bs-target="#productDetailModal"
                                         th:data-id="${p.productId}"
                                         th:data-name="${p.productName}"
@@ -262,7 +264,7 @@
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn PHÊ DUYỆT hoa quả [' + p.productName + '] không? Sản phẩm sẽ được kích hoạt mở bán trên sàn.'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
-                                    <button type="submit" class="btn btn-sm btn-success d-flex align-items-center" title="Phê duyệt hoa quả">
+                                    <button type="submit" class="btn btn-sm btn-success d-inline-flex align-items-center text-nowrap" title="Phê duyệt hoa quả">
                                         <i class="bi bi-check-lg me-1"></i> Duyệt
                                     </button>
                                 </form>
@@ -273,7 +275,7 @@
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn TỪ CHỐI hoa quả [' + p.productName + '] không?'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center" title="Từ chối sản phẩm">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center text-nowrap" title="Từ chối sản phẩm">
                                         <i class="bi bi-x-lg me-1"></i> Từ chối
                                     </button>
                                 </form>
@@ -287,7 +289,7 @@
                                                        'Bạn có chắc chắn muốn MỞ BÁN LẠI sản phẩm [' + p.productName + '] không?'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
                                     <button type="submit" 
-                                            class="btn btn-sm d-flex align-items-center"
+                                            class="btn btn-sm d-inline-flex align-items-center text-nowrap"
                                             th:classappend="${p.visibilityStatus != null and p.visibilityStatus.name() == 'ACTIVE' ? 'btn-outline-warning' : 'btn-outline-success'}"
                                             th:title="${p.visibilityStatus != null and p.visibilityStatus.name() == 'ACTIVE' ? 'Ẩn sản phẩm này khỏi sàn' : 'Mở bán lại sản phẩm này'}">
                                         <i class="bi" th:classappend="${p.visibilityStatus != null and p.visibilityStatus.name() == 'ACTIVE' ? 'bi-eye-slash' : 'bi-eye'}"></i>
