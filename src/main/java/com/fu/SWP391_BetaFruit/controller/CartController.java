@@ -30,6 +30,22 @@ public class CartController {
                 () -> cartService.addItem(customerId(session), variantId, quantity), "Đã thêm vào giỏ hàng.");
     }
 
+    @PostMapping("/customer/cart/items/add")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<java.util.Map<String, Object>> addWithoutRedirect(
+            @RequestParam Integer variantId, @RequestParam Integer quantity,
+            @RequestParam(required = false) String cartToken, HttpSession session) {
+        try {
+            CartFormToken.validate(session, cartToken);
+            cartService.addItem(customerId(session), variantId, quantity);
+            long count = cartService.getItemCount(customerId(session));
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of(
+                    "message", "Đã thêm vào giỏ hàng.", "cartCount", count));
+        } catch (IllegalArgumentException ex) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", ex.getMessage()));
+        }
+    }
+
     @PostMapping("/customer/cart/items/{itemId}/quantity")
     public String update(@PathVariable Integer itemId, @RequestParam Integer quantity,
                          @RequestParam(required = false) String cartToken, HttpSession session,
