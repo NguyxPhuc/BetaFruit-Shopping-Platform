@@ -12,9 +12,9 @@ import java.util.List;
 
 @Repository
 public interface MasterCategoryRepository extends JpaRepository<MasterCategory, Integer> {
+    List<MasterCategory> findByIsActiveTrueOrderByCategoryNameAsc();
     boolean existsByCategoryNameIgnoreCase(String categoryName);
     boolean existsByCategoryNameIgnoreCaseAndCategoryIdNot(String categoryName, Integer categoryId);
-    List<MasterCategory> findByCategoryNameContainingIgnoreCase(String keyword);
     List<MasterCategory> findByIsActiveTrue();
     long countByIsActive(Boolean isActive);
 
