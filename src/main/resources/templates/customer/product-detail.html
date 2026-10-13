@@ -1,0 +1,244 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${product.productName} + ' | Chi tiết sản phẩm | BetaFruit'">Chi tiết sản phẩm | BetaFruit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
+    <link rel="stylesheet" th:href="@{/css/customer-products.css}" href="/css/customer-products.css">
+</head>
+<body style="background-color: #f8f9fa;">
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="bf-customer-container">
+    <h1 class="bf-page-title" style="margin-bottom: 28px;">Chi tiết sản phẩm</h1>
+
+    <div class="bf-detail-layout">
+        <div class="bf-detail-gallery">
+            <div class="bf-detail-main-img">
+                <img th:if="${product.primaryImageUrl != null and !#strings.isEmpty(product.primaryImageUrl)}"
+                     id="mainProductImage"
+                     th:src="${product.primaryImageUrl}"
+                     th:alt="${product.productName}" />
+                <span th:unless="${product.primaryImageUrl != null and !#strings.isEmpty(product.primaryImageUrl)}"
+                      class="bf-img-placeholder-text" style="font-size: 16px;">Ảnh sản phẩm</span>
+            </div>
+
+            <div class="bf-detail-thumbs" th:if="${product.imageUrls != null and product.imageUrls.size() > 1}">
+                <div class="bf-detail-thumb"
+                     th:each="imgUrl, iter : ${product.imageUrls}"
+                     th:classappend="${iter.first ? 'active' : ''}"
+                     th:data-image="${imgUrl}" onclick="switchImage(this, this.dataset.image)">
+                    <img th:src="${imgUrl}" th:alt="'Ảnh ' + ${iter.index + 1}" />
+                </div>
+            </div>
+        </div>
+
+        <div class="bf-detail-info">
+            <h2 class="bf-detail-title" id="productTitle" th:text="${product.productName}">Nho xanh Mỹ - 1Kg</h2>
+
+            <div class="bf-detail-price">
+                <span id="productPriceDisplay" th:text="${product.formattedPrice}">290.000đ</span>
+                <span th:if="${product.formattedOriginalPrice != null}"
+                      class="bf-detail-original-price"
+                      id="productOriginalPriceDisplay"
+                      th:text="${product.formattedOriginalPrice}"></span>
+            </div>
+
+            <div class="bf-detail-rating-row">
+                <span class="bf-stars" th:text="${#strings.repeat('★', product.fullStars) + #strings.repeat('☆', 5 - product.fullStars)}">☆☆☆☆☆</span>
+                <span th:text="${product.reviewCount} + ' đánh giá'">120 đánh giá</span>
+            </div>
+
+            <div class="bf-detail-desc" th:text="${product.description}">
+                Nho tươi, ngọt, thích hợp ăn trực tiếp hoặc làm quà.
+            </div>
+
+            <div class="bf-detail-spec-row">
+                <span>Khối lượng:</span>
+                <strong id="productSpecDisplay" th:text="${product.weightSpecification}">1Kg</strong>
+            </div>
+
+            <form id="cartForm" method="post" th:action="@{/customer/cart/items}">
+            <input type="hidden" name="cartToken" th:value="${cartToken}">
+            <input type="hidden" name="variantId" id="selectedVariantId">
+            <div th:if="${product.variants != null and !product.variants.isEmpty()}">
+                <div style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px;">Chọn phân loại:</div>
+                <div class="bf-variant-options">
+                    <button type="button"
+                            class="bf-variant-btn"
+                            th:each="v, iter : ${product.variants}"
+                            th:disabled="${v.isAvailable != true or v.stockQuantity == null or v.stockQuantity <= 0}"
+                            th:data-id="${v.variantId}"
+                            th:data-price="${v.formattedPrice}"
+                            th:data-name="${v.variantName}"
+                            th:data-stock="${v.stockQuantity}"
+                            onclick="selectVariant(this)">
+                        <span th:text="${v.variantName}">1 kg</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bf-qty-row">
+                <span class="bf-qty-label">Số lượng:</span>
+                <div class="bf-qty-picker">
+                    <button type="button" class="bf-qty-btn" onclick="decreaseQty()" aria-label="Giảm">-</button>
+                    <input type="text" id="quantityInput" name="quantity" class="bf-qty-input" value="1" readonly />
+                    <button type="button" class="bf-qty-btn" onclick="increaseQty()" aria-label="Tăng">+</button>
+                </div>
+                <span class="bf-stock-notice" th:if="${product.inStock}">
+                    (Còn hàng: <span id="stockDisplay" th:text="${product.totalStock}">80</span> sản phẩm)
+                </span>
+                <span class="bf-stock-notice" th:unless="${product.inStock}" style="color: #dc2626; font-weight: 600;">
+                    Hết hàng
+                </span>
+            </div>
+
+            <div class="bf-detail-actions">
+                <button type="button"
+                        class="bf-btn-secondary"
+                        id="addToCartBtn"
+                        th:disabled="${!product.inStock}"
+                        onclick="handleAddToCart()">
+                    Thêm vào giỏ
+                </button>
+
+                <button type="button"
+                        class="bf-btn-primary"
+                        id="buyNowBtn"
+                        th:disabled="${!product.inStock}"
+                        onclick="handleBuyNow()">
+                    Mua ngay
+                </button>
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <section class="bf-reviews-section">
+        <h3 class="bf-reviews-title">Đánh giá sản phẩm</h3>
+
+        <div class="bf-reviews-list" th:if="${product.reviews != null and !product.reviews.isEmpty()}">
+            <div class="bf-review-card" th:each="rev : ${product.reviews}">
+                <div class="bf-review-header">
+                    <div>
+                        <span class="bf-reviewer-name" th:text="${rev.customerName}">Nguyễn Văn A</span>
+                        <div class="bf-stars" style="margin-top: 2px;">
+                            <span th:if="${rev.rating != null && rev.rating >= 1}">★</span>
+                            <span th:if="${rev.rating != null && rev.rating >= 2}">★</span>
+                            <span th:if="${rev.rating != null && rev.rating >= 3}">★</span>
+                            <span th:if="${rev.rating != null && rev.rating >= 4}">★</span>
+                            <span th:if="${rev.rating != null && rev.rating >= 5}">★</span>
+                        </div>
+                    </div>
+                    <span class="bf-review-date" th:text="${rev.formattedDate}">01/10/2026 14:30</span>
+                </div>
+                <p class="bf-review-comment" th:text="${rev.comment}">Trái cây rất tươi và ngon, giao hàng đóng gói cẩn thận!</p>
+
+                <div class="bf-shop-reply" th:if="${rev.shopReply != null and !rev.shopReply.isEmpty()}">
+                    <strong>Phản hồi từ cửa hàng:</strong>
+                    <span th:text="${rev.shopReply}">Cảm ơn quý khách đã tin tưởng ủng hộ BetaFruit!</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bf-reviews-empty" th:if="${product.reviews == null || product.reviews.isEmpty()}">
+            Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên trải nghiệm và chia sẻ cảm nhận nhé!
+        </div>
+    </section>
+</main>
+
+<div id="toastMessage" class="bf-toast">Đã thêm vào giỏ hàng thành công!</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    let currentQty = 1;
+    let maxStock = 0;
+
+    function decreaseQty() {
+        if (currentQty > 1) {
+            currentQty--;
+            document.getElementById('quantityInput').value = currentQty;
+        }
+    }
+
+    function increaseQty() {
+        if (currentQty < maxStock) {
+            currentQty++;
+            document.getElementById('quantityInput').value = currentQty;
+        } else {
+            showToast('Đã đạt số lượng tối đa trong kho!');
+        }
+    }
+
+    function switchImage(thumbElem, imgUrl) {
+        document.querySelectorAll('.bf-detail-thumb').forEach(t => t.classList.remove('active'));
+        thumbElem.classList.add('active');
+        const mainImg = document.getElementById('mainProductImage');
+        if (mainImg) {
+            mainImg.src = imgUrl;
+        }
+    }
+
+    function selectVariant(btnElem) {
+        if (btnElem.disabled) return;
+        document.getElementById('selectedVariantId').value = btnElem.dataset.id;
+        document.querySelectorAll('.bf-variant-btn').forEach(b => b.classList.remove('active'));
+        btnElem.classList.add('active');
+
+        const price = btnElem.getAttribute('data-price');
+        const name = btnElem.getAttribute('data-name');
+        const stock = btnElem.getAttribute('data-stock');
+
+        if (price) document.getElementById('productPriceDisplay').innerText = price;
+        if (name) document.getElementById('productSpecDisplay').innerText = name;
+        if (stock) {
+            maxStock = parseInt(stock);
+            const stockDisplay = document.getElementById('stockDisplay');
+            if (stockDisplay) stockDisplay.innerText = stock;
+        }
+        currentQty = Math.max(1, Math.min(currentQty, maxStock));
+        document.getElementById('quantityInput').value = currentQty;
+        const originalDisplay = document.getElementById('productOriginalPriceDisplay');
+        if (originalDisplay) originalDisplay.hidden = true;
+        document.getElementById('addToCartBtn').disabled = maxStock <= 0;
+        document.getElementById('buyNowBtn').disabled = maxStock <= 0;
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toastMessage');
+        toast.innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
+    }
+
+    function handleAddToCart() {
+        if (!document.getElementById('selectedVariantId').value || maxStock < currentQty) {
+            showToast('Vui lòng chọn phân loại còn hàng.');
+            return;
+        }
+        document.getElementById('addToCartBtn').disabled = true;
+        document.getElementById('buyNowBtn').disabled = true;
+        document.getElementById('cartForm').requestSubmit();
+    }
+
+    function handleBuyNow() {
+        handleAddToCart();
+    }
+    const initialVariant = document.querySelector('.bf-variant-btn:not(:disabled)');
+    if (initialVariant) selectVariant(initialVariant);
+    else {
+        document.getElementById('addToCartBtn').disabled = true;
+        document.getElementById('buyNowBtn').disabled = true;
+    }
+</script>
+
+</body>
+</html>

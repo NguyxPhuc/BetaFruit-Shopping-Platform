@@ -13,6 +13,10 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.userId = :id")
+    Optional<User> findCartCustomerForUpdate(@Param("id") Integer id);
+
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);

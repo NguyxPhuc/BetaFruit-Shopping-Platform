@@ -41,7 +41,7 @@ public class WebConfig implements WebMvcConfigurer {
                                 .excludePathPatterns("/shop/public/**");
 
                 registry.addInterceptor(customerInterceptor)
-                                .addPathPatterns("/customer/**");
+                                .addPathPatterns("/customer/**", "/cart");
 
                 registry.addInterceptor(shipperInterceptor)
                                 .addPathPatterns("/shipper/**");

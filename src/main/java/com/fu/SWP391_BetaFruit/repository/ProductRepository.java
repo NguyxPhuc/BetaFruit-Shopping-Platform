@@ -14,6 +14,21 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
+    @Query("SELECT p FROM Product p JOIN FETCH p.shop s JOIN FETCH p.category " +
+           "WHERE p.approvalStatus = com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus.APPROVED " +
+           "AND p.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ProductVisibility.ACTIVE " +
+           "AND s.approvalStatus = com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.APPROVED " +
+           "AND s.owner.status = com.fu.SWP391_BetaFruit.enums.UserStatus.ACTIVE")
+    List<Product> findActiveCustomerProducts();
+
+    @Query("SELECT p FROM Product p JOIN FETCH p.shop s JOIN FETCH p.category " +
+           "WHERE p.productId = :productId " +
+           "AND p.approvalStatus = com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus.APPROVED " +
+           "AND p.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ProductVisibility.ACTIVE " +
+           "AND s.approvalStatus = com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.APPROVED " +
+           "AND s.owner.status = com.fu.SWP391_BetaFruit.enums.UserStatus.ACTIVE")
+    java.util.Optional<Product> findActiveCustomerProductById(@Param("productId") Integer productId);
+
 
     Page<Product> findByApprovalStatus(ProductApprovalStatus status, Pageable pageable);
 
