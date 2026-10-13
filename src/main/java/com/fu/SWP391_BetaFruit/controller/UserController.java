@@ -22,11 +22,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/")
-    public String home() {
-        return "index";
-    }
-
     @GetMapping("/profile")
     public String getCustomerProfile(Model model, HttpSession session) throws Exception {
         Integer id = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
