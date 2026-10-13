@@ -19,10 +19,6 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
     Optional<Shop> findByOwner(User owner);
     Optional<Shop> findByOwner_UserId(Integer userId);
 
-    List<Shop> findByApprovalStatus(ShopApprovalStatus status);
-
-    Page<Shop> findByApprovalStatus(ShopApprovalStatus status, Pageable pageable);
-
     long countByApprovalStatus(ShopApprovalStatus status);
 
     @Query("SELECT s FROM Shop s JOIN s.owner u WHERE " +
@@ -70,19 +66,17 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
 
     @Query(value = "SELECT s FROM Shop s JOIN s.owner u WHERE " +
            "s.approvalStatus = 'APPROVED' AND " +
+           "(:status IS NULL OR s.approvalStatus = :status) AND " +
            "(:keyword IS NULL OR :keyword = '' OR " +
            " LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            " LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           " LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           " LOWER(s.bankAccountNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
-           "(:ownerStatus IS NULL OR :ownerStatus = 'ALL' OR " +
-           " (:ownerStatus = 'ACTIVE' AND u.status = com.fu.SWP391_BetaFruit.enums.UserStatus.ACTIVE) OR " +
-           " (:ownerStatus = 'DEACTIVATED' AND u.status = com.fu.SWP391_BetaFruit.enums.UserStatus.DEACTIVATED)) AND " +
-           "(:commissionTier IS NULL OR :commissionTier = 'ALL' OR " +
-           " (:commissionTier = 'DEFAULT' AND s.commissionRate = 5.00) OR " +
-           " (:commissionTier = 'DISCOUNTED' AND s.commissionRate < 5.00) OR " +
-           " (:commissionTier = 'HIGH' AND s.commissionRate > 5.00))",
-           countQuery = "SELECT COUNT(s) FROM Shop s JOIN s.owner u WHERE " +
+           " LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Shop> searchShopsForAdmin(@Param("keyword") String keyword,
+                                   @Param("status") ShopApprovalStatus status,
+                                   Pageable pageable);
+
+    @Query("SELECT s FROM Shop s JOIN s.owner u WHERE " +
            "s.approvalStatus = 'APPROVED' AND " +
            "(:keyword IS NULL OR :keyword = '' OR " +
            " LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +

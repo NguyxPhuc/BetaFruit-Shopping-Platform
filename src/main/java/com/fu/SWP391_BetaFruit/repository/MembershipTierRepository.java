@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface MembershipTierRepository extends JpaRepository<MembershipTier,Integer> {
+public interface MembershipTierRepository extends JpaRepository<MembershipTier, Integer> {
     MembershipTier findTopByOrderByMinSpentRequiredAsc();
+
+    java.util.List<MembershipTier> findAllByOrderByMinSpentRequiredAsc();
 }

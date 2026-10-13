@@ -13,6 +13,10 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.userId = :id")
+    Optional<User> findCartCustomerForUpdate(@Param("id") Integer id);
+
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
@@ -20,26 +24,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByEmail(String email);
 
     Optional<User> findByUsername(String username);
-
-
-    @Query("SELECT u FROM User u WHERE " +
-           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "(u.phone IS NOT NULL AND LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    List<User> searchUsers(@Param("keyword") String keyword);
-
-    @Query(value = "SELECT u FROM User u WHERE " +
-           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "(u.phone IS NOT NULL AND LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))",
-           countQuery = "SELECT COUNT(u) FROM User u WHERE " +
-           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "(u.phone IS NOT NULL AND LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    Page<User> searchUsers(@Param("keyword") String keyword, Pageable pageable);
 
     @Query(value = "SELECT DISTINCT u FROM User u LEFT JOIN u.roles r WHERE " +
            "(:status IS NULL OR u.status = :status) AND " +

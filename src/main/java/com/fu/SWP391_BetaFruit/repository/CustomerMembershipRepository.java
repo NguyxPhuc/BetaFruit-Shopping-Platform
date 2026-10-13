@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface CustomerMembershipRepository extends JpaRepository<CustomerMembership, Integer> {
     Optional<CustomerMembership> findByUserId(Integer userId);
+
+    boolean existsByTier_TierId(Integer tierId);
 }

@@ -4,8 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BetaFruit</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="stylesheet" th:href="@{/css/customer-products.css}">
 </head>
 <body>
-hello
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="bf-customer-container">
+    <section style="padding: 48px 0;">
+        <h1 class="bf-page-title">Trái cây tươi ngon mỗi ngày</h1>
+        <p class="bf-page-subtitle">Khám phá trái cây từ các cửa hàng trên BetaFruit, chọn phân loại và lưu vào giỏ hàng của bạn.</p>
+        <a th:href="@{/products}" class="bf-btn-primary">Xem sản phẩm</a>
+    </section>
+    <section style="margin-bottom: 40px;">
+        <h2 class="bf-page-title">Khám phá sản phẩm</h2>
+        <div class="bf-product-grid" th:if="${!#lists.isEmpty(featuredProducts)}">
+            <article class="bf-product-card" th:each="product : ${featuredProducts}">
+                <a th:href="@{/products/{id}(id=${product.productId})}" style="text-decoration: none; color: inherit;">
+                    <div class="bf-product-img-box">
+                        <img th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
+                             th:src="${product.imageUrl}" th:alt="${product.productName}" loading="lazy">
+                        <span th:unless="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
+                              class="bf-img-placeholder-text">Ảnh sản phẩm</span>
+                        <span th:if="${!product.inStock}" class="bf-stock-badge">Hết hàng</span>
+                    </div>
+                    <div class="bf-product-title" th:text="${product.productName}"></div>
+                    <div class="bf-product-price" th:text="${product.formattedPrice}"></div>
+                    <div class="bf-product-rating">
+                        <span class="bf-stars" th:text="${#strings.repeat('★', product.fullStars) + #strings.repeat('☆', 5 - product.fullStars)}">☆☆☆☆☆</span>
+                        <span th:if="${product.reviewCount == 0}">Chưa có đánh giá</span>
+                        <span th:if="${product.reviewCount > 0}" th:text="'(' + ${product.reviewCount} + ')'"></span>
+                    </div>
+                </a>
+            </article>
+        </div>
+        <p th:if="${#lists.isEmpty(featuredProducts)}">Chưa có sản phẩm đang bán.</p>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

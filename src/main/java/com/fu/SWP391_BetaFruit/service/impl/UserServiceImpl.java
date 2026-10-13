@@ -80,6 +80,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public ShopProfileResponse getShopProfile(Integer id) throws Exception {
+        ShopProfileResponse shopProfileResponse = new ShopProfileResponse();
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin người dùng."));
+
+        shopProfileResponse.setEmail(user.getEmail());
+        shopProfileResponse.setPhone(user.getPhone());
+
+        Shop shop = shopRepository.findByOwner(user)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin shop."));
+        shopProfileResponse.setShopName(shop.getShopName());
+        shopProfileResponse.setShopDescription(shop.getShopDescription());
+        shopProfileResponse.setBankName(shop.getBankName());
+        shopProfileResponse.setBankAccountNumber(shop.getBankAccountNumber());
+        shopProfileResponse.setAccountName(shop.getAccountName());
+
+        return shopProfileResponse;
+    }
+
+    @Override
     public User getUserById(Integer userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng với ID: " + userId));
@@ -89,11 +109,6 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void toggleUserStatus(Integer userId) {
         User user = getUserById(userId);
-
-        // Bảo vệ tài khoản quản trị viên chính không bị khóa ngoài ý muốn
-        if ("khaidq".equalsIgnoreCase(user.getUsername())) {
-            throw new IllegalStateException("Không thể khóa tài khoản quản trị viên hệ thống (khaidq)!");
-        }
 
         if (user.getStatus() == UserStatus.ACTIVE) {
             user.setStatus(UserStatus.DEACTIVATED);
@@ -127,23 +142,13 @@ public class UserServiceImpl implements UserService {
     );
 
     @Override
-    public Page<User> getAdminUserPage(String keyword, int page, int size) {
-        return getAdminUserPage(keyword, null, null, page, size, "userId", "desc");
-    }
-
-    @Override
-    public Page<User> getAdminUserPage(String keyword, int page, int size, String sortBy, String sortDir) {
-        return getAdminUserPage(keyword, null, null, page, size, sortBy, sortDir);
-    }
-
-    @Override
     public Page<User> getAdminUserPage(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
         int pageSize = size > 0 ? size : 5;
 
         String safeSortBy = (sortBy != null && ALLOWED_USER_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "userId";
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
@@ -185,26 +190,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Map<String, Object> getAdminUserPageData(String keyword) {
-        return getAdminUserPageData(keyword, null, null, 1, 5, "userId", "desc");
-    }
-
-    @Override
-    public Map<String, Object> getAdminUserPageData(String keyword, int page, int size) {
-        return getAdminUserPageData(keyword, null, null, page, size, "userId", "desc");
-    }
-
-    @Override
-    public Map<String, Object> getAdminUserPageData(String keyword, int page, int size, String sortBy, String sortDir) {
-        return getAdminUserPageData(keyword, null, null, page, size, sortBy, sortDir);
-    }
-
-    @Override
     public Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
         String safeSortBy = (sortBy != null && ALLOWED_USER_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "userId";
-        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+        String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
         Long validRoleId = (roleId != null && roleId > 0) ? roleId : null;
         UserStatus filterStatus = parseUserStatus(status);
 

@@ -24,21 +24,8 @@ public class CategoryServiceImpl implements CategoryService {
     private final MasterCategoryRepository masterCategoryRepository;
 
     @Override
-    public List<MasterCategory> getAllCategories() {
-        return masterCategoryRepository.findAll();
-    }
-
-    @Override
     public List<MasterCategory> getActiveCategories() {
         return masterCategoryRepository.findByIsActiveTrue();
-    }
-
-    @Override
-    public List<MasterCategory> searchCategories(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return masterCategoryRepository.findAll();
-        }
-        return masterCategoryRepository.findByCategoryNameContainingIgnoreCase(keyword.trim());
     }
 
     @Override
@@ -110,23 +97,13 @@ public class CategoryServiceImpl implements CategoryService {
     );
 
     @Override
-    public Page<MasterCategory> getAdminCategoryPage(String keyword, int page, int size) {
-        return getAdminCategoryPage(keyword, "ALL", page, size, "categoryId", "desc");
-    }
-
-    @Override
-    public Page<MasterCategory> getAdminCategoryPage(String keyword, int page, int size, String sortBy, String sortDir) {
-        return getAdminCategoryPage(keyword, "ALL", page, size, sortBy, sortDir);
-    }
-
-    @Override
     public Page<MasterCategory> getAdminCategoryPage(String keyword, String status, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
         int pageSize = size > 0 ? size : 5;
 
         String safeSortBy = (sortBy != null && ALLOWED_CATEGORY_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "categoryId";
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
@@ -136,26 +113,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Map<String, Object> getAdminCategoryPageData(String keyword) {
-        return getAdminCategoryPageData(keyword, "ALL", 1, 5, "categoryId", "desc");
-    }
-
-    @Override
-    public Map<String, Object> getAdminCategoryPageData(String keyword, int page, int size) {
-        return getAdminCategoryPageData(keyword, "ALL", page, size, "categoryId", "desc");
-    }
-
-    @Override
-    public Map<String, Object> getAdminCategoryPageData(String keyword, int page, int size, String sortBy, String sortDir) {
-        return getAdminCategoryPageData(keyword, "ALL", page, size, sortBy, sortDir);
-    }
-
-    @Override
     public Map<String, Object> getAdminCategoryPageData(String keyword, String status, int page, int size, String sortBy, String sortDir) {
         String cleanKeyword = (keyword != null) ? keyword.trim() : "";
         String safeSortBy = (sortBy != null && ALLOWED_CATEGORY_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "categoryId";
-        String safeSortDir = "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+        String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
 
         Boolean parsedStatus = parseActiveStatus(status);
         String currentStatus = (parsedStatus == null) ? "ALL" : (parsedStatus ? "ACTIVE" : "HIDDEN");

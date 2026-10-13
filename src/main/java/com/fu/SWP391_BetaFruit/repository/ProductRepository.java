@@ -14,24 +14,29 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
+    @Query("SELECT p FROM Product p JOIN FETCH p.shop s JOIN FETCH p.category " +
+           "WHERE p.approvalStatus = com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus.APPROVED " +
+           "AND p.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ProductVisibility.ACTIVE " +
+           "AND s.approvalStatus = com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.APPROVED " +
+           "AND s.owner.status = com.fu.SWP391_BetaFruit.enums.UserStatus.ACTIVE")
+    List<Product> findActiveCustomerProducts();
 
-    List<Product> findByApprovalStatus(ProductApprovalStatus status);
+    @Query("SELECT p FROM Product p JOIN FETCH p.shop s JOIN FETCH p.category " +
+           "WHERE p.productId = :productId " +
+           "AND p.approvalStatus = com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus.APPROVED " +
+           "AND p.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ProductVisibility.ACTIVE " +
+           "AND s.approvalStatus = com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.APPROVED " +
+           "AND s.owner.status = com.fu.SWP391_BetaFruit.enums.UserStatus.ACTIVE")
+    java.util.Optional<Product> findActiveCustomerProductById(@Param("productId") Integer productId);
+
 
     Page<Product> findByApprovalStatus(ProductApprovalStatus status, Pageable pageable);
-
-    List<Product> findByApprovalStatusAndVisibilityStatus(ProductApprovalStatus approvalStatus, ProductVisibility visibilityStatus);
 
     Page<Product> findByApprovalStatusAndVisibilityStatus(ProductApprovalStatus approvalStatus, ProductVisibility visibilityStatus, Pageable pageable);
 
     long countByApprovalStatus(ProductApprovalStatus status);
 
     long countByApprovalStatusAndVisibilityStatus(ProductApprovalStatus approvalStatus, ProductVisibility visibilityStatus);
-
-    @Query("SELECT p FROM Product p JOIN p.shop s JOIN p.category c WHERE " +
-           "(LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    List<Product> searchAll(@Param("keyword") String keyword);
 
     @Query(value = "SELECT p FROM Product p JOIN p.shop s JOIN p.category c WHERE " +
            "(LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -42,13 +47,6 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
            "LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Product> searchAll(@Param("keyword") String keyword, Pageable pageable);
-
-    @Query("SELECT p FROM Product p JOIN p.shop s JOIN p.category c WHERE " +
-           "p.approvalStatus = :status AND " +
-           "(LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    List<Product> searchByApprovalStatus(@Param("keyword") String keyword, @Param("status") ProductApprovalStatus status);
 
     @Query(value = "SELECT p FROM Product p JOIN p.shop s JOIN p.category c WHERE " +
            "p.approvalStatus = :status AND " +
@@ -61,15 +59,6 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
            "LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Product> searchByApprovalStatus(@Param("keyword") String keyword, @Param("status") ProductApprovalStatus status, Pageable pageable);
-
-    @Query("SELECT p FROM Product p JOIN p.shop s JOIN p.category c WHERE " +
-           "p.approvalStatus = :approvalStatus AND p.visibilityStatus = :visibilityStatus AND " +
-           "(LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "LOWER(c.categoryName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
-    List<Product> searchByApprovalAndVisibility(@Param("keyword") String keyword,
-                                                @Param("approvalStatus") ProductApprovalStatus approvalStatus,
-                                                @Param("visibilityStatus") ProductVisibility visibilityStatus);
 
     @Query(value = "SELECT p FROM Product p JOIN p.shop s JOIN p.category c WHERE " +
            "p.approvalStatus = :approvalStatus AND p.visibilityStatus = :visibilityStatus AND " +
