@@ -5,58 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giỏ hàng | BetaFruit</title>
     <link rel="stylesheet" th:href="@{/css/site.css}">
-    <link rel="stylesheet" th:href="@{/css/customer-products.css}">
     <link rel="stylesheet" th:href="@{/css/customer-cart.css}">
 </head>
-<body>
+<body class="cart-page">
 <div th:replace="~{fragments/header :: header}"></div>
-<main class="bf-customer-container">
-    <h1 class="bf-page-title">Giỏ hàng của bạn</h1>
-    <p role="status" class="cart-success" th:if="${successMessage}" th:text="${successMessage}"></p>
-    <p role="alert" class="cart-warning" th:if="${errorMessage}" th:text="${errorMessage}"></p>
-    <div class="cart-empty" th:if="${cart.items.isEmpty()}">
-        <p>Giỏ hàng đang trống.</p>
-        <a class="bf-btn-primary" th:href="@{/products}">Khám phá sản phẩm</a>
+<main class="cart-container">
+    <nav class="cart-breadcrumb" aria-label="Đường dẫn"><a th:href="@{/}">Trang chủ</a><span aria-hidden="true">/</span><span>Giỏ hàng</span></nav>
+    <div class="cart-heading">
+        <div><h1>Giỏ hàng của bạn</h1><p>Chọn những sản phẩm bạn muốn mua.</p></div>
+        <a class="cart-back" th:href="@{/products}">← Tiếp tục mua sắm</a>
     </div>
-    <div th:unless="${cart.items.isEmpty()}" class="cart-layout">
-        <section aria-label="Sản phẩm trong giỏ">
-            <article class="cart-item" th:each="item : ${cart.items}">
-                <div>
-                    <a th:href="@{/products/{id}(id=${item.productId})}" th:text="${item.productName}"></a>
-                    <p><span th:text="${item.variantName}"></span> · <span th:text="${item.shopName}"></span></p>
-                    <p th:if="${item.available}">Đơn giá: <strong th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></p>
-                    <p th:unless="${item.available}" class="cart-warning" role="alert" th:text="${item.warning}"></p>
+    <p role="status" class="cart-notice cart-success" th:if="${successMessage}" th:text="${successMessage}"></p>
+    <p role="alert" class="cart-notice cart-warning" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+    <section class="cart-empty" th:if="${cart.items.isEmpty()}">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 10h5l5 23h21l5-16H14M21 40h.01M35 40h.01"/></svg>
+        <h2>Giỏ hàng đang trống</h2><p>Khám phá trái cây tươi ngon và chọn món bạn yêu thích.</p>
+        <a class="cart-primary" th:href="@{/products}">Khám phá sản phẩm →</a>
+    </section>
+    <div th:unless="${cart.items.isEmpty()}" class="cart-layout" id="cartSelection" th:data-customer-id="${session.LOGGED_IN_USER_ID}">
+        <section class="cart-products" aria-label="Sản phẩm trong giỏ">
+            <div class="cart-toolbar">
+                <label class="cart-select-all"><input type="checkbox" id="selectAllItems"> Chọn tất cả</label>
+                <span th:text="${cart.items.size()} + ' sản phẩm'"></span>
+            </div>
+            <article class="cart-item" th:each="item : ${cart.items}" th:classappend="${!item.available ? 'cart-item-unavailable' : ''}">
+                <div class="cart-item-info">
+                    <input type="checkbox" class="cart-item-select" th:value="${item.itemId}" th:checked="${item.available}" th:disabled="${!item.available}"
+                           th:data-quantity="${item.quantity}" th:data-subtotal="${item.subtotal}" th:aria-label="'Chọn ' + ${item.productName} + ' - ' + ${item.variantName}">
+                    <div class="cart-item-copy">
+                        <a class="cart-product-name" th:href="@{/products/{id}(id=${item.productId})}" th:text="${item.productName}"></a>
+                        <span class="cart-variant" th:text="${item.variantName}"></span>
+                        <p class="cart-warning" th:unless="${item.available}" role="alert" th:text="${item.warning}"></p>
+                    </div>
                 </div>
-                <div class="cart-item-actions">
-                    <form method="post" th:action="@{/customer/cart/items/{id}/quantity(id=${item.itemId})}">
-                        <input type="hidden" name="cartToken" th:value="${cartToken}">
-                        <label th:for="'qty-' + ${item.itemId}">Số lượng</label>
-                        <input type="number" name="quantity" min="1" step="1" required
-                               th:id="'qty-' + ${item.itemId}" th:value="${item.quantity}">
-                        <button type="submit" class="bf-btn-secondary">Cập nhật</button>
-                    </form>
+                <div class="cart-unit-price">
+                    <span class="cart-field-label">Đơn giá</span>
+                    <span th:if="${item.available}" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'COMMA')} + 'đ'"></span>
+                    <span th:unless="${item.available}">—</span>
+                </div>
+                <form class="cart-quantity-form" method="post" th:action="@{/customer/cart/items/{id}/quantity(id=${item.itemId})}">
+                    <input type="hidden" name="cartToken" th:value="${cartToken}">
+                    <label class="cart-field-label" th:for="'qty-' + ${item.itemId}">Số lượng</label>
+                    <div class="cart-quantity-controls">
+                        <input type="number" name="quantity" min="1" step="1" required th:id="'qty-' + ${item.itemId}" th:value="${item.quantity}">
+                        <button type="submit" class="cart-update">Cập nhật</button>
+                    </div>
+                </form>
+                <div class="cart-line-total">
+                    <span class="cart-field-label">Thành tiền</span>
                     <strong th:if="${item.available}" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong>
-                    <form method="post" th:action="@{/customer/cart/items/{id}/remove(id=${item.itemId})}">
-                        <input type="hidden" name="cartToken" th:value="${cartToken}">
-                        <button type="submit" class="cart-remove">Xóa sản phẩm</button>
-                    </form>
+                    <span th:unless="${item.available}">—</span>
                 </div>
+                <form class="cart-remove-form" method="post" th:action="@{/customer/cart/items/{id}/remove(id=${item.itemId})}">
+                    <input type="hidden" name="cartToken" th:value="${cartToken}">
+                    <button type="submit" class="cart-remove" th:aria-label="'Xóa ' + ${item.productName}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5"/></svg><span>Xóa</span>
+                    </button>
+                </form>
             </article>
+            <div class="cart-list-footer">
+                <span>Bỏ chọn sản phẩm để mua vào lần sau.</span>
+                <form method="post" th:action="@{/customer/cart/clear}" onsubmit="return confirm('Xóa toàn bộ sản phẩm trong giỏ?')">
+                    <input type="hidden" name="cartToken" th:value="${cartToken}"><button type="submit" class="cart-clear">Xóa toàn bộ</button>
+                </form>
+            </div>
         </section>
         <aside class="cart-summary">
             <h2>Tóm tắt giỏ hàng</h2>
-            <p>Số lượng đã chọn: <strong th:text="${cart.totalQuantity}"></strong></p>
-            <p>Tổng tiền hàng: <strong th:text="${#numbers.formatDecimal(cart.totalAmount, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></p>
-            <p th:unless="${cart.valid}" class="cart-warning">Sản phẩm không hợp lệ chưa được tính vào tổng tiền. Vui lòng cập nhật hoặc xóa.</p>
-            <p>Giá và tồn kho được kiểm tra lại mỗi lần mở giỏ. Chưa bao gồm phí giao hàng.</p>
-            <a th:href="@{/products}" class="bf-btn-primary">Tiếp tục mua sắm</a>
-            <form method="post" th:action="@{/customer/cart/clear}" onsubmit="return confirm('Xóa toàn bộ sản phẩm trong giỏ?')">
-                <input type="hidden" name="cartToken" th:value="${cartToken}">
-                <button type="submit" class="cart-remove">Xóa toàn bộ giỏ hàng</button>
-            </form>
+            <div aria-live="polite" aria-atomic="true">
+                <div class="cart-summary-row"><span>Số lượng đã chọn</span><strong id="selectedQuantity" th:text="${cart.totalQuantity}"></strong></div>
+                <div class="cart-summary-total"><span>Tổng tiền hàng</span><strong id="selectedTotal" th:text="${#numbers.formatDecimal(cart.totalAmount, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></div>
+            </div>
+            <p class="cart-summary-note">Chưa bao gồm phí giao hàng.</p>
+            <p id="noSelection" class="cart-selection-note" hidden>Chọn sản phẩm để xem tổng tiền.</p>
+            <p th:unless="${cart.valid}" class="cart-warning">Sản phẩm không khả dụng chưa được tính vào tổng tiền.</p>
+            <a th:href="@{/products}" class="cart-primary">Tiếp tục mua sắm →</a>
+            <div class="cart-summary-footnote">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3zM8 12l3 3 5-6"/></svg>
+                <span>Giá và tồn kho luôn được kiểm tra lại.</span>
+            </div>
         </aside>
     </div>
 </main>
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script th:src="@{/js/customer-cart.js}" defer></script>
 </body>
 </html>

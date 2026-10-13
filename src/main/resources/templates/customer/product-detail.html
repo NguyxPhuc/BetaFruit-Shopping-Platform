@@ -63,7 +63,8 @@
                 <strong id="productSpecDisplay" th:text="${product.weightSpecification}">1Kg</strong>
             </div>
 
-            <form id="cartForm" method="post" th:action="@{/customer/cart/items}">
+            <form id="cartForm" method="post" th:action="@{/customer/cart/items}"
+                  th:data-add-url="@{/customer/cart/items/add}">
             <input type="hidden" name="cartToken" th:value="${cartToken}">
             <input type="hidden" name="variantId" id="selectedVariantId">
             <div th:if="${product.variants != null and !product.variants.isEmpty()}">
@@ -152,7 +153,7 @@
     </section>
 </main>
 
-<div id="toastMessage" class="bf-toast">Đã thêm vào giỏ hàng thành công!</div>
+<div id="toastMessage" class="bf-toast" role="status" aria-live="polite">Đã thêm vào giỏ hàng thành công!</div>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 
@@ -219,19 +220,51 @@
         }, 2500);
     }
 
-    function handleAddToCart() {
+    let addingToCart = false;
+    async function handleAddToCart(goToCart = false) {
+        if (addingToCart) return;
         if (!document.getElementById('selectedVariantId').value || maxStock < currentQty) {
             showToast('Vui lòng chọn phân loại còn hàng.');
             return;
         }
+        addingToCart = true;
         document.getElementById('addToCartBtn').disabled = true;
         document.getElementById('buyNowBtn').disabled = true;
-        document.getElementById('cartForm').requestSubmit();
+        const form = document.getElementById('cartForm');
+        try {
+            const response = await fetch(form.dataset.addUrl, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body: new URLSearchParams(new FormData(form))
+            });
+            if (response.redirected || !response.headers.get('content-type')?.includes('application/json')) {
+                showToast('Vui lòng đăng nhập tài khoản khách hàng rồi thử lại.');
+                return;
+            }
+            const result = await response.json();
+            if (!response.ok) {
+                showToast(result.message || 'Không thể thêm sản phẩm vào giỏ hàng.');
+                return;
+            }
+            document.querySelectorAll('.cart-count').forEach(badge => badge.textContent = result.cartCount);
+            if (goToCart) window.location.href = document.querySelector('.cart-button').href;
+            else showToast(result.message);
+        } catch (error) {
+            showToast('Không thể kết nối. Vui lòng kiểm tra giỏ hàng trước khi thử lại.');
+        } finally {
+            addingToCart = false;
+            document.getElementById('addToCartBtn').disabled = maxStock <= 0;
+            document.getElementById('buyNowBtn').disabled = maxStock <= 0;
+        }
     }
 
     function handleBuyNow() {
-        handleAddToCart();
+        handleAddToCart(true);
     }
+    document.getElementById('cartForm').addEventListener('submit', event => {
+        event.preventDefault();
+        handleAddToCart();
+    });
     const initialVariant = document.querySelector('.bf-variant-btn:not(:disabled)');
     if (initialVariant) selectVariant(initialVariant);
     else {
