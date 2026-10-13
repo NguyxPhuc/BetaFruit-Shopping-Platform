@@ -1,9 +1,13 @@
 package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.ProductCreateRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest;
+import com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest;
 import com.fu.SWP391_BetaFruit.entity.Product;
+import com.fu.SWP391_BetaFruit.entity.ProductVariant;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
+import com.fu.SWP391_BetaFruit.service.InventoryService;
 import com.fu.SWP391_BetaFruit.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -17,9 +21,17 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest;
-import com.fu.SWP391_BetaFruit.entity.ProductVariant;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -27,7 +39,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final CategoryService categoryService;
-    private final com.fu.SWP391_BetaFruit.service.InventoryService inventoryService;
+    private final InventoryService inventoryService;
 
     // =========================================================================
     // 1. DANH SÁCH HOA QUẢ CỦA CỬA HÀNG (SHOP OWNER)
@@ -83,7 +95,7 @@ public class ProductController {
 
             if (!model.containsAttribute("product")) {
                 ProductCreateRequest defaultRequest = new ProductCreateRequest();
-                com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest firstVariant = new com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest();
+                VariantItemRequest firstVariant = new VariantItemRequest();
                 firstVariant.setLowStockThreshold(5);
                 defaultRequest.getVariants().add(firstVariant);
                 model.addAttribute("product", defaultRequest);
@@ -129,18 +141,18 @@ public class ProductController {
         }
 
         // Kiểm tra hợp lệ danh sách thực thể (biến thể)
-        java.util.List<com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest> effectiveVariants = request.getEffectiveVariants();
+        List<VariantItemRequest> effectiveVariants = request.getEffectiveVariants();
         if (effectiveVariants.isEmpty()) {
             model.addAttribute("errorMessage", "Vui lòng nhập ít nhất 1 thực thể cho hoa quả.");
         } else {
             for (int i = 0; i < effectiveVariants.size(); i++) {
-                com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest v = effectiveVariants.get(i);
-                if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new java.math.BigDecimal("1000")) < 0) {
+                VariantItemRequest v = effectiveVariants.get(i);
+                if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
                     model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') phải có giá niêm yết từ 1,000 VNĐ trở lên.");
                     break;
                 }
                 if (v.getSalePrice() != null) {
-                    if (v.getSalePrice().compareTo(java.math.BigDecimal.ZERO) <= 0 || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
+                    if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
                         model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
                         break;
                     }
@@ -158,7 +170,7 @@ public class ProductController {
                 request.setVariants(effectiveVariants);
             }
             if (request.getVariants().isEmpty()) {
-                request.getVariants().add(new com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest());
+                request.getVariants().add(new VariantItemRequest());
             }
             model.addAttribute("shop", shop);
             model.addAttribute("categories", categoryService.getActiveCategories());
@@ -168,21 +180,21 @@ public class ProductController {
         // Nếu người dùng tải ảnh từ máy tính, lưu vào thư mục uploads/products/
         if (hasFile) {
             try {
-                org.springframework.web.multipart.MultipartFile file = request.getImageFile();
+                MultipartFile file = request.getImageFile();
                 String originalFilename = file.getOriginalFilename();
                 String extension = "";
                 if (originalFilename != null && originalFilename.contains(".")) {
                     extension = originalFilename.substring(originalFilename.lastIndexOf("."));
                 }
-                String filename = java.util.UUID.randomUUID() + extension;
-                java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads", "products");
-                if (!java.nio.file.Files.exists(uploadDir)) {
-                    java.nio.file.Files.createDirectories(uploadDir);
+                String filename = UUID.randomUUID() + extension;
+                Path uploadDir = Paths.get("uploads", "products");
+                if (!Files.exists(uploadDir)) {
+                    Files.createDirectories(uploadDir);
                 }
-                java.nio.file.Path targetLocation = uploadDir.resolve(filename);
-                java.nio.file.Files.copy(file.getInputStream(), targetLocation, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                Path targetLocation = uploadDir.resolve(filename);
+                Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
                 request.setImageUrl("/uploads/products/" + filename);
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 model.addAttribute("errorMessage", "Lỗi khi lưu tệp hình ảnh tải lên: " + e.getMessage());
                 model.addAttribute("shop", shop);
                 model.addAttribute("categories", categoryService.getActiveCategories());
@@ -263,7 +275,7 @@ public class ProductController {
 
                 if (product.getVariants() != null) {
                     for (ProductVariant v : product.getVariants()) {
-                        com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest vReq = new com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest();
+                        VariantItemRequest vReq = new VariantItemRequest();
                         vReq.setVariantId(v.getVariantId());
                         vReq.setVariantName(v.getVariantName());
                         vReq.setOriginalPrice(v.getOriginalPrice());
@@ -276,7 +288,7 @@ public class ProductController {
                     }
                 }
                 if (request.getVariants().isEmpty()) {
-                    request.getVariants().add(new com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest());
+                    request.getVariants().add(new VariantItemRequest());
                 }
                 model.addAttribute("product", request);
             }
@@ -319,18 +331,18 @@ public class ProductController {
         }
 
         // Kiểm tra hợp lệ danh sách thực thể (biến thể)
-        java.util.List<com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest> effectiveVariants = request.getEffectiveVariants();
+        List<VariantItemRequest> effectiveVariants = request.getEffectiveVariants();
         if (effectiveVariants.isEmpty()) {
             model.addAttribute("errorMessage", "Vui lòng nhập ít nhất 1 thực thể cho hoa quả.");
         } else {
             for (int i = 0; i < effectiveVariants.size(); i++) {
-                com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest v = effectiveVariants.get(i);
-                if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new java.math.BigDecimal("1000")) < 0) {
+                VariantItemRequest v = effectiveVariants.get(i);
+                if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
                     model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') phải có giá niêm yết từ 1,000 VNĐ trở lên.");
                     break;
                 }
                 if (v.getSalePrice() != null) {
-                    if (v.getSalePrice().compareTo(java.math.BigDecimal.ZERO) <= 0 || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
+                    if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
                         model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
                         break;
                     }
@@ -348,7 +360,7 @@ public class ProductController {
                 request.setVariants(effectiveVariants);
             }
             if (request.getVariants().isEmpty()) {
-                request.getVariants().add(new com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest());
+                request.getVariants().add(new VariantItemRequest());
             }
             model.addAttribute("shop", shop);
             model.addAttribute("categories", categoryService.getActiveCategories());
@@ -359,21 +371,21 @@ public class ProductController {
         // Nếu người dùng chọn ảnh mới tải lên từ máy tính
         if (request.getImageFile() != null && !request.getImageFile().isEmpty()) {
             try {
-                org.springframework.web.multipart.MultipartFile file = request.getImageFile();
+                MultipartFile file = request.getImageFile();
                 String originalFilename = file.getOriginalFilename();
                 String extension = "";
                 if (originalFilename != null && originalFilename.contains(".")) {
                     extension = originalFilename.substring(originalFilename.lastIndexOf("."));
                 }
-                String filename = java.util.UUID.randomUUID() + extension;
-                java.nio.file.Path uploadDir = java.nio.file.Paths.get("uploads", "products");
-                if (!java.nio.file.Files.exists(uploadDir)) {
-                    java.nio.file.Files.createDirectories(uploadDir);
+                String filename = UUID.randomUUID() + extension;
+                Path uploadDir = Paths.get("uploads", "products");
+                if (!Files.exists(uploadDir)) {
+                    Files.createDirectories(uploadDir);
                 }
-                java.nio.file.Path targetLocation = uploadDir.resolve(filename);
-                java.nio.file.Files.copy(file.getInputStream(), targetLocation, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                Path targetLocation = uploadDir.resolve(filename);
+                Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
                 request.setImageUrl("/uploads/products/" + filename);
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 model.addAttribute("errorMessage", "Lỗi khi lưu tệp hình ảnh tải lên: " + e.getMessage());
                 model.addAttribute("shop", shop);
                 model.addAttribute("categories", categoryService.getActiveCategories());
