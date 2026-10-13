@@ -279,15 +279,15 @@ public class ShopServiceImpl implements ShopService {
         return shopProfileResponse;
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public void editShopProfile(Integer id, ShopProfileRequest shopProfileRequest) throws Exception {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin người dùng."));
+    @Transactional(rollbackFor = Exception.class)
+    public void editShopProfile(Integer userId, ShopProfileRequest shopProfileRequest) throws Exception {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin người dùng."));
         Shop shop = shopRepository.findByOwner(user)
-                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin shop."));
-        if(!user.getEmail().equalsIgnoreCase(shopProfileRequest.getEmail())) {
-            if(userRepository.existsByEmail(shopProfileRequest.getEmail())) {
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin cửa hàng."));
+        if (!user.getEmail().trim().equalsIgnoreCase(shopProfileRequest.getEmail())) {
+            if (userRepository.existsByEmail(shopProfileRequest.getEmail())) {
                 throw new Exception("Email đã tồn tại trong hệ thống.");
             }
             user.setEmail(shopProfileRequest.getEmail());
@@ -296,8 +296,9 @@ public class ShopServiceImpl implements ShopService {
         shop.setShopName(shopProfileRequest.getShopName());
         shop.setShopDescription(shopProfileRequest.getShopDescription());
         shop.setBankName(shopProfileRequest.getBankName());
-        shop.setBankAccountNumber(shopProfileRequest.getBankAccountNumber());
+        shop.setBankAccountNumber(shop.getBankAccountNumber());
         shop.setAccountName(shopProfileRequest.getAccountName());
+
         userRepository.save(user);
         shopRepository.save(shop);
     }

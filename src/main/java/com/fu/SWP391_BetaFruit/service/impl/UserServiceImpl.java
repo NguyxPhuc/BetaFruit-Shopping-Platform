@@ -2,9 +2,11 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
 import com.fu.SWP391_BetaFruit.dto.request.CustomerProfileRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.CustomerMembership;
 import com.fu.SWP391_BetaFruit.entity.Role;
+import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import com.fu.SWP391_BetaFruit.repository.CustomerMembershipRepository;
@@ -247,13 +249,13 @@ public class UserServiceImpl implements UserService {
     public void editCustomerProfile(Integer userId, CustomerProfileRequest customerProfileRequest) throws Exception {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new Exception("Lỗi: Không tìm thấy người dùng trong hệ thống."));
-        if(!user.getEmail().equalsIgnoreCase(customerProfileRequest.getEmail())) {
+        if(!user.getEmail().trim().equalsIgnoreCase(customerProfileRequest.getEmail())) {
             if(userRepository.existsByEmail(customerProfileRequest.getEmail())) {
                 throw new Exception("Email đã tồn tại trong hệ thống.");
             }
             user.setEmail(customerProfileRequest.getEmail());
         }
-        if(!user.getUsername().equalsIgnoreCase(customerProfileRequest.getUsername())) {
+        if(!user.getUsername().trim().equalsIgnoreCase(customerProfileRequest.getUsername())) {
             if(userRepository.existsByUsername(customerProfileRequest.getUsername())) {
                 throw new Exception("Username đã tồn tại trong hệ thống.");
             }
@@ -263,4 +265,5 @@ public class UserServiceImpl implements UserService {
         user.setPhone(customerProfileRequest.getPhone());
         userRepository.save(user);
     }
+
 }
