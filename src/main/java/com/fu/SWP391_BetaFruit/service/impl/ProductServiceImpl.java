@@ -1,6 +1,8 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.ProductCreateRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest;
+import com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.*;
 import com.fu.SWP391_BetaFruit.repository.*;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -195,12 +198,12 @@ public class ProductServiceImpl implements ProductService {
         Product savedProduct = productRepository.save(product);
 
         // 2. Lưu các Thực thể ProductVariant (Hỗ trợ nhiều quy cách đóng gói & Giá bán)
-        java.util.List<com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest> variantList = request.getEffectiveVariants();
+        List<VariantItemRequest> variantList = request.getEffectiveVariants();
         if (variantList.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng nhập ít nhất 1 thực thể (biến thể) cho hoa quả!");
         }
 
-        for (com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest vReq : variantList) {
+        for (VariantItemRequest vReq : variantList) {
             ProductVariant variant = new ProductVariant();
             variant.setProduct(savedProduct);
             variant.setVariantName(vReq.getVariantName().trim());
@@ -293,7 +296,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public Product updateProductForShop(Integer userId, Integer productId, com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest request) {
+    public Product updateProductForShop(Integer userId, Integer productId, ProductUpdateRequest request) {
         Shop shop = getShopByUserId(userId);
         Product product = getProductById(productId);
         if (!product.getShop().getShopId().equals(shop.getShopId())) {
@@ -332,15 +335,15 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // Cập nhật thực thể (Variants)
-        List<com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest> reqVariants = request.getEffectiveVariants();
+        List<VariantItemRequest> reqVariants = request.getEffectiveVariants();
         if (reqVariants.isEmpty()) {
             throw new IllegalArgumentException("Hoa quả phải có ít nhất 1 thực thể!");
         }
 
         List<ProductVariant> existingVariants = productVariantRepository.findByProduct_ProductId(productId);
-        java.util.Set<Integer> keptVariantIds = new java.util.HashSet<>();
+        Set<Integer> keptVariantIds = new HashSet<>();
 
-        for (com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest vReq : reqVariants) {
+        for (VariantItemRequest vReq : reqVariants) {
             if (vReq.getOriginalPrice() == null || vReq.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
                 throw new IllegalArgumentException("Thực thể '" + vReq.getVariantName() + "' phải có giá niêm yết từ 1,000 VNĐ trở lên.");
             }

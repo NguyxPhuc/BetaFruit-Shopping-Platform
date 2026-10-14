@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "Product")
@@ -48,8 +50,8 @@ public class Product {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.List<ProductVariant> variants = new java.util.ArrayList<>();
+    private List<ProductVariant> variants = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private java.util.List<ProductImage> images = new java.util.ArrayList<>();
+    private List<ProductImage> images = new ArrayList<>();
 }

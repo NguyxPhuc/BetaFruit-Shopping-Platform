@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -59,7 +60,7 @@ public class User {
 
     public List<Long> getRoleIds() {
         if (roles == null) {
-            return java.util.Collections.emptyList();
+            return Collections.emptyList();
         }
         return roles.stream().map(Role::getRoleId).toList();
     }
