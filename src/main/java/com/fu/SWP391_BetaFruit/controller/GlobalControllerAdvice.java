@@ -15,6 +15,14 @@ public class GlobalControllerAdvice {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private com.fu.SWP391_BetaFruit.service.CartService cartService;
+
+    @ModelAttribute("cartCount")
+    public long cartCount(HttpSession session) {
+        return cartService.getItemCount((Integer) session.getAttribute("LOGGED_IN_USER_ID"));
+    }
+
     @ModelAttribute
     public void addGlobalAttributes(HttpSession session, Model model) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");

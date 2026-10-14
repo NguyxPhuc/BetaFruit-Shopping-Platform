@@ -19,6 +19,6 @@ public class Role {
     @Column(name = "RoleId")
     private Long roleId;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = com.fu.SWP391_BetaFruit.entity.converter.RoleNameConverter.class)
     private RoleName roleName;
 }
