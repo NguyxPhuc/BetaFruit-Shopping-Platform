@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'coupons', ~{::content})}">
+<head>
+    <title>Tạo Mã Khuyến Mãi Sàn Mới - BetaFruit Admin</title>
+    <style>
+        .voucher-ticket {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: #ffffff;
+            border-radius: 16px;
+            padding: 1.75rem;
+            position: relative;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4);
+            overflow: hidden;
+        }
+        .voucher-ticket::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background-color: #f8fafc;
+            border-radius: 50%;
+        }
+        .voucher-ticket::after {
+            content: '';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background-color: #f8fafc;
+            border-radius: 50%;
+        }
+        .ticket-code-display {
+            font-family: 'Consolas', monospace;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            letter-spacing: 2px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            display: inline-block;
+            border: 1px dashed rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">
+                <i class="bi bi-plus-circle-fill text-success me-2"></i>Tạo Mã Khuyến Mãi Cấp Nền Tảng (Platform Coupon)
+            </h3>
+            <p class="text-secondary small mb-0">Mã ưu đãi toàn sàn có thể áp dụng cho mọi khách hàng hoặc trợ giá cước vận chuyển (Freeship).</p>
+        </div>
+        <a th:href="@{/admin/coupons}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <!-- Error message if any -->
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
+        <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <form th:action="@{/admin/coupons/create}" th:object="${couponRequest}" method="post">
+        <div class="row g-4">
+            <!-- Form inputs -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-3 p-4">
+                    <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                        <i class="bi bi-sliders me-2 text-success"></i>Cấu Hình Mã Toàn Sàn
+                    </h5>
+
+                    <!-- Mã Coupon -->
+                    <div class="mb-3">
+                        <label for="couponCode" class="form-label fw-semibold">Mã giảm giá (Coupon Code) <span class="text-danger">*</span></label>
+                        <input type="text" id="couponCode" th:field="*{couponCode}"
+                               class="form-control text-uppercase fw-bold"
+                               placeholder="VD: FREESHIPALL, BETAFRUIT2026, BANQUANLY"
+                               maxlength="20" required>
+                        <div class="form-text">Từ 3-20 ký tự (chữ in hoa, số, dấu gạch ngang/dưới). Tự động viết hoa.</div>
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('couponCode')}" th:errors="*{couponCode}"></div>
+                    </div>
+
+                    <!-- Loại ưu đãi -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phạm vi ưu đãi <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check p-3 border rounded-3 flex-fill bg-white">
+                                <input class="form-check-input" type="radio" th:field="*{couponCategory}" id="catShipping" value="SHIPPING">
+                                <label class="form-check-label fw-semibold" for="catShipping">
+                                    <i class="bi bi-truck text-info me-1"></i> Hỗ trợ phí ship (Freeship sàn)
+                                </label>
+                                <div class="small text-muted mt-1">Sàn tài trợ giảm chi phí vận chuyển</div>
+                            </div>
+                            <div class="form-check p-3 border rounded-3 flex-fill bg-white">
+                                <input class="form-check-input" type="radio" th:field="*{couponCategory}" id="catProduct" value="PRODUCT">
+                                <label class="form-check-label fw-semibold" for="catProduct">
+                                    <i class="bi bi-basket text-success me-1"></i> Giảm giá trực tiếp hoa quả
+                                </label>
+                                <div class="small text-muted mt-1">Trợ giá trực tiếp vào tiền mua nông sản</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hình thức giảm & Mức giảm -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="discountType" class="form-label fw-semibold">Hình thức giảm <span class="text-danger">*</span></label>
+                            <select id="discountType" th:field="*{discountType}" class="form-select" required>
+                                <option value="FIXED_AMOUNT">Giảm số tiền cố định (VNĐ)</option>
+                                <option value="PERCENT">Giảm theo % (Phần trăm)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="discountValue" class="form-label fw-semibold">
+                                Mức giảm <span class="text-danger">*</span>
+                                <span id="discountUnitLabel" class="text-muted">(VNĐ)</span>
+                            </label>
+                            <input type="number" step="any" id="discountValue" th:field="*{discountValue}"
+                                   class="form-control" placeholder="VD: 25000 hoặc 20" min="0.01" required>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('discountValue')}" th:errors="*{discountValue}"></div>
+                        </div>
+                    </div>
+
+                    <!-- Mức giảm tối đa (nếu là %) -->
+                    <div class="mb-3" id="maxDiscountWrap" style="display: none;">
+                        <label for="maxDiscountAmount" class="form-label fw-semibold">Mức giảm tối đa (VNĐ) <span class="text-danger">*</span></label>
+                        <input type="number" id="maxDiscountAmount" th:field="*{maxDiscountAmount}"
+                               class="form-control" placeholder="VD: 50000" min="1000">
+                        <div class="form-text">Bắt buộc khi chọn giảm theo phần trăm.</div>
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('maxDiscountAmount')}" th:errors="*{maxDiscountAmount}"></div>
+                    </div>
+
+                    <!-- Giá trị đơn tối thiểu -->
+                    <div class="mb-3">
+                        <label for="minOrderValue" class="form-label fw-semibold">Giá trị đơn hàng tối thiểu (VNĐ)</label>
+                        <input type="number" id="minOrderValue" th:field="*{minOrderValue}"
+                               class="form-control" placeholder="VD: 100000 (0 nếu áp dụng mọi đơn)" min="0">
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('minOrderValue')}" th:errors="*{minOrderValue}"></div>
+                    </div>
+
+                    <!-- Tổng số lượt sử dụng tối đa -->
+                    <div class="mb-3">
+                        <label for="usageLimit" class="form-label fw-semibold">Tổng số lượt phát hành <span class="text-danger">*</span></label>
+                        <input type="number" id="usageLimit" th:field="*{usageLimit}"
+                               class="form-control" placeholder="VD: 1000" min="1" required>
+                        <div class="text-danger small mt-1" th:if="${#fields.hasErrors('usageLimit')}" th:errors="*{usageLimit}"></div>
+                    </div>
+
+                    <!-- Thời gian hiệu lực -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="startDate" class="form-label fw-semibold">Bắt đầu từ <span class="text-danger">*</span></label>
+                            <input type="datetime-local" id="startDate" th:field="*{startDate}" class="form-control" required>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endDate" class="form-label fw-semibold">Hết hạn vào <span class="text-danger">*</span></label>
+                            <input type="datetime-local" id="endDate" th:field="*{endDate}" class="form-control" required>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
+                        </div>
+                    </div>
+
+                    <!-- Kích hoạt ngay -->
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" id="isActive" th:field="*{isActive}" checked>
+                        <label class="form-check-label fw-semibold" for="isActive">Kích hoạt mã toàn sàn ngay sau khi tạo</label>
+                    </div>
+
+                    <!-- Nút Submit -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success flex-fill py-2 fw-semibold">
+                            <i class="bi bi-check-circle me-1"></i> Tạo mã toàn sàn
+                        </button>
+                        <a th:href="@{/admin/coupons}" class="btn btn-light border py-2 px-4">Hủy bỏ</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Column -->
+            <div class="col-lg-5">
+                <div class="sticky-top" style="top: 2rem;">
+                    <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 0.8rem;">
+                        <i class="bi bi-eye me-1"></i> Xem trước thẻ ưu đãi sàn
+                    </h6>
+
+                    <div class="voucher-ticket">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge bg-primary text-white fw-bold mb-1" id="previewCategoryBadge">FREESHIP TOÀN SÀN</span>
+                                <div class="small opacity-75">Ưu đãi nền tảng BetaFruit</div>
+                            </div>
+                            <i class="bi bi-shield-check display-6 opacity-50"></i>
+                        </div>
+
+                        <div class="my-3">
+                            <div class="display-6 fw-bold" id="previewDiscountText">Giảm 25,000đ</div>
+                            <div class="small opacity-75 mt-1" id="previewConditionText">Đơn tối thiểu: 0đ</div>
+                            <div class="small opacity-75" id="previewMaxDiscountText" style="display: none;">Mức giảm tối đa: 50,000đ</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-end mt-4 pt-3 border-top border-white-50">
+                            <div>
+                                <div class="small opacity-75 mb-1" style="font-size: 0.75rem;">MÃ ÁP DỤNG:</div>
+                                <div class="ticket-code-display" id="previewCodeText">FREESHIPALL</div>
+                            </div>
+                            <div class="text-end" style="font-size: 0.75rem;">
+                                <div class="opacity-75">Hạn dùng đến:</div>
+                                <div class="fw-bold" id="previewExpiryText">--/--/----</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Preview Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const codeInput = document.getElementById('couponCode');
+            const discountTypeSelect = document.getElementById('discountType');
+            const discountValueInput = document.getElementById('discountValue');
+            const maxDiscountWrap = document.getElementById('maxDiscountWrap');
+            const maxDiscountInput = document.getElementById('maxDiscountAmount');
+            const minOrderInput = document.getElementById('minOrderValue');
+            const endDateInput = document.getElementById('endDate');
+            const discountUnitLabel = document.getElementById('discountUnitLabel');
+
+            const catProduct = document.getElementById('catProduct');
+            const catShipping = document.getElementById('catShipping');
+
+            const previewCategoryBadge = document.getElementById('previewCategoryBadge');
+            const previewDiscountText = document.getElementById('previewDiscountText');
+            const previewConditionText = document.getElementById('previewConditionText');
+            const previewMaxDiscountText = document.getElementById('previewMaxDiscountText');
+            const previewCodeText = document.getElementById('previewCodeText');
+            const previewExpiryText = document.getElementById('previewExpiryText');
+
+            function updatePreview() {
+                const code = codeInput.value.trim().toUpperCase() || 'MÃ TOÀN SÀN';
+                codeInput.value = code;
+                previewCodeText.textContent = code;
+
+                if (catShipping && catShipping.checked) {
+                    previewCategoryBadge.textContent = 'FREESHIP TOÀN SÀN';
+                    previewCategoryBadge.className = 'badge bg-info text-dark fw-bold mb-1';
+                } else {
+                    previewCategoryBadge.textContent = 'CHIẾT KHẤU TOÀN SÀN';
+                    previewCategoryBadge.className = 'badge bg-warning text-dark fw-bold mb-1';
+                }
+
+                const type = discountTypeSelect.value;
+                const val = parseFloat(discountValueInput.value) || 0;
+                if (type === 'PERCENT') {
+                    if (discountUnitLabel) discountUnitLabel.textContent = '(%)';
+                    if (maxDiscountWrap) maxDiscountWrap.style.display = 'block';
+                    previewDiscountText.textContent = 'Giảm ' + val + '%';
+
+                    const maxD = parseFloat(maxDiscountInput.value) || 0;
+                    if (maxD > 0) {
+                        previewMaxDiscountText.style.display = 'block';
+                        previewMaxDiscountText.textContent = 'Giảm tối đa: ' + maxD.toLocaleString('vi-VN') + 'đ';
+                    } else {
+                        previewMaxDiscountText.style.display = 'none';
+                    }
+                } else {
+                    if (discountUnitLabel) discountUnitLabel.textContent = '(VNĐ)';
+                    if (maxDiscountWrap) maxDiscountWrap.style.display = 'none';
+                    previewDiscountText.textContent = 'Giảm ' + val.toLocaleString('vi-VN') + 'đ';
+                    previewMaxDiscountText.style.display = 'none';
+                }
+
+                const minOrder = parseFloat(minOrderInput.value) || 0;
+                if (minOrder > 0) {
+                    previewConditionText.textContent = 'Đơn tối thiểu: ' + minOrder.toLocaleString('vi-VN') + 'đ';
+                } else {
+                    previewConditionText.textContent = 'Áp dụng cho mọi giá trị đơn';
+                }
+
+                if (endDateInput.value) {
+                    const d = new Date(endDateInput.value);
+                    if (!isNaN(d.getTime())) {
+                        previewExpiryText.textContent = d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                    }
+                }
+            }
+
+            [codeInput, discountValueInput, maxDiscountInput, minOrderInput, endDateInput].forEach(el => {
+                if (el) el.addEventListener('input', updatePreview);
+            });
+            if (discountTypeSelect) discountTypeSelect.addEventListener('change', updatePreview);
+            if (catProduct) catProduct.addEventListener('change', updatePreview);
+            if (catShipping) catShipping.addEventListener('change', updatePreview);
+
+            updatePreview();
+        });
+    </script>
+</div>
+</body>
+</html>
