@@ -187,17 +187,9 @@
                                  loading="lazy" />
                             <span th:unless="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
                                   class="bf-img-placeholder-text">Ảnh sản phẩm</span>
-                            <span th:if="${!product.inStock}" class="bf-stock-badge">Hết hàng</span>
                         </div>
                         <div class="bf-product-title" th:text="${product.productName}">Táo Envy</div>
-                        <div class="bf-product-price" th:text="${product.formattedPrice}">180.000đ / kg</div>
-                        <div class="bf-product-rating">
-                            <span class="bf-stars" th:text="${#strings.repeat('★', product.fullStars) + #strings.repeat('☆', 5 - product.fullStars)}">☆☆☆☆☆</span>
-                            <span th:if="${product.reviewCount == 0}">Chưa có đánh giá</span>
-                            <span th:if="${product.reviewCount != null && product.reviewCount > 0}"
-                                  style="font-size: 12px; color: var(--bf-text-muted); margin-left: 4px;"
-                                  th:text="'(' + ${product.reviewCount} + ')'"></span>
-                        </div>
+                        <div class="bf-product-price" th:text="${product.formattedPrice}">180.000đ</div>
                     </a>
                 </article>
             </div>
