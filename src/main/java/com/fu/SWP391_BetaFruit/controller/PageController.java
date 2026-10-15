@@ -15,7 +15,8 @@ public class PageController {
 
     @GetMapping({"/", "/home"})
     public String homePage(org.springframework.ui.Model model) {
-        model.addAttribute("featuredProducts", customerProductService.getFeaturedProducts(4));
+        model.addAttribute("featuredProducts", customerProductService.getFeaturedProducts(8));
+        model.addAttribute("homeCategories", customerProductService.getAllActiveCategories().stream().limit(6).toList());
         return "public/index";
     }
 
