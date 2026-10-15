@@ -95,7 +95,7 @@ public class AuthController {
             } else if (roles != null && roles.contains(RoleName.SHOP_OWNER)) {
                 return "redirect:/shop/profile";
             } else {
-                return "redirect:/customer/profile";
+                return "redirect:/home";
             }
         }catch (Exception e){
             e.printStackTrace();
