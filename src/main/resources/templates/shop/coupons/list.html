@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Mã Giảm Giá | Kênh Người Bán BetaFruit</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Global CSS -->
+    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
+    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
+
+    <style>
+        :root {
+            --fruit-green: #15803d;
+            --fruit-green-hover: #166534;
+            --fruit-light: #f0fdf4;
+            --fruit-border: #bbf7d0;
+        }
+
+        body.shop-theme {
+            background-color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1e293b;
+        }
+
+        .page-container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem;
+        }
+
+        .coupon-code-badge {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border: 1px dashed #cbd5e1;
+            display: inline-block;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .table-custom thead th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            padding: 0.85rem 1rem;
+            border-bottom: 1.5px solid #e2e8f0;
+        }
+
+        .table-custom tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .nav-tabs-custom {
+            border-bottom: 2px solid #e2e8f0;
+            gap: 0.5rem;
+        }
+
+        .nav-tabs-custom .nav-link {
+            border: none;
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px 8px 0 0;
+            background: transparent;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .nav-tabs-custom .nav-link:hover {
+            color: var(--fruit-green);
+        }
+
+        .nav-tabs-custom .nav-link.active {
+            color: var(--fruit-green);
+            background-color: transparent;
+        }
+
+        .nav-tabs-custom .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2.5px;
+            background-color: var(--fruit-green);
+            border-radius: 2px 2px 0 0;
+        }
+
+        .progress-slim {
+            height: 6px;
+            border-radius: 4px;
+            background-color: #e2e8f0;
+        }
+
+        .btn-fruit {
+            background-color: var(--fruit-green);
+            color: #ffffff;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            padding: 0.55rem 1.15rem;
+            transition: all 0.2s;
+        }
+
+        .btn-fruit:hover {
+            background-color: var(--fruit-green-hover);
+            color: #ffffff;
+        }
+
+        .badge-chip {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body class="shop-theme">
+
+    <!-- Header Kênh người bán -->
+    <header th:replace="~{shop/fragments/header :: header}"></header>
+
+    <main class="page-container">
+
+        <!-- Breadcrumb & Tiêu đề -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 text-muted" style="font-size: 0.85rem;">
+                        <li class="breadcrumb-item"><a th:href="@{/shop/profile}" class="text-decoration-none text-muted">Kênh Người Bán</a></li>
+                        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Mã giảm giá</li>
+                    </ol>
+                </nav>
+                <h1 class="h3 fw-bold text-dark mb-0">Quản Lý Mã Giảm Giá Cửa Hàng</h1>
+                <p class="text-muted small mb-0 mt-1">Thiết lập các chương trình khuyến mãi, giảm giá hoa quả và hỗ trợ phí giao hàng cho khách hàng.</p>
+            </div>
+            <div>
+                <a th:href="@{/shop/coupons/create}" class="btn btn-fruit d-inline-flex align-items-center gap-2 shadow-sm">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Tạo mã giảm giá mới</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Thông báo Flash Alert -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+            <span th:text="${successMessage}">Thao tác thành công!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
+            <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Thẻ thống kê KPI -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number" th:text="${totalCount}">0</div>
+                        <div class="stat-label">Tổng số mã</div>
+                    </div>
+                    <div class="stat-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-success" th:text="${activeCount}">0</div>
+                        <div class="stat-label">Đang hoạt động</div>
+                    </div>
+                    <div class="stat-icon bg-success-subtle text-success">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-danger" th:text="${outOfStockCount}">0</div>
+                        <div class="stat-label">Hết lượt dùng</div>
+                    </div>
+                    <div class="stat-icon bg-danger-subtle text-danger">
+                        <i class="bi bi-hourglass-bottom"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-secondary" th:text="${expiredCount}">0</div>
+                        <div class="stat-label">Đã hết hạn</div>
+                    </div>
+                    <div class="stat-icon bg-secondary-subtle text-secondary">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Bảng danh sách & Bộ lọc -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <!-- Tabs lọc trạng thái & Thanh tìm kiếm -->
+            <div class="card-header bg-white border-bottom p-3 p-md-4">
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                    <!-- Tab điều hướng -->
+                    <ul class="nav nav-tabs nav-tabs-custom mb-0 flex-nowrap overflow-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${status == 'ALL'} ? 'active' : ''"
+                               th:href="@{/shop/coupons(status='ALL', keyword=${keyword})}">Tất cả</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${status == 'ACTIVE'} ? 'active' : ''"
+                               th:href="@{/shop/coupons(status='ACTIVE', keyword=${keyword})}">Đang chạy</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${status == 'UPCOMING'} ? 'active' : ''"
+                               th:href="@{/shop/coupons(status='UPCOMING', keyword=${keyword})}">Sắp diễn ra</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${status == 'PAUSED'} ? 'active' : ''"
+                               th:href="@{/shop/coupons(status='PAUSED', keyword=${keyword})}">Tạm dừng</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${status == 'OUT_OF_STOCK'} ? 'active' : ''"
+                               th:href="@{/shop/coupons(status='OUT_OF_STOCK', keyword=${keyword})}">Hết lượt</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:classappend="${status == 'EXPIRED'} ? 'active' : ''"
+                               th:href="@{/shop/coupons(status='EXPIRED', keyword=${keyword})}">Hết hạn</a>
+                        </li>
+                    </ul>
+
+                    <!-- Ô tìm kiếm mã -->
+                    <form method="get" th:action="@{/shop/coupons}" class="d-flex gap-2" style="min-width: 280px;">
+                        <input type="hidden" name="status" th:value="${status}">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" name="keyword" th:value="${keyword}"
+                                   class="form-control border-start-0 ps-0" placeholder="Tìm theo mã coupon..."
+                                   aria-label="Tìm kiếm">
+                            <button type="submit" class="btn btn-outline-secondary">Tìm</button>
+                        </div>
+                        <a th:if="${keyword != null and !keyword.isEmpty()}" th:href="@{/shop/coupons(status=${status})}"
+                           class="btn btn-light border text-muted" title="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></a>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Bảng dữ liệu -->
+            <div class="table-responsive">
+                <table class="table table-custom align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 140px;">Mã Coupon</th>
+                            <th style="min-width: 130px;">Loại ưu đãi</th>
+                            <th style="min-width: 160px;">Mức giảm</th>
+                            <th style="min-width: 140px;">Đơn tối thiểu</th>
+                            <th style="min-width: 160px;">Tiến độ lượt dùng</th>
+                            <th style="min-width: 160px;">Thời hạn hiệu lực</th>
+                            <th style="min-width: 120px;">Trạng thái</th>
+                            <th style="min-width: 150px;" class="text-end">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Khi danh sách trống -->
+                        <tr th:if="${#lists.isEmpty(coupons)}">
+                            <td colspan="8" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-ticket-detailed display-5 opacity-25 d-block mb-3"></i>
+                                    <h6 class="fw-bold text-dark">Chưa có mã giảm giá nào</h6>
+                                    <p class="small text-secondary mb-3">Tạo mã giảm giá để thúc đẩy doanh số và thu hút khách hàng mua sắm hoa quả tại shop bạn.</p>
+                                    <a th:href="@{/shop/coupons/create}" class="btn btn-sm btn-fruit">
+                                        <i class="bi bi-plus me-1"></i> Tạo mã giảm giá ngay
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Danh sách từng mã -->
+                        <tr th:each="c : ${coupons}">
+                            <!-- Mã Code -->
+                            <td>
+                                <span class="coupon-code-badge" th:text="${c.couponCode}">BETA20</span>
+                                <div th:if="${c.usedCount != null and c.usedCount > 0}" class="small text-muted mt-1" style="font-size: 0.75rem;">
+                                    <i class="bi bi-lock-fill text-secondary"></i> Đã có đơn dùng
+                                </div>
+                            </td>
+
+                            <!-- Loại ưu đãi -->
+                            <td>
+                                <span th:if="${c.couponCategory != null and c.couponCategory.name() == 'PRODUCT'}"
+                                      class="badge bg-success-subtle text-success border border-success-subtle badge-chip">
+                                    <i class="bi bi-basket me-1"></i> Giảm hoa quả
+                                </span>
+                                <span th:if="${c.couponCategory != null and c.couponCategory.name() == 'SHIPPING'}"
+                                      class="badge bg-info-subtle text-info-emphasis border border-info-subtle badge-chip">
+                                    <i class="bi bi-truck me-1"></i> Hỗ trợ ship
+                                </span>
+                            </td>
+
+                            <!-- Mức giảm -->
+                            <td>
+                                <div class="fw-bold text-dark">
+                                    <span th:if="${c.discountType != null and c.discountType.name() == 'PERCENT'}"
+                                          th:text="${#numbers.formatDecimal(c.discountValue, 0, 'COMMA', 0, 'POINT')} + '%'">15%</span>
+                                    <span th:if="${c.discountType != null and c.discountType.name() == 'FIXED_AMOUNT'}"
+                                          th:text="${#numbers.formatDecimal(c.discountValue, 0, 'COMMA', 0, 'POINT')} + ' đ'">20,000 đ</span>
+                                </div>
+                                <div th:if="${c.discountType != null and c.discountType.name() == 'PERCENT' and c.maxDiscountAmount != null}"
+                                     class="text-muted small" style="font-size: 0.75rem;">
+                                    Tối đa: <span th:text="${#numbers.formatDecimal(c.maxDiscountAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">50,000 đ</span>
+                                </div>
+                            </td>
+
+                            <!-- Đơn tối thiểu -->
+                            <td>
+                                <span th:if="${c.minOrderValue != null and c.minOrderValue > 0}"
+                                      th:text="${#numbers.formatDecimal(c.minOrderValue, 0, 'COMMA', 0, 'POINT')} + ' đ'">100,000 đ</span>
+                                <span th:unless="${c.minOrderValue != null and c.minOrderValue > 0}"
+                                      class="text-muted small">0 đ (Mọi đơn)</span>
+                            </td>
+
+                            <!-- Lượt sử dụng & Progress -->
+                            <td>
+                                <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 0.8rem;">
+                                    <span class="fw-semibold text-dark">
+                                        <span th:text="${c.usedCount != null ? c.usedCount : 0}">0</span> /
+                                        <span th:text="${c.usageLimit}">100</span>
+                                    </span>
+                                    <span class="text-muted" th:text="${c.getUsagePercent()} + '%'">0%</span>
+                                </div>
+                                <div class="progress progress-slim">
+                                    <div class="progress-bar"
+                                         th:classappend="${c.isOutOfStock() ? 'bg-danger' : (c.getUsagePercent() >= 80 ? 'bg-warning' : 'bg-success')}"
+                                         role="progressbar"
+                                         th:style="'width: ' + ${c.getUsagePercent()} + '%;'"
+                                         th:aria-valuenow="${c.getUsagePercent()}" aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Thời hạn -->
+                            <td>
+                                <div style="font-size: 0.82rem;">
+                                    <div class="text-dark">
+                                        <i class="bi bi-calendar-event me-1 text-muted"></i>
+                                        <span th:text="${#temporals.format(c.startDate, 'dd/MM/yyyy HH:mm')}">01/10/2026</span>
+                                    </div>
+                                    <div class="text-muted">
+                                        <i class="bi bi-clock me-1"></i> Đến:
+                                        <span th:text="${#temporals.format(c.endDate, 'dd/MM/yyyy HH:mm')}">31/10/2026</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Trạng thái -->
+                            <td>
+                                <span class="badge badge-chip" th:classappend="${c.getStatusBadgeClass()}" th:text="${c.getStatusLabel()}">
+                                    Đang hoạt động
+                                </span>
+                            </td>
+
+                            <!-- Nút hành động -->
+                            <td class="text-end">
+                                <div class="d-inline-flex align-items-center gap-1">
+                                    <!-- Xem lịch sử sử dụng -->
+                                    <a th:href="@{/shop/coupons/{id}/usage(id=${c.couponId})}"
+                                       class="btn btn-sm btn-outline-info" title="Xem lịch sử sử dụng & đơn hàng">
+                                        <i class="bi bi-bar-chart-fill"></i>
+                                    </a>
+
+                                    <!-- Nút Sửa -->
+                                    <a th:href="@{/shop/coupons/{id}/edit(id=${c.couponId})}"
+                                       class="btn btn-sm btn-outline-secondary" title="Chỉnh sửa mã">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+
+                                    <!-- Nút Bật / Tắt trạng thái -->
+                                    <form th:action="@{/shop/coupons/{id}/toggle-status(id=${c.couponId})}" method="post" class="d-inline">
+                                        <input type="hidden" name="status" th:value="${status}">
+                                        <input type="hidden" name="keyword" th:value="${keyword}">
+                                        <input type="hidden" name="page" th:value="${currentPage}">
+                                        <button type="submit" class="btn btn-sm"
+                                                th:classappend="${c.isActive ? 'btn-outline-warning' : 'btn-outline-success'}"
+                                                th:title="${c.isActive ? 'Bấm để tạm dừng mã này' : 'Bấm để kích hoạt lại mã này'}">
+                                            <i class="bi" th:classappend="${c.isActive ? 'bi-pause-circle' : 'bi-play-circle'}"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang -->
+            <div th:if="${totalPages > 1}" class="card-footer bg-white border-top p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <span class="text-muted small">
+                    Hiển thị trang <strong th:text="${currentPage}">1</strong> / <strong th:text="${totalPages}">1</strong> (Tổng cộng <span th:text="${totalItems}">0</span> mã)
+                </span>
+                <nav aria-label="Phân trang mã coupon">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled' : ''">
+                            <a class="page-link" th:href="@{/shop/coupons(page=${currentPage - 1}, status=${status}, keyword=${keyword})}">Trước</a>
+                        </li>
+                        <li th:each="p : ${#numbers.sequence(1, totalPages)}"
+                            class="page-item" th:classappend="${p == currentPage} ? 'active' : ''">
+                            <a class="page-link" th:text="${p}" th:href="@{/shop/coupons(page=${p}, status=${status}, keyword=${keyword})}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled' : ''">
+                            <a class="page-link" th:href="@{/shop/coupons(page=${currentPage + 1}, status=${status}, keyword=${keyword})}">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

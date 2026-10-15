@@ -61,6 +61,13 @@
                         <span>Hạng Thành Viên & Đặc Quyền</span>
                     </a>
                 </li>
+                <li class="admin-nav-item">
+                    <a th:href="@{/admin/coupons}" href="/admin/coupons" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'coupons'} ? 'active' : ''">
+                        <i class="bi bi-ticket-perforated-fill"></i>
+                        <span>Quản lý Mã giảm giá</span>
+                    </a>
+                </li>
             </ul>
 
             <div class="admin-sidebar-divider"></div>
