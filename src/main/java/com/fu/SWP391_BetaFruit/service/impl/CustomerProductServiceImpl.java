@@ -390,11 +390,8 @@ public class CustomerProductServiceImpl implements CustomerProductService {
             }
         }
 
-        // Formatted price with unit
+        // Product cards show only the price; variants are selected on the detail page.
         String formattedPrice = formatCurrency(lowestPrice);
-        if (unit != null && !unit.isEmpty()) {
-            formattedPrice += " / " + unit;
-        }
 
         // Rating
         Double avgRating = reviewRepository.getAverageRatingByProductId(product.getProductId());
