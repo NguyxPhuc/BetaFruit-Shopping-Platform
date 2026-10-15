@@ -223,6 +223,8 @@ public class ShopServiceImpl implements ShopService {
         shopRepository.save(shop);
     }
 
+
+
     @Override
     public Map<String, Object> getAdminCommissionPageData(String keyword, String ownerStatus, String commissionTier, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
@@ -256,7 +258,6 @@ public class ShopServiceImpl implements ShopService {
         data.put("approvedTotal", approvedTotal);
         data.put("activeCount", activeCount);
         data.put("deactivatedCount", deactivatedCount);
-
         return data;
     }
 }

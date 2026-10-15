@@ -15,16 +15,13 @@ public interface ShopService {
     void updateCommissionRate(Integer shopId, java.math.BigDecimal commissionRate);
     long countByStatus(ShopApprovalStatus status);
     long countTotal();
-    org.springframework.data.domain.Page<Shop> searchShopsPaginated(String keyword, ShopApprovalStatus status, int page, int size);
-    org.springframework.data.domain.Page<Shop> searchShopsPaginated(String keyword, ShopApprovalStatus status, int page, int size, String sortBy, String sortDir);
-    java.util.Map<String, Object> getAdminShopPageData(String keyword, String statusStr);
 
     ShopProfileResponse getShopProfile(Integer id) throws Exception;
 
    
     void editShopProfile(Integer id, ShopProfileRequest shopProfileRequest) throws Exception;
 
-    java.util.Map<String, Object> getAdminShopPageData(String keyword, String statusStr, int page, int size);
+
     java.util.Map<String, Object> getAdminShopPageData(String keyword, String statusStr, int page, int size, String sortBy, String sortDir);
     java.util.Map<String, Object> getAdminCommissionPageData(String keyword, String ownerStatus, String commissionTier, int page, int size, String sortBy, String sortDir);
 }

@@ -2,11 +2,9 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
 import com.fu.SWP391_BetaFruit.dto.request.CustomerProfileRequest;
-import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.CustomerMembership;
 import com.fu.SWP391_BetaFruit.entity.Role;
-import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import com.fu.SWP391_BetaFruit.repository.CustomerMembershipRepository;
@@ -37,9 +35,6 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private ShopRepository shopRepository;
-
-    @Autowired
     private RoleRepository roleRepository;
 
     @Autowired
@@ -63,40 +58,6 @@ public class UserServiceImpl implements UserService {
         }
 
         return customerProfileResponse;
-    }
-
-  
-    @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    @Override
-    public List<User> searchUsers(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return userRepository.findAll();
-        }
-        return userRepository.searchUsers(keyword.trim());
-    }
-
-    @Override
-    public ShopProfileResponse getShopProfile(Integer id) throws Exception {
-        ShopProfileResponse shopProfileResponse = new ShopProfileResponse();
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin người dùng."));
-
-        shopProfileResponse.setEmail(user.getEmail());
-        shopProfileResponse.setPhone(user.getPhone());
-
-        Shop shop = shopRepository.findByOwner(user)
-                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin shop."));
-        shopProfileResponse.setShopName(shop.getShopName());
-        shopProfileResponse.setShopDescription(shop.getShopDescription());
-        shopProfileResponse.setBankName(shop.getBankName());
-        shopProfileResponse.setBankAccountNumber(shop.getBankAccountNumber());
-        shopProfileResponse.setAccountName(shop.getAccountName());
-
-        return shopProfileResponse;
     }
 
     @Override
