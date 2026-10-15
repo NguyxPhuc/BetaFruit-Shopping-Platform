@@ -9,9 +9,11 @@ import com.fu.SWP391_BetaFruit.service.RoleService;
 import com.fu.SWP391_BetaFruit.service.ShopService;
 import com.fu.SWP391_BetaFruit.service.UserService;
 import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -55,7 +57,7 @@ public class AdminController {
                                   @RequestParam(value = "sortBy", defaultValue = "shopId") String sortBy,
                                   @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                                   Model model) {
-        model.addAllAttributes(shopService.getAdminCommissionPageData(keyword, ownerStatus, commissionTier, page, size, sortBy, sortDir));
+        model.addAllAttributes(shopService.getAdminCommissionPageData(sanitizeKeyword(keyword), ownerStatus, commissionTier, page, size, sortBy, sortDir));
         return "admin/commission/shops";
     }
 
@@ -70,6 +72,16 @@ public class AdminController {
                                    @RequestParam(value = "ownerStatus", defaultValue = "ALL") String ownerStatus,
                                    @RequestParam(value = "commissionTier", defaultValue = "ALL") String commissionTier,
                                    RedirectAttributes redirectAttributes) {
+        if (commissionRate == null || commissionRate.compareTo(BigDecimal.ZERO) < 0 || commissionRate.compareTo(new BigDecimal("100")) > 0) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Tỷ lệ chiết khấu phí sàn phải nằm trong khoảng từ 0% đến 100%!");
+            redirectAttributes.addAttribute("page", page);
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                redirectAttributes.addAttribute("keyword", keyword.trim());
+            }
+            redirectAttributes.addAttribute("ownerStatus", ownerStatus);
+            redirectAttributes.addAttribute("commissionTier", commissionTier);
+            return "redirect:/admin/shops/commission";
+        }
         shopService.updateCommissionRate(id, commissionRate);
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật tỷ lệ phí sàn thành công!");
         redirectAttributes.addAttribute("page", page);
@@ -94,7 +106,7 @@ public class AdminController {
                             @RequestParam(value = "sortBy", defaultValue = "userId") String sortBy,
                             @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                             Model model) {
-        model.addAllAttributes(userService.getAdminUserPageData(keyword, roleId, status, page, size, sortBy, sortDir));
+        model.addAllAttributes(userService.getAdminUserPageData(sanitizeKeyword(keyword), roleId, status, page, size, sortBy, sortDir));
         return "admin/users/list";
     }
 
@@ -161,7 +173,7 @@ public class AdminController {
                                  @RequestParam(value = "sortBy", defaultValue = "categoryId") String sortBy,
                                  @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                                  Model model) {
-        model.addAllAttributes(categoryService.getAdminCategoryPageData(keyword, status, page, size, sortBy, sortDir));
+        model.addAllAttributes(categoryService.getAdminCategoryPageData(sanitizeKeyword(keyword), status, page, size, sortBy, sortDir));
         return "admin/categories/list";
     }
 
@@ -169,7 +181,13 @@ public class AdminController {
      * Handles the creation of a new fruit category.
      */
     @PostMapping("/admin/categories/create")
-    public String createCategory(@ModelAttribute("newCategory") CategoryRequest request, RedirectAttributes redirectAttributes) {
+    public String createCategory(@Valid @ModelAttribute("newCategory") CategoryRequest request,
+                                 BindingResult bindingResult,
+                                 RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/categories";
+        }
         categoryService.createCategory(request);
         redirectAttributes.addFlashAttribute("successMessage", "Tạo danh mục hoa quả mới thành công!");
         return "redirect:/admin/categories";
@@ -180,8 +198,13 @@ public class AdminController {
      */
     @PostMapping("/admin/categories/edit/{id}")
     public String editCategory(@PathVariable("id") Integer id,
-                               @ModelAttribute CategoryRequest request,
+                               @Valid @ModelAttribute CategoryRequest request,
+                               BindingResult bindingResult,
                                RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/categories";
+        }
         categoryService.updateCategory(id, request);
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật danh mục hoa quả thành công!");
         return "redirect:/admin/categories";
@@ -222,7 +245,13 @@ public class AdminController {
      * Handles the creation of a new role.
      */
     @PostMapping("/admin/roles/create")
-    public String createRole(@ModelAttribute("newRole") RoleRequest roleRequest, RedirectAttributes redirectAttributes) {
+    public String createRole(@Valid @ModelAttribute("newRole") RoleRequest roleRequest,
+                             BindingResult bindingResult,
+                             RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/roles";
+        }
         roleService.createRole(roleRequest);
         redirectAttributes.addFlashAttribute("successMessage", "Tạo vai trò mới thành công!");
         return "redirect:/admin/roles";
@@ -232,7 +261,14 @@ public class AdminController {
      * Updates an existing role and its permissions by ID.
      */
     @PostMapping("/admin/roles/edit/{id}")
-    public String editRole(@PathVariable("id") Long id, @ModelAttribute RoleRequest roleRequest, RedirectAttributes redirectAttributes) {
+    public String editRole(@PathVariable("id") Long id,
+                           @Valid @ModelAttribute RoleRequest roleRequest,
+                           BindingResult bindingResult,
+                           RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/roles";
+        }
         roleService.updateRole(id, roleRequest);
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật vai trò thành công!");
         return "redirect:/admin/roles";
@@ -252,8 +288,13 @@ public class AdminController {
      * Tạo mới hạng thành viên (Admin).
      */
     @PostMapping("/admin/membership-tiers/create")
-    public String createMembershipTier(@ModelAttribute("newTier") MembershipTierRequest request,
+    public String createMembershipTier(@Valid @ModelAttribute("newTier") MembershipTierRequest request,
+                                       BindingResult bindingResult,
                                        RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/membership-tiers";
+        }
         try {
             membershipTierService.createTier(request);
             redirectAttributes.addFlashAttribute("successMessage", "Tạo hạng thành viên mới thành công!");
@@ -268,8 +309,13 @@ public class AdminController {
      */
     @PostMapping("/admin/membership-tiers/edit/{id}")
     public String editMembershipTier(@PathVariable("id") Integer id,
-                                     @ModelAttribute MembershipTierRequest request,
+                                     @Valid @ModelAttribute MembershipTierRequest request,
+                                     BindingResult bindingResult,
                                      RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/membership-tiers";
+        }
         try {
             membershipTierService.updateTier(id, request);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hạng thành viên thành công!");
@@ -292,5 +338,16 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/admin/membership-tiers";
+    }
+
+    private String sanitizeKeyword(String keyword) {
+        if (keyword == null) {
+            return null;
+        }
+        String clean = keyword.trim();
+        if (clean.isEmpty()) {
+            return null;
+        }
+        return clean.length() > 100 ? clean.substring(0, 100) : clean;
     }
 }
