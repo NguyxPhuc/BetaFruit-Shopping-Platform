@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'coupons', ~{::content})}">
+<head>
+    <title>Lịch Sử Sử Dụng Mã Giảm Giá - BetaFruit Admin</title>
+    <style>
+        .coupon-code-badge {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border: 1.5px dashed #cbd5e1;
+            display: inline-block;
+        }
+        .badge-order-status {
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- Header Section -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="coupon-code-badge" th:text="${coupon.couponCode}">BETA20</span>
+                <span th:if="${coupon.shop == null}" class="badge bg-primary">Mã cấp toàn sàn</span>
+                <span th:unless="${coupon.shop == null}" class="badge bg-secondary">
+                    Cửa hàng: <span th:text="${coupon.shop.shopName}">Shop</span>
+                </span>
+                <span class="badge" th:classappend="${coupon.getStatusBadgeClass()}" th:text="${coupon.getStatusLabel()}">Đang hoạt động</span>
+            </div>
+            <h3 class="fw-bold text-dark mt-2 mb-0">Theo Dõi Lịch Sử & Đơn Hàng Áp Dụng Mã</h3>
+            <p class="text-secondary small mb-0 mt-1">Chi tiết các đơn hàng mua sắm hoa quả đã sử dụng mã này trong hệ thống.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/admin/coupons/{id}/edit(id=${coupon.couponId})}" class="btn btn-outline-secondary d-flex align-items-center gap-1">
+                <i class="bi bi-pencil"></i> Chỉnh sửa
+            </a>
+            <a th:href="@{/admin/coupons}" class="btn btn-outline-dark d-flex align-items-center gap-1">
+                <i class="bi bi-arrow-left"></i> Về danh sách
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm bg-white p-3 h-100 border-start border-primary border-4">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-primary-subtle text-primary p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-check-all fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Lượt đã dùng</div>
+                        <h4 class="fw-bold mb-0 text-primary" th:text="${usageData.totalUsed}">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm bg-white p-3 h-100 border-start border-success border-4">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-success-subtle text-success p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-hourglass-split fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Lượt còn lại</div>
+                        <h4 class="fw-bold mb-0 text-success" th:text="${usageData.remainingLimit}">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm bg-white p-3 h-100 border-start border-warning border-4">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-warning-subtle text-warning p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-pie-chart fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Tỷ lệ sử dụng</div>
+                        <h4 class="fw-bold mb-0 text-warning" th:text="${usageData.usagePercentage} + '%'">0%</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm bg-white p-3 h-100 border-start border-danger border-4">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-danger-subtle text-danger p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-cash-stack fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Tổng tiền đã giảm</div>
+                        <h4 class="fw-bold mb-0 text-danger"
+                            th:text="${#numbers.formatDecimal(usageData.totalDiscountSponsored != null ? usageData.totalDiscountSponsored : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                            0 đ
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold text-dark mb-0">
+                <i class="bi bi-bag-check me-2 text-success"></i>Đơn Hàng Đã Sử Dụng Mã Này
+            </h6>
+            <span class="badge bg-light text-dark border">
+                Tổng: <strong th:text="${totalOrders}">0</strong> đơn
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="min-width: 100px;">Mã đơn</th>
+                        <th style="min-width: 160px;">Cửa hàng</th>
+                        <th style="min-width: 160px;">Khách hàng</th>
+                        <th style="min-width: 140px;">Thời gian đặt</th>
+                        <th style="min-width: 130px;">Tổng tiền đơn</th>
+                        <th style="min-width: 130px;">Tiền được giảm</th>
+                        <th style="min-width: 130px;">Thực thu</th>
+                        <th style="min-width: 130px;">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(orders)}">
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                            Chưa có đơn hàng nào áp dụng mã này.
+                        </td>
+                    </tr>
+
+                    <tr th:each="o : ${orders}">
+                        <td><span class="fw-bold text-primary">#<span th:text="${o.orderId}">1001</span></span></td>
+                        <td>
+                            <span class="fw-semibold text-dark" th:text="${o.shop != null ? o.shop.shopName : '---'}">Shop A</span>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark" th:text="${o.customer != null ? o.customer.fullName : 'Khách lẻ'}">Nguyễn Văn B</div>
+                            <div class="text-muted small" th:if="${o.customer != null and o.customer.phone != null}" th:text="${o.customer.phone}">0912345678</div>
+                        </td>
+                        <td>
+                            <span th:if="${o.createdAt != null}" th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}">01/10/2026 14:30</span>
+                            <span th:unless="${o.createdAt != null}" class="text-muted">--</span>
+                        </td>
+                        <td>
+                            <span th:text="${#numbers.formatDecimal(o.totalAmount != null ? o.totalAmount : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">150,000 đ</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-danger">
+                                -<span th:text="${#numbers.formatDecimal(o.discountAmount != null ? o.discountAmount : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">20,000 đ</span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-success"
+                                  th:text="${#numbers.formatDecimal(o.finalAmount != null ? o.finalAmount : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">130,000 đ</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-order-status bg-secondary-subtle text-secondary"
+                                  th:if="${o.orderStatus == null}" th:text="'Chờ xử lý'">Chờ xử lý</span>
+                            <span class="badge badge-order-status bg-warning-subtle text-warning-emphasis"
+                                  th:if="${o.orderStatus != null and (o.orderStatus.name() == 'PENDING' or o.orderStatus.name() == 'CONFIRMED')}"
+                                  th:text="${o.orderStatus.name()}">Chờ xác nhận</span>
+                            <span class="badge badge-order-status bg-info-subtle text-info-emphasis"
+                                  th:if="${o.orderStatus != null and (o.orderStatus.name() == 'SHIPPING' or o.orderStatus.name() == 'DELIVERING')}"
+                                  th:text="${o.orderStatus.name()}">Đang giao</span>
+                            <span class="badge badge-order-status bg-success-subtle text-success"
+                                  th:if="${o.orderStatus != null and (o.orderStatus.name() == 'DELIVERED' or o.orderStatus.name() == 'SUCCESS')}"
+                                  th:text="${o.orderStatus.name()}">Thành công</span>
+                            <span class="badge badge-order-status bg-danger-subtle text-danger"
+                                  th:if="${o.orderStatus != null and (o.orderStatus.name() == 'CANCELLED' or o.orderStatus.name() == 'RETURNED')}"
+                                  th:text="${o.orderStatus.name()}">Đã hủy</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Phân trang -->
+        <div th:if="${totalPages > 1}" class="card-footer bg-white border-top p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span class="text-muted small">
+                Trang <strong th:text="${currentPage}">1</strong> / <strong th:text="${totalPages}">1</strong>
+            </span>
+            <nav aria-label="Phân trang đơn hàng">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/admin/coupons/{id}/usage(id=${coupon.couponId}, page=${currentPage - 1})}">Trước</a>
+                    </li>
+                    <li th:each="p : ${#numbers.sequence(1, totalPages)}"
+                        class="page-item" th:classappend="${p == currentPage} ? 'active' : ''">
+                        <a class="page-link" th:text="${p}" th:href="@{/admin/coupons/{id}/usage(id=${coupon.couponId}, page=${p})}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/admin/coupons/{id}/usage(id=${coupon.couponId}, page=${currentPage + 1})}">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
