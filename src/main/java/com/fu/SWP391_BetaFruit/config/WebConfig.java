@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.config;
 
+
 import com.fu.SWP391_BetaFruit.interceptor.AdminInterceptor;
 import com.fu.SWP391_BetaFruit.interceptor.CustomerInterceptor;
 import com.fu.SWP391_BetaFruit.interceptor.ShipperInterceptor;
@@ -37,8 +38,7 @@ public class WebConfig implements WebMvcConfigurer {
                                 .addPathPatterns("/staff/**");
 
                 registry.addInterceptor(shopOwnerInterceptor)
-                                .addPathPatterns("/shop/**")
-                                .excludePathPatterns("/shop/public/**");
+                                .addPathPatterns("/shop/**");
 
                 registry.addInterceptor(customerInterceptor)
                                 .addPathPatterns("/customer/**", "/cart");

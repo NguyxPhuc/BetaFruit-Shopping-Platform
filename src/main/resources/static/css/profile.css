@@ -187,12 +187,19 @@
 
 /* Main Layout Grid */
 .profile-main-grid {
+    display: block;
+    max-width: 980px;
+    margin: -36px auto 0;
+    position: relative;
+    z-index: 10;
+}
+
+.profile-main-grid:has(.profile-sidebar),
+.profile-main-grid.has-sidebar {
     display: grid;
     grid-template-columns: 280px 1fr;
     gap: 28px;
-    margin-top: -36px;
-    position: relative;
-    z-index: 10;
+    max-width: 1200px;
 }
 
 /* Sidebar Styling */
