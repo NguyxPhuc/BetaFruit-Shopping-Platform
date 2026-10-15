@@ -15,17 +15,14 @@ public class StaffInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         HttpSession session = request.getSession();
 
-        if (session.getAttribute("LOGGED_IN_USER_ID") == null) {
+        if(session.getAttribute("LOGGED_IN_USER_ID") == null){
             response.sendRedirect("/auth/login");
             return false;
         }
-
         List<RoleName> roles = (List<RoleName>) session.getAttribute("LOGGED_IN_ROLES");
-        // Cả nhân viên vận hành (STAFF) và Quản trị viên (ADMIN) đều được phép truy cập /staff/**
-        if (roles != null && (roles.contains(RoleName.STAFF) || roles.contains(RoleName.ADMIN))) {
+        if(roles != null && roles.contains(RoleName.STAFF)){
             return true;
         }
-
         response.sendRedirect("/403");
         return false;
     }

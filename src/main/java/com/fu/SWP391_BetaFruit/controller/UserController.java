@@ -1,8 +1,8 @@
 package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
+import com.fu.SWP391_BetaFruit.dto.request.CustomerProfileRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
-import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -22,16 +22,18 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/profile")
+    @GetMapping("/")
+    public String home() {
+        return "index";
+    }
+
+    @GetMapping("/customer/profile")
     public String getCustomerProfile(Model model, HttpSession session) throws Exception {
         Integer id = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
-        if (id == null) {
-            return "redirect:/auth/login";
-        }
         try {
             CustomerProfileResponse customerProfileResponse = userService.getCustomerProfile(id);
             model.addAttribute("customerProfileResponse", customerProfileResponse);
-            return "customer/customer-profile";
+            return "customer/profile";
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("errorMessage", e.getMessage());
@@ -39,22 +41,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/shop/profile")
-    public String getShopProfile(Model model, HttpSession session) throws Exception {
-        Integer id = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
-        if (id == null) {
-            return "redirect:/auth/login";
-        }
-        try {
-            ShopProfileResponse shopProfileResponse = userService.getShopProfile(id);
-            model.addAttribute("shopProfileResponse", shopProfileResponse);
-            return "shop/shop-profile";
-        } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("errorMessage", e.getMessage());
-            return "index";
-        }
-    }
 
     @GetMapping("/change-password")
     public String showChangePasswordForm(Model model, HttpSession session) {
@@ -86,6 +72,49 @@ public class UserController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/change-password";
+        }
+    }
+
+    @GetMapping("/customer/profile/edit")
+    public String showEditCustomerProfileForm(Model model, HttpSession session, RedirectAttributes redirectAttributes) {
+        Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (userId == null) {
+            return "redirect:/auth/login";
+        }
+        try {
+            CustomerProfileResponse currentProfile = userService.getCustomerProfile(userId);
+            CustomerProfileRequest request = new CustomerProfileRequest();
+            request.setUsername(currentProfile.getUsername());
+            request.setFullName(currentProfile.getFullName());
+            request.setEmail(currentProfile.getEmail());
+            request.setPhone(currentProfile.getPhone());
+
+            model.addAttribute("customerProfileRequest", request);
+            return "customer/edit-profile";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/customer/profile";
+        }
+    }
+
+    @PostMapping("/customer/profile/edit")
+    public String editCustomerProfile(@Valid @ModelAttribute("customerProfileRequest") CustomerProfileRequest request, BindingResult bindingResult, HttpSession session, RedirectAttributes redirectAttributes, Model model){
+        Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (userId == null) {
+            return "redirect:/auth/login";
+        }
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", "Vui lòng kiểm tra lại các thông tin nhập chưa hợp lệ.");
+            return "customer/edit-profile";
+        }
+
+        try {
+            userService.editCustomerProfile(userId, request);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
+            return "redirect:/customer/profile";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "customer/edit-profile";
         }
     }
 }
