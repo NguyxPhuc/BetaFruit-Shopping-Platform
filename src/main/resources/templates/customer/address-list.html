@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Quản lý sổ địa chỉ nhận hàng - BetaFruit Nông sản tươi sạch">
+    <title>Địa chỉ nhận hàng | BetaFruit</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
+    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
+    <link rel="stylesheet" th:href="@{/css/address.css}" href="/css/address.css">
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<main class="address-page">
+    <div class="address-container">
+
+        <!-- Breadcrumb / Back Navigation -->
+        <div style="margin-bottom: 16px;">
+            <a th:href="@{/customer/profile}" href="/customer/profile" style="display: inline-flex; align-items: center; font-size: 13px; color: #4b5563; text-decoration: none; font-weight: 500;">
+                Quay lại Hồ sơ cá nhân
+            </a>
+        </div>
+
+        <!-- Header Bar -->
+        <div class="address-header-bar">
+            <div class="address-header-title">
+                <h1>Địa chỉ nhận hàng của tôi</h1>
+                <p>Quản lý các địa chỉ nhận hàng để thanh toán và đặt hàng nhanh chóng hơn</p>
+            </div>
+            <div>
+                <a th:href="@{/{role}/address/create(role=${role})}" class="btn-primary-action">
+                    Thêm địa chỉ mới
+                </a>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        <div class="address-alert address-alert-success" id="successAlert" th:if="${successMessage}">
+            <span th:text="${successMessage}">Thao tác thành công!</span>
+        </div>
+
+        <div class="address-alert address-alert-error" id="errorAlert" th:if="${errorMessage}">
+            <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
+        </div>
+
+        <!-- Address List -->
+        <div class="address-list-wrapper" th:if="${addresses != null && !addresses.empty}">
+            <div th:each="addr : ${addresses}"
+                 class="address-card"
+                 th:classappend="${addr.isDefault ? 'is-default-card' : ''}">
+
+                <div class="address-card-info">
+                    <div class="address-user-line">
+                        <span class="address-name" th:text="${addr.receiverName}">Nguyễn Văn A</span>
+                        <span class="address-separator">|</span>
+                        <span class="address-phone" th:text="${addr.receiverPhone}">0912 345 678</span>
+                        <span class="badge-default" th:if="${addr.isDefault}">Mặc định</span>
+                    </div>
+
+                    <p class="address-location-line">
+                        <span class="address-detail-text" th:text="${addr.addressLine}">Số 123 Đường Cầu Giấy</span>,
+                        <span th:text="${addr.ward}">Phường Quan Hoa</span>,
+                        <span th:text="${addr.district}">Quận Cầu Giấy</span>,
+                        <span th:text="${addr.city}">Hà Nội</span>
+                    </p>
+                </div>
+
+                <div class="address-card-actions">
+                    <a th:href="@{/{role}/address/edit/{id}(role=${role}, id=${addr.addressId})}"
+                       class="btn-card-action btn-card-edit"
+                       title="Chỉnh sửa thông tin địa chỉ">
+                        Cập nhật
+                    </a>
+
+                    <!-- Delete Button -->
+                    <button type="button"
+                            class="btn-card-action btn-card-delete"
+                            th:disabled="${addr.isDefault}"
+                            th:classappend="${addr.isDefault ? 'is-disabled' : ''}"
+                            th:attr="data-id=${addr.addressId}, data-name=${addr.receiverName}, data-line=${addr.addressLine}"
+                            th:title="${addr.isDefault ? 'Không thể xóa địa chỉ mặc định' : 'Xóa địa chỉ này'}"
+                            onclick="confirmDeleteAddress(this)">
+                        Xóa
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="address-empty-state" th:if="${addresses == null || addresses.empty}">
+            <h3>Bạn chưa có địa chỉ nhận hàng nào</h3>
+            <p>Hãy thêm địa chỉ giao hàng để đặt mua nông sản tươi sạch dễ dàng và tiện lợi hơn.</p>
+            <a th:href="@{/{role}/address/create(role=${role})}" class="btn-primary-action">
+                Thêm địa chỉ ngay
+            </a>
+        </div>
+
+    </div>
+</main>
+
+<!-- ═══════════════ CONFIRM DELETE MODAL ═══════════════ -->
+<div class="modal-backdrop-custom" id="deleteConfirmModal">
+    <div class="modal-dialog-custom">
+        <h3>Xác nhận xóa địa chỉ</h3>
+        <p>Bạn có chắc chắn muốn xóa địa chỉ của <strong id="deleteTargetName">...</strong> (<span id="deleteTargetLine">...</span>)? Thao tác này không thể hoàn tác.</p>
+
+        <form id="deleteAddressForm" method="post" action="">
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary-action" onclick="closeDeleteModal()">Hủy bỏ</button>
+                <button type="submit" class="btn-danger-confirm">Xóa vĩnh viễn</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script th:inline="javascript">
+    const currentRole = /*[[${role}]]*/ 'customer';
+
+    function confirmDeleteAddress(btn) {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const line = btn.getAttribute('data-line');
+
+        document.getElementById('deleteTargetName').innerText = name || 'người nhận';
+        document.getElementById('deleteTargetLine').innerText = line || '';
+        document.getElementById('deleteAddressForm').action = '/' + currentRole + '/address/delete/' + id;
+
+        document.getElementById('deleteConfirmModal').classList.add('is-open');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteConfirmModal').classList.remove('is-open');
+    }
+
+    // Close modal on click outside
+    document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
+    });
+
+    // Auto-hide alert after 4 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.address-alert');
+        alerts.forEach(function(alert) {
+            alert.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-6px)';
+            setTimeout(() => alert.remove(), 400);
+        });
+    }, 4000);
+</script>
+
+</body>
+</html>

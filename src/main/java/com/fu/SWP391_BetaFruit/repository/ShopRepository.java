@@ -22,6 +22,50 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
     long countByApprovalStatus(ShopApprovalStatus status);
 
     @Query("SELECT s FROM Shop s JOIN s.owner u WHERE " +
+           "(LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    List<Shop> searchShops(@Param("keyword") String keyword);
+
+    @Query(value = "SELECT s FROM Shop s JOIN s.owner u WHERE " +
+           "(LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+           countQuery = "SELECT COUNT(s) FROM Shop s JOIN s.owner u WHERE " +
+           "(LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Shop> searchShops(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT s FROM Shop s JOIN s.owner u WHERE " +
+           "s.approvalStatus = :status AND " +
+           "(LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    List<Shop> searchShopsByStatus(@Param("keyword") String keyword, @Param("status") ShopApprovalStatus status);
+
+    Optional<Shop> findByShopId(Integer shopId);
+    
+    @Query(value = "SELECT s FROM Shop s JOIN s.owner u WHERE " +
+           "s.approvalStatus = :status AND " +
+           "(LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))",
+           countQuery = "SELECT COUNT(s) FROM Shop s JOIN s.owner u WHERE " +
+           "s.approvalStatus = :status AND " +
+           "(LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Shop> searchShopsByStatus(@Param("keyword") String keyword, @Param("status") ShopApprovalStatus status, Pageable pageable);
+
+    @Query(value = "SELECT s FROM Shop s JOIN s.owner u WHERE " +
+           "s.approvalStatus = 'APPROVED' AND " +
            "(:status IS NULL OR s.approvalStatus = :status) AND " +
            "(:keyword IS NULL OR :keyword = '' OR " +
            " LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +

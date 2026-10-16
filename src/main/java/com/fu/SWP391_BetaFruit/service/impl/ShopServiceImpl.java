@@ -1,5 +1,7 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
+import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
+import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.RoleName;
@@ -201,6 +203,52 @@ public class ShopServiceImpl implements ShopService {
     }
 
     @Override
+    public ShopProfileResponse getShopProfile(Integer id) throws Exception {
+        ShopProfileResponse shopProfileResponse = new ShopProfileResponse();
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin người dùng."));
+
+        shopProfileResponse.setEmail(user.getEmail());
+        shopProfileResponse.setPhone(user.getPhone());
+
+        Shop shop = shopRepository.findByOwner(user)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin shop."));
+
+        shopProfileResponse.setShopName(shop.getShopName());
+        shopProfileResponse.setShopDescription(shop.getShopDescription());
+        shopProfileResponse.setBankName(shop.getBankName());
+        shopProfileResponse.setBankAccountNumber(shop.getBankAccountNumber());
+        shopProfileResponse.setAccountName(shop.getAccountName());
+        return shopProfileResponse;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void editShopProfile(Integer userId, ShopProfileRequest shopProfileRequest) throws Exception {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin người dùng."));
+        Shop shop = shopRepository.findByOwner(user)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin cửa hàng."));
+        if (!user.getEmail().trim().equalsIgnoreCase(shopProfileRequest.getEmail())) {
+            if (userRepository.existsByEmail(shopProfileRequest.getEmail())) {
+                throw new Exception("Email đã tồn tại trong hệ thống.");
+            }
+            user.setEmail(shopProfileRequest.getEmail());
+        }
+        user.setPhone(shopProfileRequest.getPhone());
+        shop.setShopName(shopProfileRequest.getShopName());
+        shop.setShopDescription(shopProfileRequest.getShopDescription());
+        shop.setBankName(shopProfileRequest.getBankName());
+        shop.setBankAccountNumber(shop.getBankAccountNumber());
+        shop.setAccountName(shopProfileRequest.getAccountName());
+
+        userRepository.save(user);
+        shopRepository.save(shop);
+    }
+
+
+
+    @Override
     public Map<String, Object> getAdminCommissionPageData(String keyword, String ownerStatus, String commissionTier, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
         int pageSize = size > 0 ? size : 5;
@@ -233,7 +281,6 @@ public class ShopServiceImpl implements ShopService {
         data.put("approvedTotal", approvedTotal);
         data.put("activeCount", activeCount);
         data.put("deactivatedCount", deactivatedCount);
-
         return data;
     }
 }
