@@ -14,6 +14,11 @@
             </h3>
             <p class="text-secondary small mb-0">Quản lý danh sách tài khoản, kích hoạt / khóa truy cập và phân quyền vai trò (Role) trong hệ thống BetaFruit</p>
         </div>
+        <div>
+            <button type="button" class="btn btn-success shadow-sm d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                <i class="bi bi-person-plus-fill me-2"></i> Thêm Người Dùng Mới
+            </button>
+        </div>
     </div>
 
     <!-- Quick Stats Cards -->
@@ -277,6 +282,132 @@
         <div th:replace="~{admin/fragments/pagination :: pager(pageData=${pageData}, baseUrl='/admin/users')}"></div>
     </div>
 
+    <!-- Modal Thêm Người Dùng Mới (Create User) -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <form th:action="@{/admin/users/create}" method="post">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title fw-bold" id="createUserModalLabel">
+                            <i class="bi bi-person-plus-fill me-2"></i>Thêm Tài Khoản Người Dùng Mới
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <!-- Họ tên & Tên đăng nhập -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-6">
+                                <label for="createFullName" class="form-label fw-bold">
+                                    Họ và tên <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="createFullName" name="fullName"
+                                       placeholder="VD: Nguyễn Văn An" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="createUsername" class="form-label fw-bold">
+                                    Tên đăng nhập <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="createUsername" name="username"
+                                       placeholder="VD: nguyenvanan" required pattern="^[a-zA-Z0-9_]{3,50}$"
+                                       title="Chỉ chứa chữ cái, số và dấu gạch dưới, từ 3-50 ký tự">
+                                <div class="form-text small text-muted">Từ 3-50 ký tự, viết liền không dấu, không khoảng trắng.</div>
+                            </div>
+                        </div>
+
+                        <!-- Email & SĐT -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-6">
+                                <label for="createEmail" class="form-label fw-bold">
+                                    Email liên hệ <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" class="form-control" id="createEmail" name="email"
+                                       placeholder="VD: an.nguyen@example.com" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="createPhone" class="form-label fw-bold">
+                                    Số điện thoại
+                                </label>
+                                <input type="tel" class="form-control" id="createPhone" name="phone"
+                                       placeholder="VD: 0912345678" pattern="^(0|\+84)[35789][0-9]{8}$">
+                            </div>
+                        </div>
+
+                        <!-- Mật khẩu & Trạng thái -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-6">
+                                <label for="createPassword" class="form-label fw-bold">
+                                    Mật khẩu khởi tạo <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="createPassword" name="password"
+                                           placeholder="Tối thiểu 6 ký tự" required minlength="6">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn" title="Hiện/ẩn mật khẩu">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-primary" type="button" id="setDefaultPassBtn" title="Gán mật khẩu mặc định 123456">
+                                        123456
+                                    </button>
+                                </div>
+                                <div class="form-text small text-muted">Mật khẩu có thể đổi lại sau khi đăng nhập.</div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="createStatus" class="form-label fw-bold">
+                                    Trạng thái tài khoản
+                                </label>
+                                <select class="form-select" id="createStatus" name="status">
+                                    <option value="ACTIVE" selected>Hoạt động (ACTIVE)</option>
+                                    <option value="DEACTIVATED">Khóa tạm thời (DEACTIVATED)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Gán vai trò áp dụng -->
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-shield-check text-success me-1"></i>Chọn vai trò áp dụng: <span class="text-danger">*</span>
+                            </label>
+                            <div class="d-flex flex-column gap-2 border rounded p-3 bg-white">
+                                <div th:each="r : ${allRoles}" class="form-check p-2 rounded hover-bg"
+                                     th:classappend="${r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')} ? 'opacity-75 bg-light' : ''">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox"
+                                           name="roleIds" th:value="${r.roleId}" th:id="${'new_role_' + r.roleId}"
+                                           th:disabled="${r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')}">
+                                    <label class="form-check-label w-100 cursor-pointer" th:for="${'new_role_' + r.roleId}">
+                                        <span class="badge"
+                                              th:classappend="${(r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')) ? 'bg-danger' : 
+                                                               ((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary' : 
+                                                               ((r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')) ? 'bg-secondary text-white' : 
+                                                               ((r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')) ? 'bg-secondary' : 'bg-info text-dark')))}"
+                                              th:text="${r.roleName}">
+                                            Role
+                                        </span>
+                                        <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')}">- Quản trị viên tối cao hệ thống</span>
+                                        <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')}">- Nhân viên vận hành & kiểm duyệt</span>
+                                        <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'CUSTOMER' or r.roleName == 'Customer')}">- Khách hàng mua sắm hoa quả (Tự sinh Giỏ hàng & Hạng thành viên)</span>
+                                        <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')}">- Chủ gian hàng bán hoa quả</span>
+                                        <th:block th:if="${r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')}">
+                                            <span class="badge bg-secondary-subtle text-secondary border ms-2">Đang phát triển</span>
+                                            <span class="text-muted small ms-1">- Chức năng Shipper chưa kích hoạt</span>
+                                        </th:block>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-text mt-2 text-muted small">
+                                <i class="bi bi-info-circle me-1"></i>Vui lòng tích chọn ít nhất một vai trò hợp lệ để cấp quyền truy cập.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="submit" class="btn btn-success d-flex align-items-center">
+                            <i class="bi bi-check-lg me-1"></i> Tạo tài khoản
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Phân Vai Trò (Assign Roles) -->
     <div class="modal fade" id="assignRoleModal" tabindex="-1" aria-labelledby="assignRoleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -376,6 +507,37 @@
                     });
                 });
             });
+
+            // Tiện ích cho Modal Thêm Người Dùng: Gán mật khẩu mặc định & Bật/Tắt xem mật khẩu
+            const createPasswordInput = document.getElementById("createPassword");
+            const togglePasswordBtn = document.getElementById("togglePasswordBtn");
+            const setDefaultPassBtn = document.getElementById("setDefaultPassBtn");
+
+            if (setDefaultPassBtn && createPasswordInput) {
+                setDefaultPassBtn.addEventListener("click", function () {
+                    createPasswordInput.value = "123456";
+                    createPasswordInput.focus();
+                });
+            }
+
+            if (togglePasswordBtn && createPasswordInput) {
+                togglePasswordBtn.addEventListener("click", function () {
+                    const icon = this.querySelector("i");
+                    if (createPasswordInput.type === "password") {
+                        createPasswordInput.type = "text";
+                        if (icon) {
+                            icon.classList.remove("bi-eye");
+                            icon.classList.add("bi-eye-slash");
+                        }
+                    } else {
+                        createPasswordInput.type = "password";
+                        if (icon) {
+                            icon.classList.remove("bi-eye-slash");
+                            icon.classList.add("bi-eye-warning", "bi-eye");
+                        }
+                    }
+                });
+            }
         });
     </script>
 </div>

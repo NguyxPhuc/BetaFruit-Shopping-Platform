@@ -3,6 +3,7 @@ package com.fu.SWP391_BetaFruit.controller;
 import com.fu.SWP391_BetaFruit.dto.request.CategoryRequest;
 import com.fu.SWP391_BetaFruit.dto.request.RoleRequest;
 import com.fu.SWP391_BetaFruit.dto.request.MembershipTierRequest;
+import com.fu.SWP391_BetaFruit.dto.request.UserRequest;
 import com.fu.SWP391_BetaFruit.service.MembershipTierService;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
 import com.fu.SWP391_BetaFruit.service.RoleService;
@@ -159,6 +160,22 @@ public class AdminController {
             redirectUrl.append("&status=").append(status.trim());
         }
         return redirectUrl.toString();
+    }
+
+    /**
+     * Handles creating a new user account (Admin only).
+     */
+    @PostMapping("/admin/users/create")
+    public String createUser(@Valid @ModelAttribute("newUser") UserRequest request,
+                             BindingResult bindingResult,
+                             RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/admin/users";
+        }
+        userService.createUser(request);
+        redirectAttributes.addFlashAttribute("successMessage", "Tạo tài khoản người dùng [" + request.getUsername() + "] thành công!");
+        return "redirect:/admin/users";
     }
 
     // ================= 2. QUẢN LÝ DANH MỤC GỐC (MASTER CATEGORIES) =================

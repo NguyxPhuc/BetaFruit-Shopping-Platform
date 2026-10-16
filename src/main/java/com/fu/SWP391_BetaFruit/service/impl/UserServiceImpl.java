@@ -2,12 +2,18 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
 import com.fu.SWP391_BetaFruit.dto.request.CustomerProfileRequest;
+import com.fu.SWP391_BetaFruit.dto.request.UserRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
+import com.fu.SWP391_BetaFruit.entity.Cart;
 import com.fu.SWP391_BetaFruit.entity.CustomerMembership;
+import com.fu.SWP391_BetaFruit.entity.MembershipTier;
 import com.fu.SWP391_BetaFruit.entity.Role;
 import com.fu.SWP391_BetaFruit.entity.User;
+import com.fu.SWP391_BetaFruit.enums.RoleName;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
+import com.fu.SWP391_BetaFruit.repository.CartRepository;
 import com.fu.SWP391_BetaFruit.repository.CustomerMembershipRepository;
+import com.fu.SWP391_BetaFruit.repository.MembershipTierRepository;
 import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
@@ -22,6 +28,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +46,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private CustomerMembershipRepository customerMembershipRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private MembershipTierRepository tierRepository;
 
     @Override
     public CustomerProfileResponse getCustomerProfile(Integer id) throws Exception {
@@ -96,6 +109,77 @@ public class UserServiceImpl implements UserService {
 
         user.setRoles(roles);
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createUser(UserRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Dữ liệu người dùng không hợp lệ!");
+        }
+
+        String cleanUsername = request.getUsername() != null ? request.getUsername().trim() : "";
+        if (cleanUsername.isEmpty()) {
+            throw new IllegalArgumentException("Tên đăng nhập không được để trống!");
+        }
+        if (userRepository.existsByUsername(cleanUsername)) {
+            throw new IllegalArgumentException("Tên đăng nhập '" + cleanUsername + "' đã tồn tại trên hệ thống!");
+        }
+
+        String cleanEmail = request.getEmail() != null ? request.getEmail().trim() : "";
+        if (cleanEmail.isEmpty()) {
+            throw new IllegalArgumentException("Email không được để trống!");
+        }
+        if (userRepository.existsByEmail(cleanEmail)) {
+            throw new IllegalArgumentException("Email '" + cleanEmail + "' đã được sử dụng bởi tài khoản khác!");
+        }
+
+        if (request.getPassword() == null || request.getPassword().trim().length() < 6) {
+            throw new IllegalArgumentException("Mật khẩu phải từ 6 ký tự trở lên!");
+        }
+
+        if (request.getRoleIds() == null || request.getRoleIds().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất 1 vai trò cho người dùng!");
+        }
+
+        List<Role> roles = roleRepository.findAllById(request.getRoleIds());
+        if (roles.isEmpty()) {
+            throw new IllegalArgumentException("Không tìm thấy vai trò hợp lệ trong hệ thống!");
+        }
+
+        boolean hasDeliveryStaff = roles.stream()
+                .anyMatch(r -> r.getRoleName() == RoleName.DELIVERY_STAFF);
+        if (hasDeliveryStaff) {
+            throw new IllegalArgumentException("Vai trò Nhân viên giao hàng (DELIVERY_STAFF) đang được phát triển, tạm thời chưa thể tạo tài khoản!");
+        }
+
+        User newUser = new User();
+        newUser.setUsername(cleanUsername);
+        newUser.setPasswordHash(BCrypt.hashpw(request.getPassword().trim(), BCrypt.gensalt()));
+        newUser.setEmail(cleanEmail);
+        newUser.setFullName(request.getFullName() != null ? request.getFullName().trim() : "");
+        newUser.setPhone(request.getPhone() != null && !request.getPhone().trim().isEmpty() ? request.getPhone().trim() : null);
+        newUser.setStatus(request.getStatus() != null ? request.getStatus() : UserStatus.ACTIVE);
+        newUser.setRoles(roles);
+
+        newUser = userRepository.save(newUser);
+
+        boolean hasCustomerRole = roles.stream()
+                .anyMatch(r -> r.getRoleName() == RoleName.CUSTOMER);
+        if (hasCustomerRole) {
+            Cart cart = new Cart();
+            cart.setCustomer(newUser);
+            cartRepository.save(cart);
+
+            MembershipTier defaultTier = tierRepository.findTopByOrderByMinSpentRequiredAsc();
+            if (defaultTier != null) {
+                CustomerMembership customerMembership = new CustomerMembership();
+                customerMembership.setUser(newUser);
+                customerMembership.setTier(defaultTier);
+                customerMembership.setTotalCumulativeSpend(BigDecimal.ZERO);
+                customerMembershipRepository.save(customerMembership);
+            }
+        }
     }
 
     private static final Set<String> ALLOWED_USER_SORT_FIELDS = Set.of(
@@ -175,6 +259,7 @@ public class UserServiceImpl implements UserService {
         data.put("totalCount", userRepository.count());
         data.put("activeCount", userRepository.countByStatus(UserStatus.ACTIVE));
         data.put("lockedCount", userRepository.countByStatus(UserStatus.DEACTIVATED));
+        data.put("newUser", new UserRequest());
 
         return data;
     }
