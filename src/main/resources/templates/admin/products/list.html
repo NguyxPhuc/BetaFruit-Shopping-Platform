@@ -260,7 +260,7 @@
 
                                 <!-- Nút Phê Duyệt (Dành cho hoa quả chưa duyệt) -->
                                 <form th:if="${p.approvalStatus == null or p.approvalStatus.name() != 'APPROVED'}"
-                                      th:action="@{/staff/products/{id}/approve(id=${p.productId}, tab=${currentTab}, page=${pageData != null ? pageData.number + 1 : 1})}" 
+                                      th:action="@{/staff/products/{id}/approve(id=${p.productId}, tab=${currentTab}, page=${pageData != null ? pageData.number + 1 : 1}, keyword=${keyword})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn PHÊ DUYỆT hoa quả [' + p.productName + '] không? Sản phẩm sẽ được kích hoạt mở bán trên sàn.'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
@@ -269,9 +269,9 @@
                                     </button>
                                 </form>
 
-                                <!-- Nút Từ Chối (Dành cho hoa quả chưa từ chối) -->
-                                <form th:if="${p.approvalStatus == null or p.approvalStatus.name() != 'REJECTED'}"
-                                      th:action="@{/staff/products/{id}/reject(id=${p.productId}, tab=${currentTab}, page=${pageData != null ? pageData.number + 1 : 1})}" 
+                                <!-- Nút Từ Chối (Chỉ dành cho hoa quả đang chờ duyệt) -->
+                                <form th:if="${p.approvalStatus != null and p.approvalStatus.name() == 'PENDING'}"
+                                      th:action="@{/staff/products/{id}/reject(id=${p.productId}, tab=${currentTab}, page=${pageData != null ? pageData.number + 1 : 1}, keyword=${keyword})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${'Bạn có chắc chắn muốn TỪ CHỐI hoa quả [' + p.productName + '] không?'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
@@ -282,7 +282,7 @@
 
                                 <!-- Nút Ẩn / Mở bán lại (Dành cho hoa quả đã được duyệt) -->
                                 <form th:if="${p.approvalStatus != null and p.approvalStatus.name() == 'APPROVED'}"
-                                      th:action="@{/staff/products/{id}/toggle-visibility(id=${p.productId}, tab=${currentTab}, page=${pageData != null ? pageData.number + 1 : 1})}" 
+                                      th:action="@{/staff/products/{id}/toggle-visibility(id=${p.productId}, tab=${currentTab}, page=${pageData != null ? pageData.number + 1 : 1}, keyword=${keyword})}" 
                                       method="post" class="d-inline"
                                       th:data-confirm="${p.visibilityStatus != null and p.visibilityStatus.name() == 'ACTIVE' ? 
                                                        'Bạn có chắc chắn muốn ẨN sản phẩm [' + p.productName + '] khỏi sàn không? Khách hàng sẽ không thể nhìn thấy hoặc mua sản phẩm này.' : 
