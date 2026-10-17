@@ -6,6 +6,7 @@ import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.RoleName;
 import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
+import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
@@ -105,6 +106,28 @@ public class ShopServiceImpl implements ShopService {
         Shop shop = getShopById(shopId);
         shop.setCommissionRate(commissionRate);
         shopRepository.save(shop);
+    }
+
+    /**
+     * Toggles the visibility/active status of a shop by updating its owner's account status.
+     * When DEACTIVATED, products from this shop are automatically hidden from the homepage and customer catalog.
+     *
+     * @param shopId the ID of the shop to toggle
+     */
+    @Override
+    @Transactional
+    public void toggleShopVisibility(Integer shopId) {
+        Shop shop = getShopById(shopId);
+        User owner = shop.getOwner();
+        if (owner != null) {
+            UserStatus currentStatus = owner.getStatus();
+            if (currentStatus == UserStatus.ACTIVE) {
+                owner.setStatus(UserStatus.DEACTIVATED);
+            } else {
+                owner.setStatus(UserStatus.ACTIVE);
+            }
+            userRepository.save(owner);
+        }
     }
 
     /**

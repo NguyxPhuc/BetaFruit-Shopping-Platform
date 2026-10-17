@@ -190,6 +190,8 @@ public class MembershipTierServiceImpl implements MembershipTierService {
      * - Không âm (minSpentRequired >= 0, discountPercent >= 0 và <= 100)
      * - Tên hạng không được trùng
      * - Ngưỡng chi tiêu không được trùng với hạng khác
+     * - Quy tắc lũy tiến: Hạng chi tiêu cao hơn phải có tỷ lệ giảm giá >= hạng thấp hơn
+     * - Bảo vệ hạng cơ sở (0 ₫) dành cho khách hàng mới
      */
     private void validateTierRequest(MembershipTierRequest request, Integer currentId) {
         if (request.getTierName() == null || request.getTierName().trim().isEmpty()) {
@@ -206,6 +208,20 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         String trimmedName = request.getTierName().trim();
         List<MembershipTier> allTiers = membershipTierRepository.findAll();
 
+        // 1. Kiểm tra bảo vệ Hạng cơ sở (0 ₫) khi cập nhật
+        if (currentId != null) {
+            MembershipTier existingTier = getTierById(currentId);
+            if (existingTier.getMinSpentRequired().compareTo(BigDecimal.ZERO) == 0
+                    && request.getMinSpentRequired().compareTo(BigDecimal.ZERO) > 0) {
+                boolean hasOtherZeroTier = allTiers.stream()
+                        .anyMatch(t -> !Objects.equals(t.getTierId(), currentId) && t.getMinSpentRequired().compareTo(BigDecimal.ZERO) == 0);
+                if (!hasOtherZeroTier) {
+                    throw new IllegalArgumentException("Hệ thống bắt buộc phải duy trì ít nhất 1 hạng thành viên cơ sở với ngưỡng chi tiêu 0 ₫ dành cho khách hàng mới!");
+                }
+            }
+        }
+
+        // 2. Kiểm tra trùng lặp và tính lũy tiến hợp lý
         for (MembershipTier t : allTiers) {
             if (currentId != null && Objects.equals(t.getTierId(), currentId)) {
                 continue; // Bỏ qua chính bản ghi đang cập nhật
@@ -215,6 +231,15 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             }
             if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) == 0) {
                 throw new IllegalArgumentException("Ngưỡng chi tiêu " + request.getMinSpentRequired() + " ₫ đã trùng với hạng '" + t.getTierName() + "'!");
+            }
+            // Quy tắc lũy tiến:
+            if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) > 0
+                    && t.getDiscountPercent().compareTo(request.getDiscountPercent()) < 0) {
+                throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu thấp hơn hạng '" + t.getTierName() + "' nhưng tỷ lệ giảm giá lại cao hơn (" + request.getDiscountPercent() + "% > " + t.getDiscountPercent() + "%)!");
+            }
+            if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) < 0
+                    && t.getDiscountPercent().compareTo(request.getDiscountPercent()) > 0) {
+                throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu cao hơn hạng '" + t.getTierName() + "' nhưng tỷ lệ giảm giá lại thấp hơn (" + request.getDiscountPercent() + "% < " + t.getDiscountPercent() + "%)!");
             }
         }
     }

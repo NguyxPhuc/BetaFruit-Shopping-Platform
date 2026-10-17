@@ -21,4 +21,14 @@ public class Role {
 
     @Convert(converter = com.fu.SWP391_BetaFruit.entity.converter.RoleNameConverter.class)
     private RoleName roleName;
+
+    @Transient
+    public boolean isActive() {
+        return roleName != null && roleName.isActive();
+    }
+
+    @Transient
+    public boolean isHidden() {
+        return roleName == null || roleName.isHidden();
+    }
 }

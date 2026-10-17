@@ -1,8 +1,13 @@
 package com.fu.SWP391_BetaFruit.service;
 
+import com.fu.SWP391_BetaFruit.dto.request.ProductCreateRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest;
 import com.fu.SWP391_BetaFruit.entity.Product;
+import com.fu.SWP391_BetaFruit.entity.Shop;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ProductService {
     Product getProductById(Integer productId);
@@ -14,12 +19,12 @@ public interface ProductService {
     long countActive();
     long countHidden();
     long countRejected();
-    org.springframework.data.domain.Page<Product> searchProductsPaginated(String keyword, String tab, int page, int size, String sortBy, String sortDir);
-    java.util.Map<String, Object> getAdminProductPageData(String keyword, String tab, int page, int size, String sortBy, String sortDir);
-    Product createProductForShop(Integer userId, com.fu.SWP391_BetaFruit.dto.request.ProductCreateRequest request);
-    org.springframework.data.domain.Page<Product> getShopProductsPaginated(Integer userId, String keyword, int page, int size);
-    com.fu.SWP391_BetaFruit.entity.Shop getShopByUserId(Integer userId);
+    Page<Product> searchProductsPaginated(String keyword, String tab, int page, int size, String sortBy, String sortDir);
+    Map<String, Object> getAdminProductPageData(String keyword, String tab, int page, int size, String sortBy, String sortDir);
+    Product createProductForShop(Integer userId, ProductCreateRequest request);
+    Page<Product> getShopProductsPaginated(Integer userId, String keyword, int page, int size);
+    Shop getShopByUserId(Integer userId);
     void toggleProductVisibilityForShop(Integer userId, Integer productId);
     Product getShopProductForEdit(Integer userId, Integer productId);
-    Product updateProductForShop(Integer userId, Integer productId, com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest request);
+    Product updateProductForShop(Integer userId, Integer productId, ProductUpdateRequest request);
 }

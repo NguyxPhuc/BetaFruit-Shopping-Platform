@@ -3,6 +3,7 @@ package com.fu.SWP391_BetaFruit.service;
 import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
 import com.fu.SWP391_BetaFruit.dto.request.CustomerProfileRequest;
 import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
+import com.fu.SWP391_BetaFruit.dto.request.UserRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.User;
@@ -17,6 +18,7 @@ public interface UserService {
     User getUserById(Integer userId);
     void toggleUserStatus(Integer userId);
     void assignRolesToUser(Integer userId, List<Long> roleIds);
+    void createUser(UserRequest userRequest);
 
     Page<User> getAdminUserPage(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir);
     Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir);
