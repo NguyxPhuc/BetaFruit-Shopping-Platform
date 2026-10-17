@@ -4,12 +4,15 @@ import com.fu.SWP391_BetaFruit.dto.request.CategoryRequest;
 import com.fu.SWP391_BetaFruit.dto.request.RoleRequest;
 import com.fu.SWP391_BetaFruit.dto.request.MembershipTierRequest;
 import com.fu.SWP391_BetaFruit.dto.request.UserRequest;
+import com.fu.SWP391_BetaFruit.entity.Role;
+import com.fu.SWP391_BetaFruit.enums.RoleName;
+import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
 import com.fu.SWP391_BetaFruit.service.MembershipTierService;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
 import com.fu.SWP391_BetaFruit.service.RoleService;
 import com.fu.SWP391_BetaFruit.service.ShopService;
 import com.fu.SWP391_BetaFruit.service.UserService;
-import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -107,7 +110,9 @@ public class AdminController {
                             @RequestParam(value = "sortBy", defaultValue = "userId") String sortBy,
                             @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                             Model model) {
-        model.addAllAttributes(userService.getAdminUserPageData(sanitizeKeyword(keyword), roleId, status, page, size, sortBy, sortDir));
+        int safePage = Math.max(1, page);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        model.addAllAttributes(userService.getAdminUserPageData(sanitizeKeyword(keyword), roleId, status, safePage, safeSize, sortBy, sortDir));
         return "admin/users/list";
     }
 
@@ -120,20 +125,21 @@ public class AdminController {
                                @RequestParam(value = "keyword", required = false) String keyword,
                                @RequestParam(value = "roleId", required = false) Long roleId,
                                @RequestParam(value = "status", required = false) String status,
+                               HttpSession session,
                                RedirectAttributes redirectAttributes) {
-        userService.toggleUserStatus(id);
-        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái tài khoản thành công!");
-        StringBuilder redirectUrl = new StringBuilder("redirect:/admin/users?page=").append(page);
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            redirectUrl.append("&keyword=").append(keyword.trim());
+        Integer loggedInUserId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (loggedInUserId != null && loggedInUserId.equals(id)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Bạn không thể tự khóa tài khoản quản trị đang đăng nhập của chính mình!");
+            return buildUserRedirectUrl(page, keyword, roleId, status);
         }
-        if (roleId != null && roleId > 0) {
-            redirectUrl.append("&roleId=").append(roleId);
+
+        try {
+            userService.toggleUserStatus(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái tài khoản thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        if (status != null && !status.trim().isEmpty()) {
-            redirectUrl.append("&status=").append(status.trim());
-        }
-        return redirectUrl.toString();
+        return buildUserRedirectUrl(page, keyword, roleId, status);
     }
 
     /**
@@ -146,9 +152,32 @@ public class AdminController {
                               @RequestParam(value = "keyword", required = false) String keyword,
                               @RequestParam(value = "roleId", required = false) Long roleId,
                               @RequestParam(value = "status", required = false) String status,
+                              HttpSession session,
                               RedirectAttributes redirectAttributes) {
-        userService.assignRolesToUser(userId, roleIds);
-        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật phân quyền vai trò thành công!");
+        Integer loggedInUserId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (loggedInUserId != null && loggedInUserId.equals(userId)) {
+            boolean willKeepAdmin = false;
+            if (roleIds != null) {
+                List<Role> allRoles = roleService.getAllRoles();
+                willKeepAdmin = allRoles.stream()
+                        .anyMatch(r -> roleIds.contains(r.getRoleId()) && r.getRoleName() == RoleName.ADMIN);
+            }
+            if (!willKeepAdmin) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Bạn không thể tự gỡ vai trò Quản trị viên (ADMIN) của chính mình!");
+                return buildUserRedirectUrl(page, keyword, roleId, status);
+            }
+        }
+
+        try {
+            userService.assignRolesToUser(userId, roleIds);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật phân quyền vai trò thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return buildUserRedirectUrl(page, keyword, roleId, status);
+    }
+
+    private String buildUserRedirectUrl(int page, String keyword, Long roleId, String status) {
         StringBuilder redirectUrl = new StringBuilder("redirect:/admin/users?page=").append(page);
         if (keyword != null && !keyword.trim().isEmpty()) {
             redirectUrl.append("&keyword=").append(keyword.trim());
@@ -288,6 +317,21 @@ public class AdminController {
         }
         roleService.updateRole(id, roleRequest);
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật vai trò thành công!");
+        return "redirect:/admin/roles";
+    }
+
+    /**
+     * Toggles the active/hidden status of a role.
+     */
+    @PostMapping("/admin/roles/{id}/toggle-status")
+    public String toggleRoleStatus(@PathVariable("id") Long id,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            roleService.toggleRoleStatus(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Thay đổi trạng thái hiển thị vai trò thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/roles";
     }
 

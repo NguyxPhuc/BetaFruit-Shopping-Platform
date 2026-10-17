@@ -11,5 +11,6 @@ public interface RoleService {
     Role getRoleById(Long id);
     void createRole(RoleRequest roleRequest);
     void updateRole(Long id, RoleRequest roleRequest);
+    void toggleRoleStatus(Long id);
     Map<String, Object> getAdminRolePageData();
 }

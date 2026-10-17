@@ -286,7 +286,7 @@
     <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow">
-                <form th:action="@{/admin/users/create}" method="post">
+                <form th:action="@{/admin/users/create}" method="post" id="createUserForm" autocomplete="off">
                     <div class="modal-header bg-success text-white">
                         <h5 class="modal-title fw-bold" id="createUserModalLabel">
                             <i class="bi bi-person-plus-fill me-2"></i>Thêm Tài Khoản Người Dùng Mới
@@ -301,16 +301,29 @@
                                     Họ và tên <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" class="form-control" id="createFullName" name="fullName"
-                                       placeholder="VD: Nguyễn Văn An" required>
+                                       placeholder="VD: Nguyễn Văn An" required autocomplete="off"
+                                       pattern="^(?!.*(.)\1{2,})[\p{L}\s\-_']{2,100}$"
+                                       title="Từ 2 đến 100 ký tự, chỉ chứa chữ cái, dấu cách, dấu gạch nối hoặc dấu nháy đơn, và không lặp ký tự liên tiếp quá 2 lần!">
                             </div>
                             <div class="col-12 col-md-6">
                                 <label for="createUsername" class="form-label fw-bold">
                                     Tên đăng nhập <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control" id="createUsername" name="username"
-                                       placeholder="VD: nguyenvanan" required pattern="^[a-zA-Z0-9_]{3,50}$"
-                                       title="Chỉ chứa chữ cái, số và dấu gạch dưới, từ 3-50 ký tự">
-                                <div class="form-text small text-muted">Từ 3-50 ký tự, viết liền không dấu, không khoảng trắng.</div>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="createUsername" name="username"
+                                           placeholder="VD: staff_a8k9m" required pattern="^(?!.*(.)\1{2,})[a-zA-Z0-9_]{3,50}$"
+                                           title="Từ 3 đến 50 ký tự, chỉ chứa chữ cái, số và dấu gạch dưới (_), không chứa dấu cách và không lặp ký tự liên tiếp quá 2 lần!"
+                                           autocomplete="off">
+                                    <button class="btn btn-outline-success d-flex align-items-center" type="button" id="randomUsernameBtn" title="Tạo tên đăng nhập ngẫu nhiên">
+                                        <i class="bi bi-shuffle"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text small text-muted" id="usernameHelpText">
+                                    Chỉ gồm chữ cái, số và dấu gạch dưới (_), viết liền không dấu cách (VD: staff_a8k9m).
+                                </div>
+                                <div class="text-danger small mt-1 d-none" id="usernameWarning">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Tên đăng nhập viết liền không khoảng trắng, chỉ dùng dấu gạch dưới (_) và không nhập @!
+                                </div>
                             </div>
                         </div>
 
@@ -321,14 +334,15 @@
                                     Email liên hệ <span class="text-danger">*</span>
                                 </label>
                                 <input type="email" class="form-control" id="createEmail" name="email"
-                                       placeholder="VD: an.nguyen@example.com" required>
+                                       placeholder="VD: an.nguyen@example.com" required autocomplete="off">
                             </div>
                             <div class="col-12 col-md-6">
                                 <label for="createPhone" class="form-label fw-bold">
                                     Số điện thoại
                                 </label>
                                 <input type="tel" class="form-control" id="createPhone" name="phone"
-                                       placeholder="VD: 0912345678" pattern="^(0|\+84)[35789][0-9]{8}$">
+                                       placeholder="VD: 0912345678" pattern="^(0|\+84)[\s\-]?[35789]([\s\-]?[0-9]){8}$"
+                                       title="Số điện thoại di động Việt Nam hợp lệ (VD: 0912345678 hoặc 0912 345 678)" autocomplete="off">
                             </div>
                         </div>
 
@@ -340,15 +354,23 @@
                                 </label>
                                 <div class="input-group">
                                     <input type="password" class="form-control" id="createPassword" name="password"
-                                           placeholder="Tối thiểu 6 ký tự" required minlength="6">
+                                           placeholder="Từ 8 - 64 ký tự (hoa, số, ký tự đặc biệt)" required minlength="8" maxlength="64"
+                                           pattern="^(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,64}$"
+                                           title="Mật khẩu từ 8 đến 64 ký tự, có ít nhất 1 chữ hoa, 1 số và 1 ký tự đặc biệt"
+                                           autocomplete="new-password">
                                     <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn" title="Hiện/ẩn mật khẩu">
                                         <i class="bi bi-eye"></i>
                                     </button>
-                                    <button class="btn btn-outline-primary" type="button" id="setDefaultPassBtn" title="Gán mật khẩu mặc định 123456">
-                                        123456
+                                    <button class="btn btn-outline-primary d-flex align-items-center" type="button" id="randomPasswordBtn" title="Tạo ngẫu nhiên mật khẩu mạnh & sao chép">
+                                        <i class="bi bi-key-fill"></i>
                                     </button>
                                 </div>
-                                <div class="form-text small text-muted">Mật khẩu có thể đổi lại sau khi đăng nhập.</div>
+                                <div class="form-text small text-muted" id="passwordHelpText">
+                                    Tối thiểu 8 - 64 ký tự (bắt buộc gồm chữ hoa, số và ký tự đặc biệt).
+                                </div>
+                                <div class="text-success small mt-1 d-none" id="passwordCopiedToast">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Đã tạo và sao chép mật khẩu vào bộ nhớ tạm!
+                                </div>
                             </div>
                             <div class="col-12 col-md-6">
                                 <label for="createStatus" class="form-label fw-bold">
@@ -368,10 +390,10 @@
                             </label>
                             <div class="d-flex flex-column gap-2 border rounded p-3 bg-white">
                                 <div th:each="r : ${allRoles}" class="form-check p-2 rounded hover-bg"
-                                     th:classappend="${r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')} ? 'opacity-75 bg-light' : ''">
+                                     th:classappend="${!r.active} ? 'opacity-75 bg-light' : ''">
                                     <input class="form-check-input ms-0 me-2" type="checkbox"
                                            name="roleIds" th:value="${r.roleId}" th:id="${'new_role_' + r.roleId}"
-                                           th:disabled="${r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')}">
+                                           th:disabled="${!r.active}">
                                     <label class="form-check-label w-100 cursor-pointer" th:for="${'new_role_' + r.roleId}">
                                         <span class="badge"
                                               th:classappend="${(r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')) ? 'bg-danger' : 
@@ -385,9 +407,9 @@
                                         <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')}">- Nhân viên vận hành & kiểm duyệt</span>
                                         <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'CUSTOMER' or r.roleName == 'Customer')}">- Khách hàng mua sắm hoa quả (Tự sinh Giỏ hàng & Hạng thành viên)</span>
                                         <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')}">- Chủ gian hàng bán hoa quả</span>
-                                        <th:block th:if="${r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')}">
-                                            <span class="badge bg-secondary-subtle text-secondary border ms-2">Đang phát triển</span>
-                                            <span class="text-muted small ms-1">- Chức năng Shipper chưa kích hoạt</span>
+                                        <th:block th:if="${!r.active}">
+                                            <span class="badge bg-secondary-subtle text-secondary border ms-2">Đã ẩn</span>
+                                            <span class="text-muted small ms-1">- Vai trò này đang tạm ngưng kích hoạt</span>
                                         </th:block>
                                     </label>
                                 </div>
@@ -442,23 +464,28 @@
                         </label>
                         
                         <div class="d-flex flex-column gap-2 border rounded p-3 bg-white">
-                            <div th:each="r : ${allRoles}" class="form-check p-2 rounded hover-bg">
+                            <div th:each="r : ${allRoles}" class="form-check p-2 rounded hover-bg"
+                                 th:classappend="${!r.active} ? 'opacity-75 bg-light' : ''">
                                 <input class="form-check-input role-checkbox ms-0 me-2" type="checkbox" 
-                                       name="roleIds" th:value="${r.roleId}" th:id="${'role_' + r.roleId}">
+                                       name="roleIds" th:value="${r.roleId}" th:id="${'role_' + r.roleId}"
+                                       th:disabled="${!r.active}">
                                 <label class="form-check-label w-100 cursor-pointer" th:for="${'role_' + r.roleId}">
                                     <span class="badge"
                                           th:classappend="${(r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')) ? 'bg-danger' : 
                                                            ((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary' : 
-                                                           ((r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')) ? 'bg-warning text-dark' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')) ? 'bg-secondary text-white' : 
                                                            ((r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')) ? 'bg-secondary' : 'bg-info text-dark')))}"
                                           th:text="${r.roleName}">
                                         Role
                                     </span>
                                     <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')}">- Quản trị viên cao nhất hệ thống</span>
                                     <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')}">- Chủ cửa hàng bán hoa quả</span>
-                                    <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')}">- Nhân viên giao nhận hoa quả</span>
                                     <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'CUSTOMER' or r.roleName == 'Customer')}">- Khách hàng mua sắm hoa quả</span>
                                     <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')}">- Nhân viên hỗ trợ & kiểm duyệt</span>
+                                    <th:block th:if="${!r.active}">
+                                        <span class="badge bg-secondary-subtle text-secondary border ms-2">Đã ẩn</span>
+                                        <span class="text-muted small ms-1">- Vai trò này đang tạm ngưng</span>
+                                    </th:block>
                                 </label>
                             </div>
                         </div>
@@ -508,15 +535,125 @@
                 });
             });
 
-            // Tiện ích cho Modal Thêm Người Dùng: Gán mật khẩu mặc định & Bật/Tắt xem mật khẩu
+            // ================= TIỆN ÍCH MODAL THÊM NGƯỜI DÙNG =================
+            const createUserModalEl = document.getElementById("createUserModal");
+            const createUserForm = document.getElementById("createUserForm");
+            const createUsernameInput = document.getElementById("createUsername");
+            const randomUsernameBtn = document.getElementById("randomUsernameBtn");
+            const usernameWarning = document.getElementById("usernameWarning");
+
             const createPasswordInput = document.getElementById("createPassword");
             const togglePasswordBtn = document.getElementById("togglePasswordBtn");
-            const setDefaultPassBtn = document.getElementById("setDefaultPassBtn");
+            const randomPasswordBtn = document.getElementById("randomPasswordBtn");
+            const passwordCopiedToast = document.getElementById("passwordCopiedToast");
 
-            if (setDefaultPassBtn && createPasswordInput) {
-                setDefaultPassBtn.addEventListener("click", function () {
-                    createPasswordInput.value = "123456";
-                    createPasswordInput.focus();
+            // Ngăn chặn trình duyệt tự động điền (autofill) và xóa sạch dữ liệu cũ khi mở Modal
+            if (createUserModalEl) {
+                createUserModalEl.addEventListener("show.bs.modal", function () {
+                    if (createUserForm) {
+                        createUserForm.reset();
+                    }
+                    if (createUsernameInput) createUsernameInput.value = "";
+                    if (createPasswordInput) {
+                        createPasswordInput.value = "";
+                        createPasswordInput.type = "password";
+                    }
+                    if (togglePasswordBtn) {
+                        const icon = togglePasswordBtn.querySelector("i");
+                        if (icon) {
+                            icon.classList.remove("bi-eye-slash");
+                            icon.classList.add("bi-eye");
+                        }
+                    }
+                    if (usernameWarning) usernameWarning.classList.add("d-none");
+                    if (passwordCopiedToast) passwordCopiedToast.classList.add("d-none");
+                });
+            }
+
+            // 1. Hàm sinh Tên đăng nhập ngẫu nhiên (chuẩn viết liền, dùng _, không dấu cách, không dùng tên người cố định)
+            function generateRandomUsername() {
+                const prefixes = ["staff", "admin", "mod", "user"];
+                const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+                const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+                let token = "";
+                for (let i = 0; i < 5; i++) {
+                    let nextChar = chars[Math.floor(Math.random() * chars.length)];
+                    while (token.length >= 2 && nextChar === token[token.length - 1] && nextChar === token[token.length - 2]) {
+                        nextChar = chars[Math.floor(Math.random() * chars.length)];
+                    }
+                    token += nextChar;
+                }
+                return `${prefix}_${token}`;
+            }
+
+            if (randomUsernameBtn && createUsernameInput) {
+                randomUsernameBtn.addEventListener("click", function () {
+                    createUsernameInput.value = generateRandomUsername();
+                    if (usernameWarning) usernameWarning.classList.add("d-none");
+                    createUsernameInput.focus();
+                });
+            }
+
+            // Kiểm tra thời gian thực nếu cố tình gõ dấu cách hoặc @
+            if (createUsernameInput) {
+                createUsernameInput.addEventListener("input", function () {
+                    const val = this.value;
+                    if (val.includes(" ") || val.includes("@") || val.includes(".")) {
+                        if (usernameWarning) usernameWarning.classList.remove("d-none");
+                    } else {
+                        if (usernameWarning) usernameWarning.classList.add("d-none");
+                    }
+                });
+            }
+
+            // 2. Hàm sinh Mật khẩu ngẫu nhiên mạnh (8 - 64 ký tự: gồm hoa, thường, số, đặc biệt)
+            function generateStrongPassword(len = 14) {
+                const upperChars = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+                const lowerChars = "abcdefghijkmnpqrstuvwxyz";
+                const numChars = "23456789";
+                const specChars = "@#$%&*!_";
+
+                // Bắt buộc có ít nhất 1 chữ hoa, 1 chữ thường, 1 số, 1 ký tự đặc biệt
+                let pwd = [
+                    upperChars[Math.floor(Math.random() * upperChars.length)],
+                    lowerChars[Math.floor(Math.random() * lowerChars.length)],
+                    numChars[Math.floor(Math.random() * numChars.length)],
+                    specChars[Math.floor(Math.random() * specChars.length)]
+                ];
+
+                const pool = upperChars + lowerChars + numChars + specChars;
+                for (let i = 4; i < len; i++) {
+                    pwd.push(pool[Math.floor(Math.random() * pool.length)]);
+                }
+
+                // Xáo trộn ngẫu nhiên
+                for (let i = pwd.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pwd[i], pwd[j]] = [pwd[j], pwd[i]];
+                }
+                return pwd.join("");
+            }
+
+            if (randomPasswordBtn && createPasswordInput) {
+                randomPasswordBtn.addEventListener("click", function () {
+                    const generatedPwd = generateStrongPassword(14);
+                    createPasswordInput.value = generatedPwd;
+                    createPasswordInput.type = "text";
+                    if (togglePasswordBtn) {
+                        const icon = togglePasswordBtn.querySelector("i");
+                        if (icon) {
+                            icon.classList.remove("bi-eye");
+                            icon.classList.add("bi-eye-slash");
+                        }
+                    }
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(generatedPwd).then(() => {
+                            if (passwordCopiedToast) {
+                                passwordCopiedToast.classList.remove("d-none");
+                                setTimeout(() => passwordCopiedToast.classList.add("d-none"), 3500);
+                            }
+                        }).catch(() => {});
+                    }
                 });
             }
 
@@ -533,7 +670,7 @@
                         createPasswordInput.type = "password";
                         if (icon) {
                             icon.classList.remove("bi-eye-slash");
-                            icon.classList.add("bi-eye-warning", "bi-eye");
+                            icon.classList.add("bi-eye");
                         }
                     }
                 });

@@ -85,6 +85,16 @@ public class UserServiceImpl implements UserService {
         User user = getUserById(userId);
 
         if (user.getStatus() == UserStatus.ACTIVE) {
+            boolean isAdmin = user.getRoles().stream()
+                    .anyMatch(r -> r.getRoleName() == RoleName.ADMIN);
+            if (isAdmin) {
+                long activeAdminCount = userRepository.findAll().stream()
+                        .filter(u -> u.getStatus() == UserStatus.ACTIVE && u.getRoles().stream().anyMatch(r -> r.getRoleName() == RoleName.ADMIN))
+                        .count();
+                if (activeAdminCount <= 1) {
+                    throw new IllegalArgumentException("Không thể khóa tài khoản Quản trị viên (ADMIN) duy nhất đang hoạt động trong hệ thống!");
+                }
+            }
             user.setStatus(UserStatus.DEACTIVATED);
         } else {
             user.setStatus(UserStatus.ACTIVE);
@@ -107,6 +117,26 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Không tìm thấy vai trò hợp lệ nào trong hệ thống!");
         }
 
+        boolean hasInactiveRole = roles.stream()
+                .anyMatch(r -> !r.isActive());
+        if (hasInactiveRole) {
+            Role inactiveRole = roles.stream().filter(r -> !r.isActive()).findFirst().orElse(null);
+            String name = inactiveRole != null ? inactiveRole.getRoleName().name() : "";
+            throw new IllegalArgumentException("Vai trò [" + name + "] đang ở trạng thái ẩn hoặc tạm ngưng hoạt động, không thể cấp quyền!");
+        }
+
+        // Chặn tước quyền Quản trị viên của tài khoản Admin duy nhất đang hoạt động
+        boolean wasAdmin = user.getRoles().stream().anyMatch(r -> r.getRoleName() == RoleName.ADMIN);
+        boolean willBeAdmin = roles.stream().anyMatch(r -> r.getRoleName() == RoleName.ADMIN);
+        if (wasAdmin && !willBeAdmin && user.getStatus() == UserStatus.ACTIVE) {
+            long activeAdminCount = userRepository.findAll().stream()
+                    .filter(u -> u.getStatus() == UserStatus.ACTIVE && u.getRoles().stream().anyMatch(r -> r.getRoleName() == RoleName.ADMIN))
+                    .count();
+            if (activeAdminCount <= 1) {
+                throw new IllegalArgumentException("Không thể gỡ vai trò Quản trị viên của tài khoản ADMIN duy nhất đang hoạt động!");
+            }
+        }
+
         user.setRoles(roles);
         userRepository.save(user);
     }
@@ -122,11 +152,23 @@ public class UserServiceImpl implements UserService {
         if (cleanUsername.isEmpty()) {
             throw new IllegalArgumentException("Tên đăng nhập không được để trống!");
         }
+        if (!cleanUsername.matches("^(?!.*(.)\\1{2,})[a-zA-Z0-9_]{3,50}$")) {
+            throw new IllegalArgumentException("Tên đăng nhập từ 3 đến 50 ký tự, chỉ chứa chữ cái, số và dấu gạch dưới (_), không chứa dấu cách và không lặp ký tự liên tiếp quá 2 lần!");
+        }
         if (userRepository.existsByUsername(cleanUsername)) {
             throw new IllegalArgumentException("Tên đăng nhập '" + cleanUsername + "' đã tồn tại trên hệ thống!");
         }
 
-        String cleanEmail = request.getEmail() != null ? request.getEmail().trim() : "";
+        String rawFullName = request.getFullName() != null ? request.getFullName().trim() : "";
+        String cleanFullName = rawFullName.replaceAll("\\s+", " ");
+        if (cleanFullName.isEmpty()) {
+            throw new IllegalArgumentException("Họ và tên không được để trống!");
+        }
+        if (!cleanFullName.matches("^(?!.*(.)\\1{2,})[\\p{L}\\s\\-_']{2,100}$")) {
+            throw new IllegalArgumentException("Họ và tên từ 2 đến 100 ký tự, chỉ chứa chữ cái, dấu cách, dấu gạch nối hoặc dấu nháy đơn, và không lặp ký tự liên tiếp quá 2 lần!");
+        }
+
+        String cleanEmail = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
         if (cleanEmail.isEmpty()) {
             throw new IllegalArgumentException("Email không được để trống!");
         }
@@ -134,8 +176,17 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email '" + cleanEmail + "' đã được sử dụng bởi tài khoản khác!");
         }
 
-        if (request.getPassword() == null || request.getPassword().trim().length() < 6) {
-            throw new IllegalArgumentException("Mật khẩu phải từ 6 ký tự trở lên!");
+        String cleanPhone = null;
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            cleanPhone = request.getPhone().replaceAll("[\\s\\-\\.]", "");
+            if (!cleanPhone.matches("^(0|\\+84)[35789][0-9]{8}$")) {
+                throw new IllegalArgumentException("Số điện thoại phải là số di động hợp lệ (VD: 0912345678) hoặc để trống!");
+            }
+        }
+
+        String cleanPassword = request.getPassword() != null ? request.getPassword().trim() : "";
+        if (!cleanPassword.matches("^(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,64}$")) {
+            throw new IllegalArgumentException("Mật khẩu phải từ 8 đến 64 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ số và 1 ký tự đặc biệt!");
         }
 
         if (request.getRoleIds() == null || request.getRoleIds().isEmpty()) {
@@ -147,18 +198,20 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Không tìm thấy vai trò hợp lệ trong hệ thống!");
         }
 
-        boolean hasDeliveryStaff = roles.stream()
-                .anyMatch(r -> r.getRoleName() == RoleName.DELIVERY_STAFF);
-        if (hasDeliveryStaff) {
-            throw new IllegalArgumentException("Vai trò Nhân viên giao hàng (DELIVERY_STAFF) đang được phát triển, tạm thời chưa thể tạo tài khoản!");
+        boolean hasInactiveRole = roles.stream()
+                .anyMatch(r -> !r.isActive());
+        if (hasInactiveRole) {
+            Role inactiveRole = roles.stream().filter(r -> !r.isActive()).findFirst().orElse(null);
+            String name = inactiveRole != null ? inactiveRole.getRoleName().name() : "";
+            throw new IllegalArgumentException("Vai trò [" + name + "] đang ở trạng thái ẩn hoặc tạm ngưng hoạt động, không thể tạo tài khoản!");
         }
 
         User newUser = new User();
         newUser.setUsername(cleanUsername);
         newUser.setPasswordHash(BCrypt.hashpw(request.getPassword().trim(), BCrypt.gensalt()));
         newUser.setEmail(cleanEmail);
-        newUser.setFullName(request.getFullName() != null ? request.getFullName().trim() : "");
-        newUser.setPhone(request.getPhone() != null && !request.getPhone().trim().isEmpty() ? request.getPhone().trim() : null);
+        newUser.setFullName(cleanFullName);
+        newUser.setPhone(cleanPhone);
         newUser.setStatus(request.getStatus() != null ? request.getStatus() : UserStatus.ACTIVE);
         newUser.setRoles(roles);
 
@@ -189,7 +242,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Page<User> getAdminUserPage(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
-        int pageSize = size > 0 ? size : 5;
+        int pageSize = size > 0 ? Math.min(size, 100) : 5;
 
         String safeSortBy = (sortBy != null && ALLOWED_USER_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "userId";
