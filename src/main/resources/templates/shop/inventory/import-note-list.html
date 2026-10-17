@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'import-note-list', ~{::content})}">
+<head>
+    <title>Lịch Sử Phiếu Nhập Kho | BetaFruit</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- ════════ TIÊU ĐỀ TRANG TỐI GIẢN ════════ -->
+    <div class="mb-4 pb-2 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <div class="text-muted small mb-1">Quản lý kho hàng / Lịch sử nhập kho</div>
+            <h3 class="fw-bold text-dark mb-1">Lịch Sử Phiếu Nhập Kho</h3>
+            <p class="text-muted small mb-0">Tra cứu danh sách các đợt hoa quả đã nhập về từ nhà vườn và kiểm soát giá vốn.</p>
+        </div>
+        <div>
+            <a th:href="@{/shop/inventory/import-note/new}" href="/shop/inventory/import-note/new"
+               class="btn btn-shop-primary fw-semibold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="bi bi-plus-lg"></i>
+                <span>Lập Phiếu Nhập Mới</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ════════ BẢNG DANH SÁCH LỊCH SỬ PHIẾU NHẬP ════════ -->
+    <div class="import-panel-card">
+        
+        <div class="import-panel-header align-items-center justify-content-between">
+            <h2>
+                <i class="bi bi-receipt-cutoff text-success"></i>
+                <span>Tất Cả Phiếu Nhập Kho</span>
+                <span class="badge bg-success-subtle text-success-emphasis rounded-pill fs-7 ms-2"
+                      th:text="${responseList != null ? responseList.size() + ' phiếu' : '0 phiếu'}">
+                    0 phiếu
+                </span>
+            </h2>
+        </div>
+
+        <div class="import-panel-body p-0">
+            
+            <!-- TRƯỜNG HỢP 1: CÓ DỮ LIỆU PHIẾU NHẬP -->
+            <div class="table-responsive" th:if="${responseList != null and !responseList.isEmpty()}">
+                <table class="import-table" id="receiptsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%; text-align: center;">STT</th>
+                            <th style="width: 18%;">Mã Phiếu</th>
+                            <th style="width: 20%;">Thời Gian Lập</th>
+                            <th style="width: 32%;">Ghi Chú Lô Hàng</th>
+                            <th style="width: 15%; text-align: right;">Tổng Tiền Nhập</th>
+                            <th style="width: 10%; text-align: center;">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="note, stat : ${responseList}" class="receipt-row">
+                            <!-- STT -->
+                            <td class="text-center fw-bold text-muted" th:text="${stat.count}">1</td>
+
+                            <!-- Mã phiếu -->
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1 rounded-2 fw-bold font-monospace"
+                                      style="font-size: 0.85rem;"
+                                      th:text="${note.importCode ?: ('PN-' + note.importId)}">
+                                    PN-000001
+                                </span>
+                            </td>
+
+                            <!-- Ngày nhập -->
+                            <td>
+                                <div class="fw-semibold text-dark"
+                                     th:text="${note.importDate != null ? #temporals.format(note.importDate, 'dd/MM/yyyy HH:mm') : '---'}">
+                                    15/10/2026 14:30
+                                </div>
+                                <small class="text-muted"
+                                       th:text="${note.importDate != null ? #temporals.format(note.importDate, 'EEEE', new java.util.Locale('vi', 'VN')) : ''}">
+                                    Thứ Năm
+                                </small>
+                            </td>
+
+                            <!-- Ghi chú -->
+                            <td>
+                                <span class="text-dark note-text"
+                                      th:text="${note.note != null and !note.note.isEmpty() ? note.note : 'Không có ghi chú'}"
+                                      th:classappend="${note.note == null or note.note.isEmpty()} ? 'text-muted fst-italic' : ''">
+                                    Lô xoài cát Hòa Lộc Tiền Giang
+                                </span>
+                            </td>
+
+                            <!-- Tổng tiền nhập -->
+                            <td class="text-end fw-bold text-success" style="font-size: 1rem;"
+                                th:text="${note.totalCost != null ? #numbers.formatDecimal(note.totalCost, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                                15.000.000 ₫
+                            </td>
+
+                            <!-- Thao tác xem chi tiết -->
+                            <td class="text-center">
+                                <a th:href="@{'/shop/inventory/import-note/' + ${note.importId}}"
+                                   class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-eye"></i>
+                                    <span>Chi tiết</span>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TRƯỜNG HỢP 2: DANH SÁCH RỖNG (EMPTY STATE) -->
+            <div class="text-center py-5 px-3" th:if="${responseList == null or responseList.isEmpty()}">
+                <div class="mb-3">
+                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center"
+                         style="width: 80px; height: 80px;">
+                        <i class="bi bi-inbox text-muted" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Chưa có phiếu nhập kho nào</h5>
+                <p class="text-muted small mx-auto mb-4" style="max-width: 420px;">
+                    Cửa hàng của bạn chưa ghi nhận đợt nhập hàng nào. Hãy lập phiếu nhập kho đầu tiên để đưa hoa quả vào kho và bắt đầu kinh doanh.
+                </p>
+                <a th:href="@{/shop/inventory/import-note/new}" href="/shop/inventory/import-note/new"
+                   class="btn btn-shop-primary">
+                    <i class="bi bi-box-arrow-in-down me-1"></i> Lập Phiếu Nhập Kho Ngay
+                </a>
+            </div>
+
+        </div>
+
+        <!-- Footer Bar -->
+        <div class="p-3 bg-light border-top d-flex align-items-center justify-content-between text-muted small"
+             th:if="${responseList != null and !responseList.isEmpty()}">
+            <span>Hiển thị toàn bộ các đợt nhập hàng đã hoàn tất</span>
+            <span>BetaFruit Inventory System</span>
+        </div>
+
+    </div>
+
+</div>
+
+
+</body>
+</html>

@@ -48,7 +48,6 @@ public class UserController {
         if (userId == null) {
             return "redirect:/auth/login";
         }
-
         model.addAttribute("changePasswordRequest", new ChangePasswordRequest());
         return "auth/change-password";
     }

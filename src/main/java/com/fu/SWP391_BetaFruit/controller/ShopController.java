@@ -22,6 +22,21 @@ public class ShopController {
     @Autowired
     private ShopService shopService;
 
+    @GetMapping({"", "/", "/dashboard"})
+    public String getShopDashboard(Model model, HttpSession session) {
+        Integer id = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (id == null) {
+            return "redirect:/auth/login";
+        }
+        try {
+            ShopProfileResponse shopProfileResponse = shopService.getShopProfile(id);
+            model.addAttribute("shopProfileResponse", shopProfileResponse);
+            return "shop/dashboard";
+        } catch (Exception e) {
+            return "shop/dashboard";
+        }
+    }
+
     @GetMapping("/profile")
     public String getShopProfile(Model model, HttpSession session) throws Exception {
         Integer id = (Integer) session.getAttribute("LOGGED_IN_USER_ID");

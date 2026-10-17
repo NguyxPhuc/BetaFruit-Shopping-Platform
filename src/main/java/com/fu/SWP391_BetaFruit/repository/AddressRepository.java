@@ -16,11 +16,13 @@ import java.util.Optional;
 public interface AddressRepository extends JpaRepository<Address,Integer> {
     int countByUser_UserIdAndAddressType(Integer userId, AddressType addressType);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("Update Address a Set a.isDefault = false Where a.user.userId = :userId And a.addressType = :type And a.isDefault = true")
     void clearDefaultAddress(@Param("userId") Integer userId, @Param("type") AddressType type);
 
     List<Address> getAddressesByUser_UserIdAndIsActiveAndAddressTypeIn(Integer userUserId, Boolean isActive, Collection<AddressType> addressTypes);
 
     Optional<Address> findByUser_UserIdAndAddressIdAndIsActive(Integer userId, Integer addressId, Boolean isActive);
+
+    List<Address> findByUser_UserIdAndAddressTypeAndIsActiveTrue(Integer userId, AddressType addressType);
 }
