@@ -216,7 +216,7 @@ public class ShopServiceImpl implements ShopService {
         shop.setShopName(shopProfileRequest.getShopName());
         shop.setShopDescription(shopProfileRequest.getShopDescription());
         shop.setBankName(shopProfileRequest.getBankName());
-        shop.setBankAccountNumber(shop.getBankAccountNumber());
+        shop.setBankAccountNumber(shopProfileRequest.getBankAccountNumber());
         shop.setAccountName(shopProfileRequest.getAccountName());
 
         userRepository.save(user);

@@ -1,35 +1,24 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'products-create', ~{::content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thêm Hoa Quả Mới | Kênh Người Bán BetaFruit</title>
+    <title>Thêm Hoa Quả Mới | BetaFruit</title>
+</head>
+<body class="shop-theme">
 
-    <!-- Google Fonts: Plus Jakarta Sans for Ultra Modern SaaS Look -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap 5 & Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-    <!-- Global CSS -->
-    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
-    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
-
+<div th:fragment="content">
     <style>
         :root {
-            --brand-green-primary: #059669;
-            --brand-green-hover: #047857;
-            --brand-green-active: #065f46;
-            --brand-green-light: #ecfdf5;
-            --brand-green-border: #a7f3d0;
-            --brand-green-glow: rgba(16, 185, 129, 0.16);
+            --brand-green-primary: #ea580c;
+            --brand-green-hover: #c2410c;
+            --brand-green-active: #9a3412;
+            --brand-green-light: #fff7ed;
+            --brand-green-border: #fed7aa;
+            --brand-green-glow: rgba(234, 88, 12, 0.2);
 
-            --brand-amber: #f59e0b;
-            --brand-amber-light: #fef3c7;
-            --brand-amber-border: #fde68a;
+            --brand-amber: #f97316;
+            --brand-amber-light: #ffedd5;
+            --brand-amber-border: #fed7aa;
 
             --surface-bg: #f8fafc;
             --surface-card: #ffffff;
@@ -68,9 +57,9 @@
         }
 
         .page-container {
-            max-width: 1240px;
-            margin: 0 auto;
-            padding: 1.75rem 1.25rem 6.5rem;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 0 4rem 0 !important;
         }
 
         /* ══════════ BREADCRUMB ══════════ */
@@ -754,17 +743,19 @@
 
         /* ══════════ FLOATING STICKY ACTION BAR ══════════ */
         .sticky-action-container {
-            position: fixed;
+            position: sticky;
             bottom: 0;
-            left: 0;
-            right: 0;
+            width: 100%;
+            box-sizing: border-box;
             z-index: 1020;
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-top: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 -10px 25px rgba(15, 23, 42, 0.06);
+            box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
             padding: 0.85rem 1.25rem;
+            margin: 2rem 0 0 0;
+            border-radius: 16px 16px 0 0;
         }
 
         .sticky-action-inner {
@@ -936,19 +927,10 @@
             100% { width: 0%; }
         }
     </style>
-</head>
-<body class="shop-theme">
 
-<!-- ═══════════════ HEADER ═══════════════ -->
-<div th:replace="~{shop/fragments/header :: header}"></div>
-
-<div class="page-container">
+<div class="page-container py-2">
     <!-- Breadcrumb Navigation -->
     <nav class="breadcrumb-wrap" aria-label="breadcrumb">
-        <a th:href="@{/shop/profile}">
-            <i class="bi bi-shop"></i> Kênh Người Bán
-        </a>
-        <i class="bi bi-chevron-right breadcrumb-separator"></i>
         <a th:href="@{/shop/products}">
             <i class="bi bi-basket2"></i> Quản Lý Hoa Quả
         </a>
@@ -966,26 +948,6 @@
             <p class="page-header-desc">
                 Cung cấp hình ảnh tươi ngon, thông tin xuất xứ rõ ràng và các thực thể đóng gói để bắt đầu kinh doanh trên BetaFruit.
             </p>
-        </div>
-    </div>
-
-    <!-- ═══════════════ SHOP BANNER (CỬA HÀNG ĐĂNG BÁN) ═══════════════ -->
-    <div class="shop-identity-card">
-        <div class="shop-identity-main">
-            <div class="shop-avatar-box"
-                 th:text="${shop != null && shop.shopName != null && !shop.shopName.isEmpty() ? #strings.substring(shop.shopName, 0, 1) : 'S'}">
-                S
-            </div>
-            <div>
-                <h2 class="shop-meta-name">
-                    <span th:text="${shop != null ? shop.shopName : 'Cửa hàng BetaFruit'}">Vựa Nông Sản Đà Lạt</span>
-                </h2>
-            </div>
-        </div>
-
-        <div class="shop-status-badge">
-            <span class="status-dot"></span>
-            <span>Cửa hàng đang hoạt động</span>
         </div>
     </div>
 
@@ -1009,16 +971,6 @@
             </div>
             <div class="toast-progress-bar" id="toastProgressBar"></div>
         </div>
-    </div>
-
-    <!-- Alert Messages Khi Có Lỗi -->
-    <div th:if="${errorMessage != null}" class="alert alert-danger alert-dismissible fade show d-flex align-items-center mb-4 rounded-4 shadow-sm border-danger-subtle" role="alert">
-        <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
-        <div class="flex-grow-1">
-            <strong class="d-block mb-1">Không thể đăng bán hoa quả!</strong>
-            <span th:text="${errorMessage}">Đã xảy ra lỗi khi tạo sản phẩm!</span>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
     <!-- ═══════════════ FORM ĐĂNG BÁN HOA QUẢ MỚI ═══════════════ -->
@@ -1833,6 +1785,6 @@
         }
     }
 </script>
-
+</div>
 </body>
 </html>

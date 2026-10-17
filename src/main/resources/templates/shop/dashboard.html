@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'dashboard', ~{::content})}">
+<head>
+    <title>Bảng Điều Khiển Cửa Hàng | BetaFruit</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- ════════ 1. TIÊU ĐỀ TRANG TỐI GIẢN ════════ -->
+    <div class="mb-4 pb-2 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <div class="text-muted small mb-1">Tổng quan / Bảng điều khiển</div>
+            <h3 class="fw-bold text-dark mb-1"
+                th:text="'Xin chào, ' + (${shop?.shopName ?: session.LOGGED_IN_FULLNAME ?: 'Chủ Cửa Hàng'}) + '!'">
+                Xin chào, Duy Hoang!
+            </h3>
+            <p class="text-muted small mb-0">Theo dõi dòng tiền doanh thu, kiểm soát tồn kho theo thời gian thực và quản lý các phiếu nhập kho.</p>
+        </div>
+        <div>
+            <span class="badge px-3 py-2 rounded-pill fw-semibold"
+                  style="background-color: #fff7ed; color: #ea580c; border: 1px solid #fed7aa;">
+                <i class="bi bi-patch-check-fill text-warning me-1"></i> Gian hàng đang hoạt động
+            </span>
+        </div>
+    </div>
+
+    <!-- ════════ 2. THẺ CHỈ SỐ KPI VẬN HÀNH ════════ -->
+    <div class="row g-3 mb-4">
+        <!-- KPI 1: Số dư ví doanh thu -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="shop-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shop-kpi-label">Số dư khả dụng</span>
+                    <div class="shop-kpi-icon kpi-icon-orange">
+                        <i class="bi bi-wallet2"></i>
+                    </div>
+                </div>
+                <div class="shop-kpi-val" style="color: #ea580c;"
+                     th:text="${shop?.availableBalance != null ? #numbers.formatDecimal(shop.availableBalance, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                    0 ₫
+                </div>
+                <div class="text-muted small">
+                    <i class="bi bi-shield-check text-warning me-1"></i> Sẵn sàng yêu cầu rút tiền
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 2: Quản lý phiếu nhập kho -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="shop-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shop-kpi-label">Nhập kho hàng</span>
+                    <div class="shop-kpi-icon kpi-icon-purple">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                </div>
+                <div class="shop-kpi-val text-primary" style="font-size: 1.5rem; padding-top: 5px;">
+                    Phiếu Nhập
+                </div>
+                <div class="small">
+                    <a th:href="@{/shop/inventory/import-note}" class="text-primary text-decoration-none fw-semibold">
+                        Xem lịch sử nhập kho <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 3: Quản lý hoa quả -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="shop-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shop-kpi-label">Mặt hàng hoa quả</span>
+                    <div class="shop-kpi-icon kpi-icon-blue">
+                        <i class="bi bi-basket3"></i>
+                    </div>
+                </div>
+                <div class="shop-kpi-val">
+                    Kho Hàng
+                </div>
+                <div class="small">
+                    <a th:href="@{/shop/products}" class="text-info-emphasis text-decoration-none fw-semibold">
+                        Quản lý danh sách <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 4: Cảnh báo tồn kho -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="shop-kpi-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="shop-kpi-label">Cảnh báo tồn</span>
+                    <div class="shop-kpi-icon kpi-icon-amber">
+                        <i class="bi bi-exclamation-octagon"></i>
+                    </div>
+                </div>
+                <div class="shop-kpi-val text-warning">
+                    Kiểm Kê
+                </div>
+                <div class="small">
+                    <a th:href="@{/shop/inventory/history}" class="text-warning-emphasis text-decoration-none fw-semibold">
+                        Xem biến động tồn kho <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════ 3. KHU VỰC TÁC VỤ QUẢN LÝ KHO TRỌNG TÂM ════════ -->
+    <div class="row g-4">
+        <!-- Cột trái: Lối tắt quản trị nhập kho & quy trình -->
+        <div class="col-lg-7">
+            <div class="import-panel-card mb-4">
+                <div class="import-panel-header">
+                    <h2>
+                        <i class="bi bi-boxes text-success"></i>
+                        <span>Quy Trình Quản Lý Kho & Nhập Hàng</span>
+                    </h2>
+                </div>
+                <div class="import-panel-body">
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-weight: 700;">
+                                1
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark">Khai báo phân loại sản phẩm (Product & Variant)</h6>
+                                <p class="text-muted small mb-0">
+                                    Tạo sản phẩm hoa quả và thiết lập các biến thể (Hộp 1kg, Thùng 5kg...) trước khi tiến hành đưa hàng vào kho.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-weight: 700;">
+                                2
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark">Lập phiếu nhập kho từ nhà vườn</h6>
+                                <p class="text-muted small mb-0">
+                                    Ghi nhận số lượng thực tế và đơn giá nhập để hệ thống tự động cập nhật <strong>Giá vốn bình quân (MAC)</strong> và đẩy số lượng tồn kho mở bán.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-start gap-3 p-3 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                            <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; font-weight: 700;">
+                                3
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1 text-dark">Tự động trừ kho & Tính lãi lỗ khi bán</h6>
+                                <p class="text-muted small mb-0">
+                                    Khi khách mua hàng trên sàn BetaFruit, hệ thống tự động giảm tồn kho tương ứng và tính toán báo cáo lãi gộp chính xác.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Thông tin cửa hàng & Thao tác nhanh -->
+        <div class="col-lg-5">
+            <div class="import-panel-card mb-4">
+                <div class="import-panel-header">
+                    <h2>
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Thông Tin Cửa Hàng</span>
+                    </h2>
+                    <a th:href="@{/shop/profile}" class="btn btn-sm btn-outline-secondary">
+                        Hồ sơ
+                    </a>
+                </div>
+                <div class="import-panel-body">
+                    <div class="mb-3">
+                        <label class="text-muted small d-block mb-1">Tên gian hàng:</label>
+                        <strong class="fs-6 text-dark" th:text="${shop?.shopName ?: 'Chưa cập nhật'}">Tên Shop</strong>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small d-block mb-1">Tài khoản ngân hàng nhận tiền:</label>
+                        <div class="p-2 rounded-2 bg-light border">
+                            <div class="fw-bold text-dark" th:text="${shop?.bankName ?: 'Chưa liên kết ngân hàng'}">Ngân hàng</div>
+                            <div class="small text-muted" th:text="'STK: ' + (${shop?.bankAccountNumber ?: '---'}) + ' (' + (${shop?.accountName ?: '---'}) + ')'">STK</div>
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <a th:href="@{/shop/profile}" class="btn btn-shop-outline w-100 rounded-pill fw-semibold">
+                            <i class="bi bi-pencil-square me-1"></i> Chỉnh sửa thông tin hồ sơ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

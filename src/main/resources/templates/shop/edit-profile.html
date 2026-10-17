@@ -1,33 +1,22 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'profile', ~{::content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Chỉnh sửa thông tin hồ sơ cửa hàng đối tác - BetaFruit Nông sản tươi sạch">
-    <title>Chỉnh sửa hồ sơ cửa hàng | BetaFruit Kênh Người Bán</title>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
-
-    <!-- Stylesheets -->
-    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
-    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
+    <title>Chỉnh Sửa Hồ Sơ Cửa Hàng | BetaFruit</title>
 </head>
 <body class="shop-theme">
 
-<!-- ═══════════════ SHOP HEADER ═══════════════ -->
-<div th:replace="~{shop/fragments/header :: header}"></div>
+<div th:fragment="content">
+    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
 
 <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
-<main class="profile-page">
-    <div class="container" style="max-width: 900px; padding-top: 36px;">
+<main class="profile-page py-1">
+    <div class="w-100">
 
         <!-- Breadcrumb / Back Link -->
         <div style="margin-bottom: 20px;">
             <a th:href="@{/shop/profile}" href="/shop/profile" style="display: inline-flex; align-items: center; font-size: 14px; color: #78350f; text-decoration: none; font-weight: 500;">
-                Quay lại Hồ sơ cửa hàng
+                <i class="bi bi-arrow-left me-1"></i> Quay lại Hồ sơ cửa hàng
             </a>
         </div>
 
@@ -40,11 +29,6 @@
                     <h2 style="font-size: 22px; font-weight: 700; color: #38240f; margin: 0 0 6px 0;">Chỉnh sửa thông tin cửa hàng</h2>
                     <p style="font-size: 14px; color: #78350f; margin: 0;">Cập nhật thông tin thương hiệu, thông tin liên hệ và tài khoản nhận thanh toán doanh thu</p>
                 </div>
-            </div>
-
-            <!-- Server Error Notification -->
-            <div class="profile-alert alert-warning" th:if="${errorMessage}" role="alert" style="margin-bottom: 22px;">
-                <span th:text="${errorMessage}">Đã xảy ra lỗi khi cập nhật hồ sơ cửa hàng.</span>
             </div>
 
             <!-- Edit Form -->
@@ -211,6 +195,6 @@
 
     </div>
 </main>
-
+</div>
 </body>
 </html>
