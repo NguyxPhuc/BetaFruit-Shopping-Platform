@@ -34,3 +34,4 @@ build/
 
 # Environments
 .env
+/src/main/resources/application-local.properties
