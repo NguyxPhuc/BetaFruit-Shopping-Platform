@@ -1,0 +1,753 @@
+/* ==========================================================================
+   BetaFruit - Dedicated Shop Owner Portal Stylesheet (SaaS / ERP Style)
+   Design System: BetaFruit Signature Vibrant Orange (#ea580c / #f97316)
+   Warm Slate Dark Sidebar + Radiant Orange Accents & Badges
+   ========================================================================== */
+
+:root {
+    /* Brand Orange Palette (BetaFruit Signature) */
+    --shop-brand-900: #7c2d12;
+    --shop-brand-800: #9a3412;
+    --shop-brand-700: #c2410c;
+    --shop-brand-600: #ea580c;
+    --shop-brand-500: #f97316;
+    --shop-brand-400: #fb923c;
+    --shop-orange-light: #fff7ed;
+    --shop-orange-border: #fed7aa;
+    --shop-orange-glow: rgba(234, 88, 12, 0.22);
+
+    /* Amber / Accent */
+    --shop-amber:       #f59e0b;
+    --shop-amber-light: #fef3c7;
+    --shop-amber-dark:  #d97706;
+
+    /* Neutrals & Surfaces */
+    --shop-bg:          #fdfbf7;
+    --shop-card-bg:     #ffffff;
+    --shop-ink:         #1c1917;
+    --shop-text:        #334155;
+    --shop-muted:       #64748b;
+    --shop-border:      #e2e8f0;
+    --shop-border-subtle: #f1f5f9;
+
+    /* Sidebar Variables (Warm Slate / Charcoal with Orange highlights) */
+    --shop-sidebar-width: 265px;
+    --shop-sidebar-bg: linear-gradient(180deg, #181513 0%, #221c17 100%);
+
+    --shop-radius-sm: 8px;
+    --shop-radius-md: 12px;
+    --shop-radius-lg: 16px;
+    --shop-radius-xl: 20px;
+    --shop-radius-full: 9999px;
+
+    --shop-shadow-sm: 0 1px 3px rgba(28, 25, 23, 0.05);
+    --shop-shadow:    0 4px 16px rgba(28, 25, 23, 0.06);
+    --shop-shadow-lg: 0 10px 30px rgba(234, 88, 12, 0.1);
+}
+
+html, body.shop-portal-body {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background-color: var(--shop-bg);
+    color: var(--shop-text);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ==========================================================================
+   1. MAIN SHELL & SIDEBAR
+   ========================================================================== */
+.shop-shell {
+    display: flex !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    width: 100vw !important;
+    overflow: hidden !important;
+}
+
+.shop-sidebar {
+    width: var(--shop-sidebar-width) !important;
+    min-width: var(--shop-sidebar-width) !important;
+    max-width: var(--shop-sidebar-width) !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    background: var(--shop-sidebar-bg) !important;
+    color: #ffffff;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-shrink: 0 !important;
+    position: sticky !important;
+    top: 0 !important;
+    overflow: hidden !important;
+    z-index: 1040;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.shop-sidebar-brand {
+    padding: 0.85rem 1rem 0.65rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.shop-logo-box {
+    background: #ffffff;
+    padding: 6px 12px;
+    border-radius: var(--shop-radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    width: 100%;
+}
+
+.shop-logo-img {
+    height: 34px;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.shop-portal-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(249, 115, 22, 0.22);
+    color: #fed7aa;
+    border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+.shop-sidebar-nav {
+    flex: 1 1 auto;
+    overflow-y: hidden;
+    padding: 0.35rem 0.65rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.12rem;
+}
+
+.shop-nav-group-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #a89f91;
+    padding: 0.35rem 0.65rem 0.12rem;
+}
+
+.shop-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.75rem;
+    color: #e2dcd5;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: var(--shop-radius-sm);
+    text-decoration: none;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.shop-nav-link i {
+    font-size: 1.05rem;
+    color: #fdba74;
+    transition: color 0.15s ease;
+    width: 20px;
+    text-align: center;
+}
+
+.shop-nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    transform: translateX(3px);
+}
+
+.shop-nav-link:hover i {
+    color: #f97316;
+}
+
+.shop-nav-link.active {
+    background: linear-gradient(90deg, rgba(234, 88, 12, 0.28) 0%, rgba(249, 115, 22, 0.12) 100%) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-left: 3.5px solid var(--shop-brand-500) !important;
+}
+
+.shop-nav-link.active i {
+    color: var(--shop-brand-400) !important;
+}
+
+.shop-nav-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+
+.shop-sidebar-footer {
+    padding: 0.65rem 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.btn-switch-store {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--shop-radius-md);
+    padding: 0.45rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.btn-switch-store:hover {
+    background: #ffffff;
+    color: var(--shop-brand-700);
+}
+
+.btn-sidebar-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+    border: 1.5px solid rgba(248, 113, 113, 0.45);
+    border-radius: var(--shop-radius-md);
+    padding: 0.5rem;
+    font-size: 0.825rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.btn-sidebar-logout:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.45);
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   2. MAIN CONTENT AREA & TOPBAR
+   ========================================================================== */
+.shop-main-pane {
+    flex: 1 1 auto !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background-color: var(--shop-bg) !important;
+    min-width: 0 !important;
+}
+
+.shop-topbar {
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--shop-border) !important;
+    padding: 0.85rem 2rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1020 !important;
+    box-shadow: var(--shop-shadow-sm) !important;
+    flex-shrink: 0 !important;
+}
+
+.shop-topbar-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.shop-topbar-breadcrumb a {
+    color: var(--shop-muted);
+    text-decoration: none;
+}
+
+.shop-topbar-breadcrumb a:hover {
+    color: var(--shop-brand-600);
+}
+
+.shop-topbar-breadcrumb .active {
+    color: var(--shop-ink);
+    font-weight: 600;
+}
+
+.shop-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.shop-owner-mini-card {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--shop-radius-full);
+    background: var(--shop-bg);
+    border: 1px solid var(--shop-border);
+}
+
+.shop-owner-avatar-mini {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--shop-brand-500), var(--shop-brand-700));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.shop-owner-name-mini {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--shop-ink);
+}
+
+.shop-content-outlet {
+    flex-grow: 1;
+    padding: 1.75rem 2rem 3rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   ĐỒNG NHẤT KHUNG TRÌNH BÀY CHO TOÀN BỘ CÁC TRANG CỦA SHOP
+   Loại bỏ căn giữa co cụm (max-width + margin: 0 auto), giúp tất cả các trang
+   đều căn đều lề trái đồng nhất với Topbar và Sidebar.
+   ========================================================================== */
+.page-container,
+.profile-page,
+.form-body-wrapper,
+.address-page,
+.address-container,
+.shop-content-outlet > .container,
+.shop-content-outlet > div > .container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+}
+
+/* ==========================================================================
+   3. DASHBOARD CARDS & WIDGETS
+   ========================================================================== */
+.shop-kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--shop-border);
+    border-radius: var(--shop-radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shop-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.shop-kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shop-shadow-lg);
+}
+
+.shop-kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--shop-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+}
+
+.kpi-icon-orange { background: #fff7ed; color: #ea580c; }
+.kpi-icon-amber  { background: #fef3c7; color: #d97706; }
+.kpi-icon-blue   { background: #eff6ff; color: #2563eb; }
+.kpi-icon-purple { background: #f5f3ff; color: #7c3aed; }
+.kpi-icon-green  { background: #ecfdf5; color: #059669; }
+
+.shop-kpi-val {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--shop-ink);
+    line-height: 1.2;
+    margin: 0.5rem 0 0.25rem;
+}
+
+.shop-kpi-label {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--shop-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   4. GOODS RECEIPT / IMPORT NOTE COMPONENTS
+   ========================================================================== */
+.import-hero-bar {
+    background: transparent !important;
+    color: var(--shop-ink) !important;
+    border-radius: 0 !important;
+    padding: 0 0 1.25rem 0 !important;
+    margin-bottom: 1.75rem !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid var(--shop-border) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+}
+
+.import-hero-bar .badge {
+    background-color: #fff7ed !important;
+    color: #c2410c !important;
+    border: 1px solid #fed7aa !important;
+}
+
+.import-hero-title h1 {
+    font-size: 1.65rem !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    margin: 0.25rem 0 !important;
+    letter-spacing: -0.5px !important;
+}
+
+.import-hero-title p {
+    margin: 0 !important;
+    color: #64748b !important;
+    font-size: 0.925rem !important;
+}
+
+.import-hero-bar .btn-outline-light {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: var(--shop-radius-full) !important;
+}
+
+.import-hero-bar .btn-outline-light:hover {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+
+.import-hero-bar .btn-warning {
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: var(--shop-radius-full) !important;
+}
+
+/* Bottom Action Bar (Fixed overflow issue) */
+.sticky-action-container {
+    position: sticky !important;
+    bottom: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    z-index: 1020 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-top: 1px solid #e2e8f0 !important;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08) !important;
+    padding: 0.85rem 1.5rem !important;
+    margin-top: 2rem !important;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+.import-panel-card {
+    background: #ffffff;
+    border: 1px solid var(--shop-border);
+    border-radius: var(--shop-radius-lg);
+    box-shadow: var(--shop-shadow);
+    overflow: hidden;
+}
+
+.import-panel-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--shop-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+}
+
+.import-panel-header h2, .import-panel-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--shop-ink);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.import-panel-body {
+    padding: 1.5rem;
+}
+
+/* Table Design */
+.import-table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.import-table th {
+    background: #f8fafc;
+    color: var(--shop-muted);
+    font-weight: 700;
+    font-size: 0.775rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.85rem 1rem;
+    border-bottom: 1.5px solid var(--shop-border);
+}
+
+.import-table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--shop-border-subtle);
+    font-size: 0.9rem;
+}
+
+.import-table tr:hover td {
+    background-color: #fdfbf7;
+}
+
+/* Financial Summary Sidebar Box */
+.import-cost-summary-box {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border: 1.5px solid #fed7aa;
+    border-radius: var(--shop-radius-md);
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.import-cost-summary-box .label {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: #9a3412;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.import-cost-summary-box .total-number {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #ea580c;
+    margin: 0.35rem 0 0;
+    line-height: 1.2;
+}
+
+/* Buttons */
+.btn-shop-primary {
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    color: #ffffff;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--shop-radius-md);
+    padding: 0.75rem 1.5rem;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.3);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-shop-primary:hover {
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4);
+    color: #ffffff;
+}
+
+.btn-shop-secondary {
+    background: #ffffff;
+    border: 1px solid var(--shop-border);
+    color: var(--shop-text);
+    font-weight: 600;
+    border-radius: var(--shop-radius-md);
+    padding: 0.75rem 1.25rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-shop-secondary:hover {
+    background: #f1f5f9;
+    color: var(--shop-ink);
+}
+
+/* ==========================================================================
+   5. PRODUCT MANAGEMENT & GLOBAL STYLING COMPATIBILITY
+   ========================================================================== */
+.shop-header-banner {
+    background: linear-gradient(135deg, #9a3412 0%, #ea580c 50%, #f97316 100%) !important;
+    border-radius: var(--shop-radius-lg) !important;
+    color: #ffffff !important;
+    padding: 1.75rem 2rem !important;
+    margin-bottom: 2rem !important;
+    box-shadow: 0 10px 25px -5px rgba(234, 88, 12, 0.28) !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 1.5rem !important;
+}
+
+.shop-banner-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1.25rem !important;
+}
+
+.shop-avatar-circle {
+    width: 58px !important;
+    height: 58px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(8px) !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.shop-banner-title {
+    font-size: 1.6rem !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+}
+
+.btn-shop-cta,
+.btn-fruit,
+.btn-success:not(.btn-outline-success) {
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: var(--shop-radius-md) !important;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.3) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-shop-cta:hover,
+.btn-fruit:hover,
+.btn-success:not(.btn-outline-success):hover {
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4) !important;
+    color: #ffffff !important;
+}
+
+.btn-outline-success,
+.btn-outline-fruit {
+    border: 1.5px solid #ea580c !important;
+    color: #ea580c !important;
+    background: transparent !important;
+    font-weight: 700 !important;
+    border-radius: var(--shop-radius-md) !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-outline-success:hover,
+.btn-outline-fruit:hover {
+    background: #ea580c !important;
+    color: #ffffff !important;
+}
+
+/* Badges */
+.badge.bg-success,
+.badge-verified {
+    background-color: #ea580c !important;
+    color: #ffffff !important;
+}
+
+.badge.bg-success-subtle,
+.badge-chip-active {
+    background-color: #fff7ed !important;
+    color: #c2410c !important;
+    border: 1px solid #fed7aa !important;
+}
+
+/* Form Inputs Focus Ring */
+.form-control:focus,
+.form-select:focus {
+    border-color: #f97316 !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2) !important;
+}
+
+/* Nav Tabs Custom */
+.nav-tabs-custom .nav-link.active {
+    color: #ea580c !important;
+    border-bottom: 2.5px solid #ea580c !important;
+}
+
+.nav-tabs-custom .nav-link:hover {
+    color: #ea580c !important;
+}
+
+/* ════════ STICKY BOTTOM ACTION BAR (TRÁNH TRÀN VIỀN) ════════ */
+.sticky-action-container {
+    position: sticky !important;
+    bottom: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    z-index: 1020 !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-top: 1px solid var(--shop-border) !important;
+    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08) !important;
+    padding: 0.85rem 1.25rem !important;
+    margin: 1.5rem 0 0 0 !important;
+    border-radius: 14px 14px 0 0 !important;
+}
+
+.btn-submit-hero {
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%) !important;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.3) !important;
+}
+
+.btn-submit-hero:hover {
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%) !important;
+    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4) !important;
+}

@@ -6,6 +6,7 @@ import com.fu.SWP391_BetaFruit.dto.response.LoginResponse;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.NotificationType;
 import com.fu.SWP391_BetaFruit.enums.RoleName;
+import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import com.fu.SWP391_BetaFruit.repository.*;
 import com.fu.SWP391_BetaFruit.service.AuthService;
@@ -28,6 +29,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private ShopRepository shopRepository;
 
     @Autowired
     private CartRepository cartRepository;
@@ -108,13 +112,17 @@ public class AuthServiceImpl implements AuthService {
         newUser.setPhone(registerRequest.getPhone());
         newUser.setStatus(UserStatus.ACTIVE);
 
-        newUser = userRepository.save(newUser);
-
         Role ownerRole = roleRepository.findByRoleName(RoleName.SHOP_OWNER)
                 .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy quyền trong hệ thống."));
         newUser.getRoles().add(ownerRole);
-        userRepository.save(newUser);
+        newUser = userRepository.save(newUser);
+        Shop shop = new Shop();
+        shop.setOwner(newUser);
+        String shopName = "Shop của " + registerRequest.getUsername();
+        shop.setShopName(shopName);
+        shop.setApprovalStatus(ShopApprovalStatus.PENDING);
 
+        shopRepository.save(shop);
         emailService.sendWelcomeEmail(registerRequest.getEmail(), registerRequest.getFullName());
         notificationService.createBaseNotification(
                 newUser,

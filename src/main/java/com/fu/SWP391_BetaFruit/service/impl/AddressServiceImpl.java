@@ -31,7 +31,17 @@ public class AddressServiceImpl implements AddressService {
             throw new Exception("Không tìm thấy người dùng trong hệ thống.");
         }
         Boolean isDefault = addressRequest.getIsDefault();
-        AddressType addressType = forceType != null ? forceType : AddressType.valueOf(addressRequest.getAddressType().toUpperCase());
+
+        AddressType addressType;
+        if (forceType != null) {
+            addressType = forceType;
+        } else {
+            if (addressRequest.getAddressType() == null || addressRequest.getAddressType().isEmpty()) {
+                throw new Exception("Vui lòng cung cấp loại địa chỉ Address Type.");
+            }
+            addressType = AddressType.valueOf(addressRequest.getAddressType().toUpperCase());
+        }
+
         int countByUserIdAndAddressType = addressRepository.countByUser_UserIdAndAddressType(userId, addressType);
         if(countByUserIdAndAddressType == 0){
             isDefault = true;
@@ -99,10 +109,21 @@ public class AddressServiceImpl implements AddressService {
     public void updateAddress(Integer userId, Integer addressId, AddressRequest request, AddressType forceType) throws Exception {
         Address address = addressRepository.findByUser_UserIdAndAddressIdAndIsActive(userId, addressId, true)
                 .orElseThrow(() -> new Exception("Không tìm thấy địa chỉ."));
-        AddressType type = (forceType != null) ? forceType : AddressType.valueOf(request.getAddressType().toUpperCase());
+        AddressType addressType;
+        if (forceType != null) {
+            addressType = forceType;
+        } else {
+            if (request.getAddressType() == null || request.getAddressType().isEmpty()) {
+                throw new Exception("Vui lòng cung cấp loại địa chỉ Address Type.");
+            }
+            addressType = AddressType.valueOf(request.getAddressType().toUpperCase());
+        }
         boolean willBeDefault = request.getIsDefault() != null ? request.getIsDefault() : false;
+        if (address.getIsDefault()) {
+            willBeDefault = true;
+        }
         if (willBeDefault && !address.getIsDefault()) {
-            addressRepository.clearDefaultAddress(userId, type);
+            addressRepository.clearDefaultAddress(userId, addressType);
         }
         address.setReceiverName(request.getReceiverName());
         address.setReceiverPhone(request.getReceiverPhone());
@@ -110,7 +131,7 @@ public class AddressServiceImpl implements AddressService {
         address.setCity(request.getCity());
         address.setDistrict(request.getDistrict());
         address.setWard(request.getWard());
-        address.setAddressType(type);
+        address.setAddressType(addressType);
         address.setIsDefault(willBeDefault);
         addressRepository.save(address);
     }
@@ -123,6 +144,22 @@ public class AddressServiceImpl implements AddressService {
         address.setIsActive(false);
         if (address.getIsDefault()) {
             address.setIsDefault(false);
+            List<Address> allActive = addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(userId, address.getAddressType());
+            if(allActive.isEmpty()){
+                addressRepository.save(address);
+                return;
+            }
+            Address autoNewDefault = null;
+            for (Address activeAddress : allActive) {
+                if(!address.getAddressId().equals(activeAddress.getAddressId())){
+                    autoNewDefault = activeAddress;
+                    break;
+                }
+            }
+            if(autoNewDefault != null){
+                autoNewDefault.setIsDefault(true);
+                addressRepository.save(autoNewDefault);
+            }
         }
         addressRepository.save(address);
     }

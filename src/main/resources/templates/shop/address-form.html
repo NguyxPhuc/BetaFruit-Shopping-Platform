@@ -1,25 +1,13 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'address', ~{::content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Thiết lập địa chỉ lấy hàng và trả hàng - Kênh Người Bán BetaFruit">
-    <title th:text="${isEditMode} ? 'Cập nhật địa chỉ kho | Kênh Người Bán' : 'Thêm địa chỉ kho mới | Kênh Người Bán'">Địa chỉ kho | Kênh Người Bán</title>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
-
-    <!-- Stylesheets -->
-    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
-    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
-    <link rel="stylesheet" th:href="@{/css/address.css}" href="/css/address.css">
+    <title th:text="${isEditMode} ? 'Cập nhật địa chỉ kho | BetaFruit' : 'Thêm địa chỉ kho mới | BetaFruit'">Địa chỉ kho | BetaFruit</title>
 </head>
 <body class="shop-theme">
 
-<!-- ═══════════════ SHOP HEADER ═══════════════ -->
-<div th:replace="~{shop/fragments/header :: header}"></div>
+<div th:fragment="content">
+    <link rel="stylesheet" th:href="@{/css/address.css}" href="/css/address.css">
 
 <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
 <main class="address-page">
@@ -204,6 +192,6 @@
         return true;
     }
 </script>
-
+</div>
 </body>
 </html>

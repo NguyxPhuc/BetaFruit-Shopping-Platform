@@ -1,25 +1,13 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'address', ~{::content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Quản lý địa chỉ kho và trả hàng - Kênh Người Bán BetaFruit">
-    <title>Địa chỉ kho & lấy hàng | BetaFruit Kênh Người Bán</title>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
-
-    <!-- Stylesheets -->
-    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
-    <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
-    <link rel="stylesheet" th:href="@{/css/address.css}" href="/css/address.css">
+    <title>Địa chỉ kho & lấy hàng | BetaFruit</title>
 </head>
 <body class="shop-theme">
 
-<!-- ═══════════════ SHOP HEADER ═══════════════ -->
-<div th:replace="~{shop/fragments/header :: header}"></div>
+<div th:fragment="content">
+    <link rel="stylesheet" th:href="@{/css/address.css}" href="/css/address.css">
 
 <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
 <main class="address-page">
@@ -43,15 +31,6 @@
                     Thêm địa chỉ kho
                 </a>
             </div>
-        </div>
-
-        <!-- Flash Messages -->
-        <div class="address-alert address-alert-success" id="successAlert" th:if="${successMessage}">
-            <span th:text="${successMessage}">Thao tác thành công!</span>
-        </div>
-
-        <div class="address-alert address-alert-error" id="errorAlert" th:if="${errorMessage}">
-            <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
         </div>
 
         <!-- Address List -->
@@ -168,6 +147,6 @@
         });
     }, 4000);
 </script>
-
+</div>
 </body>
 </html>
