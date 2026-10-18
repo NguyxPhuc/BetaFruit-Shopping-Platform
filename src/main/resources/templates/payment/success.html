@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán Thành Công | BetaFruit</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+
+    <link rel="stylesheet" th:href="@{/css/payment.css}">
+</head>
+<body class="payment-result-page">
+
+    <!-- Global Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Celebratory Confetti Canvas -->
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- Main Container -->
+    <main class="result-container">
+        
+        <div class="receipt-card">
+            
+            <!-- ═════════ 1. STATUS HERO ═════════ -->
+            <div class="status-hero payment-success-hero">
+                
+                <div class="icon-badge-pulse success">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+
+                <h1 class="status-title">Thanh Toán Thành Công!</h1>
+
+                <p class="status-subtitle">
+                    Cảm ơn bạn đã lựa chọn hoa quả sạch tại <strong class="text-dark">BetaFruit</strong>. Đơn hàng của bạn đã được xác nhận thanh toán và đang được chuyển tới nhà vườn/cửa hàng để đóng gói giao sớm nhất!
+                </p>
+            </div>
+
+            <!-- ═════════ 2. RECEIPT TEAR NOTCHES ═════════ -->
+            <div class="receipt-tear-line">
+                <div class="receipt-notch left"></div>
+                <div class="receipt-dashed"></div>
+                <div class="receipt-notch right"></div>
+            </div>
+
+            <!-- ═════════ 3. TRANSACTION DETAILS ═════════ -->
+            <div class="receipt-body">
+                
+                <!-- Amount Banner -->
+                <div class="amount-hero-banner">
+                    <div>
+                        <span class="amount-label">Số tiền đã thanh toán</span>
+                        <div class="amount-val text-success-accent" th:text="${result.formattedAmount}">150.000 ₫</div>
+                    </div>
+                    <div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold">
+                            <i class="bi bi-patch-check-fill me-1"></i> Đã thanh toán
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Details List -->
+                <div class="detail-list">
+                    
+                    <!-- Mã Đơn Hàng -->
+                    <div class="detail-item">
+                        <span class="detail-key">
+                            <i class="bi bi-receipt"></i> Mã đơn hàng
+                        </span>
+                        <span class="detail-val">
+                            <span class="order-badge-pill">
+                                <span id="orderCodeSpan" th:text="${result.orderCode}">#DH000123</span>
+                                <button type="button" class="btn-copy-code" onclick="copyOrderCode()" title="Sao chép mã đơn">
+                                    <i class="bi bi-copy"></i>
+                                </button>
+                            </span>
+                        </span>
+                    </div>
+
+                    <!-- Cổng Thanh Toán -->
+                    <div class="detail-item">
+                        <span class="detail-key">
+                            <i class="bi bi-credit-card-2-front"></i> Cổng thanh toán
+                        </span>
+                        <span class="detail-val">
+                            <span class="badge bg-primary-subtle text-primary fw-bold px-2.5 py-1 rounded-pill">
+                                <span th:text="${result.paymentMethod ?: 'VNPAY'}">VNPAY</span>
+                                <span th:if="${result.bankCode != null and !result.bankCode.isEmpty()}" 
+                                      th:text="' - ' + ${result.bankCode}"> - NCB</span>
+                            </span>
+                        </span>
+                    </div>
+
+                    <!-- Mã Giao Dịch Cổng VNPay -->
+                    <div class="detail-item" th:if="${result.gatewayTransactionNo != null and !result.gatewayTransactionNo.isEmpty()}">
+                        <span class="detail-key">
+                            <i class="bi bi-upc-scan"></i> Mã giao dịch VNPay
+                        </span>
+                        <span class="detail-val" th:text="${result.gatewayTransactionNo}">14298104</span>
+                    </div>
+
+                    <!-- Thời Gian Giao Dịch -->
+                    <div class="detail-item">
+                        <span class="detail-key">
+                            <i class="bi bi-clock-history"></i> Thời gian giao dịch
+                        </span>
+                        <span class="detail-val" th:text="${result.payDate}">22:30:15 18/10/2026</span>
+                    </div>
+
+                    <!-- Người Nhận Hàng -->
+                    <div class="detail-item" th:if="${result.customerName != null and !result.customerName.isEmpty()}">
+                        <span class="detail-key">
+                            <i class="bi bi-person"></i> Người nhận hàng
+                        </span>
+                        <span class="detail-val">
+                            <span th:text="${result.customerName}">Nguyễn Văn A</span>
+                            <span th:if="${result.customerPhone != null and !result.customerPhone.isEmpty()}" 
+                                  class="text-muted small fw-normal ms-1" 
+                                  th:text="'(' + ${result.customerPhone} + ')'"></span>
+                        </span>
+                    </div>
+
+                    <!-- Nơi Nhận Hàng -->
+                    <div class="detail-item" th:if="${result.shippingAddress != null and !result.shippingAddress.isEmpty()}">
+                        <span class="detail-key">
+                            <i class="bi bi-geo-alt"></i> Nơi nhận hàng
+                        </span>
+                        <span class="detail-val" style="max-width: 60%; font-size: 0.875rem;" th:text="${result.shippingAddress}">
+                            Số 123 Cầu Giấy, Hà Nội
+                        </span>
+                    </div>
+
+                </div>
+
+                <!-- ═════════ 4. ACTIONS GROUP ═════════ -->
+                <div class="actions-group">
+                    
+                    <a th:if="${result.orderId != null}" 
+                       th:href="@{/customer/orders/{id}(id=${result.orderId})}" 
+                       href="/customer/orders" 
+                       class="btn-primary-action btn-action-green">
+                        <i class="bi bi-box2-heart-fill"></i>
+                        <span>Xem Chi Tiết Đơn Hàng</span>
+                    </a>
+
+                    <a th:href="@{/products}" href="/products" class="btn-secondary-action">
+                        <i class="bi bi-basket2"></i>
+                        <span>Tiếp Tục Mua Sắm Hoa Quả</span>
+                    </a>
+
+                    <div class="text-center">
+                        <button type="button" class="btn-print-mini" onclick="window.print()">
+                            <i class="bi bi-printer"></i>
+                            <span>In biên lai giao dịch</span>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ═════════ 5. FOOTER SUPPORT ═════════ -->
+        <div class="support-info-card">
+            <span>Cần hỗ trợ về thanh toán hoặc đơn hàng? Hotline 24/7: </span>
+            <a href="tel:19008888">1900 8888</a>
+            <span> | Email: </span>
+            <a href="mailto:support@betafruit.vn">support@betafruit.vn</a>
+        </div>
+
+    </main>
+
+    <!-- Global Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <!-- ═════════ CONFETTI & COPY SCRIPT ═════════ -->
+    <script>
+        function copyOrderCode() {
+            const codeSpan = document.getElementById('orderCodeSpan');
+            if (!codeSpan) return;
+            const code = codeSpan.textContent.trim();
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Đã sao chép mã đơn: ' + code);
+            }).catch(() => {});
+        }
+
+        // Confetti Canvas Micro-Animation
+        (function() {
+            const canvas = document.getElementById('confettiCanvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            const colors = ['#16a34a', '#22c55e', '#ea580c', '#f97316', '#eab308', '#38bdf8'];
+            const particles = [];
+            const particleCount = 80;
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height - height,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    speedY: Math.random() * 3 + 2,
+                    speedX: Math.random() * 2 - 1,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: Math.random() * 10 - 5
+                });
+            }
+
+            let animationFrameId;
+            let timer = setTimeout(() => {
+                cancelAnimationFrame(animationFrameId);
+                canvas.style.display = 'none';
+            }, 4500);
+
+            function render() {
+                ctx.clearRect(0, 0, width, height);
+
+                particles.forEach(p => {
+                    p.y += p.speedY;
+                    p.x += p.speedX;
+                    p.rotation += p.rotationSpeed;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                    ctx.restore();
+
+                    if (p.y > height) {
+                        p.y = -10;
+                        p.x = Math.random() * width;
+                    }
+                });
+
+                animationFrameId = requestAnimationFrame(render);
+            }
+
+            render();
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+        })();
+    </script>
+</body>
+</html>
