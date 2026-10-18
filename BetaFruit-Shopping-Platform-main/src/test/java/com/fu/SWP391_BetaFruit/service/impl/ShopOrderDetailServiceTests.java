@@ -34,7 +34,7 @@ class ShopOrderDetailServiceTests {
     }
 
     @Test
-    void usesOrderSnapshotsAndStoredNetReceivedWithOptionalDataAbsent() {
+    void usesOrderSnapshotsAndCalculatedNetReceivedWithOptionalDataAbsent() {
         User customer = new User();
         customer.setUserId(7);
         customer.setFullName("Customer");
@@ -48,9 +48,11 @@ class ShopOrderDetailServiceTests {
         order.setShop(shop);
         order.setSnapshotShippingAddress("Address at checkout");
         order.setFinalAmount(new BigDecimal("100000.00"));
+        order.setTotalAmount(new BigDecimal("100000.00"));
+        shop.setCommissionRate(new BigDecimal("5.00"));
         order.setShopNetReceived(new BigDecimal("85000.25"));
         order.setIsSettled(false);
-        order.setPlatformFee(new BigDecimal("4250.00"));
+        order.setPlatformFee(new BigDecimal("10.00"));
         order.setIsCODRemitted(true);
         OrderItem item = new OrderItem();
         item.setOrderItemId(1);
@@ -68,16 +70,16 @@ class ShopOrderDetailServiceTests {
 
         var result = service.getOrderDetailForShopOwner(12, 3);
 
-        assertEquals(new BigDecimal("85000.25"), result.summary().shopNetReceived());
+        assertEquals(new BigDecimal("95000.00"), result.summary().shopNetReceived());
         assertEquals("Address at checkout", result.snapshotShippingAddress());
         assertEquals("Product at checkout", result.items().getFirst().productName());
         assertEquals("Variant at checkout", result.items().getFirst().variantName());
         assertEquals(new BigDecimal("37501.50"), result.items().getFirst().lineTotal());
-        assertEquals(new BigDecimal("4250.00"), result.platformFee());
+        assertEquals(new BigDecimal("5000.00"), result.platformFee());
         assertEquals(Boolean.TRUE, result.isCODRemitted());
         assertEquals(new BigDecimal("8000.00"), result.items().getFirst().costSnapshot());
         assertEquals(new BigDecimal("24000.00"), result.totalCost());
-        assertEquals(new BigDecimal("61000.25"), result.estimatedProfit());
+        assertEquals(new BigDecimal("71000.00"), result.estimatedProfit());
         assertNull(result.couponCode());
         assertNull(result.delivery());
         assertTrue(result.payments().isEmpty());
@@ -90,6 +92,7 @@ class ShopOrderDetailServiceTests {
         order.setCustomer(new User());
         order.setShop(new Shop());
         order.getShop().setCommissionRate(new BigDecimal("90.00"));
+        order.setTotalAmount(new BigDecimal("65.75"));
         order.setShopNetReceived(new BigDecimal("20.15"));
         order.setPlatformFee(new BigDecimal("5.00"));
         order.setShippingFee(new BigDecimal("12.00"));
@@ -107,10 +110,10 @@ class ShopOrderDetailServiceTests {
         var result = service.getOrderDetailForShopOwner(12, 3);
 
         assertEquals(new BigDecimal("32.95"), result.totalCost());
-        assertEquals(new BigDecimal("-12.80"), result.estimatedProfit());
+        assertEquals(new BigDecimal("-26.38"), result.estimatedProfit());
         assertEquals(new BigDecimal("45.75"), result.items().getFirst().lineTotal());
-        assertEquals(new BigDecimal("20.15"), result.summary().shopNetReceived());
-        assertEquals(new BigDecimal("5.00"), result.platformFee());
+        assertEquals(new BigDecimal("6.57"), result.summary().shopNetReceived());
+        assertEquals(new BigDecimal("59.18"), result.platformFee());
     }
 
     @Test
@@ -118,7 +121,10 @@ class ShopOrderDetailServiceTests {
         Order order = new Order();
         order.setCustomer(new User());
         order.setShop(new Shop());
+        // This fixture models a zero-fee shop, independently of the entity's original 5% default.
+        order.getShop().setCommissionRate(BigDecimal.ZERO);
         order.setShopNetReceived(new BigDecimal("100.00"));
+        order.setTotalAmount(new BigDecimal("100.00"));
         when(orders.findDetailForShopOwner(12, 3)).thenReturn(Optional.of(order));
         when(items.findByOrderOrderIdOrderByOrderItemIdAsc(12)).thenReturn(List.of());
         var empty = service.getOrderDetailForShopOwner(12, 3);

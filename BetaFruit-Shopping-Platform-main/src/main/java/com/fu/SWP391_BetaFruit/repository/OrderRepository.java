@@ -13,10 +13,16 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 
-    @EntityGraph(attributePaths = "customer")
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select o from CustomerOrder o where o.orderId = :orderId")
+    java.util.Optional<Order> findLockedById(@Param("orderId") Integer orderId);
+
+    @EntityGraph(attributePaths = {"customer", "shop", "coupon"})
     @Query("""
             select o
             from CustomerOrder o
+            join o.shop s
+            left join o.coupon c
             where o.shop.owner.userId = :ownerId
               and (:status is null or o.orderStatus = :status)
               and (:keyword is null

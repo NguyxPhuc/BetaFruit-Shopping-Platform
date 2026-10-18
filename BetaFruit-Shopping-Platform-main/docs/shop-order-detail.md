@@ -46,10 +46,56 @@ The detail page is available at GET /shop/orders/{orderId}?ownerId={ownerId} and
 
 ## Money breakdown
 
-The customer total (FinalAmount), PlatformFee and ShopNetReceived are stored order values.
-Current Shop.CommissionRate and ProductVariant.CostPrice never recalculate historical orders.
-The shop card shows the stored platform fee, already deducted from net receipts.
-Total cost = sum(OrderItem.CostSnapshot * Quantity). Estimated profit = ShopNetReceived - total cost;
+The customer total (FinalAmount) remains the stored checkout amount. Shop receipts on
+the list, detail and API are calculated on read using the following rules:
+
+- When Shop.CommissionRate is non-null (including 0%), fee amount =
+  round(TotalAmount * Shop.CommissionRate / 100, 2), using HALF_UP, before vouchers
+  and excluding shipping.
+- Otherwise use Order.PlatformFee as the stored **currency amount**. Existing SQL
+  Server data stores amounts such as 20,000 for a product total of 400,000.
+  The displayed equivalent percentage is fee * 100 / TotalAmount (0 for a zero total
+  and zero fee). This is display-only and is never multiplied back to recalculate the fee.
+  Even a fee below 100 is currency; never infer its unit from its magnitude.
+- Coupon.ShopId = 0 identifies an admin coupon covering the platform. Legacy null
+  ShopId is treated the same way. Its DiscountAmount does not reduce shop receipts.
+- A positive Coupon.ShopId must match Order.ShopId. That shop bears DiscountAmount.
+  Mismatched or negative coupon ownership is rejected with HTTP 409; confirmation
+  validates ownership before stock changes. Existing stock validation also requires
+  all ordered variants to belong to the order's shop.
+- Net receipts = TotalAmount - shop-funded DiscountAmount - fee amount.
+  No coupon means no shop-funded voucher deduction.
+
+For products costing 100,000, a 10,000 voucher and a 5% rate, admin coupons yield
+95,000 for the shop; shop coupons yield 85,000. Shipping never enters these calculations.
+The detail DTO's `platformFee` remains a **calculated currency amount**, with separate
+`commissionRate`, `commissionSource` (SHOP/PLATFORM), and `shopDiscountAmount` fields.
+The summary/list adds `couponCode` and `couponSource` (NONE/SHOP/PLATFORM).
+`receivedAmount` and `shopNetReceived` both contain the calculated net receipts.
+Sorting by net receipts uses the same formula in the database before pagination.
+
+Reads do not overwrite Order.ShopNetReceived or change balances, settlement or payments.
+Changing the shop's current rate therefore changes displayed receipts for existing orders.
+This repository has no checkout/coupon-application endpoint; future checkout code must
+reuse these ownership rules and verify product ownership before accepting a coupon.
+
+No fee data conversion is needed: Order.PlatformFee retains its existing currency unit.
+There is no separate platform percentage configuration table in this codebase.
+The original `Coupon.shop` ManyToOne mapping is preserved. Pricing reads only that
+association's identifier; the sort expression uses Hibernate `fk(c.shop)` to read
+the stored ShopId without joining a nonexistent Shop 0. A legacy null association
+still identifies a platform coupon. If Coupon.ShopId has a database foreign key to
+Shop, that existing constraint must already permit any 0 sentinel stored in the data.
+This implementation does not change the schema, create a Shop 0 or disable live constraints.
+`Shop` retains its original 5% initialization default; an explicitly null rate loaded
+from the database still uses the stored monetary PlatformFee fallback.
+No migration or live data changes are performed by the order read path.
+
+The list controller logs failures and distinguishes data validation, database connection,
+query and unexpected processing errors. A pricing validation failure must not be reported
+as a lost SQL Server connection. Hibernate SELECT and count_big output are normal SQL logs.
+
+Total cost = sum(OrderItem.CostSnapshot * Quantity). Estimated profit = calculated net receipts - total cost;
 shipping and platform fees are not deducted again. A loss remains negative.
 No items or missing cost snapshots produce an unknown cost/profit rather than zero.
 Explicit zero cost snapshots remain valid stored values (including migrated default values).

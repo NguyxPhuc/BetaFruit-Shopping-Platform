@@ -15,6 +15,7 @@ import com.fu.SWP391_BetaFruit.service.ShopOrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,17 +88,19 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 : items.stream()
                         .map(item -> item.costSnapshot().multiply(BigDecimal.valueOf(item.quantity())))
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal estimatedProfit = totalCost == null || order.getShopNetReceived() == null
-                ? null : order.getShopNetReceived().subtract(totalCost);
+        var pricing = OrderPricing.calculate(order);
+        BigDecimal estimatedProfit = totalCost == null
+                ? null : pricing.shopNetReceived().subtract(totalCost);
 
         return new ShopOrderDetailResponse(
-                toListItem(order), order.getShop().getShopId(), order.getShop().getShopName(),
+                toListItem(order, pricing), order.getShop().getShopId(), order.getShop().getShopName(),
                 order.getCustomer().getUserId(), order.getCustomer().getPhone(),
                 order.getSnapshotShippingAddress(), order.getTotalAmount(), order.getDiscountAmount(),
                 order.getShippingFee(), enumName(order.getPaymentMethod()), order.getIsSettled(),
                 order.getSettledAt(), order.getCoupon() == null ? null : order.getCoupon().getCouponCode(),
-                items, history, delivery, payments, order.getPlatformFee(), order.getIsCODRemitted(),
-                totalCost, estimatedProfit);
+                items, history, delivery, payments, pricing.platformFee(), order.getIsCODRemitted(),
+                totalCost, estimatedProfit, pricing.commissionRate(), pricing.commissionSource(),
+                pricing.shopDiscountAmount());
     }
 
     private String enumName(Enum<?> value) {
@@ -118,20 +121,26 @@ public class ShopOrderServiceImpl implements ShopOrderService {
     }
 
     private ShopOrderListItemResponse toListItem(Order order) {
+        return toListItem(order, OrderPricing.calculate(order));
+    }
+
+    private ShopOrderListItemResponse toListItem(Order order, OrderPricing.Amounts pricing) {
         return new ShopOrderListItemResponse(
                 order.getOrderId(),
                 String.valueOf(order.getOrderId()),
                 order.getCustomer().getFullName(),
                 order.getFinalAmount(),
-                order.getShopNetReceived(),
-                order.getShopNetReceived(),
+                pricing.shopNetReceived(),
+                pricing.shopNetReceived(),
                 order.getOrderStatus() == null ? null : order.getOrderStatus().name(),
                 statusLabel(order.getOrderStatus()),
                 order.getOrderStatus() == OrderStatus.PENDING,
                 order.getOrderStatus() == OrderStatus.CONFIRMED,
                 order.getOrderStatus() == OrderStatus.PREPARING,
                 canShopCancel(order.getOrderStatus()),
-                order.getCreatedAt()
+                order.getCreatedAt(),
+                order.getCoupon() == null ? null : order.getCoupon().getCouponCode(),
+                pricing.couponSource()
         );
     }
 
@@ -142,7 +151,8 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         return switch (sortBy == null ? "" : sortBy) {
             case "orderCode" -> Sort.by(direction, "orderId");
             case "totalAmount" -> Sort.by(direction, "finalAmount");
-            case "receivedAmount", "shopNetReceived" -> Sort.by(direction, "shopNetReceived");
+            case "receivedAmount", "shopNetReceived" -> JpaSort.unsafe(direction,
+                    "(" + OrderPricing.NET_SORT_EXPRESSION + ")").and(Sort.by("orderId"));
             default -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
     }
@@ -185,6 +195,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Trạng thái đơn hàng không hợp lệ cho thao tác này");
         }
         if (expectedStatus == OrderStatus.PENDING && nextStatus == OrderStatus.CONFIRMED) {
+            OrderPricing.couponSource(order);
             orderStockService.deduct(order, ownerId);
         }
         saveStatusChange(order, ownerId, nextStatus, note);
@@ -218,7 +229,8 @@ public class ShopOrderServiceImpl implements ShopOrderService {
             case READY -> "Sẵn sàng giao";
             case PICKED_UP -> "Đã lấy hàng";
             case DELIVERING -> "Đang giao hàng";
-            case SUCCESS -> "Giao thành công";
+            case DELIVERED -> "Đã giao - chờ hoàn tất";
+            case SUCCESS -> "Đơn hoàn tất";
             case FAILED -> "Giao thất bại";
             case CANCELLED -> "Đã hủy";
             case REJECTED -> "Từ chối nhận đơn";

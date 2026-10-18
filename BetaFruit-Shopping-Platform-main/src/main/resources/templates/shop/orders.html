@@ -22,7 +22,7 @@
         .sort-filter select { height: 46px; padding: 0 35px 0 13px; border: 1px solid #d6e8f5; border-radius: 11px; outline: none; background: #fff; color: #29435a; font: inherit; font-size: 13px; cursor: pointer; }
         .sort-filter select:focus { border-color: #3671ff; box-shadow: 0 0 0 3px rgba(54,113,255,.12); }
         .database-warning { max-width: 634px; margin: -13px 0 20px; padding: 11px 14px; border: 1px solid #ffd6ad; border-radius: 10px; background: #fff8ed; color: #a66316; font-size: 13px; line-height: 1.45; }
-        .order-card { overflow: hidden; width: 100%; max-width: 1280px; border: 1px solid #d6e8f5; border-radius: 18px; background: #fff; box-shadow: 0 2px 6px rgba(34, 80, 115, .04); }
+        .order-card { overflow-x: auto; width: 100%; max-width: 1280px; border: 1px solid #d6e8f5; border-radius: 18px; background: #fff; box-shadow: 0 2px 6px rgba(34, 80, 115, .04); }
         .order-table { width: 100%; border-collapse: collapse; text-align: left; }
         .order-table th { height: 50px; padding: 0 24px; border-bottom: 1px solid #dbeaf4; color: #748da0; font-size: 11px; font-weight: 700; white-space: nowrap; }
         .order-table td { height: 93px; padding: 9px 24px; border-bottom: 1px solid #dbeaf4; color: #29435a; font-size: 14px; font-weight: 600; }
@@ -100,7 +100,8 @@
                     <option value="READY" th:selected="${selectedStatus != null and selectedStatus.name() == 'READY'}">Sẵn sàng giao</option>
                     <option value="PICKED_UP" th:selected="${selectedStatus != null and selectedStatus.name() == 'PICKED_UP'}">Đã lấy hàng</option>
                     <option value="DELIVERING" th:selected="${selectedStatus != null and selectedStatus.name() == 'DELIVERING'}">Đang giao hàng</option>
-                    <option value="SUCCESS" th:selected="${selectedStatus != null and selectedStatus.name() == 'SUCCESS'}">Giao thành công</option>
+                    <option value="DELIVERED" th:selected="${selectedStatus != null and selectedStatus.name() == 'DELIVERED'}">Đã giao - chờ hoàn tất</option>
+                    <option value="SUCCESS" th:selected="${selectedStatus != null and selectedStatus.name() == 'SUCCESS'}">Đơn hoàn tất</option>
                     <option value="FAILED" th:selected="${selectedStatus != null and selectedStatus.name() == 'FAILED'}">Giao thất bại</option>
                     <option value="CANCELLED" th:selected="${selectedStatus != null and selectedStatus.name() == 'CANCELLED'}">Đã hủy</option>
                     <option value="REJECTED" th:selected="${selectedStatus != null and selectedStatus.name() == 'REJECTED'}">Từ chối nhận đơn</option>
@@ -130,7 +131,7 @@
                     <td class="order-code" th:text="${order.orderCode}">#DH1042</td>
                     <td class="order-customer" th:text="${order.customerName}">Ngọc Hà</td>
                     <td class="order-money" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'">600.000đ</td>
-                    <td class="order-received" th:text="${#numbers.formatDecimal(order.shopNetReceived, 0, 'COMMA', 0, 'POINT')} + 'đ'">0đ</td>
+                    <td class="order-received" th:text="${#numbers.formatDecimal(order.shopNetReceived, 0, 'COMMA', (order.shopNetReceived.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'">0đ</td>
                     <td>
                         <span class="order-status"
                               th:classappend="${order.orderStatus == 'PENDING'} ? ' order-status--pending' : (${order.orderStatus == 'CONFIRMED'} ? ' order-status--confirmed' : (${order.orderStatus == 'CANCELLED' || order.orderStatus == 'FAILED' || order.orderStatus == 'REJECTED'} ? ' order-status--cancelled' : ' order-status--other'))"

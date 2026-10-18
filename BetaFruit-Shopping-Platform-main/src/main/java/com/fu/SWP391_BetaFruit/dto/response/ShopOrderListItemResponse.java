@@ -17,6 +17,8 @@ public record ShopOrderListItemResponse(
         boolean canStartPreparing,
         boolean canMarkReady,
         boolean canCancel,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String couponCode,
+        String couponSource
 ) {
 }

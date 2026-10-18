@@ -26,7 +26,10 @@ public record ShopOrderDetailResponse(
         BigDecimal platformFee,
         Boolean isCODRemitted,
         BigDecimal totalCost,
-        BigDecimal estimatedProfit
+        BigDecimal estimatedProfit,
+        BigDecimal commissionRate,
+        String commissionSource,
+        BigDecimal shopDiscountAmount
 ) {
     public record Item(Integer orderItemId, String productName, String variantName,
                        Integer quantity, BigDecimal unitPrice, BigDecimal lineTotal,

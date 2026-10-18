@@ -13,10 +13,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.transaction.CannotCreateTransactionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping({"/shop/orders", "/shop/orders.html"})
 public class ShopOrderController {
+    private static final Logger log = LoggerFactory.getLogger(ShopOrderController.class);
     /** Temporary test owner. Change it or pass ?ownerId={id} while login is unavailable. */
     private static final Integer TEST_OWNER_ID = 1;
 
@@ -46,10 +53,22 @@ public class ShopOrderController {
             model.addAttribute("orders", Page.empty());
         } else try {
             model.addAttribute("orders", shopOrderService.getOrdersForShopOwner(shopOwnerId, keyword, status, sortBy, sortDirection, page, size));
-        } catch (Exception exception) {
-            // Keep the page testable when the local SQL Server is not reachable.
+        } catch (ResponseStatusException exception) {
+            log.warn("Order data validation failed for ownerId={}", shopOwnerId, exception);
+            model.addAttribute("orders", Page.empty());
+            model.addAttribute("orderLoadError", "Dữ liệu đơn hàng không hợp lệ: " + exception.getReason());
+        } catch (DataAccessResourceFailureException | CannotCreateTransactionException exception) {
+            log.error("Cannot access order database for ownerId={}", shopOwnerId, exception);
             model.addAttribute("orders", Page.empty());
             model.addAttribute("orderLoadError", "Không thể kết nối cơ sở dữ liệu để tải đơn hàng. Kiểm tra lại SQL Server rồi tải lại trang.");
+        } catch (DataAccessException exception) {
+            log.error("Order query failed for ownerId={}", shopOwnerId, exception);
+            model.addAttribute("orders", Page.empty());
+            model.addAttribute("orderLoadError", "Không thể truy vấn dữ liệu đơn hàng. Xem log ứng dụng để biết nguyên nhân.");
+        } catch (Exception exception) {
+            log.error("Order loading failed for ownerId={}", shopOwnerId, exception);
+            model.addAttribute("orders", Page.empty());
+            model.addAttribute("orderLoadError", "Có lỗi khi xử lý đơn hàng. Xem log ứng dụng để biết nguyên nhân.");
         }
         model.addAttribute("keyword", keyword);
         model.addAttribute("selectedStatus", status);
