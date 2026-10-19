@@ -54,6 +54,30 @@ public class CartController {
                 () -> cartService.updateQuantity(customerId(session), itemId, quantity), "Đã cập nhật số lượng.");
     }
 
+    @PostMapping("/customer/cart/items/{itemId}/quantity/auto")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<java.util.Map<String, Object>> updateAutomatically(
+            @PathVariable Integer itemId, @RequestParam(required = false) String quantity,
+            @RequestParam(required = false) String cartToken, HttpSession session) {
+        try {
+            CartFormToken.validate(session, cartToken);
+            Integer value;
+            try {
+                value = Integer.valueOf(quantity);
+            } catch (NumberFormatException ex) {
+                throw new IllegalArgumentException("Số lượng phải là số nguyên lớn hơn 0.");
+            }
+            cartService.updateQuantity(customerId(session), itemId, value);
+            var summary = cartService.getSummary(customerId(session));
+            var item = summary.items().stream().filter(row -> row.itemId().equals(itemId)).findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Sản phẩm đã được xóa khỏi giỏ hàng."));
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of(
+                    "item", item, "cartCount", summary.totalQuantity()));
+        } catch (IllegalArgumentException ex) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", ex.getMessage()));
+        }
+    }
+
     @PostMapping("/customer/cart/items/{itemId}/remove")
     public String remove(@PathVariable Integer itemId, @RequestParam(required = false) String cartToken,
                          HttpSession session, RedirectAttributes redirect) {
@@ -66,6 +90,13 @@ public class CartController {
                         RedirectAttributes redirect) {
         return mutate(session, cartToken, redirect,
                 () -> cartService.clearCart(customerId(session)), "Đã xóa toàn bộ giỏ hàng.");
+    }
+
+    @PostMapping("/customer/cart/shops/{shopId}/clear")
+    public String clearShop(@PathVariable Integer shopId, @RequestParam(required = false) String cartToken,
+                            HttpSession session, RedirectAttributes redirect) {
+        return mutate(session, cartToken, redirect,
+                () -> cartService.clearShopCart(customerId(session), shopId), "Đã xóa giỏ hàng của cửa hàng này.");
     }
 
     @ExceptionHandler({org.springframework.web.bind.MissingServletRequestParameterException.class,

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Không thể tải trang | BetaFruit</title>
+    <style>
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f5f8f1; color: #183c2c; font: 16px/1.7 'Segoe UI', Arial, sans-serif; }
+        main { max-width: 520px; margin: 24px; padding: 36px; background: white; border: 1px solid #dce7df; border-radius: 16px; }
+        h1 { font-size: 26px; line-height: 1.4; } p { color: #64766d; }
+        a { display: inline-block; background: #26724b; color: white; padding: 10px 18px; border-radius: 8px; text-decoration: none; }
+    </style>
+</head>
+<body>
+<!-- Standalone view: rendering this error page must not query the database or shared header. -->
+<main>
+    <strong>BetaFruit</strong>
+    <h1>Hiện chưa thể tải trang</h1>
+    <p>Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại sau. Nếu lỗi vẫn tiếp diễn, hãy liên hệ quản trị viên.</p>
+    <a th:href="@{/auth/login}" href="/auth/login">Về trang đăng nhập</a>
+</main>
+</body>
+</html>

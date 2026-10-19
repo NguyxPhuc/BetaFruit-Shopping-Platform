@@ -5,11 +5,12 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.server.ResponseStatusException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ProblemDetail> handleResponseStatus(ResponseStatusException ex) {
@@ -17,17 +18,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public String handleException(Exception ex, HttpServletRequest request, RedirectAttributes redirectAttributes) {
-        String message = ex.getMessage();
-        if (message == null || message.trim().isEmpty()) {
-            message = "Đã xảy ra lỗi trong quá trình xử lý! Vui lòng thử lại sau.";
-        }
-        redirectAttributes.addFlashAttribute("errorMessage", message);
-
-        String referer = request.getHeader("Referer");
-        if (referer != null && !referer.trim().isEmpty()) {
-            return "redirect:" + referer;
-        }
-        return "redirect:/";
+    public ModelAndView handleException(Exception ex, HttpServletRequest request) {
+        log.error("Unhandled error for {} {}", request.getMethod(), request.getRequestURI(), ex);
+        // Render directly: redirecting to the failing page creates an endless loop.
+        ModelAndView error = new ModelAndView("error/500");
+        error.setStatus(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR);
+        return error;
     }
 }

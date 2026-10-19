@@ -1,6 +1,6 @@
-package com.fu.SWP391_BetaFruit.dto.response.customer;
+package com.fu.SWP391_BetaFruit.dto.response;
 
-import com.fu.SWP391_BetaFruit.dto.request.customer.ProductFilterRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ProductFilterRequest;
 import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

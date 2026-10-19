@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
-    <link rel="stylesheet" th:href="@{/css/customer-products.css}" href="/css/customer-products.css">
+    <link rel="stylesheet" th:href="@{/css/customer-products.css(v='20261015-autoqty')}" href="/css/customer-products.css?v=20261015-autoqty">
 </head>
 <body style="background-color: #f8f9fa;">
 
@@ -40,6 +40,7 @@
 
         <div class="bf-detail-info">
             <h2 class="bf-detail-title" id="productTitle" th:text="${product.productName}">Nho xanh Mỹ - 1Kg</h2>
+            <div class="bf-detail-shop"><span>Cửa hàng: </span> <strong th:text="${product.shopName}"></strong></div>
 
             <div class="bf-detail-price">
                 <span id="productPriceDisplay" th:text="${product.formattedPrice}">290.000đ</span>
@@ -64,6 +65,7 @@
             </div>
 
             <form id="cartForm" method="post" th:action="@{/customer/cart/items}"
+                  th:data-shop-id="${product.shopId}"
                   th:data-add-url="@{/customer/cart/items/add}">
             <input type="hidden" name="cartToken" th:value="${cartToken}">
             <input type="hidden" name="variantId" id="selectedVariantId">
@@ -247,7 +249,7 @@
                 return;
             }
             document.querySelectorAll('.cart-count').forEach(badge => badge.textContent = result.cartCount);
-            if (goToCart) window.location.href = document.querySelector('.cart-button').href;
+            if (goToCart) window.location.href = document.querySelector('.cart-button').href + '#shop-' + form.dataset.shopId;
             else showToast(result.message);
         } catch (error) {
             showToast('Không thể kết nối. Vui lòng kiểm tra giỏ hàng trước khi thử lại.');

@@ -1,6 +1,6 @@
 package com.fu.SWP391_BetaFruit.service;
 
-import com.fu.SWP391_BetaFruit.dto.response.customer.CartSummaryResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CartSummaryResponse;
 
 public interface CartService {
     long getItemCount(Integer customerId);
@@ -9,4 +9,5 @@ public interface CartService {
     void updateQuantity(Integer customerId, Integer itemId, Integer quantity);
     void removeItem(Integer customerId, Integer itemId);
     void clearCart(Integer customerId);
+    void clearShopCart(Integer customerId, Integer shopId);
 }
