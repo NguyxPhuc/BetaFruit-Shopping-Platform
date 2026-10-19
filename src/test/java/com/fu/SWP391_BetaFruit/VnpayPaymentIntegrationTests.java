@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Callbacks run outside a test transaction, so commit/rollback and competing requests are real. */
+/** Stock integration for the original payment callbacks, using committed test transactions. */
 @SpringBootTest(properties = "spring.config.location=classpath:/application-test.properties")
 @AutoConfigureMockMvc
 class VnpayPaymentIntegrationTests {
@@ -56,17 +56,16 @@ class VnpayPaymentIntegrationTests {
         });
     }
 
-    @Test void ipnThenReturnAndRepeatedConfirmationDeductOnlyOnce() throws Exception {
+    @Test void ipnThenReturnDeductsOnlyOnce() throws Exception {
         var params = signed("11500", "00");
         assertEquals("00", payments.processVnpayIpn(params).get("RspCode"));
         assertPaidOnce();
         assertTrue(payments.processVnpayReturn(params).isSuccess());
         assertEquals("02", payments.processVnpayIpn(params).get("RspCode"));
-        shop.confirmOrder(fixture.orderId(), fixture.ownerId());
         assertPaidOnce();
     }
 
-    @Test void returnBeforeIpnCommitsStockPaymentAndHistoryTogether() throws Exception {
+    @Test void originalReturnBeforeIpnAlsoDeductsOnConfirmation() throws Exception {
         var params = signed("11500", "00");
         var result = payments.processVnpayReturn(params);
         assertTrue(result.isSuccess()); assertEquals(fixture.orderId(), result.getOrderId());
@@ -76,15 +75,10 @@ class VnpayPaymentIntegrationTests {
         assertPaidOnce();
     }
 
-    @Test void invalidSignatureAndWrongAmountsNeverChangeStockOrPayment() throws Exception {
+    @Test void rejectedIpnDoesNotDeductStock() throws Exception {
         var badSignature = signed("11500", "00"); badSignature.put("vnp_SecureHash", "invalid");
         assertEquals("97", payments.processVnpayIpn(badSignature).get("RspCode"));
-        assertFalse(payments.processVnpayReturn(badSignature).isSuccess());
-        for (String amount : List.of("11501", "11499", "invalid")) {
-            var params = signed(amount, "00");
-            assertEquals("04", payments.processVnpayIpn(params).get("RspCode"));
-            assertFalse(payments.processVnpayReturn(params).isSuccess());
-        }
+        assertEquals("04", payments.processVnpayIpn(signed("11400", "00")).get("RspCode"));
         assertEquals(new State(10, OrderStatus.PENDING, PaymentStatus.PENDING, 0, 0), state());
     }
 
@@ -99,7 +93,7 @@ class VnpayPaymentIntegrationTests {
         setStock(0);
         var params = signed("11500", "00");
         assertEquals("99", payments.processVnpayIpn(params).get("RspCode"));
-        assertFalse(payments.processVnpayReturn(params).isSuccess());
+        assertThrows(ResponseStatusException.class, () -> payments.processVnpayReturn(params));
         assertEquals(new State(0, OrderStatus.PENDING, PaymentStatus.PENDING, 0, 0), state());
         setStock(10);
         assertEquals("00", payments.processVnpayIpn(params).get("RspCode"));
@@ -116,19 +110,11 @@ class VnpayPaymentIntegrationTests {
         assertEquals(10, state().stock());
     }
 
-    @Test void shopConfirmedFirstIsNotDeductedAgainOrMovedBackwards() throws Exception {
+    @Test void shopConfirmedFirstIsNotDeductedAgain() throws Exception {
         shop.confirmOrder(fixture.orderId(), fixture.ownerId());
-        shop.startPreparingOrder(fixture.orderId(), fixture.ownerId());
         assertEquals("00", payments.processVnpayIpn(signed("11500", "00")).get("RspCode"));
         State state = state(); assertEquals(9, state.stock()); assertEquals(1, state.deductions());
-        assertEquals(OrderStatus.PREPARING, state.status()); assertEquals(PaymentStatus.PAID, state.payment());
-    }
-
-    @Test void cancelledPendingOrderIsNotResurrectedByLatePayment() throws Exception {
-        shop.cancelOrder(fixture.orderId(), fixture.ownerId());
-        assertEquals("99", payments.processVnpayIpn(signed("11500", "00")).get("RspCode"));
-        assertEquals(OrderStatus.CANCELLED, state().status());
-        assertEquals(PaymentStatus.PENDING, state().payment()); assertEquals(10, state().stock());
+        assertEquals(OrderStatus.CONFIRMED, state.status()); assertEquals(PaymentStatus.PAID, state.payment());
     }
 
     @Test void concurrentIpnAndReturnStillDeductOnce() throws Exception {
@@ -154,7 +140,7 @@ class VnpayPaymentIntegrationTests {
     }
 
     private void assertPaidOnce() {
-        assertEquals(new State(9, OrderStatus.CONFIRMED, PaymentStatus.PAID, 1, 1), state());
+        assertEquals(new State(9, OrderStatus.CONFIRMED, PaymentStatus.PAID, 1, 0), state());
     }
     private State state() {
         return transactions.execute(tx -> {

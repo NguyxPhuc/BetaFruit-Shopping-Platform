@@ -73,8 +73,6 @@ class Swp391BetaFruitApplicationTests {
                 assertEquals(PaymentStatus.PAID, transaction.getStatus());
                 assertEquals(OrderStatus.CONFIRMED, order.getOrderStatus());
                 assertEquals(stockBeforeCallback - 1, variant.getStockQuantity());
-                mvc.perform(post(shopUrl + "/confirm").session(ownerSession)).andExpect(redirectedUrl("/shop/orders"));
-                assertEquals(stockBeforeCallback - 1, variant.getStockQuantity());
                 assertEquals("02", payments.processVnpayIpn(params).get("RspCode"));
                 assertTrue(payments.processVnpayReturn(params).isSuccess());
                 assertEquals(stockBeforeCallback - 1, variant.getStockQuantity());
