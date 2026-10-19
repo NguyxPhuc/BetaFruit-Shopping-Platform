@@ -14,19 +14,27 @@ public class ShipperInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        HttpSession session = request.getSession();
+        HttpSession session = request.getSession(false);
 
-        if(session.getAttribute("LOGGED_IN_USER_ID") == null){
-            response.sendRedirect("/auth/login");
+        if (session == null || !(session.getAttribute("LOGGED_IN_USER_ID") instanceof Integer)) {
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, "/auth/login");
             return false;
         }
 
-        List<RoleName> roles = (List<RoleName>) session.getAttribute("LOGGED_IN_ROLES");
-        if (roles != null && roles.contains(RoleName.DELIVERY_STAFF)) {
+        Object rawRoles = session.getAttribute("LOGGED_IN_ROLES");
+        if (rawRoles instanceof List<?> roles && roles.contains(RoleName.DELIVERY_STAFF)) {
             return true;
         }
 
-        response.sendRedirect("/403");
+        reject(request, response, HttpServletResponse.SC_FORBIDDEN, "/403");
         return false;
+    }
+    private void reject(HttpServletRequest request, HttpServletResponse response, int status, String page) throws java.io.IOException {
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        if (path.matches("/(shop|shipper)/orders(?:\\.html)?/api(?:/.*)?")) {
+            response.sendError(status);
+        } else {
+            response.sendRedirect(request.getContextPath() + page);
+        }
     }
 }

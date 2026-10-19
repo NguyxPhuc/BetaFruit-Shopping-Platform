@@ -1,13 +1,30 @@
-/* ==========================================================================
-   BetaFruit - Customer & Shop Profile Stylesheet
-   Design System: Organic Green & Premium Amber Accent
-   ========================================================================== */
+:root {
+    --green-900: #143c2c;
+    --green-800: #1c5039;
+    --green-700: #26724b;
+    --green-600: #34875c;
+    --green-100: #e6f2e9;
+    --cream: #fffaf0;
+    --orange: #f59e36;
+    --orange-dark: #ea580c;
+    --ink: #1e293b;
+    --muted: #64748b;
+    --white: #ffffff;
+    --border: #e2e8f0;
+    --shadow: 0 12px 35px rgba(25, 77, 54, .11);
+}
 
 /* Profile Page Layout */
 .profile-page {
     background-color: #f7f9f7;
     min-height: calc(100vh - 120px);
     padding-bottom: 60px;
+}
+
+.shop-theme .profile-page {
+    background-color: transparent;
+    min-height: auto;
+    padding-bottom: 40px;
 }
 
 /* Hero / Header Banner */
@@ -45,7 +62,10 @@
 
 /* Shop Theme Overrides */
 .shop-theme .profile-hero {
-    background: linear-gradient(135deg, #2b1f13 0%, #452d16 50%, #683e18 100%);
+    background: linear-gradient(135deg, #7c2d12 0%, #c2410c 50%, #ea580c 100%);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(234, 88, 12, 0.25);
+    margin-bottom: 24px;
 }
 
 .shop-theme .profile-hero::before {
@@ -396,6 +416,43 @@
 
 .btn-secondary:hover {
     background-color: #dfe7e1;
+}
+
+/* Edit Mode Toggle Display Rules */
+.btn-edit-mode,
+.editing-banner,
+.form-actions-footer.btn-edit-mode {
+    display: none !important;
+}
+
+body.is-editing .btn-edit-mode,
+.shop-theme.is-editing .btn-edit-mode,
+.is-editing .btn-edit-mode {
+    display: inline-flex !important;
+}
+
+body.is-editing .editing-banner,
+.shop-theme.is-editing .editing-banner,
+.is-editing .editing-banner {
+    display: flex !important;
+}
+
+body.is-editing .form-actions-footer.btn-edit-mode,
+.shop-theme.is-editing .form-actions-footer.btn-edit-mode,
+.is-editing .form-actions-footer.btn-edit-mode {
+    display: flex !important;
+}
+
+body.is-editing .btn-view-mode,
+.shop-theme.is-editing .btn-view-mode,
+.is-editing .btn-view-mode {
+    display: none !important;
+}
+
+.is-editing .editable-field {
+    background-color: #ffffff !important;
+    border-color: #ea580c !important;
+    cursor: text !important;
 }
 
 /* Alert Notification */

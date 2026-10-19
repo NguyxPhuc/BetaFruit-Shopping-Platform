@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn giao hàng | BetaFruit</title>
+    <style th:replace="~{shipper/fragments/sidebar :: sidebar-styles}"></style>
+    <style>
+        :root { color-scheme: light; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; background: #eef8ff; color: #18334c; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        .deliverer-layout { display: flex; min-height: 100vh; }
+        .deliverer-content { flex: 1; min-width: 0; padding: 47px 5% 48px 4%; }
+        .page-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; max-width: 1280px; margin-bottom: 28px; }
+        .page-heading h1 { margin: 0; color: #173149; font-size: clamp(28px, 3vw, 34px); letter-spacing: -.9px; line-height: 1.2; }
+        .page-heading p { margin: 8px 0 0; color: #637f95; font-size: 14px; line-height: 1.5; }
+        .order-count { padding: 8px 13px; border: 1px solid #d6e8f5; border-radius: 999px; background: #fff; color: #526c81; font-size: 13px; white-space: nowrap; }
+        .order-filters { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; max-width: 1280px; margin-bottom: 22px; }
+        .filter-field { display: flex; flex-direction: column; gap: 7px; color: #526c81; font-size: 12px; font-weight: 600; }
+        .filter-field--search { flex: 1 1 230px; }
+        .search-box { position: relative; }
+        .search-box svg { position: absolute; top: 50%; left: 14px; width: 18px; height: 18px; fill: none; stroke: #7893a8; stroke-width: 2; transform: translateY(-50%); pointer-events: none; }
+        input, select, button { font: inherit; }
+        .filter-field input, .filter-field select { width: 100%; height: 44px; padding: 0 12px; border: 1px solid #d6e8f5; border-radius: 10px; outline: none; background: #fff; color: #29435a; font-size: 13px; }
+        .filter-field input { padding-left: 42px; }
+        .filter-field select { max-width: 220px; cursor: pointer; }
+        .filter-field input:focus, .filter-field select:focus { border-color: #3671ff; box-shadow: 0 0 0 3px rgba(54,113,255,.12); }
+        .filter-submit { min-height: 44px; padding: 0 18px; border: 1px solid #3671ff; border-radius: 10px; background: #3671ff; color: #fff; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .filter-submit:hover { background: #1f5df5; }
+        .load-error { max-width: 1280px; margin: 0 0 20px; padding: 14px 16px; border: 1px solid #ffd6ad; border-radius: 10px; background: #fff8ed; color: #925b16; font-size: 14px; }
+        .order-card { overflow-x: auto; max-width: 1280px; border: 1px solid #d6e8f5; border-radius: 18px; background: #fff; box-shadow: 0 2px 6px rgba(34,80,115,.04); }
+        .order-table { width: 100%; min-width: 760px; border-collapse: collapse; text-align: left; }
+        .order-table th { height: 52px; padding: 0 24px; border-bottom: 1px solid #dbeaf4; color: #637f95; font-size: 11px; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
+        .order-table td { height: 94px; padding: 16px 24px; border-bottom: 1px solid #dbeaf4; color: #29435a; font-size: 14px; font-weight: 600; }
+        .order-table tbody tr:last-child td { border-bottom: 0; }
+        .order-table tbody tr:hover { background: #fbfdff; }
+        .order-code, .order-money { white-space: nowrap; }
+        .detail-link { display: inline-flex; align-items: center; min-height: 38px; padding: 8px 12px; border: 1px solid #d6e8f5; border-radius: 9px; color: #30485c; text-decoration: none; font-size: 13px; white-space: nowrap; }
+        .detail-link:hover { background: #eaf2ff; border-color: #8eb4ee; }
+        .order-customer { min-width: 150px; max-width: 240px; overflow-wrap: anywhere; line-height: 1.5; }
+        .badge { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 34px; padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.35; white-space: nowrap; }
+        .badge--cod { background: #fff3d6; color: #915e00; }
+        .badge--online { background: #e7f5f1; color: #17765d; }
+        .payment-note { display: block; margin-top: 7px; color: #637f95; font-size: 11px; font-weight: 400; }
+        .order-status { min-width: 138px; background: #eaf2ff; color: #2b5cbd; }
+        .order-status::before { width: 5px; height: 5px; flex: none; border-radius: 50%; background: currentColor; content: ""; }
+        .order-status--waiting { background: #fff7df; color: #94650a; }
+        .order-status--done { background: #e7f5f1; color: #17765d; }
+        .order-status--closed { background: #ffeded; color: #bd4444; }
+        .empty-state { padding: 56px 24px !important; color: #637f95 !important; font-weight: 400 !important; text-align: center; }
+        .pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; max-width: 1280px; margin-top: 20px; color: #637f95; font-size: 13px; }
+        .pagination__links { display: flex; align-items: center; gap: 7px; }
+        .pagination__link { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 36px; padding: 0 10px; border: 1px solid #d6e8f5; border-radius: 8px; background: #fff; color: #30485c; text-decoration: none; }
+        .pagination__link:hover { border-color: #8eb4ee; background: #f6faff; }
+        .pagination__link--active { border-color: #3671ff; background: #3671ff; color: #fff; }
+        a:focus-visible, button:focus-visible { outline: 2px solid #3671ff; outline-offset: 3px; }
+        @media (max-width: 1100px) { .deliverer-content { padding-inline: 28px; } }
+        @media (max-width: 700px) { .deliverer-content { padding: 30px 18px; } .filter-field { flex: 1 1 140px; } .filter-field--search { flex-basis: 100%; } .filter-field select { max-width: none; } .pagination { align-items: flex-start; flex-direction: column; } }
+    </style>
+</head>
+<body>
+<div class="deliverer-layout">
+    <aside th:replace="~{shipper/fragments/sidebar :: sidebar('orders')}"></aside>
+    <main class="deliverer-content">
+        <header class="page-heading">
+            <div><h1>Đơn giao hàng</h1><p>Theo dõi các đơn được phân công và khoản cần thu từ khách.</p></div>
+            <span class="order-count" th:if="${orderLoadError == null}" th:text="${orders.totalElements} + ' đơn hàng'">0 đơn hàng</span>
+        </header>
+
+        <form class="order-filters" method="get" th:action="@{/shipper/orders}">
+            <label class="filter-field filter-field--search"><span>Tìm đơn hàng</span>
+                <span class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m16 16 4 4"/></svg>
+                    <input type="search" name="keyword" th:value="${keyword}" placeholder="Mã đơn, tên khách hàng">
+                </span>
+            </label>
+            <label class="filter-field"><span>Thanh toán</span>
+                <select name="paymentMethod">
+                    <option value="">Tất cả</option>
+                    <option value="COD" th:selected="${selectedPaymentMethod != null and selectedPaymentMethod.name() == 'COD'}">COD — thu hộ</option>
+                    <option value="VNPAY" th:selected="${selectedPaymentMethod != null and selectedPaymentMethod.name() == 'VNPAY'}">VNPay</option>
+                </select>
+            </label>
+            <label class="filter-field"><span>Trạng thái</span>
+                <select name="status">
+                    <option value="">Tất cả</option>
+                    <option value="PENDING" th:selected="${selectedStatus != null and selectedStatus.name() == 'PENDING'}">Chờ xác nhận</option>
+                    <option value="CONFIRMED" th:selected="${selectedStatus != null and selectedStatus.name() == 'CONFIRMED'}">Đã xác nhận</option>
+                    <option value="PREPARING" th:selected="${selectedStatus != null and selectedStatus.name() == 'PREPARING'}">Đang chuẩn bị hàng</option>
+                    <option value="READY" th:selected="${selectedStatus != null and selectedStatus.name() == 'READY'}">Sẵn sàng giao</option>
+                    <option value="PICKED_UP" th:selected="${selectedStatus != null and selectedStatus.name() == 'PICKED_UP'}">Đã lấy hàng</option>
+                    <option value="DELIVERING" th:selected="${selectedStatus != null and selectedStatus.name() == 'DELIVERING'}">Đang giao hàng</option>
+                    <option value="DELIVERED" th:selected="${selectedStatus != null and selectedStatus.name() == 'DELIVERED'}">Đã giao - chờ hoàn tất</option>
+                    <option value="SUCCESS" th:selected="${selectedStatus != null and selectedStatus.name() == 'SUCCESS'}">Đơn hoàn tất</option>
+                    <option value="FAILED" th:selected="${selectedStatus != null and selectedStatus.name() == 'FAILED'}">Giao thất bại</option>
+                    <option value="CANCELLED" th:selected="${selectedStatus != null and selectedStatus.name() == 'CANCELLED'}">Đã hủy</option>
+                    <option value="REJECTED" th:selected="${selectedStatus != null and selectedStatus.name() == 'REJECTED'}">Từ chối nhận đơn</option>
+                </select>
+            </label>
+            <label class="filter-field"><span>Sắp xếp theo</span>
+                <select name="sortBy"><option value="assignedAt" th:selected="${sortBy == 'assignedAt'}">Phân công mới nhất</option><option value="orderCode" th:selected="${sortBy == 'orderCode'}">Mã đơn</option><option value="totalAmount" th:selected="${sortBy == 'totalAmount'}">Tổng tiền</option></select>
+            </label>
+            <label class="filter-field"><span>Thứ tự</span>
+                <select name="sortDirection"><option value="desc" th:selected="${sortDirection == 'desc'}">Giảm dần</option><option value="asc" th:selected="${sortDirection == 'asc'}">Tăng dần</option></select>
+            </label>
+            <input type="hidden" name="size" th:value="${orders.size > 0 ? orders.size : 10}">
+            <button class="filter-submit" type="submit">Tìm kiếm</button>
+        </form>
+
+        <p class="load-error" role="alert" th:if="${orderLoadError}" th:text="${orderLoadError}"></p>
+        <div class="order-card" th:if="${orderLoadError == null}">
+            <table class="order-table" aria-label="Danh sách đơn được phân công">
+                <thead><tr><th scope="col">MÃ ĐƠN</th><th scope="col">KHÁCH HÀNG</th><th scope="col">TỔNG TIỀN</th><th scope="col">THANH TOÁN</th><th scope="col">TRẠNG THÁI</th><th scope="col">THAO TÁC</th></tr></thead>
+                <tbody>
+                <tr th:each="order : ${orders.content}">
+                    <td class="order-code" th:text="'#' + ${order.orderId}"></td>
+                    <td class="order-customer" th:text="${order.customerName}"></td>
+                    <td class="order-money" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', (order.finalAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
+                    <td>
+                        <span class="badge" th:classappend="${order.paymentMethod == 'COD' ? ' badge--cod' : ' badge--online'}" th:text="${order.paymentMethod == 'COD' ? 'COD' : 'Online'}"></span>
+                        <small class="payment-note" th:if="${order.paymentMethod == 'VNPAY'}">Không thu tiền mặt</small>
+                        <small class="payment-note" th:if="${order.paymentMethod == 'COD' and order.amountToCollect > 0}" th:text="'Cần thu ' + ${#numbers.formatDecimal(order.amountToCollect, 0, 'COMMA', (order.amountToCollect.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></small>
+                    </td>
+                    <td><span class="badge order-status"
+                              th:classappend="${order.orderStatus == 'DELIVERED' or order.orderStatus == 'SUCCESS'} ? ' order-status--done' : (${order.orderStatus == 'FAILED' or order.orderStatus == 'CANCELLED' or order.orderStatus == 'REJECTED'} ? ' order-status--closed' : (${order.orderStatus == 'PENDING' or order.orderStatus == 'PREPARING'} ? ' order-status--waiting' : ''))"
+                              th:text="${order.orderStatusLabel()}"></span></td>
+                    <td><a class="detail-link" th:href="@{/shipper/orders/{id}(id=${order.orderId})}">Xem chi tiết</a></td>
+                </tr>
+                <tr th:if="${orders.empty}"><td class="empty-state" colspan="6">Không có đơn giao hàng phù hợp. Thử thay đổi bộ lọc hoặc kiểm tra lại khi có phân công mới.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav class="pagination" th:if="${orderLoadError == null and orders.totalPages > 1}" aria-label="Phân trang đơn giao hàng">
+            <span th:text="'Trang ' + ${orders.number + 1} + ' / ' + ${orders.totalPages}"></span>
+            <div class="pagination__links">
+                <a class="pagination__link" th:if="${not orders.first}" th:href="@{/shipper/orders(keyword=${keyword},paymentMethod=${selectedPaymentMethod},status=${selectedStatus},sortBy=${sortBy},sortDirection=${sortDirection},page=${orders.number - 1},size=${orders.size})}">Trước</a>
+                <a class="pagination__link" th:each="p : ${#numbers.sequence(T(java.lang.Math).max(0, orders.number - 2), T(java.lang.Math).min(orders.totalPages - 1, orders.number + 2))}"
+                   th:classappend="${p == orders.number} ? ' pagination__link--active' : ''" th:attr="aria-current=${p == orders.number ? 'page' : null}"
+                   th:href="@{/shipper/orders(keyword=${keyword},paymentMethod=${selectedPaymentMethod},status=${selectedStatus},sortBy=${sortBy},sortDirection=${sortDirection},page=${p},size=${orders.size})}" th:text="${p + 1}"></a>
+                <a class="pagination__link" th:if="${not orders.last}" th:href="@{/shipper/orders(keyword=${keyword},paymentMethod=${selectedPaymentMethod},status=${selectedStatus},sortBy=${sortBy},sortDirection=${sortDirection},page=${orders.number + 1},size=${orders.size})}">Sau</a>
+            </div>
+        </nav>
+    </main>
+</div>
+</body>
+</html>

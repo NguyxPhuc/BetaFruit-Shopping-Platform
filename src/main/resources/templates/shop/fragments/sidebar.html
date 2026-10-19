@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="sidebar(activeMenu)" class="shop-sidebar">
+
+    <!-- ════════ BRAND LOGO & TAG ════════ -->
+    <div class="shop-sidebar-brand">
+        <a th:href="@{/shop/dashboard}" href="/shop/dashboard" class="text-decoration-none d-block">
+            <div class="shop-logo-box">
+                <img th:src="@{/images/betafruit-logo.png}" src="/images/betafruit-logo.png" alt="BetaFruit" class="shop-logo-img">
+            </div>
+        </a>
+    </div>
+
+    <!-- ════════ SIDEBAR NAVIGATION LIST ════════ -->
+    <nav class="shop-sidebar-nav">
+
+        <!-- NHÓM 1: TỔNG QUAN -->
+        <div class="shop-nav-group-title">Tổng quan</div>
+        <a th:href="@{/shop/dashboard}" href="/shop/dashboard" class="shop-nav-link"
+           th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
+            <i class="bi bi-grid-1x2-fill"></i>
+            <span>Bảng Điều Khiển</span>
+        </a>
+
+        <!-- NHÓM 2: SẢN PHẨM & HOA QUẢ -->
+        <div class="shop-nav-group-title mt-2">Sản phẩm & Hoa quả</div>
+        <a th:href="@{/shop/products}" href="/shop/products" class="shop-nav-link"
+           th:classappend="${activeMenu == 'products'} ? 'active' : ''">
+            <i class="bi bi-basket2-fill"></i>
+            <span>Danh Sách Hoa Quả</span>
+        </a>
+        <a th:href="@{/shop/products/create}" href="/shop/products/create" class="shop-nav-link"
+           th:classappend="${activeMenu == 'products-create'} ? 'active' : ''">
+            <i class="bi bi-plus-circle-fill"></i>
+            <span>Đăng Bán Hoa Quả</span>
+        </a>
+
+        <!-- NHÓM 3: QUẢN LÝ KHO (GOODS RECEIPT & INVENTORY) -->
+        <div class="shop-nav-group-title mt-2">Quản lý kho hàng</div>
+        <a th:href="@{/shop/inventory/import-note/new}" href="/shop/inventory/import-note/new" class="shop-nav-link"
+           th:classappend="${activeMenu == 'import-note-create'} ? 'active' : ''">
+            <i class="bi bi-box-arrow-in-down"></i>
+            <span>Lập Phiếu Nhập Kho</span>
+        </a>
+        <a th:href="@{/shop/inventory/import-note}" href="/shop/inventory/import-note" class="shop-nav-link"
+           th:classappend="${activeMenu == 'import-note-list'} ? 'active' : ''">
+            <i class="bi bi-receipt-cutoff"></i>
+            <span>Lịch Sử Nhập Kho</span>
+        </a>
+        <a th:href="@{/shop/inventory/history}" href="/shop/inventory/history" class="shop-nav-link"
+           th:classappend="${activeMenu == 'inventory-history'} ? 'active' : ''">
+            <i class="bi bi-clock-history"></i>
+            <span>Biến Động Tồn Kho</span>
+        </a>
+
+        <!-- NHÓM 4: BÁN HÀNG & KHUYẾN MÃI -->
+        <div class="shop-nav-group-title mt-2">Bán hàng & Khuyến mãi</div>
+        <a th:href="@{/shop/orders}" href="/shop/orders" class="shop-nav-link"
+           th:classappend="${activeMenu == 'orders'} ? 'active' : ''">
+            <i class="bi bi-bag-check-fill"></i>
+            <span>Đơn Hàng Cửa Hàng</span>
+        </a>
+        <a th:href="@{/shop/coupons}" href="/shop/coupons" class="shop-nav-link"
+           th:classappend="${activeMenu == 'coupons'} ? 'active' : ''">
+            <i class="bi bi-ticket-perforated-fill"></i>
+            <span>Mã Giảm Giá (Voucher)</span>
+        </a>
+
+        <!-- NHÓM 5: CÀI ĐẶT CỬA HÀNG -->
+        <div class="shop-nav-group-title mt-2">Cài đặt cửa hàng</div>
+        <a th:href="@{/shop/address}" href="/shop/address" class="shop-nav-link"
+           th:classappend="${activeMenu == 'address'} ? 'active' : ''">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>Địa Chỉ Lấy Hàng</span>
+        </a>
+        <a th:href="@{/shop/profile}" href="/shop/profile" class="shop-nav-link"
+           th:classappend="${activeMenu == 'profile'} ? 'active' : ''">
+            <i class="bi bi-shop-window"></i>
+            <span>Hồ Sơ Cửa Hàng</span>
+        </a>
+
+    </nav>
+
+    <!-- ════════ FOOTER: QUAY VỀ SÀN BÁN LẺ & ĐĂNG XUẤT ════════ -->
+    <div class="shop-sidebar-footer">
+        <a th:href="@{/home}" href="/home" class="btn-switch-store mb-2">
+            <i class="bi bi-arrow-left-circle"></i>
+            <span>Về Sàn BetaFruit</span>
+        </a>
+        <a th:href="@{/auth/logout}" href="/auth/logout" class="btn-sidebar-logout">
+            <i class="bi bi-box-arrow-right fs-6"></i>
+            <span>Đăng Xuất Tài Khoản</span>
+        </a>
+    </div>
+
+</div>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{shop/layout :: layout(~{::title}, 'orders', ~{::orderContent})}">
+<head><title>Chi tiết đơn hàng | BetaFruit</title></head>
+<body>
+<section th:fragment="orderContent" class="shop-orders-page">
+<style>
+
+.shop-orders-page { color-scheme: light; }
+.shop-orders-page { margin: 0; background: #eef8ff; color: #18334c; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.shop-orders-page .shop-layout { display: flex; min-height: 100vh; }
+.shop-orders-page .shop-content { flex: 1; min-width: 0; padding: 47px 8.4% 48px 4%; }
+.shop-orders-page .page-heading { margin: 0 0 24px; }
+.shop-orders-page .page-heading h1 { margin: 0; color: #173149; font-size: clamp(28px, 3vw, 34px); letter-spacing: -.9px; line-height: 1.1; }
+.shop-orders-page .page-heading p { margin: 8px 0 0; color: #7690a6; font-size: 14px; }
+.shop-orders-page .order-filters { display: flex; align-items: center; gap: 14px; max-width: 1280px; margin-bottom: 29px; }
+.shop-orders-page .order-search { position: relative; flex: 1; max-width: 634px; }
+.shop-orders-page .order-search svg { position: absolute; top: 50%; left: 15px; width: 19px; height: 19px; color: #7893a8; fill: none; stroke: currentColor; stroke-width: 2.2; transform: translateY(-50%); pointer-events: none; }
+.shop-orders-page .order-search input { width: 100%; height: 46px; padding: 0 17px 0 44px; border: 1px solid #d6e8f5; border-radius: 13px; outline: none; background: #fff; box-shadow: 0 1px 2px rgba(45, 94, 136, .03); color: #263f56; font: inherit; font-size: 14px; }
+.shop-orders-page .order-search input:focus { border-color: #3671ff; box-shadow: 0 0 0 3px rgba(54,113,255,.12); }
+.shop-orders-page .sort-filter { display: flex; align-items: center; gap: 8px; color: #637f95; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.shop-orders-page .sort-filter select { height: 46px; padding: 0 35px 0 13px; border: 1px solid #d6e8f5; border-radius: 11px; outline: none; background: #fff; color: #29435a; font: inherit; font-size: 13px; cursor: pointer; }
+.shop-orders-page .sort-filter select:focus { border-color: #3671ff; box-shadow: 0 0 0 3px rgba(54,113,255,.12); }
+.shop-orders-page .database-warning { max-width: 634px; margin: -13px 0 20px; padding: 11px 14px; border: 1px solid #ffd6ad; border-radius: 10px; background: #fff8ed; color: #a66316; font-size: 13px; line-height: 1.45; }
+.shop-orders-page .order-card { overflow: hidden; width: 100%; max-width: 1280px; border: 1px solid #d6e8f5; border-radius: 18px; background: #fff; box-shadow: 0 2px 6px rgba(34, 80, 115, .04); }
+.shop-orders-page .order-table { width: 100%; border-collapse: collapse; text-align: left; }
+.shop-orders-page .order-table th { height: 50px; padding: 0 24px; border-bottom: 1px solid #dbeaf4; color: #748da0; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.shop-orders-page .order-table td { height: 93px; padding: 9px 24px; border-bottom: 1px solid #dbeaf4; color: #29435a; font-size: 14px; font-weight: 600; }
+.shop-orders-page .order-table tbody tr:last-child td { border-bottom: 0; }
+.shop-orders-page .order-code { color: #1e3b54; white-space: nowrap; }
+.shop-orders-page .order-customer { min-width: 104px; max-width: 150px; line-height: 1.45; }
+.shop-orders-page .order-money { white-space: nowrap; }
+.shop-orders-page .order-received { color: #526c81; font-weight: 500; white-space: nowrap; }
+.shop-orders-page .order-table th:nth-child(5), .shop-orders-page .order-table td:nth-child(5) { min-width: 158px; }
+.shop-orders-page .order-status { display: inline-flex; align-items: center; gap: 7px; min-width: 136px; min-height: 41px; padding: 5px 13px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.shop-orders-page .order-status::before { width: 5px; height: 5px; flex: none; border-radius: 50%; background: currentColor; content: ""; }
+.shop-orders-page .order-status--pending { background: #fff7df; color: #d99010; }
+.shop-orders-page .order-status--confirmed { background: #e1f8f8; color: #10bfae; }
+.shop-orders-page .order-status--cancelled, .shop-orders-page .order-status--failed, .shop-orders-page .order-status--rejected { background: #ffeded; color: #e15757; }
+.shop-orders-page .order-status--other { background: #eaf2ff; color: #3671ff; }
+.shop-orders-page .order-actions { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.shop-orders-page .button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; padding: 8px 12px; border: 1px solid #d6e8f5; border-radius: 9px; background: #fff; color: #30485c; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; transition: .18s ease; }
+.shop-orders-page .button:hover { border-color: #8eb4ee; background: #f6faff; }
+.shop-orders-page .button--primary { border-color: #3671ff; background: #3671ff; box-shadow: 0 6px 13px rgba(54,113,255,.25); color: #fff; }
+.shop-orders-page .button--primary:hover { background: #1f5df5; }
+.shop-orders-page .button--cancel { border-color: #ffd3d3; color: #d95858; }
+.shop-orders-page .button--cancel:hover { background: #fff5f5; border-color: #efaaaa; }
+.shop-orders-page .order-actions form { margin: 0; }
+.shop-orders-page .empty-state { padding: 48px 24px; color: #7890a3; text-align: center; }
+.shop-orders-page .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 7px; max-width: 1280px; margin-top: 18px; }
+.shop-orders-page .confirmation-dialog { width: min(420px, calc(100vw - 36px)); padding: 0; border: 0; border-radius: 16px; box-shadow: 0 18px 45px rgba(23, 49, 73, .25); color: #18334c; }
+.shop-orders-page .confirmation-dialog::backdrop { background: rgba(19, 43, 63, .42); }
+.shop-orders-page .confirmation-dialog__content { padding: 25px; }
+.shop-orders-page .confirmation-dialog h2 { margin: 0; font-size: 20px; }
+.shop-orders-page .confirmation-dialog p { margin: 11px 0 24px; color: #617d92; font-size: 14px; line-height: 1.5; }
+.shop-orders-page .confirmation-dialog__actions { display: flex; justify-content: flex-end; gap: 10px; }
+.shop-orders-page .pagination__link { display: inline-flex; min-width: 36px; height: 36px; align-items: center; justify-content: center; padding: 0 10px; border: 1px solid #d6e8f5; border-radius: 8px; background: #fff; color: #30485c; font-size: 13px; font-weight: 600; text-decoration: none; }
+.shop-orders-page .pagination__link:hover { border-color: #8eb4ee; background: #f6faff; }
+.shop-orders-page .pagination__link--active { border-color: #3671ff; background: #3671ff; color: #fff; }
+.shop-orders-page .pagination__link--disabled { pointer-events: none; opacity: .45; }
+        @media (max-width: 1000px) {
+.shop-orders-page .shop-content { padding-inline: 28px; }
+.shop-orders-page .order-card { overflow-x: auto; }
+.shop-orders-page .order-table { min-width: 1000px; } }
+        @media (max-width: 700px) {
+.shop-orders-page .shop-content { padding: 30px 18px; }
+.shop-orders-page .order-filters { align-items: stretch; flex-direction: column; }
+.shop-orders-page .sort-filter { flex-wrap: wrap; }
+.shop-orders-page .order-table th, .shop-orders-page .order-table td { padding-inline: 16px; } }
+    
+
+.shop-orders-page *, .shop-orders-page *::before, .shop-orders-page *::after { box-sizing: border-box; }
+.shop-orders-page .shop-sidebar { flex-shrink: 0; }
+.shop-orders-page .detail-content { max-width: 1500px; }
+.shop-orders-page .back-link { display: inline-flex; margin-bottom: 24px; color: #637f95; font-size: 13px; text-decoration: none; }
+.shop-orders-page .back-link:hover { color: #3671ff; }
+.shop-orders-page .detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.shop-orders-page .detail-heading h1 { overflow-wrap: anywhere; }
+.shop-orders-page .detail-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 22px; align-items: start; }
+.shop-orders-page .detail-stack { display: grid; gap: 22px; min-width: 0; }
+.shop-orders-page .detail-card { padding: 25px; border: 1px solid #d6e8f5; border-radius: 18px; background: white; box-shadow: 0 2px 6px rgba(34,80,115,.04); min-width: 0; }
+.shop-orders-page .detail-card h2 { margin: 0 0 21px; font-size: 17px; letter-spacing: -.3px; }
+.shop-orders-page .order-overview { margin-bottom: 22px; }
+.shop-orders-page .order-overview__summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; list-style: none; cursor: pointer; }
+.shop-orders-page .order-overview__summary::-webkit-details-marker { display: none; }
+.shop-orders-page .order-overview__summary:focus-visible { outline: 2px solid #3671ff; outline-offset: 7px; border-radius: 6px; }
+.shop-orders-page .order-overview__identity { display: grid; grid-template-columns: minmax(100px, .6fr) minmax(0, 1fr); gap: 24px; flex: 1; min-width: 0; }
+.shop-orders-page .order-overview__identity > span { display: grid; gap: 7px; }
+.shop-orders-page .order-overview__identity strong { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.shop-orders-page .order-overview__toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; min-height: 42px; padding: 8px 13px; border: 1px solid #d6e8f5; border-radius: 9px; color: #30485c; font-size: 13px; font-weight: 600; }
+.shop-orders-page .order-overview__summary:hover .order-overview__toggle { border-color: #8eb4ee; background: #f6faff; }
+.shop-orders-page .order-overview__toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+.shop-orders-page .order-overview__collapse { display: none; }
+.shop-orders-page .order-overview[open] .order-overview__expand { display: none; }
+.shop-orders-page .order-overview[open] .order-overview__collapse { display: inline; }
+.shop-orders-page .order-overview[open] .order-overview__toggle svg { transform: rotate(180deg); }
+.shop-orders-page .order-overview__body { margin-top: 23px; padding-top: 23px; border-top: 1px solid #dbeaf4; }
+.shop-orders-page .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin: 0; }
+.shop-orders-page .info-grid dt, .shop-orders-page .muted { color: #7690a6; font-size: 13px; }
+.shop-orders-page .info-grid dd { margin: 7px 0 0; font-size: 14px; font-weight: 600; line-height: 1.65; overflow-wrap: anywhere; }
+.shop-orders-page .wide { grid-column: 1 / -1; }
+.shop-orders-page .address { white-space: pre-line; }
+.shop-orders-page .detail-actions { flex-wrap: wrap; margin-top: 23px; padding-top: 21px; border-top: 1px solid #dbeaf4; }
+.shop-orders-page .detail-actions .button { min-height: 42px; }
+.shop-orders-page .total-label { font-size: 14px; color: #637f95; }
+.shop-orders-page .total-value { display: block; font-size: clamp(25px, 3vw, 32px); color: #173149; margin: 9px 0 22px; overflow-wrap: anywhere; }
+.shop-orders-page .money-lines { margin: 0; display: grid; gap: 16px; padding-top: 20px; border-top: 1px solid #dbeaf4; }
+.shop-orders-page .money-lines > div { display: flex; justify-content: space-between; align-items: baseline; gap: 15px; font-size: 14px; }
+.shop-orders-page .money-lines dt { color: #637f95; }
+.shop-orders-page .money-lines dd { margin: 0; font-weight: 600; text-align: right; white-space: nowrap; }
+.shop-orders-page .voucher-code { display: block; margin-top: 5px; font-size: 12px; overflow-wrap: anywhere; }
+.shop-orders-page .net-received { padding: 16px; margin-top: 22px; background: #eaf2ff; border-radius: 12px; }
+.shop-orders-page .net-received span { display: block; color: #52759c; font-size: 13px; }
+.shop-orders-page .net-received strong { display: block; color: #3671ff; font-size: 24px; margin-top: 8px; overflow-wrap: anywhere; }
+.shop-orders-page .payment-note { margin: 15px 0 0; font-size: 13px; color: #7690a6; line-height: 1.6; }
+.shop-orders-page .unassigned { margin: 0; padding: 15px; background: #f5f9fd; border-radius: 11px; color: #637f95; font-size: 14px; line-height: 1.7; }
+.shop-orders-page .items-card { padding: 0; overflow: hidden; }
+.shop-orders-page .items-card h2 { padding: 25px 25px 0; }
+.shop-orders-page .items-scroll { overflow-x: auto; }
+.shop-orders-page .items-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+.shop-orders-page .items-table th { background: #f8fbfe; font-size: 11px; color: #748da0; padding: 15px 20px; white-space: nowrap; }
+.shop-orders-page .items-table td { padding: 20px; border-top: 1px solid #dbeaf4; line-height: 1.6; }
+.shop-orders-page .items-table th:last-child, .shop-orders-page .items-table td:last-child { text-align: right; }
+.shop-orders-page .item-name { display: block; min-width: 140px; font-weight: 600; overflow-wrap: anywhere; }
+.shop-orders-page .variant { display: block; color: #7690a6; font-size: 12px; margin-top: 5px; }
+.shop-orders-page .money { white-space: nowrap; }
+.shop-orders-page .timeline { list-style: none; margin: 0; padding: 0; }
+.shop-orders-page .timeline li { position: relative; margin-left: 5px; padding: 0 0 23px 22px; border-left: 1px solid #d6e8f5; font-size: 13px; }
+.shop-orders-page .timeline li::before { content: ""; position: absolute; left: -4px; top: 4px; width: 7px; height: 7px; border-radius: 50%; background: #3671ff; }
+.shop-orders-page .timeline li:last-child { padding-bottom: 0; }
+.shop-orders-page .timeline p { color: #637f95; margin: 7px 0; overflow-wrap: anywhere; line-height: 1.6; }
+.shop-orders-page .timeline small { color: #7690a6; line-height: 1.6; }
+        @media (max-width: 1150px) {
+.shop-orders-page .detail-grid { grid-template-columns: minmax(0, 1fr); } }
+        @media (max-width: 700px) {
+.shop-orders-page .detail-card { padding: 20px; }
+.shop-orders-page .items-card { padding: 0; }
+.shop-orders-page .info-grid { grid-template-columns: 1fr; }
+.shop-orders-page .shop-content { padding: 26px 14px; }
+.shop-orders-page .detail-heading { gap: 14px; }
+.shop-orders-page .money-lines > div { flex-wrap: wrap; gap: 6px; } }
+        @media (max-width: 700px) {
+.shop-orders-page .order-overview__summary { align-items: flex-start; gap: 14px; }
+.shop-orders-page .order-overview__identity { grid-template-columns: minmax(0, 1fr); gap: 15px; }
+.shop-orders-page .order-overview__toggle { padding-inline: 10px; } }
+    
+.shop-orders-page .shop-layout { min-height: 0; }
+.shop-orders-page .shop-content { padding: 0 !important; width: 100%; }
+/* Keep the shared shop shell usable on order pages at phone widths. */
+@media (max-width: 767px) {
+    html.shop-orders-document, body.shop-orders-portal { height: auto !important; max-height: none !important; overflow: auto !important; }
+    .shop-orders-portal .shop-shell { width: 100% !important; flex-direction: column !important; height: auto !important; max-height: none !important; overflow: visible !important; }
+    .shop-orders-portal .shop-sidebar { width: 100% !important; min-width: 0 !important; max-width: none !important; height: auto !important; max-height: none !important; }
+    .shop-orders-portal .shop-sidebar-brand, .shop-orders-portal .shop-nav-group-title { display: none; }
+    .shop-orders-portal .shop-sidebar-nav { display: flex; flex-direction: row; flex: none; gap: 8px; overflow-x: auto; padding: 10px; }
+    .shop-orders-portal .shop-nav-link { flex-shrink: 0; white-space: nowrap; }
+    .shop-orders-portal .shop-sidebar-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 12px; }
+    .shop-orders-portal .shop-sidebar-footer > a { margin: 0 !important; }
+    .shop-orders-portal .shop-main-pane { width: 100%; height: auto !important; max-height: none !important; overflow: visible !important; }
+    .shop-orders-portal .shop-content-outlet { padding: 18px 14px 28px !important; overflow: visible !important; }
+}
+</style>
+
+<div class="shop-layout" th:with="order=${detail.summary}">
+    <section class="shop-content detail-content">
+        <a class="back-link" th:href="@{/shop/orders}">← Quay lại danh sách đơn hàng</a>
+        <header class="page-heading detail-heading">
+            <div>
+                <h1>Chi tiết đơn hàng <span th:text="'#' + ${order.orderCode}"></span></h1>
+                <p th:if="${order.createdAt != null}" th:text="'Đặt lúc ' + ${#temporals.format(order.createdAt, 'HH:mm · dd/MM/yyyy')}"></p>
+            </div>
+            <span class="order-status"
+                  th:classappend="${order.orderStatus == 'PENDING'} ? 'order-status--pending' : (${order.orderStatus == 'CONFIRMED'} ? 'order-status--confirmed' : (${order.orderStatus == 'CANCELLED' or order.orderStatus == 'FAILED' or order.orderStatus == 'REJECTED'} ? 'order-status--cancelled' : 'order-status--other'))"
+                  th:text="${order.orderStatusLabel}"></span>
+        </header>
+        <details class="detail-card order-overview">
+            <summary class="order-overview__summary">
+                <span class="order-overview__identity">
+                    <span><span class="muted">Mã đơn hàng</span><strong th:text="'#' + ${order.orderCode}"></strong></span>
+                    <span><span class="muted">Người đặt</span><strong th:text="${order.customerName}"></strong></span>
+                </span>
+                <span class="order-overview__toggle">
+                    <span class="order-overview__expand">Mở rộng</span><span class="order-overview__collapse">Thu gọn</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
+            </summary>
+            <div class="order-overview__body">
+                    <h2>Thông tin đơn hàng</h2>
+                    <dl class="info-grid">
+                        <div><dt>Số điện thoại người đặt</dt><dd th:text="${#strings.isEmpty(detail.customerPhone) ? 'Chưa có số điện thoại' : detail.customerPhone}"></dd></div>
+                        <div><dt>Phương thức thanh toán</dt><dd th:text="${detail.paymentMethod == 'COD' ? 'Thanh toán khi nhận hàng (COD)' : (detail.paymentMethod ?: 'Chưa có thông tin')}"></dd></div>
+                        <div class="wide"><dt>Địa chỉ giao hàng</dt><dd class="address" th:text="${detail.snapshotShippingAddress}"></dd></div>
+                    </dl>
+                    <div class="order-actions detail-actions" th:if="${order.canCancel or order.canConfirm or order.canStartPreparing or order.canMarkReady}">
+                        <form th:if="${order.canCancel}" class="status-change-form" method="post" th:action="@{/shop/orders/{id}/cancel(id=${order.orderId})}" data-confirm-title="Hủy đơn hàng?" data-confirm-message="Bạn có chắc muốn hủy đơn hàng này không?">
+                                <input type="hidden" name="returnToDetail" value="true">
+                                <button class="button button--cancel" type="submit">Hủy đơn</button>
+                            </form>
+                            <form th:if="${order.canConfirm}" class="status-change-form" method="post" th:action="@{/shop/orders/{id}/confirm(id=${order.orderId})}" data-confirm-title="Xác nhận đơn hàng?" data-confirm-message="Bạn có chắc muốn xác nhận đơn hàng này không?">
+                                <input type="hidden" name="returnToDetail" value="true">
+                                <button class="button button--primary" type="submit">Xác nhận</button>
+                            </form>
+                            <form th:if="${order.canStartPreparing}" class="status-change-form" method="post" th:action="@{/shop/orders/{id}/preparing(id=${order.orderId})}" data-confirm-title="Bắt đầu chuẩn bị hàng?" data-confirm-message="Bạn có chắc muốn chuyển đơn hàng sang trạng thái đang chuẩn bị không?">
+                                <input type="hidden" name="returnToDetail" value="true">
+                                <button class="button button--primary" type="submit">Chuẩn bị hàng</button>
+                            </form>
+                            <form th:if="${order.canMarkReady}" class="status-change-form" method="post" th:action="@{/shop/orders/{id}/ready(id=${order.orderId})}" data-confirm-title="Xác nhận đã chuẩn bị xong?" data-confirm-message="Bạn có chắc muốn chuyển đơn hàng sang trạng thái sẵn sàng giao không?">
+                                <input type="hidden" name="returnToDetail" value="true">
+                                <button class="button button--primary" type="submit">Sẵn sàng giao</button>
+                            </form>
+                    </div>
+            </div>
+        </details>
+        <div class="detail-grid">
+            <div class="detail-stack">
+                <section class="detail-card items-card">
+                    <h2>Sản phẩm trong đơn <span class="muted" th:text="'(' + ${#lists.size(detail.items)} + ' mặt hàng)'"></span></h2>
+                    <div class="items-scroll">
+                        <table class="items-table">
+                            <thead><tr><th scope="col">SẢN PHẨM / BIẾN THỂ</th><th scope="col">ĐƠN GIÁ</th><th scope="col">SỐ LƯỢNG</th><th scope="col">THÀNH TIỀN</th></tr></thead>
+                            <tbody>
+                                <tr th:each="item : ${detail.items}">
+                                    <td><span class="item-name" th:text="${item.productName}"></span><span class="variant" th:text="'Biến thể: ' + ${item.variantName}"></span></td>
+                                    <td class="money" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', (item.unitPrice != null and item.unitPrice.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
+                                    <td th:text="${item.quantity}"></td>
+                                    <td class="money" th:text="${#numbers.formatDecimal(item.lineTotal, 0, 'COMMA', (item.lineTotal != null and item.lineTotal.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(detail.items)}"><td colspan="4" class="empty-state">Đơn hàng chưa có thông tin sản phẩm.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                <section class="detail-card" th:if="${not #lists.isEmpty(detail.statusHistory)}">
+                    <h2>Lịch sử đơn hàng</h2>
+                    <ol class="timeline">
+                        <li th:each="entry : ${detail.statusHistory}">
+                            <strong th:text="${entry.statusToLabel}"></strong>
+                            <p th:if="${not #strings.isEmpty(entry.note)}" th:text="${entry.note}"></p>
+                            <small><span th:text="${entry.updatedByName}"></span><span th:if="${entry.createdAt != null}" th:text="' · ' + ${#temporals.format(entry.createdAt, 'HH:mm dd/MM/yyyy')}"></span></small>
+                        </li>
+                    </ol>
+                </section>
+            </div>
+            <div class="detail-stack">
+                <section class="detail-card">
+                    <h2>Khách thanh toán</h2>
+                    <div class="total-label">Tổng thanh toán</div>
+                    <strong class="total-value" th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', (order.finalAmount != null and order.finalAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></strong>
+                    <dl class="money-lines">
+                        <div><dt>Giá sản phẩm</dt><dd th:text="${#numbers.formatDecimal(detail.totalAmount, 0, 'COMMA', (detail.totalAmount != null and detail.totalAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                        <div><dt>+ Phí vận chuyển</dt><dd th:text="${#numbers.formatDecimal(detail.shippingFee ?: 0, 0, 'COMMA', (detail.shippingFee != null and detail.shippingFee.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                        <div><dt>− Giảm từ voucher<span class="voucher-code" th:if="${detail.couponCode != null}" th:text="${detail.couponCode}"></span></dt><dd th:text="${#numbers.formatDecimal(detail.discountAmount ?: 0, 0, 'COMMA', (detail.discountAmount != null and detail.discountAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                    </dl>
+                    <p class="payment-note">Tổng thanh toán gồm tiền sản phẩm, phí vận chuyển và giảm giá của đơn hàng.</p>
+                    <p class="payment-note" th:if="${order.couponSource == 'PLATFORM'}">Voucher admin dùng chung toàn nền tảng. Nền tảng chịu chi phí giảm giá, không trừ vào tiền shop thực nhận.</p>
+                    <p class="payment-note" th:if="${order.couponSource == 'SHOP'}">Voucher của shop, chỉ áp dụng cho sản phẩm của shop này. Shop chịu chi phí giảm giá.</p>
+                </section>
+                <section class="detail-card">
+                    <h2>Thu nhập của shop</h2>
+                    <p class="payment-note" th:if="${order.orderStatus == 'DELIVERED'}">Đơn đã giao. Tiền chưa được cộng vào số dư shop; đơn chỉ hoàn tất sau đủ 3 ngày nếu không có tranh chấp.</p>
+                    <dl class="money-lines">
+                        <div><dt>Tỷ lệ phí sàn</dt><dd th:text="${#numbers.formatDecimal(detail.commissionRate, 0, 'COMMA', 2, 'POINT')} + '%'"></dd></div>
+                        <div th:if="${order.couponSource == 'SHOP'}"><dt>− Voucher do shop chịu</dt><dd th:text="${#numbers.formatDecimal(detail.shopDiscountAmount, 0, 'COMMA', (detail.shopDiscountAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                        <div><dt>Phí sàn đã khấu trừ</dt><dd th:text="${#numbers.formatDecimal(detail.platformFee, 0, 'COMMA', (detail.platformFee != null and detail.platformFee.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                    </dl>
+                    <p class="payment-note" th:text="${detail.commissionSource == 'SHOP' ? 'Phí sàn tính theo tỷ lệ riêng của shop trên giá sản phẩm trước voucher.' : 'Áp dụng khoản phí sàn đã lưu trong đơn hàng. Tỷ lệ hiển thị được quy đổi từ khoản phí này.'}"></p>
+                    <p class="payment-note">Shop thực nhận = giá sản phẩm − voucher do shop chịu − phí sàn. Không bao gồm phí vận chuyển.</p>
+                    <div class="net-received"><span>Shop thực nhận (sau phí sàn)</span><strong th:text="${#numbers.formatDecimal(order.shopNetReceived, 0, 'COMMA', (order.shopNetReceived != null and order.shopNetReceived.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></strong></div>
+                    <dl class="money-lines" style="margin-top: 20px">
+                        <div><dt>Tổng giá vốn</dt><dd th:text="${detail.totalCost != null ? #numbers.formatDecimal(detail.totalCost, 0, 'COMMA', (detail.totalCost != null and detail.totalCost.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT') + 'đ' : 'Chưa đủ dữ liệu'}"></dd></div>
+                        <div><dt>Lợi nhuận dự kiến</dt><dd th:text="${detail.estimatedProfit != null ? #numbers.formatDecimal(detail.estimatedProfit, 0, 'COMMA', (detail.estimatedProfit != null and detail.estimatedProfit.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT') + 'đ' : 'Chưa đủ dữ liệu'}"></dd></div>
+                    </dl>
+                    <p class="payment-note">Lợi nhuận dự kiến = tiền shop thực nhận − tổng giá vốn tại lúc đặt hàng. Chưa bao gồm các chi phí khác.</p>
+                    <p class="payment-note" th:text="${detail.isSettled == true ? 'Đã chuyển tiền vào số dư shop' : 'Chưa chuyển tiền vào số dư shop'}"></p>
+                    <p class="payment-note" th:if="${detail.paymentMethod == 'COD'}" th:text="${detail.isCODRemitted == null ? 'Chưa có thông tin nộp tiền COD' : (detail.isCODRemitted ? 'Đã nộp tiền COD' : 'Chưa nộp tiền COD')}"></p>
+                    <p class="payment-note" th:if="${detail.settledAt != null}" th:text="'Thời gian chuyển tiền vào số dư shop: ' + ${#temporals.format(detail.settledAt, 'HH:mm dd/MM/yyyy')}"></p>
+                </section>
+                <section class="detail-card">
+                    <h2>Nhân viên giao hàng</h2>
+                    <p class="unassigned" th:if="${detail.delivery == null}">Đơn này chưa được bàn giao cho shipper nào cả.</p>
+                    <dl class="info-grid" th:if="${detail.delivery != null}">
+                        <div class="wide"><dt>Họ tên shipper</dt><dd th:text="${detail.delivery.shipperName}"></dd></div>
+                        <div><dt>Mã nhân viên</dt><dd th:text="${detail.delivery.shipperId}"></dd></div>
+                        <div><dt>Số điện thoại</dt><dd th:text="${#strings.isEmpty(detail.delivery.shipperPhone) ? 'Chưa có số điện thoại' : detail.delivery.shipperPhone}"></dd></div>
+                        <div class="wide" th:if="${detail.delivery.assignedAt != null}"><dt>Thời gian phân công</dt><dd th:text="${#temporals.format(detail.delivery.assignedAt, 'HH:mm dd/MM/yyyy')}"></dd></div>
+                    </dl>
+                </section>
+            </div>
+        </div>
+    </section>
+</div>
+<dialog class="confirmation-dialog" id="status-confirmation-dialog" aria-labelledby="confirmation-title">
+    <div class="confirmation-dialog__content">
+        <h2 id="confirmation-title">Xác nhận thao tác</h2>
+        <p id="confirmation-message">Bạn có chắc muốn tiếp tục?</p>
+        <div class="confirmation-dialog__actions">
+            <button class="button" type="button" id="confirmation-cancel">Quay lại</button>
+            <button class="button button--primary" type="button" id="confirmation-accept">Xác nhận</button>
+        </div>
+    </div>
+</dialog>
+<script>
+    (() => {
+        const dialog = document.getElementById('status-confirmation-dialog');
+        const title = document.getElementById('confirmation-title');
+        const message = document.getElementById('confirmation-message');
+        const cancel = document.getElementById('confirmation-cancel');
+        const accept = document.getElementById('confirmation-accept');
+        let pendingForm;
+
+        document.querySelectorAll('.order-filters select').forEach((select) => {
+            select.addEventListener('change', () => select.form.requestSubmit());
+        });
+
+        document.querySelectorAll('.status-change-form').forEach((form) => {
+            form.addEventListener('submit', (event) => {
+                if (form.dataset.confirmed === 'true') return;
+                event.preventDefault();
+                pendingForm = form;
+                title.textContent = form.dataset.confirmTitle;
+                message.textContent = form.dataset.confirmMessage;
+                dialog.showModal();
+            });
+        });
+
+        cancel.addEventListener('click', () => dialog.close());
+        accept.addEventListener('click', () => {
+            if (!pendingForm) return;
+            pendingForm.dataset.confirmed = 'true';
+            pendingForm.requestSubmit();
+            dialog.close();
+        });
+        dialog.addEventListener('close', () => { pendingForm = undefined; });
+    })();
+</script>
+
+</section>
+</body>
+</html>
