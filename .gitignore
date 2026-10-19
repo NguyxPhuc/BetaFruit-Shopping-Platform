@@ -43,3 +43,5 @@ application-local.properties
 # Mock Data / Database scripts
 mock_data_full.sql
 
+# Local Validation Tests
+*ValidationTest.java

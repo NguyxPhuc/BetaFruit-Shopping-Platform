@@ -75,6 +75,17 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    @Transactional
+    public void toggleRoleStatus(Long id) {
+        Role role = getRoleById(id);
+        RoleName roleName = role.getRoleName();
+        if (roleName == RoleName.ADMIN || roleName == RoleName.CUSTOMER) {
+            throw new IllegalArgumentException("Không thể ẩn các vai trò cốt lõi (ADMIN, CUSTOMER) của hệ thống!");
+        }
+        roleName.setActive(!roleName.isActive());
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getAdminRolePageData() {
         Map<String, Object> data = new HashMap<>();

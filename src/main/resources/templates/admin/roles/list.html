@@ -46,18 +46,49 @@
                     <tr th:each="role : ${roles}">
                         <td class="ps-4 fw-bold text-secondary" th:text="${role.roleId}">1</td>
                         <td>
-                            <span class="badge bg-light text-dark border px-3 py-2 fs-6">
-                                <i class="bi bi-person-badge text-success me-2"></i>
-                                <span th:text="${role.roleName}">ROLE_ADMIN</span>
-                            </span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge border px-3 py-2 fs-6"
+                                      th:classappend="${role.active ? 'bg-light text-dark' : 'bg-secondary-subtle text-secondary'}">
+                                    <i class="bi" th:classappend="${role.active ? 'bi-person-badge text-success' : 'bi-eye-slash text-secondary'}"></i>
+                                    <span th:text="${role.roleName}">ROLE_ADMIN</span>
+                                </span>
+                                <span th:if="${role.active}" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Hoạt động
+                                </span>
+                                <span th:unless="${role.active}" class="badge bg-secondary-subtle text-secondary border rounded-pill">
+                                    <i class="bi bi-eye-slash-fill me-1"></i>Đã ẩn
+                                </span>
+                            </div>
                         </td>
                         <td class="text-end pe-4">
-                            <button type="button" class="btn btn-sm btn-outline-primary edit-btn"
-                                    th:data-id="${role.roleId}"
-                                    th:data-name="${role.roleName}"
-                                    data-bs-toggle="modal" data-bs-target="#editRoleModal">
-                                <i class="bi bi-pencil-square me-1"></i> Sửa
-                            </button>
+                            <div class="d-flex justify-content-end align-items-center gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-primary edit-btn"
+                                        th:data-id="${role.roleId}"
+                                        th:data-name="${role.roleName}"
+                                        data-bs-toggle="modal" data-bs-target="#editRoleModal">
+                                    <i class="bi bi-pencil-square me-1"></i> Sửa
+                                </button>
+
+                                <!-- Nút Bật / Tắt (Ẩn / Hiện) -->
+                                <th:block th:if="${role.roleName != null and (role.roleName.name() == 'ADMIN' or role.roleName.name() == 'CUSTOMER')}">
+                                    <button type="button" class="btn btn-sm btn-light text-muted border" disabled
+                                            title="Vai trò cốt lõi của hệ thống, không thể ẩn">
+                                        <i class="bi bi-lock-fill"></i>
+                                    </button>
+                                </th:block>
+                                <th:block th:unless="${role.roleName != null and (role.roleName.name() == 'ADMIN' or role.roleName.name() == 'CUSTOMER')}">
+                                    <form th:action="@{/admin/roles/{id}/toggle-status(id=${role.roleId})}" method="post" class="d-inline"
+                                          th:data-confirm="${role.active ? 'Bạn có chắc chắn muốn ẨN vai trò [' + role.roleName + '] không? Người dùng sẽ không thể được cấp vai trò này nữa.' : 'Bạn có chắc chắn muốn MỞ KÍCH HOẠT lại vai trò [' + role.roleName + '] không?'}"
+                                          onsubmit="return confirm(this.getAttribute('data-confirm'));">
+                                        <button type="submit" class="btn btn-sm d-flex align-items-center"
+                                                th:classappend="${role.active ? 'btn-outline-secondary' : 'btn-outline-success'}"
+                                                th:title="${role.active ? 'Ẩn vai trò này' : 'Kích hoạt lại vai trò này'}">
+                                            <i class="bi" th:classappend="${role.active ? 'bi-eye-slash' : 'bi-eye'}"></i>
+                                            <span class="ms-1" th:text="${role.active ? 'Ẩn' : 'Hiện'}">Ẩn</span>
+                                        </button>
+                                    </form>
+                                </th:block>
+                            </div>
                         </td>
                     </tr>
                     </tbody>
