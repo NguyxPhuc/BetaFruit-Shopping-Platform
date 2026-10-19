@@ -3,6 +3,7 @@ package com.fu.SWP391_BetaFruit.controller;
 import com.fu.SWP391_BetaFruit.dto.request.CategoryRequest;
 import com.fu.SWP391_BetaFruit.dto.request.RoleRequest;
 import com.fu.SWP391_BetaFruit.dto.request.MembershipTierRequest;
+import com.fu.SWP391_BetaFruit.dto.request.UpdateCommissionRequest;
 import com.fu.SWP391_BetaFruit.dto.request.UserRequest;
 import com.fu.SWP391_BetaFruit.entity.Role;
 import com.fu.SWP391_BetaFruit.enums.RoleName;
@@ -12,6 +13,8 @@ import com.fu.SWP391_BetaFruit.service.CategoryService;
 import com.fu.SWP391_BetaFruit.service.RoleService;
 import com.fu.SWP391_BetaFruit.service.ShopService;
 import com.fu.SWP391_BetaFruit.service.UserService;
+import com.fu.SWP391_BetaFruit.utils.RedirectUtils;
+import com.fu.SWP391_BetaFruit.utils.StringUtils;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,10 +43,10 @@ public class AdminController {
      */
     @GetMapping({"/admin", "/admin/", "/admin/dashboard"})
     public String dashboard(Model model) {
-        model.addAttribute("categoryCount", categoryService.getAdminCategoryPage(null, "ALL", 1, 1, "categoryId", "asc").getTotalElements());
+        model.addAttribute("categoryCount", categoryService.countCategories());
         model.addAttribute("approvedShopCount", shopService.countByStatus(ShopApprovalStatus.APPROVED));
         model.addAttribute("membershipTierCount", membershipTierService.getAllTiers().size());
-        model.addAttribute("userCount", userService.getAdminUserPage(null, null, null, 1, 1, "userId", "asc").getTotalElements());
+        model.addAttribute("userCount", userService.countUsers());
         return "admin/admin-dashboard";
     }
 
@@ -61,7 +64,7 @@ public class AdminController {
                                   @RequestParam(value = "sortBy", defaultValue = "shopId") String sortBy,
                                   @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                                   Model model) {
-        model.addAllAttributes(shopService.getAdminCommissionPageData(sanitizeKeyword(keyword), ownerStatus, commissionTier, page, size, sortBy, sortDir));
+        model.addAllAttributes(shopService.getAdminCommissionPageData(StringUtils.sanitizeKeyword(keyword), ownerStatus, commissionTier, page, size, sortBy, sortDir));
         return "admin/commission/shops";
     }
 
@@ -70,27 +73,29 @@ public class AdminController {
      */
     @PostMapping("/admin/shops/{id}/commission")
     public String updateCommission(@PathVariable("id") Integer id,
-                                   @RequestParam("commissionRate") BigDecimal commissionRate,
+                                   @Valid @ModelAttribute UpdateCommissionRequest request,
+                                   BindingResult bindingResult,
                                    @RequestParam(value = "page", defaultValue = "1") int page,
                                    @RequestParam(value = "keyword", required = false) String keyword,
                                    @RequestParam(value = "ownerStatus", defaultValue = "ALL") String ownerStatus,
                                    @RequestParam(value = "commissionTier", defaultValue = "ALL") String commissionTier,
                                    RedirectAttributes redirectAttributes) {
-        if (commissionRate == null || commissionRate.compareTo(BigDecimal.ZERO) < 0 || commissionRate.compareTo(new BigDecimal("100")) > 0) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Tỷ lệ chiết khấu phí sàn phải nằm trong khoảng từ 0% đến 100%!");
+        String cleanKeyword = StringUtils.sanitizeKeyword(keyword);
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
             redirectAttributes.addAttribute("page", page);
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                redirectAttributes.addAttribute("keyword", keyword.trim());
+            if (cleanKeyword != null) {
+                redirectAttributes.addAttribute("keyword", cleanKeyword);
             }
             redirectAttributes.addAttribute("ownerStatus", ownerStatus);
             redirectAttributes.addAttribute("commissionTier", commissionTier);
             return "redirect:/admin/shops/commission";
         }
-        shopService.updateCommissionRate(id, commissionRate);
+        shopService.updateCommissionRate(id, request.getCommissionRate());
         redirectAttributes.addFlashAttribute("successMessage", "Cập nhật tỷ lệ phí sàn thành công!");
         redirectAttributes.addAttribute("page", page);
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            redirectAttributes.addAttribute("keyword", keyword.trim());
+        if (cleanKeyword != null) {
+            redirectAttributes.addAttribute("keyword", cleanKeyword);
         }
         redirectAttributes.addAttribute("ownerStatus", ownerStatus);
         redirectAttributes.addAttribute("commissionTier", commissionTier);
@@ -112,7 +117,7 @@ public class AdminController {
                             Model model) {
         int safePage = Math.max(1, page);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        model.addAllAttributes(userService.getAdminUserPageData(sanitizeKeyword(keyword), roleId, status, safePage, safeSize, sortBy, sortDir));
+        model.addAllAttributes(userService.getAdminUserPageData(StringUtils.sanitizeKeyword(keyword), roleId, status, safePage, safeSize, sortBy, sortDir));
         return "admin/users/list";
     }
 
@@ -130,7 +135,7 @@ public class AdminController {
         Integer loggedInUserId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (loggedInUserId != null && loggedInUserId.equals(id)) {
             redirectAttributes.addFlashAttribute("errorMessage", "Bạn không thể tự khóa tài khoản quản trị đang đăng nhập của chính mình!");
-            return buildUserRedirectUrl(page, keyword, roleId, status);
+            return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status);
         }
 
         try {
@@ -139,7 +144,7 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return buildUserRedirectUrl(page, keyword, roleId, status);
+        return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status);
     }
 
     /**
@@ -164,7 +169,7 @@ public class AdminController {
             }
             if (!willKeepAdmin) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Bạn không thể tự gỡ vai trò Quản trị viên (ADMIN) của chính mình!");
-                return buildUserRedirectUrl(page, keyword, roleId, status);
+                return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status);
             }
         }
 
@@ -174,21 +179,7 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return buildUserRedirectUrl(page, keyword, roleId, status);
-    }
-
-    private String buildUserRedirectUrl(int page, String keyword, Long roleId, String status) {
-        StringBuilder redirectUrl = new StringBuilder("redirect:/admin/users?page=").append(page);
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            redirectUrl.append("&keyword=").append(keyword.trim());
-        }
-        if (roleId != null && roleId > 0) {
-            redirectUrl.append("&roleId=").append(roleId);
-        }
-        if (status != null && !status.trim().isEmpty()) {
-            redirectUrl.append("&status=").append(status.trim());
-        }
-        return redirectUrl.toString();
+        return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status);
     }
 
     /**
@@ -219,7 +210,7 @@ public class AdminController {
                                  @RequestParam(value = "sortBy", defaultValue = "categoryId") String sortBy,
                                  @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                                  Model model) {
-        model.addAllAttributes(categoryService.getAdminCategoryPageData(sanitizeKeyword(keyword), status, page, size, sortBy, sortDir));
+        model.addAllAttributes(categoryService.getAdminCategoryPageData(StringUtils.sanitizeKeyword(keyword), status, page, size, sortBy, sortDir));
         return "admin/categories/list";
     }
 
@@ -399,16 +390,5 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/admin/membership-tiers";
-    }
-
-    private String sanitizeKeyword(String keyword) {
-        if (keyword == null) {
-            return null;
-        }
-        String clean = keyword.trim();
-        if (clean.isEmpty()) {
-            return null;
-        }
-        return clean.length() > 100 ? clean.substring(0, 100) : clean;
     }
 }

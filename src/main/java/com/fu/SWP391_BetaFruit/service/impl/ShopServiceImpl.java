@@ -11,6 +11,7 @@ import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.ShopService;
+import com.fu.SWP391_BetaFruit.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,13 +23,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class ShopServiceImpl implements ShopService {
+
+    private static final Set<String> ALLOWED_SHOP_SORT_FIELDS = Set.of(
+            "shopId", "shopName", "approvalStatus", "commissionRate"
+    );
 
     private final ShopRepository shopRepository;
     private final UserRepository userRepository;
@@ -159,10 +163,6 @@ public class ShopServiceImpl implements ShopService {
      * @param statusStr the string representation of the approval status filter (ALL, PENDING, APPROVED, REJECTED)
      * @return a map containing shops list, current status string, keyword, and counts for total, pending, approved, and rejected shops
      */
-    private static final Set<String> ALLOWED_SHOP_SORT_FIELDS = Set.of(
-            "shopId", "shopName", "approvalStatus", "commissionRate"
-    );
-
     @Override
     public Map<String, Object> getAdminShopPageData(String keyword, String statusStr, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
@@ -181,14 +181,14 @@ public class ShopServiceImpl implements ShopService {
             }
         }
 
-        String trimmedKeyword = keyword != null ? keyword.trim() : "";
+        String cleanKeyword = StringUtils.sanitizeKeyword(keyword);
+        String trimmedKeyword = cleanKeyword != null ? cleanKeyword : "";
         String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
 
         Page<Shop> shopPage = shopRepository.searchShopsForAdmin(trimmedKeyword, filterStatus, pageable);
 
         Map<String, Object> data = new HashMap<>();
         data.put("shops", shopPage.getContent());
-        data.put("shopPage", shopPage);
         data.put("pageData", shopPage);
         data.put("currentStatus", filterStatus != null ? filterStatus.name() : "ALL");
         data.put("keyword", trimmedKeyword);
@@ -258,20 +258,29 @@ public class ShopServiceImpl implements ShopService {
         Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
-        String trimmedKeyword = keyword != null ? keyword.trim() : "";
+        String cleanKeyword = StringUtils.sanitizeKeyword(keyword);
+        String trimmedKeyword = cleanKeyword != null ? cleanKeyword : "";
+
+        UserStatus targetOwnerStatus = null;
+        if (ownerStatus != null && !ownerStatus.trim().isEmpty() && !"ALL".equalsIgnoreCase(ownerStatus.trim())) {
+            try {
+                targetOwnerStatus = UserStatus.valueOf(ownerStatus.trim().toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
         String safeOwnerStatus = (ownerStatus != null && !ownerStatus.trim().isEmpty()) ? ownerStatus.trim().toUpperCase() : "ALL";
         String safeCommissionTier = (commissionTier != null && !commissionTier.trim().isEmpty()) ? commissionTier.trim().toUpperCase() : "ALL";
         String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
 
-        Page<Shop> shopPage = shopRepository.searchApprovedShopsForCommission(trimmedKeyword, safeOwnerStatus, safeCommissionTier, pageable);
+        Page<Shop> shopPage = shopRepository.searchApprovedShopsForCommission(trimmedKeyword, targetOwnerStatus, safeCommissionTier, pageable);
 
         long approvedTotal = countByStatus(ShopApprovalStatus.APPROVED);
-        long activeCount = shopRepository.countApprovedActiveOwnerShops();
-        long deactivatedCount = shopRepository.countApprovedDeactivatedOwnerShops();
+        long activeCount = shopRepository.countApprovedShopsByOwnerStatus(UserStatus.ACTIVE);
+        long deactivatedCount = shopRepository.countApprovedShopsByOwnerStatus(UserStatus.DEACTIVATED);
 
         Map<String, Object> data = new HashMap<>();
         data.put("shops", shopPage.getContent());
-        data.put("shopPage", shopPage);
         data.put("pageData", shopPage);
         data.put("keyword", trimmedKeyword);
         data.put("ownerStatus", safeOwnerStatus);

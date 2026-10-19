@@ -7,7 +7,6 @@ import com.fu.SWP391_BetaFruit.dto.request.UserRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.User;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 import java.util.Map;
@@ -20,7 +19,7 @@ public interface UserService {
     void assignRolesToUser(Integer userId, List<Long> roleIds);
     void createUser(UserRequest userRequest);
 
-    Page<User> getAdminUserPage(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir);
+    long countUsers();
     Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir);
 
     void changePassword(Integer userId, ChangePasswordRequest changePasswordRequest) throws Exception;

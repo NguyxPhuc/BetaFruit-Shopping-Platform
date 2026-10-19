@@ -18,6 +18,7 @@ import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.UserService;
+import com.fu.SWP391_BetaFruit.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,85 +150,84 @@ public class UserServiceImpl implements UserService {
         }
 
         String cleanUsername = request.getUsername() != null ? request.getUsername().trim() : "";
-        if (cleanUsername.isEmpty()) {
-            throw new IllegalArgumentException("Tên đăng nhập không được để trống!");
-        }
-        if (!cleanUsername.matches("^(?!.*(.)\\1{2,})[a-zA-Z0-9_]{3,50}$")) {
-            throw new IllegalArgumentException("Tên đăng nhập từ 3 đến 50 ký tự, chỉ chứa chữ cái, số và dấu gạch dưới (_), không chứa dấu cách và không lặp ký tự liên tiếp quá 2 lần!");
-        }
-        if (userRepository.existsByUsername(cleanUsername)) {
-            throw new IllegalArgumentException("Tên đăng nhập '" + cleanUsername + "' đã tồn tại trên hệ thống!");
-        }
-
-        String rawFullName = request.getFullName() != null ? request.getFullName().trim() : "";
-        String cleanFullName = rawFullName.replaceAll("\\s+", " ");
-        if (cleanFullName.isEmpty()) {
-            throw new IllegalArgumentException("Họ và tên không được để trống!");
-        }
-        if (!cleanFullName.matches("^(?!.*(.)\\1{2,})[\\p{L}\\s\\-_']{2,100}$")) {
-            throw new IllegalArgumentException("Họ và tên từ 2 đến 100 ký tự, chỉ chứa chữ cái, dấu cách, dấu gạch nối hoặc dấu nháy đơn, và không lặp ký tự liên tiếp quá 2 lần!");
-        }
-
         String cleanEmail = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
-        if (cleanEmail.isEmpty()) {
-            throw new IllegalArgumentException("Email không được để trống!");
-        }
-        if (userRepository.existsByEmail(cleanEmail)) {
-            throw new IllegalArgumentException("Email '" + cleanEmail + "' đã được sử dụng bởi tài khoản khác!");
-        }
 
-        String cleanPhone = null;
-        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
-            cleanPhone = request.getPhone().replaceAll("[\\s\\-\\.]", "");
-            if (!cleanPhone.matches("^(0|\\+84)[35789][0-9]{8}$")) {
-                throw new IllegalArgumentException("Số điện thoại phải là số di động hợp lệ (VD: 0912345678) hoặc để trống!");
-            }
-        }
+        // Bước 1: Kiểm tra ràng buộc duy nhất (DB)
+        validateUniqueConstraints(cleanUsername, cleanEmail);
 
-        String cleanPassword = request.getPassword() != null ? request.getPassword().trim() : "";
-        if (!cleanPassword.matches("^(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,64}$")) {
-            throw new IllegalArgumentException("Mật khẩu phải từ 8 đến 64 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ số và 1 ký tự đặc biệt!");
-        }
+        // Bước 2: Kiểm tra và lấy danh sách vai trò hợp lệ
+        List<Role> roles = validateAndGetRoles(request.getRoleIds());
 
-        if (request.getRoleIds() == null || request.getRoleIds().isEmpty()) {
+        // Bước 3: Tạo và lưu thông tin người dùng
+        User newUser = saveNewUser(request, cleanUsername, cleanEmail, roles);
+
+        // Bước 4: Khởi tạo Giỏ hàng & Hạng thành viên (nếu là CUSTOMER)
+        initCustomerBenefitsIfApplicable(newUser, roles);
+    }
+
+    private void validateUniqueConstraints(String username, String email) {
+        if (userRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("Tên đăng nhập '" + username + "' đã tồn tại trên hệ thống!");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email '" + email + "' đã được sử dụng bởi tài khoản khác!");
+        }
+    }
+
+    private List<Role> validateAndGetRoles(List<Long> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng chọn ít nhất 1 vai trò cho người dùng!");
         }
 
-        List<Role> roles = roleRepository.findAllById(request.getRoleIds());
+        List<Role> roles = roleRepository.findAllById(roleIds);
         if (roles.isEmpty()) {
             throw new IllegalArgumentException("Không tìm thấy vai trò hợp lệ trong hệ thống!");
         }
 
-        boolean hasInactiveRole = roles.stream()
-                .anyMatch(r -> !r.isActive());
-        if (hasInactiveRole) {
-            Role inactiveRole = roles.stream().filter(r -> !r.isActive()).findFirst().orElse(null);
-            String name = inactiveRole != null ? inactiveRole.getRoleName().name() : "";
-            throw new IllegalArgumentException("Vai trò [" + name + "] đang ở trạng thái ẩn hoặc tạm ngưng hoạt động, không thể tạo tài khoản!");
+        for (Role role : roles) {
+            if (!role.isActive()) {
+                String name = role.getRoleName() != null ? role.getRoleName().name() : "";
+                throw new IllegalArgumentException("Vai trò [" + name + "] đang ở trạng thái ẩn hoặc tạm ngưng hoạt động, không thể tạo tài khoản!");
+            }
         }
+        return roles;
+    }
+
+    private User saveNewUser(UserRequest request, String cleanUsername, String cleanEmail, List<Role> roles) {
+        String rawFullName = request.getFullName() != null ? request.getFullName().trim() : "";
+        String cleanFullName = rawFullName.replaceAll("\\s+", " ");
+
+        String cleanPhone = null;
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            cleanPhone = request.getPhone().replaceAll("[\\s\\-\\.]", "");
+        }
+
+        String rawPassword = request.getPassword() != null ? request.getPassword().trim() : "";
 
         User newUser = new User();
         newUser.setUsername(cleanUsername);
-        newUser.setPasswordHash(BCrypt.hashpw(request.getPassword().trim(), BCrypt.gensalt()));
+        newUser.setPasswordHash(BCrypt.hashpw(rawPassword, BCrypt.gensalt()));
         newUser.setEmail(cleanEmail);
         newUser.setFullName(cleanFullName);
         newUser.setPhone(cleanPhone);
         newUser.setStatus(request.getStatus() != null ? request.getStatus() : UserStatus.ACTIVE);
         newUser.setRoles(roles);
 
-        newUser = userRepository.save(newUser);
+        return userRepository.save(newUser);
+    }
 
+    private void initCustomerBenefitsIfApplicable(User user, List<Role> roles) {
         boolean hasCustomerRole = roles.stream()
                 .anyMatch(r -> r.getRoleName() == RoleName.CUSTOMER);
         if (hasCustomerRole) {
             Cart cart = new Cart();
-            cart.setCustomer(newUser);
+            cart.setCustomer(user);
             cartRepository.save(cart);
 
             MembershipTier defaultTier = tierRepository.findTopByOrderByMinSpentRequiredAsc();
             if (defaultTier != null) {
                 CustomerMembership customerMembership = new CustomerMembership();
-                customerMembership.setUser(newUser);
+                customerMembership.setUser(user);
                 customerMembership.setTier(defaultTier);
                 customerMembership.setTotalCumulativeSpend(BigDecimal.ZERO);
                 customerMembershipRepository.save(customerMembership);
@@ -240,33 +240,8 @@ public class UserServiceImpl implements UserService {
     );
 
     @Override
-    public Page<User> getAdminUserPage(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
-        int pageIndex = Math.max(0, page - 1);
-        int pageSize = size > 0 ? Math.min(size, 100) : 5;
-
-        String safeSortBy = (sortBy != null && ALLOWED_USER_SORT_FIELDS.contains(sortBy.trim()))
-                ? sortBy.trim() : "userId";
-        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
-
-        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
-        UserStatus filterStatus = parseUserStatus(status);
-        Long validRoleId = (roleId != null && roleId > 0) ? roleId : null;
-
-        boolean hasKeyword = !cleanKeyword.isEmpty();
-        boolean hasRole = (validRoleId != null);
-        boolean hasStatus = (filterStatus != null);
-
-        if (!hasKeyword && !hasRole && !hasStatus) {
-            return userRepository.findAll(pageable);
-        }
-
-        return userRepository.filterUsers(
-                hasKeyword ? cleanKeyword : null,
-                validRoleId,
-                filterStatus,
-                pageable
-        );
+    public long countUsers() {
+        return userRepository.count();
     }
 
     private UserStatus parseUserStatus(String statusStr) {
@@ -289,14 +264,20 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
-        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
+        int pageIndex = Math.max(0, page - 1);
+        int pageSize = size > 0 ? Math.min(size, 100) : 5;
+
         String safeSortBy = (sortBy != null && ALLOWED_USER_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "userId";
         String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
+
+        String cleanKeyword = StringUtils.sanitizeKeyword(keyword);
         Long validRoleId = (roleId != null && roleId > 0) ? roleId : null;
         UserStatus filterStatus = parseUserStatus(status);
 
-        Page<User> userPage = getAdminUserPage(cleanKeyword, validRoleId, status, page, size, safeSortBy, safeSortDir);
+        Page<User> userPage = userRepository.filterUsers(cleanKeyword, validRoleId, filterStatus, pageable);
         List<Role> allRoles = roleRepository.findAll();
 
         Map<String, Object> data = new HashMap<>();
@@ -304,7 +285,7 @@ public class UserServiceImpl implements UserService {
         data.put("userPage", userPage);
         data.put("pageData", userPage);
         data.put("allRoles", allRoles);
-        data.put("keyword", cleanKeyword);
+        data.put("keyword", cleanKeyword != null ? cleanKeyword : "");
         data.put("currentRoleId", validRoleId);
         data.put("currentStatus", filterStatus != null ? filterStatus.name() : "ALL");
         data.put("sortBy", safeSortBy);
