@@ -21,6 +21,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -110,7 +111,7 @@ public class PaymentServiceImpl implements PaymentService {
             response.put("RspCode", "00");
             response.put("Message", "Confirm Success");
         } catch (Exception e) {
-            org.springframework.transaction.interceptor.TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             response.put("RspCode", "99");
             response.put("Message", "Unknown Error");
         }
