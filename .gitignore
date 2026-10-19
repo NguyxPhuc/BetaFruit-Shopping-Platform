@@ -39,9 +39,6 @@ application-local.properties
 # Markdown files
 *.md
 !README.md
-!/docs/REFACTOR_ROADMAP.md
-!/docs/REFACTOR_FILE_AUDIT.md
-!/docs/legacy-feature-notes/*.md
 
 # Mock Data / Database scripts
 mock_data_full.sql
