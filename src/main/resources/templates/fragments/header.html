@@ -9,7 +9,7 @@
     <div class="header-accent" aria-hidden="true"></div>
 
     <nav class="navbar container" aria-label="Điều hướng chính">
-        <a class="brand" th:href="@{/}" href="/" aria-label="BetaFruit - Trang chủ">
+        <a class="brand" th:href="@{/home}" href="/" aria-label="BetaFruit - Trang chủ">
             <img class="brand-logo" th:src="@{/images/betafruit-logo.png}"
                  src="/images/betafruit-logo.png" alt="BetaFruit">
         </a>
@@ -22,7 +22,7 @@
 
         <div class="nav-content" id="primary-menu">
             <ul class="nav-links">
-                <li><a th:href="@{/}" href="/">Trang chủ</a></li>
+                <li><a th:href="@{/home}" href="/">Trang chủ</a></li>
                 <li><a th:href="@{/products}" href="/products">Sản phẩm</a></li>
                 <li><a th:href="@{/shops}" href="/shops">Cửa hàng</a></li>
                 <li><a th:href="@{/about}" href="/about">Về chúng tôi</a></li>
@@ -147,13 +147,21 @@
                             <span class="dropdown-sub" th:text="'@' + ${session.LOGGED_IN_USERNAME ?: 'user'}">@username</span>
                         </div>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" th:href="@{/profile}" href="/profile" role="menuitem">
+                        <a class="dropdown-item" th:href="@{/customer/profile}" href="/customer/profile" role="menuitem">
                             <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                             <span>Hồ sơ của tôi</span>
+                        </a>
+                        <a class="dropdown-item" th:href="@{/customer/address}" href="/customer/address" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <span>Địa chỉ nhận hàng</span>
                         </a>
                         <a class="dropdown-item" th:href="@{/orders}" href="/orders" role="menuitem">
                             <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
                             <span>Đơn mua</span>
+                        </a>
+                        <a class="dropdown-item" th:href="@{/vouchers}" href="/vouchers" role="menuitem">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 8h10M7 12h10M7 16h6"></path></svg>
+                            <span>Kho mã giảm giá</span>
                         </a>
                         <a class="dropdown-item" th:href="@{/change-password}" href="/change-password" role="menuitem">
                             <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
