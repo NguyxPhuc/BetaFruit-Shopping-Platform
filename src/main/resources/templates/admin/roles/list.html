@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'roles', ~{::content})}">
+<head>
+    <title>Quản Lý Vai Trò - BetaFruit Admin</title>
+</head>
+<body>
+<div th:fragment="content">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">
+                <i class="bi bi-shield-lock-fill text-success me-2"></i>Quản Lý Vai Trò Hệ Thống
+            </h3>
+            <p class="text-secondary small mb-0">Quản lý các nhóm vai trò và quyền hạn tài khoản trong hệ thống BetaFruit</p>
+        </div>
+        <button type="button" class="btn btn-success shadow-sm d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+            <i class="bi bi-plus-circle me-2"></i> Thêm Vai Trò Mới
+        </button>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h6 class="m-0 fw-bold text-dark">
+                <i class="bi bi-list-ul me-2"></i>Danh Sách Vai Trò Hiện Có
+            </h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th class="ps-4" style="width: 120px;">Mã (ID)</th>
+                        <th>Tên Vai Trò (Role Name)</th>
+                        <th class="text-end pe-4" style="width: 150px;">Thao Tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(roles)}">
+                        <td colspan="3" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                            Chưa có vai trò nào trong hệ thống!
+                        </td>
+                    </tr>
+                    <tr th:each="role : ${roles}">
+                        <td class="ps-4 fw-bold text-secondary" th:text="${role.roleId}">1</td>
+                        <td>
+                            <span class="badge bg-light text-dark border px-3 py-2 fs-6">
+                                <i class="bi bi-person-badge text-success me-2"></i>
+                                <span th:text="${role.roleName}">ROLE_ADMIN</span>
+                            </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <button type="button" class="btn btn-sm btn-outline-primary edit-btn"
+                                    th:data-id="${role.roleId}"
+                                    th:data-name="${role.roleName}"
+                                    data-bs-toggle="modal" data-bs-target="#editRoleModal">
+                                <i class="bi bi-pencil-square me-1"></i> Sửa
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm Vai Trò Mới -->
+    <div class="modal fade" id="createRoleModal" tabindex="-1" aria-labelledby="createRoleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form th:action="@{/admin/roles/create}" th:object="${newRole}" method="post">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="createRoleModalLabel">
+                            <i class="bi bi-plus-circle me-2"></i>Thêm Vai Trò Mới
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="roleName" class="form-label fw-bold">Tên Vai Trò <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="roleName" th:field="*{roleName}" 
+                                   placeholder="VD: Staff, WarehouseManager..." required>
+                            <div class="form-text text-muted">Tên vai trò phải là duy nhất trong toàn hệ thống.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-1"></i> Tạo Mới
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sửa Vai Trò -->
+    <div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="editRoleForm" method="post">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="editRoleModalLabel">
+                            <i class="bi bi-pencil-square me-2"></i>Chỉnh Sửa Vai Trò
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="editRoleName" class="form-label fw-bold">Tên Vai Trò <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editRoleName" name="roleName" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Lưu Thay Đổi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript tự động điền dữ liệu vào Edit Modal -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const editButtons = document.querySelectorAll(".edit-btn");
+            const editForm = document.getElementById("editRoleForm");
+            const editNameInput = document.getElementById("editRoleName");
+
+            editButtons.forEach(button => {
+                button.addEventListener("click", function () {
+                    const roleId = this.getAttribute("data-id");
+                    const roleName = this.getAttribute("data-name");
+
+                    editForm.action = "/admin/roles/edit/" + roleId;
+                    editNameInput.value = roleName;
+                });
+            });
+        });
+    </script>
+</div>
+</body>
+</html>

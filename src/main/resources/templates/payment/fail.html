@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán Thất Bại | BetaFruit</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+
+    <link rel="stylesheet" th:href="@{/css/payment.css}">
+</head>
+<body class="payment-result-page">
+
+    <!-- Global Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Main Container -->
+    <main class="result-container">
+        
+        <div class="receipt-card">
+            
+            <!-- ═════════ 1. STATUS HERO ═════════ -->
+            <div class="status-hero payment-fail-hero">
+                
+                <div class="icon-badge-pulse fail">
+                    <i class="bi bi-x-lg"></i>
+                </div>
+
+                <h1 class="status-title">Thanh Toán Chưa Hoàn Tất</h1>
+
+                <p class="status-subtitle">
+                    Giao dịch qua cổng thanh toán không thể hoàn thành hoặc đã bị gián đoạn. Đừng lo lắng, đơn hàng của bạn vẫn được lưu giữ trong hệ thống để bạn có thể tiếp tục thanh toán.
+                </p>
+            </div>
+
+            <!-- ═════════ 2. RECEIPT TEAR NOTCHES ═════════ -->
+            <div class="receipt-tear-line">
+                <div class="receipt-notch left"></div>
+                <div class="receipt-dashed"></div>
+                <div class="receipt-notch right"></div>
+            </div>
+
+            <!-- ═════════ 3. TRANSACTION DETAILS ═════════ -->
+            <div class="receipt-body">
+                
+                <!-- Amount Banner -->
+                <div class="amount-hero-banner">
+                    <div>
+                        <span class="amount-label">Số tiền cần thanh toán</span>
+                        <div class="amount-val text-danger-accent" th:text="${result.formattedAmount}">150.000 ₫</div>
+                    </div>
+                    <div>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-semibold">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Chưa thanh toán
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Failure Reason Alert -->
+                <div class="failure-reason-box">
+                    <i class="bi bi-info-circle-fill failure-icon"></i>
+                    <div class="failure-content">
+                        <h4>Nguyên nhân giao dịch chưa hoàn tất</h4>
+                        <p th:text="${result.failureReason ?: result.message}">Giao dịch đã bị hủy bởi quý khách hoặc tài khoản không đủ số dư.</p>
+                    </div>
+                </div>
+
+                <!-- Details List -->
+                <div class="detail-list">
+                    
+                    <!-- Mã Đơn Hàng -->
+                    <div class="detail-item">
+                        <span class="detail-key">
+                            <i class="bi bi-receipt"></i> Mã đơn hàng
+                        </span>
+                        <span class="detail-val">
+                            <span class="order-badge-pill">
+                                <span id="orderCodeSpan" th:text="${result.orderCode}">#DH000123</span>
+                                <button type="button" class="btn-copy-code" onclick="copyOrderCode()" title="Sao chép mã đơn">
+                                    <i class="bi bi-copy"></i>
+                                </button>
+                            </span>
+                        </span>
+                    </div>
+
+                    <!-- Cổng Thanh Toán -->
+                    <div class="detail-item">
+                        <span class="detail-key">
+                            <i class="bi bi-credit-card-2-front"></i> Cổng thanh toán
+                        </span>
+                        <span class="detail-val">
+                            <span class="badge bg-secondary-subtle text-secondary fw-bold px-2.5 py-1 rounded-pill">
+                                <span th:text="${result.paymentMethod ?: 'VNPAY'}">VNPAY</span>
+                                <span th:if="${result.bankCode != null and !result.bankCode.isEmpty()}" 
+                                      th:text="' - ' + ${result.bankCode}"> - NCB</span>
+                            </span>
+                        </span>
+                    </div>
+
+                    <!-- Mã Giao Dịch Cổng (Nếu có) -->
+                    <div class="detail-item" th:if="${result.gatewayTransactionNo != null and !result.gatewayTransactionNo.isEmpty()}">
+                        <span class="detail-key">
+                            <i class="bi bi-upc-scan"></i> Mã giao dịch VNPay
+                        </span>
+                        <span class="detail-val" th:text="${result.gatewayTransactionNo}">14298104</span>
+                    </div>
+
+                    <!-- Thời Gian Giao Dịch -->
+                    <div class="detail-item">
+                        <span class="detail-key">
+                            <i class="bi bi-clock-history"></i> Thời gian thử giao dịch
+                        </span>
+                        <span class="detail-val" th:text="${result.payDate}">22:30:15 18/10/2026</span>
+                    </div>
+
+                    <!-- Khách Hàng -->
+                    <div class="detail-item" th:if="${result.customerName != null and !result.customerName.isEmpty()}">
+                        <span class="detail-key">
+                            <i class="bi bi-person"></i> Người đặt hàng
+                        </span>
+                        <span class="detail-val">
+                            <span th:text="${result.customerName}">Nguyễn Văn A</span>
+                            <span th:if="${result.customerPhone != null and !result.customerPhone.isEmpty()}" 
+                                  class="text-muted small fw-normal ms-1" 
+                                  th:text="'(' + ${result.customerPhone} + ')'"></span>
+                        </span>
+                    </div>
+
+                </div>
+
+                <!-- ═════════ 4. ACTIONS GROUP ═════════ -->
+                <div class="actions-group">
+                    
+                    <a th:if="${result.orderId != null}" 
+                       th:href="@{/checkout(retryOrderId=${result.orderId})}" 
+                       href="/cart" 
+                       class="btn-primary-action btn-action-orange">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span>Thử Thanh Toán Lại Ngay</span>
+                    </a>
+
+                    <a th:href="@{/cart}" href="/cart" class="btn-secondary-action">
+                        <i class="bi bi-cart3"></i>
+                        <span>Quay Lại Giỏ Hàng</span>
+                    </a>
+
+                    <a th:href="@{/products}" href="/products" class="btn-secondary-action">
+                        <i class="bi bi-basket2"></i>
+                        <span>Tiếp Tục Mua Sắm Hoa Quả</span>
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ═════════ 5. FOOTER SUPPORT ═════════ -->
+        <div class="support-info-card">
+            <span>Cần hỗ trợ về thanh toán hoặc đơn hàng? Hotline 24/7: </span>
+            <a href="tel:19008888">1900 8888</a>
+            <span> | Email: </span>
+            <a href="mailto:support@betafruit.vn">support@betafruit.vn</a>
+        </div>
+
+    </main>
+
+    <!-- Global Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <!-- ═════════ SCRIPT SAO CHÉP MÃ ĐƠN ═════════ -->
+    <script>
+        function copyOrderCode() {
+            const codeSpan = document.getElementById('orderCodeSpan');
+            if (!codeSpan) return;
+            const code = codeSpan.textContent.trim();
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Đã sao chép mã đơn: ' + code);
+            }).catch(() => {});
+        }
+    </script>
+</body>
+</html>

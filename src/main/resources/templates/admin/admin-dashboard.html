@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'dashboard', ~{::content})}">
+<head>
+    <title>Tổng Quan Hệ Thống - BetaFruit Admin</title>
+</head>
+<body>
+<div th:fragment="content">
+    <!-- Welcome Banner -->
+    <div class="card border-0 text-white mb-4 overflow-hidden position-relative" style="background: linear-gradient(135deg, var(--admin-green-900) 0%, var(--admin-green-700) 100%);">
+        <div class="card-body p-4 position-relative" style="z-index: 2;">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-7 col-xl-8">
+                    <span class="badge bg-warning text-dark px-3 py-1 mb-2 fw-bold" style="font-size: 0.75rem;">TRANG QUẢN TRỊ VIÊN</span>
+                    <h2 class="fw-bold text-white mb-2">Chào mừng trở lại, Ban Quản Trị BetaFruit!</h2>
+                    <p class="mb-0 text-white-50" style="max-width: 620px;">
+                        Thiết lập danh mục gốc, cấu hình tỷ lệ phí sàn cửa hàng, chính sách hạng thành viên và quản lý phân quyền tài khoản tập trung tại đây.
+                    </p>
+                </div>
+                <div class="col-lg-5 col-xl-4">
+                    <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                        <a th:href="@{/admin/shops/commission}" href="/admin/shops/commission" class="btn btn-warning shadow-sm text-nowrap">
+                            <i class="bi bi-percent me-1"></i> Cấu hình Phí sàn
+                        </a>
+                        <a th:href="@{/admin/users}" href="/admin/users" class="btn btn-outline-light text-nowrap">
+                            <i class="bi bi-people-fill me-1"></i> Quản lý Người dùng
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Decorative blurred circles -->
+        <div class="position-absolute rounded-circle" style="width: 220px; height: 220px; background: rgba(245, 158, 54, 0.15); top: -60px; right: 5%; filter: blur(40px);"></div>
+        <div class="position-absolute rounded-circle" style="width: 180px; height: 180px; background: rgba(130, 184, 77, 0.2); bottom: -60px; right: 30%; filter: blur(50px);"></div>
+    </div>
+
+    <!-- Quick Stats Cards Row -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Categories -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-semibold text-uppercase">Danh Mục Gốc</span>
+                    <div class="admin-stat-icon icon-box-primary">
+                        <i class="bi bi-tags-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" th:text="${categoryCount != null ? categoryCount : '10+'}">10+</h3>
+                <div class="d-flex align-items-center justify-content-between small">
+                    <span class="text-muted">Phân loại hoa quả toàn sàn</span>
+                    <a th:href="@{/admin/categories}" href="/admin/categories" class="fw-bold text-success text-decoration-none text-nowrap">
+                        Cấu hình <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Shop Commissions -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-semibold text-uppercase">Phí Sàn Cửa Hàng</span>
+                    <div class="admin-stat-icon icon-box-orange">
+                        <i class="bi bi-percent"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" th:text="${approvedShopCount != null ? approvedShopCount : '5+'}">5+</h3>
+                <div class="d-flex align-items-center justify-content-between small">
+                    <span class="text-muted">Chiết khấu Shop hoạt động</span>
+                    <a th:href="@{/admin/shops/commission}" href="/admin/shops/commission" class="fw-bold text-success text-decoration-none text-nowrap">
+                        Thiết lập <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Membership Tiers -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-semibold text-uppercase">Hạng Thành Viên</span>
+                    <div class="admin-stat-icon icon-box-primary">
+                        <i class="bi bi-award-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" th:text="${membershipTierCount != null ? membershipTierCount : '4'}">4</h3>
+                <div class="d-flex align-items-center justify-content-between small">
+                    <span class="text-muted">Chính sách ưu đãi & đặc quyền</span>
+                    <a th:href="@{/admin/membership-tiers}" href="/admin/membership-tiers" class="fw-bold text-success text-decoration-none text-nowrap">
+                        Quản lý <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Users & Roles -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-semibold text-uppercase">Tài Khoản & Vai Trò</span>
+                    <div class="admin-stat-icon icon-box-secondary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1" th:text="${userCount != null ? userCount : '50+'}">50+</h3>
+                <div class="d-flex align-items-center justify-content-between small">
+                    <span class="text-muted">Phân quyền & giám sát</span>
+                    <a th:href="@{/admin/users}" href="/admin/users" class="fw-bold text-success text-decoration-none text-nowrap">
+                        Quản lý <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

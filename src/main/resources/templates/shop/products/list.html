@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'products', ~{::content})}">
+<head>
+    <title>Danh Sách Hoa Quả Cửa Hàng | BetaFruit</title>
+</head>
+<body class="shop-theme">
+
+<div th:fragment="content">
+    <style>
+        :root {
+            --fruit-green: #ea580c;
+            --fruit-green-hover: #c2410c;
+            --fruit-light: #fff7ed;
+            --fruit-border: #fed7aa;
+            --card-radius: 16px;
+        }
+
+        body.shop-theme {
+            background-color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Dòng tiêu đề bảng hoa quả hiển thị rõ nét, tinh tế và dễ nhìn */
+        .table thead th {
+            background-color: #f8fafc !important;
+            color: #334155 !important;
+            font-size: 0.835rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.01em !important;
+            padding: 0.95rem 1rem !important;
+            border-bottom: 1.5px solid #e2e8f0 !important;
+            white-space: nowrap !important;
+            vertical-align: middle !important;
+            text-transform: none !important;
+        }
+
+        .page-container {
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .breadcrumb-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 1.5rem;
+        }
+
+        .breadcrumb-wrap a {
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb-wrap a:hover {
+            color: var(--fruit-green);
+        }
+
+        .breadcrumb-separator {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+        }
+
+        /* Banner */
+        .shop-header-banner {
+            background: linear-gradient(135deg, #9a3412 0%, #ea580c 50%, #f97316 100%);
+            border-radius: var(--card-radius);
+            color: #ffffff;
+            padding: 1.75rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(234, 88, 12, 0.3);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .shop-banner-info {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .shop-avatar-circle {
+            width: 58px;
+            height: 58px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.85rem;
+            font-weight: 700;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .shop-banner-title {
+            font-size: 1.45rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-add-product {
+            background: #ffffff;
+            color: var(--fruit-green);
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-add-product:hover {
+            background: #f0fdf4;
+            color: var(--fruit-green-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Table Card */
+        .content-card {
+            background: #ffffff;
+            border-radius: var(--card-radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .filter-bar {
+            padding: 1.25rem 1.5rem;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-input-group {
+            position: relative;
+            max-width: 360px;
+            width: 100%;
+        }
+
+        .search-input-group i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .search-input-group input {
+            padding-left: 2.5rem;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
+            font-size: 0.9375rem;
+        }
+
+        .search-input-group input:focus {
+            border-color: var(--fruit-green);
+            box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+        }
+
+        .product-thumb {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            padding: 3px;
+        }
+
+        .product-name-link {
+            font-weight: 600;
+            color: #0f172a;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .product-name-link:hover {
+            color: var(--fruit-green);
+        }
+
+        /* Status Badges */
+        .badge-status {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            white-space: nowrap;
+        }
+
+        .badge-pending {
+            background-color: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+
+        .badge-approved {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-rejected {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .badge-active {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+        }
+
+        .badge-hidden {
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .variant-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.55rem 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .variant-box:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+        }
+
+        .empty-state {
+            padding: 4rem 1.5rem;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 3.5rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        /* ════════ Floating Jump-In Toast Notification ════════ */
+        .floating-toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 99999;
+            max-width: 440px;
+            width: calc(100% - 48px);
+            pointer-events: auto;
+            animation: toastJumpIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes toastJumpIn {
+            0% {
+                opacity: 0;
+                transform: translate3d(80px, -20px, 0) scale(0.9);
+            }
+            60% {
+                opacity: 1;
+                transform: translate3d(-10px, 4px, 0) scale(1.02);
+            }
+            100% {
+                opacity: 1;
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+        }
+
+        @keyframes toastFadeOut {
+            0% {
+                opacity: 1;
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate3d(60px, 0, 0) scale(0.95);
+            }
+        }
+
+        .floating-toast-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16), 0 4px 16px rgba(21, 128, 61, 0.15);
+            border: 1px solid rgba(187, 247, 208, 0.9);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 6px;
+            background: linear-gradient(180deg, #16a34a, #22c55e);
+        }
+
+        .toast-body-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.875rem;
+            padding: 1.15rem 1.25rem 1.15rem 1.25rem;
+        }
+
+        .toast-icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #dcfce7;
+            color: #15803d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.25);
+            animation: iconPulse 1.8s infinite ease-in-out;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.08);
+            }
+        }
+
+        .toast-text-wrap {
+            flex-grow: 1;
+        }
+
+        .toast-heading {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .toast-desc {
+            font-size: 0.875rem;
+            color: #475569;
+            line-height: 1.45;
+        }
+
+        .toast-close-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .toast-close-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .toast-progress-bar {
+            height: 3px;
+            background: linear-gradient(90deg, #16a34a, #4ade80);
+            width: 100%;
+            animation: toastProgress 6s linear forwards;
+        }
+
+        @keyframes toastProgress {
+            0% {
+                width: 100%;
+            }
+            100% {
+                width: 0%;
+            }
+        }
+    </style>
+
+<div class="page-container py-2">
+    <!-- ═══════════════ TIÊU ĐỀ TRANG TỐI GIẢN ═══════════════ -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3 pb-2 border-bottom">
+        <div>
+            <div class="text-muted small mb-1">Sản phẩm & Hoa quả / Quản lý hoa quả</div>
+            <h4 class="fw-bold mb-1" style="color: #1e293b;">Danh Sách Hoa Quả Cửa Hàng</h4>
+            <p class="text-muted small mb-0">Quản lý các loại trái cây đang kinh doanh và theo dõi tình trạng kho hàng</p>
+        </div>
+        <div>
+            <a th:href="@{/shop/products/create}" class="btn btn-shop-primary px-3 py-2 rounded-pill fw-semibold shadow-sm d-inline-flex align-items-center gap-1">
+                <i class="bi bi-plus-lg"></i>
+                <span>Thêm Hoa Quả Mới</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ═══════════════ CẢNH BÁO TỒN KHO THẤP (LOW STOCK ALERT BANNER) ═══════════════ -->
+    <div th:if="${lowStockCount != null && lowStockCount > 0}" class="alert alert-warning border-warning-subtle shadow-sm mb-4 p-3 rounded-4" role="alert">
+        <div class="d-flex align-items-start gap-3">
+            <div class="bg-warning text-dark rounded-circle p-2 d-flex align-items-center justify-content-center shadow-xs" style="width: 42px; height: 42px; flex-shrink: 0;">
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                    <h6 class="alert-heading fw-bold mb-0 text-warning-emphasis d-flex align-items-center gap-2">
+                        <span>Cảnh báo tồn kho: Có</span>
+                        <span class="badge bg-danger text-white rounded-pill px-2 py-1" th:text="${lowStockCount}">0</span>
+                        <span>thực thể sắp hết hoặc đã hết hàng!</span>
+                    </h6>
+                    <a th:href="@{/shop/inventory/history}" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1 fw-semibold">
+                        <i class="bi bi-clock-history me-1"></i> Xem lịch sử kho
+                    </a>
+                </div>
+                <p class="mb-2 text-secondary small">
+                    Một số mặt hàng của bạn đã chạm mức cảnh báo hoặc hết hàng. Hãy kiểm tra và nhập thêm hàng để tiếp tục kinh doanh.
+                </p>
+                <!-- Danh sách nhanh các thực thể sắp hết -->
+                <div th:if="${lowStockVariants != null && !lowStockVariants.empty}" class="d-flex flex-wrap gap-2 pt-1">
+                    <div th:each="lsv : ${lowStockVariants}" class="badge bg-white text-dark border p-2 rounded-3 d-inline-flex align-items-center gap-2 shadow-xs">
+                        <span class="fw-semibold text-truncate" style="max-width: 180px;" th:text="${lsv.product != null ? lsv.product.productName : ''} + ' - ' + ${lsv.variantName}">Cam Sành - Hộp 1kg</span>
+                        <span th:if="${lsv.stockQuantity == 0}" class="badge bg-danger text-white rounded-pill px-2 py-1">Hết hàng (0)</span>
+                        <span th:unless="${lsv.stockQuantity == 0}" class="badge bg-warning text-dark rounded-pill px-2 py-1" th:text="'Còn: ' + ${lsv.stockQuantity}">Còn: 2</span>
+                        <button type="button" class="btn btn-sm btn-outline-success py-0 px-2 rounded-pill fw-semibold"
+                                th:attr="onclick='openRestockModal(' + ${lsv.variantId} + ', \'' + ${#strings.escapeJavaScript(lsv.variantName)} + '\', ' + ${lsv.stockQuantity} + ', \'' + ${#strings.escapeJavaScript(lsv.product != null ? lsv.product.productName : '')} + '\')'">
+                            <i class="bi bi-plus-lg"></i> Nhập kho
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TOAST THÔNG BÁO NHẢY GÓC MÀN HÌNH ═══════════════ -->
+    <div th:if="${successMessage != null}" id="floatingSuccessToast" class="floating-toast-container" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="floating-toast-card">
+            <div class="toast-indicator"></div>
+            <div class="toast-body-content">
+                <div class="toast-icon-wrap">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="toast-text-wrap">
+                    <div class="toast-heading">
+                        <span>Đăng Bán Thành Công!</span>
+                        <span>🎉</span>
+                    </div>
+                    <div class="toast-desc" th:text="${successMessage}">Đăng bán hoa quả thành công!</div>
+                </div>
+                <button type="button" class="toast-close-btn" onclick="dismissToast()" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="toast-progress-bar" id="toastProgressBar"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TABLE CONTENT CARD ═══════════════ -->
+    <div class="content-card">
+        <!-- Filter & Search Bar -->
+        <div class="filter-bar">
+            <form th:action="@{/shop/products}" method="get" class="d-flex align-items-center gap-2 m-0 w-100" style="max-width: 500px;">
+                <div class="search-input-group flex-grow-1">
+                    <i class="bi bi-search"></i>
+                    <input type="text"
+                           name="keyword"
+                           class="form-control"
+                           placeholder="Tìm kiếm hoa quả theo tên..."
+                           th:value="${keyword}">
+                </div>
+                <button type="submit" class="btn btn-outline-success">Tìm kiếm</button>
+                <a th:if="${keyword != null && !keyword.isEmpty()}" th:href="@{/shop/products}" class="btn btn-light text-secondary">
+                    Xóa lọc
+                </a>
+            </form>
+
+            <div class="text-muted small">
+                Tổng cộng: <strong class="text-dark" th:text="${totalItems != null ? totalItems : 0}">0</strong> loại hoa quả
+            </div>
+        </div>
+
+        <!-- BẢNG HOA QUẢ -->
+        <div class="table-responsive" th:if="${products != null && !products.empty}">
+            <table class="table align-middle table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 70px;">Ảnh</th>
+                        <th style="min-width: 170px;">Tên Hoa Quả</th>
+                        <th style="min-width: 130px;">Danh Mục</th>
+                        <th style="min-width: 340px;">Thực Thể / Giá / Kho</th>
+                        <th class="text-center" style="width: 125px;">Kiểm Duyệt</th>
+                        <th class="text-center" style="width: 125px;">Hiển Thị</th>
+                        <th class="text-end" style="width: 90px;">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="prod : ${products}">
+                        <!-- Ảnh -->
+                        <td>
+                            <img th:if="${prod.images != null && !prod.images.empty}"
+                                 th:src="${prod.images[0].imageUrl}"
+                                 src="/images/placeholder-fruit.png"
+                                 class="product-thumb shadow-xs"
+                                 referrerpolicy="no-referrer"
+                                 alt="Ảnh hoa quả"
+                                 onerror="this.src='/images/betafruit-logo.png'">
+                            <div th:if="${prod.images == null || prod.images.empty}" class="product-thumb d-flex align-items-center justify-content-center text-muted">
+                                <i class="bi bi-image fs-5"></i>
+                            </div>
+                        </td>
+
+                        <!-- Tên sản phẩm -->
+                        <td>
+                            <div class="product-name-link fw-bold text-dark fs-6" th:text="${prod.productName}">Xoài Cát Hòa Lộc</div>
+                            <div class="small text-muted mt-1" style="font-size: 0.8rem; line-height: 1.35;" th:if="${prod.description != null}"
+                                 th:text="${#strings.abbreviate(prod.description, 50)}">Mô tả ngắn...</div>
+                        </td>
+
+                        <!-- Danh mục -->
+                        <td>
+                            <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 fw-medium"
+                                  style="font-size: 0.78rem;"
+                                  th:text="${prod.category != null ? prod.category.categoryName : 'Chưa phân loại'}">Trái cây</span>
+                        </td>
+
+                        <!-- Thực thể & Giá / Kho (Hiển thị đẹp mắt, không gãy dòng) -->
+                        <td>
+                            <div th:if="${prod.variants != null && !prod.variants.empty}" class="d-flex flex-column gap-2" style="min-width: 330px;">
+                                <div th:each="v, vStat : ${prod.variants}"
+                                     class="variant-box position-relative"
+                                     th:classappend="${v.isAvailable != null && !v.isAvailable} ? 'opacity-75 bg-light' : ''">
+                                    <!-- Hàng 1: Tên thực thể & Nút Mở bán / Tắt bán -->
+                                    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                        <div class="d-flex align-items-center gap-1 overflow-hidden">
+                                            <span class="fw-bold text-dark small text-truncate" th:text="${v.variantName}">Hộp 1kg (Tiêu chuẩn)</span>
+                                            <!-- Huy hiệu giảm giá nếu có SalePrice -->
+                                            <span class="badge bg-danger text-white rounded-pill py-0 px-1 text-nowrap"
+                                                  style="font-size: 0.65rem;"
+                                                  th:if="${v.salePrice != null && v.salePrice > 0 && v.salePrice < v.originalPrice}"
+                                                  th:text="'-' + ${#numbers.formatInteger((1.0 - (v.salePrice.doubleValue() / v.originalPrice.doubleValue())) * 100, 0)} + '%'">-10%</span>
+                                        </div>
+
+                                        <!-- Nút bật/tắt bán biến thể (Manage Variant Availability) -->
+                                        <form th:action="@{/shop/inventory/variants/{id}/toggle-availability(id=${v.variantId})}" method="post" class="m-0 flex-shrink-0">
+                                            <button type="submit" 
+                                                    class="btn btn-xs rounded-pill py-0 px-2 border fw-semibold d-inline-flex align-items-center gap-1 text-nowrap"
+                                                    style="font-size: 0.68rem; height: 22px;"
+                                                    th:classappend="${v.isAvailable == null || v.isAvailable} ? 'bg-success-subtle text-success border-success-subtle' : 'bg-secondary-subtle text-secondary border-secondary-subtle'"
+                                                    th:title="${v.isAvailable == null || v.isAvailable} ? 'Thực thể đang mở bán. Bấm để Tắt bán.' : 'Thực thể đang tắt bán. Bấm để Mở bán lại.'">
+                                                <i th:class="${v.isAvailable == null || v.isAvailable} ? 'bi bi-check-circle-fill' : 'bi bi-slash-circle'"></i>
+                                                <span th:text="${v.isAvailable == null || v.isAvailable} ? 'Mở bán' : 'Tắt bán'">Mở bán</span>
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <!-- Hàng 2: Giá & Tồn Kho & Nút Nhập Hàng -->
+                                    <div class="d-flex align-items-center justify-content-between gap-2 pt-1 border-top border-light-subtle">
+                                        <!-- Giá tiền (luôn thẳng hàng, không gãy dòng) -->
+                                        <div class="text-nowrap flex-shrink-0">
+                                            <div th:if="${v.salePrice != null && v.salePrice > 0 && v.salePrice < v.originalPrice}"
+                                                 class="d-flex align-items-baseline gap-1">
+                                                <span class="small text-danger fw-bold text-nowrap"
+                                                      th:text="${#numbers.formatDecimal(v.salePrice, 0, 'POINT', 0, 'COMMA')} + ' đ'">45.000 đ</span>
+                                                <span class="text-muted text-decoration-line-through text-nowrap" style="font-size: 0.68rem;"
+                                                      th:text="${#numbers.formatDecimal(v.originalPrice, 0, 'POINT', 0, 'COMMA')} + ' đ'">50.000 đ</span>
+                                            </div>
+                                            <div th:unless="${v.salePrice != null && v.salePrice > 0 && v.salePrice < v.originalPrice}">
+                                                <span class="small text-danger fw-bold text-nowrap"
+                                                      th:text="${#numbers.formatDecimal(v.originalPrice, 0, 'POINT', 0, 'COMMA')} + ' đ'">50.000 đ</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Tồn kho & Cảnh báo & Nút Nhập Hàng -->
+                                        <div class="d-flex align-items-center gap-2 flex-shrink-0 text-nowrap">
+                                            <!-- Cảnh báo hết hàng / sắp hết / hiển thị số lượng tồn kho -->
+                                            <span th:if="${v.stockQuantity == 0}" class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill py-0 px-2 text-nowrap" style="font-size: 0.68rem;" title="Hết hàng!">
+                                                <i class="bi bi-x-octagon"></i> Hết hàng
+                                            </span>
+                                            <span th:if="${v.stockQuantity > 0 && v.stockQuantity <= (v.lowStockThreshold != null ? v.lowStockThreshold : 5)}" 
+                                                  class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill py-0 px-2 text-nowrap" style="font-size: 0.68rem;" 
+                                                  th:title="'Sắp hết hàng! Tồn kho: ' + ${v.stockQuantity}">
+                                                <i class="bi bi-exclamation-triangle"></i> Còn <strong th:text="${v.stockQuantity}">2</strong>
+                                            </span>
+                                            <span th:if="${v.stockQuantity > (v.lowStockThreshold != null ? v.lowStockThreshold : 5)}" class="text-muted text-nowrap" style="font-size: 0.75rem;">
+                                                Kho: <strong class="text-dark" th:text="${v.stockQuantity != null ? #numbers.formatInteger(v.stockQuantity, 1, 'POINT') : '0'}">100</strong>
+                                            </span>
+
+                                            <!-- Nút Nhập Hàng -->
+                                            <button type="button" 
+                                                    class="btn btn-xs btn-outline-success rounded-pill py-0 px-2 fw-semibold d-inline-flex align-items-center gap-1 text-nowrap"
+                                                    style="font-size: 0.7rem; height: 22px; line-height: 20px;"
+                                                    title="Nhập thêm hàng vào kho"
+                                                    th:attr="onclick='openRestockModal(' + ${v.variantId} + ', \'' + ${#strings.escapeJavaScript(v.variantName)} + '\', ' + ${v.stockQuantity} + ', \'' + ${#strings.escapeJavaScript(prod.productName)} + '\')'">
+                                                <i class="bi bi-plus-lg"></i> Nhập hàng
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div th:if="${prod.variants == null || prod.variants.empty}" class="text-muted small">Chưa có thực thể</div>
+                        </td>
+
+                        <!-- Trạng thái kiểm duyệt -->
+                        <td class="text-center text-nowrap">
+                            <span th:if="${prod.approvalStatus == T(com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus).PENDING}"
+                                  class="badge-status badge-pending">
+                                <i class="bi bi-clock-history"></i> Chờ duyệt
+                            </span>
+                            <span th:if="${prod.approvalStatus == T(com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus).APPROVED}"
+                                  class="badge-status badge-approved">
+                                <i class="bi bi-check-circle-fill"></i> Đã duyệt
+                            </span>
+                            <span th:if="${prod.approvalStatus == T(com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus).REJECTED}"
+                                  class="badge-status badge-rejected">
+                                <i class="bi bi-x-circle-fill"></i> Từ chối
+                            </span>
+                        </td>
+
+                        <!-- Trạng thái hiển thị (Chỉ hoa quả Đã duyệt mới bấm chuyển đổi được) -->
+                        <td class="text-center text-nowrap">
+                            <!-- Nếu ĐÃ DUYỆT: Cho phép bấm đổi trạng thái -->
+                            <form th:if="${prod.approvalStatus == T(com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus).APPROVED}"
+                                  th:action="@{/shop/products/{id}/toggle-visibility(id=${prod.productId})}" method="post" class="d-inline">
+                                <button type="submit" 
+                                        class="btn btn-sm rounded-pill py-1 px-3 border-0 fw-semibold text-nowrap d-inline-flex align-items-center gap-1 shadow-xs"
+                                        th:classappend="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'btn-outline-success bg-success-subtle text-success' : 'btn-outline-secondary bg-secondary-subtle text-secondary'"
+                                        th:title="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'Hoa quả đang hiển thị. Bấm để Tạm Ẩn.' : 'Hoa quả đang tạm ẩn. Bấm để Mở Bán lại.'">
+                                    <i th:class="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                                    <span th:text="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'Đang bán' : 'Tạm ẩn'">Đang bán</span>
+                                </button>
+                            </form>
+
+                            <!-- Nếu CHỜ DUYỆT hoặc TỪ CHỐI: Không bấm được (Hiển thị badge khóa) -->
+                            <div th:unless="${prod.approvalStatus == T(com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus).APPROVED}" class="d-inline-block">
+                                <span class="badge rounded-pill py-1 px-3 border text-muted bg-light text-nowrap d-inline-flex align-items-center gap-1"
+                                      style="cursor: not-allowed; opacity: 0.85;"
+                                      th:title="${prod.approvalStatus == T(com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus).PENDING} ? 'Hoa quả đang chờ duyệt, chưa thể bật/tắt hiển thị' : 'Hoa quả bị từ chối, không thể thay đổi hiển thị'">
+                                    <i th:class="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'bi bi-eye-fill' : 'bi bi-eye-slash-fill'"></i>
+                                    <span th:text="${prod.visibilityStatus == T(com.fu.SWP391_BetaFruit.enums.ProductVisibility).ACTIVE} ? 'Đang bán' : 'Tạm ẩn'">Tạm ẩn</span>
+                                    <i class="bi bi-lock-fill ms-1" style="font-size: 0.65rem;"></i>
+                                </span>
+                            </div>
+                        </td>
+
+                        <!-- Thao tác -->
+                        <td class="text-end text-nowrap">
+                            <a th:href="@{/shop/products/{id}/edit(id=${prod.productId})}" 
+                               class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-1 shadow-xs text-nowrap"
+                               title="Chỉnh sửa thông tin hoa quả">
+                                <i class="bi bi-pencil-square"></i> Sửa
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div class="empty-state" th:if="${products == null || products.empty}">
+            <div class="empty-icon">
+                <i class="bi bi-basket3"></i>
+            </div>
+            <h3 class="h5 fw-bold text-dark mb-2">Chưa Có Hoa Quả Nào</h3>
+            <p class="text-secondary small mb-4">
+                Cửa hàng của bạn hiện chưa có sản phẩm nào. Hãy bắt đầu đăng bán hoa quả tươi ngon ngay hôm nay!
+            </p>
+            <a th:href="@{/shop/products/create}" class="btn btn-success px-4 py-2 rounded-pill fw-medium">
+                <i class="bi bi-plus-circle-fill me-1"></i> Thêm Hoa Quả Đầu Tiên
+            </a>
+        </div>
+
+        <!-- PHÂN TRANG -->
+        <div class="p-3 border-top d-flex justify-content-between align-items-center" th:if="${totalPages > 1}">
+            <div class="small text-muted">
+                Trang <span th:text="${currentPage}">1</span> / <span th:text="${totalPages}">1</span>
+            </div>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${currentPage <= 1} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/shop/products(page=${currentPage - 1}, keyword=${keyword})}">Trước</a>
+                    </li>
+                    <li class="page-item"
+                        th:each="p : ${#numbers.sequence(1, totalPages)}"
+                        th:classappend="${p == currentPage} ? 'active' : ''">
+                        <a class="page-link" th:href="@{/shop/products(page=${p}, keyword=${keyword})}" th:text="${p}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage >= totalPages} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/shop/products(page=${currentPage + 1}, keyword=${keyword})}">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+</div>
+
+<!-- ═══════════════ MODAL NHẬP THÊM HÀNG (RESTOCK PRODUCTS) ═══════════════ -->
+<div class="modal fade" id="restockModal" tabindex="-1" aria-labelledby="restockModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-light border-0 py-3 px-4">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="restockModalLabel">
+                        <i class="bi bi-box-arrow-in-down text-success"></i> Nhập Thêm Hàng Vào Kho
+                    </h5>
+                    <p class="text-muted small mb-0 mt-1" id="restockModalSubtitle">Thực thể: ...</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <!-- Info banner -->
+                <div class="p-3 rounded-3 bg-light border mb-4 d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-secondary small d-block">Tồn kho hiện tại:</span>
+                        <strong class="fs-4 text-dark" id="restockModalCurrentStock">0</strong> <span class="text-muted small">đơn vị</span>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+                            <i class="bi bi-shield-check"></i> Cập nhật tức thì
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Form Nhập Thêm Hàng -->
+                <form id="formRestock" method="post">
+                    <div class="mb-3">
+                        <label for="additionalQuantityInput" class="form-label fw-semibold text-dark small">
+                            Số lượng nhập thêm vào kho <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-plus-lg"></i></span>
+                            <input type="number" class="form-control form-control-lg" id="additionalQuantityInput" name="additionalQuantity" min="1" step="1" placeholder="Nhập số lượng nhập thêm, VD: 50" required>
+                        </div>
+                        <div class="form-text">Hệ thống sẽ cộng thêm số lượng này vào tồn kho hiện tại và tự động ghi vào lịch sử kho.</div>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-success btn-lg rounded-pill fw-semibold">
+                            <i class="bi bi-check2-circle me-1"></i> Xác Nhận Nhập Hàng
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer bg-light border-0 py-2 px-4 justify-content-between">
+                <a th:href="@{/shop/inventory/history}" class="btn btn-link text-decoration-none text-muted small p-0">
+                    <i class="bi bi-clock-history me-1"></i> Xem lịch sử giao dịch kho
+                </a>
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function openRestockModal(variantId, variantName, stockQuantity, productName) {
+        const subtitleEl = document.getElementById('restockModalSubtitle');
+        const currentStockEl = document.getElementById('restockModalCurrentStock');
+        const formRestock = document.getElementById('formRestock');
+        const addInput = document.getElementById('additionalQuantityInput');
+
+        if (subtitleEl) {
+            subtitleEl.textContent = (productName ? productName + ' • ' : '') + variantName;
+        }
+        if (currentStockEl) {
+            currentStockEl.textContent = stockQuantity;
+        }
+        if (formRestock) {
+            formRestock.action = '/shop/inventory/variants/' + variantId + '/restock';
+        }
+        if (addInput) {
+            addInput.value = '';
+            setTimeout(() => addInput.focus(), 250);
+        }
+
+        const modalEl = document.getElementById('restockModal');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+    }
+    window.openInventoryModal = openRestockModal;
+
+    function dismissToast() {
+        const toast = document.getElementById('floatingSuccessToast');
+        if (toast) {
+            toast.style.animation = 'toastFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+            setTimeout(() => toast.remove(), 400);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const toast = document.getElementById('floatingSuccessToast');
+        if (toast) {
+            setTimeout(function() {
+                dismissToast();
+            }, 6000);
+        }
+    });
+</script>
+</div>
+</body>
+</html>

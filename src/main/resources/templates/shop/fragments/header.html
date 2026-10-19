@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+
+<header class="site-header-shop" th:fragment="header">
+    <div class="header-accent-shop" aria-hidden="true"></div>
+
+    <nav class="navbar container" aria-label="Điều hướng quản lý cửa hàng">
+        <div class="brand-shop-wrap">
+            <a class="brand" th:href="@{/shop/profile}" href="/shop/profile" aria-label="BetaFruit">
+                <img class="brand-logo" th:src="@{/images/betafruit-logo.png}"
+                     src="/images/betafruit-logo.png" alt="BetaFruit">
+            </a>
+        </div>
+
+        <button class="menu-toggle" type="button" aria-expanded="false"
+                aria-controls="shop-primary-menu" aria-label="Mở menu quản trị cửa hàng"
+                onclick="this.setAttribute('aria-expanded', this.getAttribute('aria-expanded') !== 'true')">
+            <span></span><span></span><span></span>
+        </button>
+
+        <div class="nav-content" id="shop-primary-menu">
+            <ul class="nav-links shop-nav-links">
+                <li><a th:href="@{/shop/profile}" href="/shop/profile">Hồ sơ Shop</a></li>
+                <li><a th:href="@{/shop/products}" href="/shop/products">Quản lý sản phẩm</a></li>
+                <li><a th:href="@{/shop/coupons}" href="/shop/coupons">Mã giảm giá</a></li>
+                <li><a th:href="@{/shop/orders}" href="/shop/orders">Đơn hàng của shop</a></li>
+                <li><a th:href="@{/shop/address}" href="/shop/address">Địa chỉ kho</a></li>
+                <li><a th:href="@{/shop/finance}" href="/shop/finance">Doanh thu</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <a class="btn-to-store" th:href="@{/}" href="/" aria-label="Về trang mua lẻ">
+                    <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    <span>Xem sàn BetaFruit</span>
+                </a>
+
+                <!-- ══════ QUẢ CHUÔNG THÔNG BÁO (KHI SHOP OWNER ĐÃ ĐĂNG NHẬP) ══════ -->
+                <div th:if="${session.LOGGED_IN_USER_ID != null}"
+                     class="notif-dropdown" id="shopNotificationDropdown">
+                    <button class="notif-button" type="button" aria-haspopup="true" aria-expanded="false"
+                            aria-label="Thông báo cửa hàng"
+                            onclick="toggleShopNotifDropdown(event)">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <!-- Số lượng thông báo chưa đọc (từ GlobalControllerAdvice) -->
+                        <span class="notif-badge"
+                              th:if="${globalUnreadCount != null && globalUnreadCount > 0}"
+                              th:text="${globalUnreadCount > 99 ? '99+' : globalUnreadCount}">0</span>
+                    </button>
+
+                    <!-- Popover Dropdown Thông Báo -->
+                    <div class="notif-menu" id="shopNotifMenu" role="dialog" aria-label="Hộp thông báo shop">
+                        <div class="notif-header">
+                            <div class="notif-title-wrap">
+                                <h3>Thông báo</h3>
+                                <span class="notif-chip"
+                                      th:if="${globalUnreadCount != null && globalUnreadCount > 0}"
+                                      th:text="${globalUnreadCount} + ' mới'">3 mới</span>
+                            </div>
+                        </div>
+
+                        <!-- Danh sách thông báo (5 gần nhất, có thể mở rộng scroll) -->
+                        <div class="notif-list" id="shopNotifList">
+                            <div class="notif-empty" th:if="${globalRecentNotifs == null || globalRecentNotifs.empty}">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                </svg>
+                                <p>Cửa hàng chưa có thông báo nào mới</p>
+                            </div>
+
+                            <a th:each="notif : ${globalRecentNotifs}"
+                               class="notif-item"
+                               th:classappend="${notif.isRead == false || notif.isRead == null ? 'is-unread' : ''}"
+                               th:href="${notif.actionUrl != null && !notif.actionUrl.isEmpty() ? notif.actionUrl : '#'}"
+                               href="#">
+                                <div class="notif-icon-box">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                    </svg>
+                                </div>
+                                <div class="notif-content">
+                                    <div class="notif-top">
+                                        <div class="notif-item-title" th:text="${notif.title}">Cập nhật đơn hàng</div>
+                                        <span class="notif-time"
+                                              th:text="${notif.createdAt != null ? #temporals.format(notif.createdAt, 'HH:mm dd/MM') : ''}">10:30</span>
+                                    </div>
+                                    <p class="notif-item-msg" th:text="${notif.message}">Nội dung thông báo...</p>
+                                </div>
+                                <span class="notif-unread-dot" th:if="${notif.isRead == false || notif.isRead == null}"></span>
+                            </a>
+                        </div>
+
+                        <!-- Footer: Xem tất cả thông báo -->
+                        <div class="notif-footer" th:if="${globalRecentNotifs != null && !globalRecentNotifs.empty}">
+                            <button type="button" class="btn-view-all-notifs" onclick="expandShopNotifications(event)">
+                                <span>Xem tất cả thông báo</span>
+                                <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRƯỜNG HỢP 1: CHƯA ĐĂNG NHẬP -->
+                <a th:if="${session.LOGGED_IN_USER_ID == null}"
+                   class="account-button" th:href="@{/auth/login}" href="/auth/login">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="8" r="3.5"></circle>
+                        <path d="M5 20c.5-4 3.1-6 7-6s6.5 2 7 6"></path>
+                    </svg>
+                    <span>Đăng nhập</span>
+                </a>
+
+                <!-- TRƯỜNG HỢP 2: SHOP OWNER ĐÃ ĐĂNG NHẬP (LẤY TỪ SESSION) -->
+                <div th:if="${session.LOGGED_IN_USER_ID != null}"
+                     class="user-dropdown" id="shopOwnerDropdown">
+                    <button class="user-dropdown-btn" type="button" aria-haspopup="true" aria-expanded="false"
+                            onclick="toggleShopOwnerDropdown(event)">
+                        <span class="user-avatar-mini"
+                              th:text="${session.LOGGED_IN_FULLNAME != null && !session.LOGGED_IN_FULLNAME.isEmpty() ? #strings.substring(session.LOGGED_IN_FULLNAME, 0, 1) : (session.LOGGED_IN_USERNAME != null ? #strings.substring(session.LOGGED_IN_USERNAME, 0, 1) : 'S')}">S</span>
+                        <span class="user-display-name"
+                              th:text="${session.LOGGED_IN_FULLNAME ?: session.LOGGED_IN_USERNAME ?: 'Chủ Cửa Hàng'}">Chủ Cửa Hàng</span>
+                        <svg class="dropdown-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown Menu (Dropbox) -->
+                    <div class="user-dropdown-menu" role="menu">
+                        <div class="dropdown-header">
+                            <strong th:text="${session.LOGGED_IN_FULLNAME ?: session.LOGGED_IN_USERNAME ?: 'Chủ cửa hàng'}">Chủ Cửa Hàng</strong>
+                            <span class="dropdown-sub" th:text="'@' + ${session.LOGGED_IN_USERNAME ?: 'shop'}">@shopowner</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" th:href="@{/shop/profile}" href="/shop/profile" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                            <span>Hồ sơ cửa hàng</span>
+                        </a>
+                        <a class="dropdown-item" th:href="@{/shop/orders}" href="/shop/orders" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            <span>Đơn hàng của shop</span>
+                        </a>
+                        <a class="dropdown-item" th:href="@{/shop/address}" href="/shop/address" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            <span>Địa chỉ kho & vận chuyển</span>
+                        </a>
+                        <a class="dropdown-item" th:href="@{/customer/profile}" href="/customer/profile" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <span>Hồ sơ cá nhân</span>
+                        </a>
+                        <a class="dropdown-item" th:href="@{/vouchers}" href="/vouchers" role="menuitem">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 8h10M7 12h10M7 16h6"></path></svg>
+                            <span>Kho mã giảm giá</span>
+                        </a>
+                        <a class="dropdown-item" th:href="@{/change-password}" href="/change-password" role="menuitem">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <span>Đổi mật khẩu</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item logout-item" th:href="@{/auth/logout}" href="/auth/logout" role="menuitem">
+                            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Đăng xuất</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<script>
+    function toggleShopNotifDropdown(e) {
+        e.stopPropagation();
+        const notifDropdown = document.getElementById('shopNotificationDropdown');
+        const userDropdown = document.getElementById('shopOwnerDropdown');
+        if (userDropdown) userDropdown.classList.remove('is-open');
+        if (notifDropdown) notifDropdown.classList.toggle('is-open');
+    }
+
+    function toggleShopOwnerDropdown(e) {
+        e.stopPropagation();
+        const userDropdown = document.getElementById('shopOwnerDropdown');
+        const notifDropdown = document.getElementById('shopNotificationDropdown');
+        if (notifDropdown) notifDropdown.classList.remove('is-open');
+        if (userDropdown) userDropdown.classList.toggle('is-open');
+    }
+
+    function expandShopNotifications(e) {
+        e.stopPropagation();
+        const notifMenu = document.getElementById('shopNotifMenu');
+        const notifList = document.getElementById('shopNotifList');
+        if (notifMenu) {
+            notifMenu.classList.add('expanded');
+        }
+        if (notifList) {
+            notifList.scrollTo({
+                top: notifList.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const notifDropdown = document.getElementById('shopNotificationDropdown');
+        const userDropdown = document.getElementById('shopOwnerDropdown');
+        if (notifDropdown && !notifDropdown.contains(e.target)) {
+            notifDropdown.classList.remove('is-open');
+        }
+        if (userDropdown && !userDropdown.contains(e.target)) {
+            userDropdown.classList.remove('is-open');
+        }
+    });
+</script>
+
+</body>
+</html>

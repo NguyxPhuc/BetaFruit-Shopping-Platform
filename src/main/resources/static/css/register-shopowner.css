@@ -1,0 +1,76 @@
+/* ════════════════════════════════════════════════
+   BetaFruit — Register Shop Owner Override Styles
+   Layered on top of register.css base styles
+   ════════════════════════════════════════════════ */
+
+/* ── Background tint ─────────────────────────── */
+.register-main--shop {
+    background: radial-gradient(ellipse at 80% 0%, #fef6ee 0%, #fffdf7 45%, #fff 100%);
+}
+
+/* ── Left Panel — Warm amber/orange gradient ─── */
+.register-aside--shop {
+    background: linear-gradient(160deg, #7c4a15, #a3621d 40%, #c47a24 75%, #d4882a);
+}
+
+.register-aside--shop::before {
+    background:
+        radial-gradient(circle at 20% 80%, rgba(245, 158, 54, .18), transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 220, 140, .12), transparent 50%);
+}
+
+.register-aside--shop .aside-features li::before {
+    background: #ffd685;
+}
+
+.register-aside--shop .aside-features li {
+    background: rgba(255, 255, 255, .1);
+    border-color: rgba(255, 255, 255, .12);
+}
+
+.register-aside--shop .aside-features li:hover {
+    background: rgba(255, 255, 255, .18);
+}
+
+.register-aside--shop .aside-title span {
+    color: #ffd685;
+}
+
+/* ── Form Header Badge ───────────────────────── */
+.form-header__badge {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+}
+
+/* ── Submit Button — Orange theme ────────────── */
+.btn-register--shop {
+    background: linear-gradient(135deg, var(--orange-dark), var(--orange));
+    box-shadow: 0 8px 24px rgba(228, 126, 30, .25);
+}
+
+.btn-register--shop:hover {
+    background: linear-gradient(135deg, #c56a10, var(--orange-dark));
+    box-shadow: 0 12px 32px rgba(228, 126, 30, .35);
+}
+
+.btn-register--shop:active {
+    box-shadow: 0 4px 12px rgba(228, 126, 30, .2);
+}
+
+/* ── Form Footer spacing ─────────────────────── */
+.register-main--shop .form-footer p {
+    margin-bottom: 6px;
+}
+
+.register-main--shop .form-footer p:last-child {
+    margin-bottom: 0;
+}

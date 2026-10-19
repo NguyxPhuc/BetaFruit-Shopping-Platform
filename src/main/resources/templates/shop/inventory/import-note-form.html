@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'import-note-create', ~{::content})}">
+<head>
+    <title>Lập Phiếu Nhập Kho | BetaFruit</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- ════════ TIÊU ĐỀ TRANG TỐI GIẢN ════════ -->
+    <div class="mb-4 pb-2 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <div class="text-muted small mb-1">Quản lý kho hàng / Lập phiếu nhập kho</div>
+            <h3 class="fw-bold text-dark mb-1">Lập Phiếu Nhập Kho Hàng Hóa</h3>
+            <p class="text-muted small mb-0">Ghi nhận số lượng hoa quả nhập về kho từ nhà vườn và cập nhật giá vốn bình quân (MAC).</p>
+        </div>
+        <div>
+            <a th:href="@{/shop/inventory/import-note}" href="/shop/inventory/import-note" class="btn btn-outline-secondary rounded-pill fw-semibold px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="bi bi-clock-history"></i>
+                <span>Xem lịch sử phiếu nhập</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ════════ FORM TẠO PHIẾU NHẬP KHO ════════ -->
+    <form th:action="@{/shop/inventory/import-note/new}"
+          th:object="${importNoteRequest}"
+          method="post"
+          id="importNoteForm">
+
+        <div class="row g-4">
+            
+            <!-- ════════ CỘT TRÁI (70%): BẢNG CHI TIẾT MẶT HÀNG NHẬP ════════ -->
+            <div class="col-12 col-xl-8">
+                <div class="import-panel-card">
+                    <div class="import-panel-header">
+                        <h2>
+                            <i class="bi bi-boxes text-success"></i>
+                            <span>Danh Sách Phân Loại Hoa Quả Nhập Kho</span>
+                        </h2>
+                        <button type="button" class="btn btn-sm btn-outline-success fw-bold rounded-pill px-3 shadow-sm" onclick="addNewItemRow()">
+                            <i class="bi bi-plus-lg me-1"></i> Thêm dòng mặt hàng
+                        </button>
+                    </div>
+
+                    <div class="import-panel-body p-0">
+                        <!-- Table danh sách hàng hóa -->
+                        <div class="table-responsive">
+                            <table class="import-table" id="itemsTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%; text-align: center;">STT</th>
+                                        <th style="width: 40%;">Phân loại hoa quả (Biến thể)</th>
+                                        <th style="width: 18%;">Số lượng nhập</th>
+                                        <th style="width: 22%;">Đơn giá vốn nhập (VNĐ)</th>
+                                        <th style="width: 15%; text-align: right;">Thành tiền</th>
+                                        <th style="width: 5%; text-align: center;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                    <!-- Render danh sách chi tiết (Thymeleaf lặp qua details) -->
+                                    <tr th:each="item, itemStat : *{details}" th:id="'row-' + ${itemStat.index}" class="item-row">
+                                        <!-- STT -->
+                                        <td class="text-center fw-bold text-muted row-index" th:text="${itemStat.count}">1</td>
+
+                                        <!-- Dropdown chọn Biến thể hoa quả -->
+                                        <td>
+                                            <select th:field="*{details[__${itemStat.index}__].variantId}"
+                                                    class="form-select form-select-sm variant-select"
+                                                    required>
+                                                <option value="" disabled th:selected="*{details[__${itemStat.index}__].variantId == null}">-- Chọn loại hoa quả nhập --</option>
+                                                <option th:each="v : ${variantList}"
+                                                        th:value="${v.variantId}"
+                                                        th:text="${v.productName + ' - ' + v.variantName}"
+                                                        th:selected="*{details[__${itemStat.index}__].variantId == v.variantId}">
+                                                    Xoài Cát - Hộp 1kg
+                                                </option>
+                                            </select>
+                                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('details[' + itemStat.index + '].variantId')}"
+                                                 th:errors="*{details[__${itemStat.index}__].variantId}"></div>
+                                        </td>
+
+                                        <!-- Số lượng nhập -->
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number"
+                                                       th:field="*{details[__${itemStat.index}__].quantity}"
+                                                       class="form-control form-control-sm text-center qty-input"
+                                                       min="1"
+                                                       step="1"
+                                                       placeholder="VD: 50"
+                                                       required
+                                                       oninput="recalculateTotals()">
+                                                <span class="input-group-text text-muted" style="font-size: 0.75rem;">Quy cách</span>
+                                            </div>
+                                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('details[' + itemStat.index + '].quantity')}"
+                                                 th:errors="*{details[__${itemStat.index}__].quantity}"></div>
+                                        </td>
+
+                                        <!-- Đơn giá nhập -->
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number"
+                                                       th:field="*{details[__${itemStat.index}__].importPrice}"
+                                                       class="form-control form-control-sm text-end price-input"
+                                                       min="0"
+                                                       step="1000"
+                                                       placeholder="VD: 35000"
+                                                       required
+                                                       oninput="recalculateTotals()">
+                                                <span class="input-group-text">₫</span>
+                                            </div>
+                                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('details[' + itemStat.index + '].importPrice')}"
+                                                 th:errors="*{details[__${itemStat.index}__].importPrice}"></div>
+                                        </td>
+
+                                        <!-- Thành tiền -->
+                                        <td class="text-end fw-bold text-success line-total" style="font-size: 0.95rem;">
+                                            0 ₫
+                                        </td>
+
+                                        <!-- Nút xóa dòng -->
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeItemRow(this)" title="Xóa dòng này">
+                                                <i class="bi bi-trash3-fill"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Nút bấm thêm dòng bên dưới bảng -->
+                        <div class="p-3 bg-light border-top text-center">
+                            <button type="button" class="btn btn-sm btn-outline-success fw-bold px-4 py-2 rounded-pill shadow-sm" onclick="addNewItemRow()">
+                                <i class="bi bi-plus-circle me-1"></i> Thêm Dòng Mặt Hàng Khác
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ════════ CỘT PHẢI (30%): THÔNG TIN PHIẾU & TÀI CHÍNH ════════ -->
+            <div class="col-12 col-xl-4">
+                <div class="import-panel-card position-sticky" style="top: 85px;">
+                    <div class="import-panel-header">
+                        <h2>
+                            <i class="bi bi-receipt text-primary"></i>
+                            <span>Thông Tin Phiếu Nhập</span>
+                        </h2>
+                    </div>
+
+                    <div class="import-panel-body">
+                        <!-- Ngày tạo phiếu -->
+                        <div class="mb-3">
+                            <label class="form-label text-muted small mb-1 fw-bold">Ngày lập phiếu:</label>
+                            <div class="p-2 bg-light rounded-2 border small fw-semibold text-dark d-flex align-items-center justify-content-between">
+                                <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">15/10/2026 14:30</span>
+                                <i class="bi bi-calendar-check text-success"></i>
+                            </div>
+                        </div>
+
+                        <!-- Ghi chú nhập kho -->
+                        <div class="mb-4">
+                            <label for="note" class="form-label text-muted small mb-1 fw-bold">
+                                Ghi chú lô hàng & Nhà vườn:
+                            </label>
+                            <textarea th:field="*{note}"
+                                      id="note"
+                                      class="form-control"
+                                      rows="3"
+                                      maxlength="255"
+                                      placeholder="Ví dụ: Lô xoài cát vườn Tiền Giang, cuống tươi, độ ngọt đạt chuẩn xuất khẩu..."></textarea>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('note')}" th:errors="*{note}"></div>
+                        </div>
+
+                        <!-- Khối Tổng kết tài chính phiếu nhập -->
+                        <div class="import-cost-summary-box">
+                            <div class="d-flex justify-content-between text-muted small mb-1">
+                                <span>Tổng số phân loại hoa quả:</span>
+                                <strong id="totalItemCountBadge" class="text-dark">1 loại</strong>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted small mb-2">
+                                <span>Tổng số lượng nhập vào:</span>
+                                <strong id="totalQuantityBadge" class="text-dark">0</strong>
+                            </div>
+                            <hr class="my-2 border-success-subtle">
+                            <div class="label">Tổng chi phí nhập kho:</div>
+                            <div class="total-number" id="grandTotalDisplay">0 ₫</div>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">
+                                * Tự động tính giá vốn bình quân di động (MAC) cho từng loại.
+                            </small>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-shop-primary justify-content-center py-2 fs-6">
+                                <i class="bi bi-check2-circle fs-5"></i>
+                                <span>Hoàn Tất & Lưu Vào Kho</span>
+                            </button>
+                            <a th:href="@{/shop/inventory/import-note}" href="/shop/inventory/import-note" class="btn btn-shop-secondary justify-content-center">
+                                Hủy bỏ phiếu
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Nhận danh sách biến thể từ Controller sang JavaScript để tái sử dụng khi thêm dòng động
+    const rawVariantList = /*[[${variantList}]]*/ [];
+    /*]]>*/
+
+    // Hàm định dạng tiền tệ Việt Nam (VNĐ)
+    function formatCurrency(amount) {
+        if (!amount || isNaN(amount)) return '0 ₫';
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    }
+
+    // Hàm tính toán tổng tiền tự động thời gian thực
+    function recalculateTotals() {
+        const rows = document.querySelectorAll('#itemsTableBody tr.item-row');
+        let grandTotal = 0;
+        let totalQty = 0;
+        let validItemCount = 0;
+
+        rows.forEach(row => {
+            const qtyInput = row.querySelector('.qty-input');
+            const priceInput = row.querySelector('.price-input');
+            const lineTotalCell = row.querySelector('.line-total');
+            const variantSelect = row.querySelector('.variant-select');
+
+            const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+            const price = parseFloat(priceInput ? priceInput.value : 0) || 0;
+            const lineTotal = qty * price;
+
+            if (lineTotalCell) {
+                lineTotalCell.textContent = formatCurrency(lineTotal);
+            }
+
+            grandTotal += lineTotal;
+            totalQty += qty;
+            if (variantSelect && variantSelect.value) {
+                validItemCount++;
+            }
+        });
+
+        const grandTotalDisplay = document.getElementById('grandTotalDisplay');
+        const totalQuantityBadge = document.getElementById('totalQuantityBadge');
+        const totalItemCountBadge = document.getElementById('totalItemCountBadge');
+
+        if (grandTotalDisplay) grandTotalDisplay.textContent = formatCurrency(grandTotal);
+        if (totalQuantityBadge) totalQuantityBadge.textContent = totalQty;
+        if (totalItemCountBadge) totalItemCountBadge.textContent = validItemCount + ' loại';
+    }
+
+    // Hàm thêm dòng mặt hàng mới bằng JavaScript
+    function addNewItemRow() {
+        const tbody = document.getElementById('itemsTableBody');
+        if (!tbody) return;
+
+        const currentRows = tbody.querySelectorAll('tr.item-row');
+        const newIndex = currentRows.length;
+
+        let optionsHtml = '<option value="" disabled selected>-- Chọn loại hoa quả nhập --</option>';
+        if (rawVariantList && rawVariantList.length > 0) {
+            rawVariantList.forEach(v => {
+                optionsHtml += `<option value="${v.variantId}">${escapeHtml(v.productName)} - ${escapeHtml(v.variantName)}</option>`;
+            });
+        }
+
+        const newRow = document.createElement('tr');
+        newRow.id = `row-${newIndex}`;
+        newRow.className = 'item-row';
+        newRow.innerHTML = `
+            <td class="text-center fw-bold text-muted row-index">${newIndex + 1}</td>
+            <td>
+                <select name="details[${newIndex}].variantId" class="form-select form-select-sm variant-select" required onchange="recalculateTotals()">
+                    ${optionsHtml}
+                </select>
+            </td>
+            <td>
+                <div class="input-group input-group-sm">
+                    <input type="number" name="details[${newIndex}].quantity" class="form-control form-control-sm text-center qty-input" min="1" step="1" placeholder="VD: 50" required oninput="recalculateTotals()">
+                    <span class="input-group-text text-muted" style="font-size: 0.75rem;">Quy cách</span>
+                </div>
+            </td>
+            <td>
+                <div class="input-group input-group-sm">
+                    <input type="number" name="details[${newIndex}].importPrice" class="form-control form-control-sm text-end price-input" min="0" step="1000" placeholder="VD: 35000" required oninput="recalculateTotals()">
+                    <span class="input-group-text">₫</span>
+                </div>
+            </td>
+            <td class="text-end fw-bold text-success line-total" style="font-size: 0.95rem;">
+                0 ₫
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeItemRow(this)" title="Xóa dòng này">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(newRow);
+        reorderRowIndices();
+        recalculateTotals();
+    }
+
+    // Hàm xóa dòng mặt hàng
+    function removeItemRow(btn) {
+        const tbody = document.getElementById('itemsTableBody');
+        const rows = tbody.querySelectorAll('tr.item-row');
+        if (rows.length <= 1) {
+            alert('Phiếu nhập kho phải có ít nhất 1 mặt hàng!');
+            return;
+        }
+
+        const row = btn.closest('tr');
+        if (row) {
+            row.remove();
+            reorderRowIndices();
+            recalculateTotals();
+        }
+    }
+
+    // Cập nhật lại chỉ số index để Spring Boot binding danh sách list đúng thứ tự: details[0], details[1]...
+    function reorderRowIndices() {
+        const rows = document.querySelectorAll('#itemsTableBody tr.item-row');
+        rows.forEach((row, idx) => {
+            row.id = `row-${idx}`;
+            const sttCell = row.querySelector('.row-index');
+            if (sttCell) sttCell.textContent = idx + 1;
+
+            const select = row.querySelector('.variant-select');
+            if (select) select.name = `details[${idx}].variantId`;
+
+            const qty = row.querySelector('.qty-input');
+            if (qty) qty.name = `details[${idx}].quantity`;
+
+            const price = row.querySelector('.price-input');
+            if (price) price.name = `details[${idx}].importPrice`;
+        });
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Khởi tạo tính toán ban đầu khi tải trang
+    document.addEventListener('DOMContentLoaded', function () {
+        recalculateTotals();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'import-note-list', ~{::content})}">
+<head>
+    <title th:text="'Chi Tiết Phiếu Nhập ' + (${importDetail?.importCode ?: ''}) + ' | BetaFruit'">Chi Tiết Phiếu Nhập Kho | BetaFruit</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- ════════ TIÊU ĐỀ TRANG TỐI GIẢN ════════ -->
+    <div class="mb-4 pb-2 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <div class="text-muted small mb-1">
+                <a th:href="@{/shop/inventory/import-note}" class="text-muted text-decoration-none">Quản lý kho hàng / Lịch sử nhập kho</a>
+                <span class="mx-1">/</span>
+                <span class="text-dark fw-semibold" th:text="${importDetail?.importCode}">PN-000001</span>
+            </div>
+            <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2 flex-wrap">
+                <span th:text="'Chi Tiết Phiếu Nhập: ' + (${importDetail?.importCode ?: ('PN-' + importDetail?.importId)})">Chi Tiết Phiếu Nhập PN-000001</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small fw-bold px-3 py-1">
+                    <i class="bi bi-check-circle-fill me-1"></i> Đã hoàn tất vào kho
+                </span>
+            </h3>
+            <p class="text-muted small mb-0">Hàng hóa đã được cộng dồn vào tồn kho khả dụng và tính toán cập nhật giá vốn bình quân (MAC).</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary rounded-pill fw-semibold px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2" onclick="window.print()">
+                <i class="bi bi-printer"></i> In Phiếu
+            </button>
+            <a th:href="@{/shop/inventory/import-note/new}" href="/shop/inventory/import-note/new" class="btn btn-shop-primary rounded-pill fw-semibold px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="bi bi-plus-lg"></i> Lập Phiếu Mới
+            </a>
+        </div>
+    </div>
+
+    <!-- ════════ CHI TIẾT PHIẾU NHẬP KHO (INVOICE STYLE) ════════ -->
+    <div class="row g-4">
+        
+        <!-- Cột trái: Bảng danh sách mặt hàng nhập -->
+        <div class="col-12 col-lg-8">
+            <div class="import-panel-card">
+                <div class="import-panel-header">
+                    <h2>
+                        <i class="bi bi-boxes text-success"></i>
+                        <span>Danh Sách Hoa Quả Đã Nhập</span>
+                    </h2>
+                    <span class="badge bg-light text-muted border px-2 py-1 rounded-pill small"
+                          th:text="${importDetail?.items != null ? importDetail.items.size() + ' mặt hàng' : '0 mặt hàng'}">
+                        0 mặt hàng
+                    </span>
+                </div>
+
+                <div class="import-panel-body p-0">
+                    <div class="table-responsive">
+                        <table class="import-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 6%; text-align: center;">STT</th>
+                                    <th style="width: 38%;">Tên Hoa Quả & Phân Loại</th>
+                                    <th style="width: 18%; text-align: center;">Số Lượng Nhập</th>
+                                    <th style="width: 18%; text-align: right;">Đơn Giá Vốn</th>
+                                    <th style="width: 20%; text-align: right;">Thành Tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="item, stat : ${importDetail?.items}">
+                                    <!-- STT -->
+                                    <td class="text-center fw-bold text-muted" th:text="${stat.count}">1</td>
+
+                                    <!-- Tên sản phẩm & variant -->
+                                    <td>
+                                        <div class="fw-bold text-dark fs-6" th:text="${item.productName}">Xoài Cát Hòa Lộc</div>
+                                        <span class="badge bg-light text-muted border px-2 py-0.5 rounded-pill small font-monospace"
+                                              th:text="'Phân loại: ' + ${item.variantName}">
+                                            Phân loại: Hộp 1kg
+                                        </span>
+                                    </td>
+
+                                    <!-- Số lượng -->
+                                    <td class="text-center">
+                                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle px-3 py-1 rounded-pill fw-bold"
+                                              style="font-size: 0.9rem;"
+                                              th:text="'+ ' + ${item.quantity}">
+                                            + 50
+                                        </span>
+                                    </td>
+
+                                    <!-- Đơn giá nhập -->
+                                    <td class="text-end text-dark font-monospace fw-semibold"
+                                        th:text="${item.importPrice != null ? #numbers.formatDecimal(item.importPrice, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                                        35.000 ₫
+                                    </td>
+
+                                    <!-- Thành tiền -->
+                                    <td class="text-end fw-bold text-success font-monospace" style="font-size: 1rem;"
+                                        th:text="${item.lineTotal != null ? #numbers.formatDecimal(item.lineTotal, 0, 'COMMA', 0, 'POINT') + ' ₫' : (item.quantity * item.importPrice) + ' ₫'}">
+                                        1.750.000 ₫
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light border-top d-flex align-items-center justify-content-between text-muted small">
+                    <a th:href="@{/shop/inventory/import-note}" class="text-decoration-none fw-semibold">
+                        <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách phiếu nhập
+                    </a>
+                    <span>BetaFruit Warehouse Management</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Thông tin tổng kết phiếu nhập -->
+        <div class="col-12 col-lg-4">
+            <div class="import-panel-card position-sticky" style="top: 85px;">
+                <div class="import-panel-header">
+                    <h2>
+                        <i class="bi bi-info-circle text-primary"></i>
+                        <span>Thông Tin Đợt Nhập</span>
+                    </h2>
+                </div>
+
+                <div class="import-panel-body">
+                    <div class="mb-3">
+                        <label class="text-muted small fw-bold d-block mb-1">Mã định danh phiếu:</label>
+                        <span class="fs-5 fw-bold text-dark font-monospace" th:text="${importDetail?.importCode}">PN-000001</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small fw-bold d-block mb-1">Thời gian nhập kho:</label>
+                        <div class="p-2 bg-light rounded-2 border small fw-semibold text-dark">
+                            <i class="bi bi-clock me-1 text-primary"></i>
+                            <span th:text="${importDetail?.importDate != null ? #temporals.format(importDetail.importDate, 'HH:mm - dd/MM/yyyy') : '---'}">14:30 - 15/10/2026</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="text-muted small fw-bold d-block mb-1">Ghi chú đợt hàng:</label>
+                        <div class="p-2.5 bg-light rounded-2 border text-dark small"
+                             th:text="${importDetail?.note != null and !importDetail.note.isEmpty() ? importDetail.note : 'Không có ghi chú thêm.'}">
+                            Ghi chú lô hàng...
+                        </div>
+                    </div>
+
+                    <!-- Tổng giá trị phiếu -->
+                    <div class="import-cost-summary-box mb-4">
+                        <div class="label">Tổng giá trị phiếu nhập:</div>
+                        <div class="total-number"
+                             th:text="${importDetail?.totalCost != null ? #numbers.formatDecimal(importDetail.totalCost, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                            15.000.000 ₫
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            * Giá trị này đã được hạch toán vào vốn hàng tồn kho của Shop.
+                        </small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a th:href="@{/shop/inventory/history}" class="btn btn-outline-success fw-bold text-start d-flex align-items-center justify-content-between">
+                            <span><i class="bi bi-clock-history me-2"></i> Xem biến động tồn kho</span>
+                            <i class="bi bi-chevron-right small"></i>
+                        </a>
+                        <a th:href="@{/shop/products}" class="btn btn-outline-secondary fw-bold text-start d-flex align-items-center justify-content-between">
+                            <span><i class="bi bi-basket2 me-2"></i> Xem tồn kho sản phẩm</span>
+                            <i class="bi bi-chevron-right small"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>

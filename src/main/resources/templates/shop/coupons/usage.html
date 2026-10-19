@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'coupons', ~{::content})}">
+<head>
+    <title>Chi Tiết Lịch Sử Sử Dụng Mã | BetaFruit</title>
+</head>
+<body class="shop-theme">
+
+<div th:fragment="content">
+    <style>
+        :root {
+            --fruit-green: #ea580c;
+            --fruit-green-hover: #c2410c;
+            --fruit-light: #fff7ed;
+            --fruit-border: #fed7aa;
+        }
+
+        body.shop-theme {
+            background-color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1e293b;
+        }
+
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem;
+        }
+
+        .coupon-code-badge {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            padding: 0.4rem 0.85rem;
+            border-radius: 8px;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border: 1.5px dashed #cbd5e1;
+            display: inline-block;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-number {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .table-custom thead th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            padding: 0.85rem 1rem;
+            border-bottom: 1.5px solid #e2e8f0;
+        }
+
+        .table-custom tbody td {
+            padding: 0.9rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .badge-order-status {
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+        }
+    </style>
+
+    <main class="page-container py-3">
+
+        <!-- Breadcrumb & Tiêu đề -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2 text-muted" style="font-size: 0.85rem;">
+                <li class="breadcrumb-item"><a th:href="@{/shop/coupons}" class="text-decoration-none text-muted">Mã giảm giá</a></li>
+                <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Lịch sử sử dụng</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="coupon-code-badge" th:text="${coupon.couponCode}">BETA20</span>
+                    <span class="badge" th:classappend="${coupon.getStatusBadgeClass()}" th:text="${coupon.getStatusLabel()}">Đang hoạt động</span>
+                </div>
+                <h1 class="h4 fw-bold text-dark mt-2 mb-0">Theo Dõi Lịch Sử Sử Dụng Mã Giảm Giá</h1>
+                <p class="text-muted small mb-0 mt-1">Chi tiết các đơn hàng đã áp dụng mã và thống kê ngân sách giảm giá đã tài trợ.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/shop/coupons/{id}/edit(id=${coupon.couponId})}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-pencil"></i> <span>Chỉnh sửa mã</span>
+                </a>
+                <a th:href="@{/shop/coupons}" class="btn btn-outline-dark d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-arrow-left"></i> <span>Về danh sách</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 4 Thẻ KPI Tracking -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-primary" th:text="${usageData.totalUsed}">0</div>
+                        <div class="stat-label">Lượt đã sử dụng</div>
+                    </div>
+                    <div class="stat-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-check-all"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-success" th:text="${usageData.remainingLimit}">0</div>
+                        <div class="stat-label">Lượt còn lại</div>
+                    </div>
+                    <div class="stat-icon bg-success-subtle text-success">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-warning" th:text="${usageData.usagePercentage} + '%'">0%</div>
+                        <div class="stat-label">Tỷ lệ sử dụng</div>
+                    </div>
+                    <div class="stat-icon bg-warning-subtle text-warning">
+                        <i class="bi bi-pie-chart"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-danger"
+                             th:text="${#numbers.formatDecimal(usageData.totalDiscountSponsored != null ? usageData.totalDiscountSponsored : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                            0 đ
+                        </div>
+                        <div class="stat-label">Tổng tiền đã giảm</div>
+                    </div>
+                    <div class="stat-icon bg-danger-subtle text-danger">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Bảng chi tiết đơn hàng áp mã -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white border-bottom p-3 p-md-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-bag-check me-2 text-success"></i>Danh Sách Đơn Hàng Áp Dụng Mã
+                    </h5>
+                    <div class="small text-muted mt-1">Hiển thị các đơn hàng mua sắm hoa quả đã nhập mã này thành công.</div>
+                </div>
+                <span class="badge bg-light text-dark border px-3 py-2">
+                    Tổng: <strong th:text="${totalOrders}">0</strong> đơn
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-custom align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 100px;">Mã đơn</th>
+                            <th style="min-width: 180px;">Khách hàng</th>
+                            <th style="min-width: 150px;">Thời gian đặt</th>
+                            <th style="min-width: 140px;">Giá trị đơn</th>
+                            <th style="min-width: 140px;">Tiền được giảm</th>
+                            <th style="min-width: 140px;">Khách thanh toán</th>
+                            <th style="min-width: 140px;">Trạng thái đơn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(orders)}">
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-inbox display-5 opacity-25 d-block mb-3"></i>
+                                    <h6 class="fw-bold text-dark">Chưa có đơn hàng nào sử dụng mã này</h6>
+                                    <p class="small text-secondary mb-0">Mã giảm giá đã sẵn sàng. Khi khách hàng áp dụng mã lúc thanh toán, thông tin đơn sẽ được ghi nhận tại đây.</p>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr th:each="o : ${orders}">
+                            <!-- Mã đơn -->
+                            <td>
+                                <span class="fw-bold text-primary">#<span th:text="${o.orderId}">1001</span></span>
+                            </td>
+
+                            <!-- Khách hàng -->
+                            <td>
+                                <div class="fw-semibold text-dark" th:text="${o.customer != null ? o.customer.fullName : 'Khách lẻ'}">Nguyễn Văn A</div>
+                                <div class="text-muted small" th:if="${o.customer != null and o.customer.phone != null}" th:text="${o.customer.phone}">0987654321</div>
+                            </td>
+
+                            <!-- Thời gian đặt -->
+                            <td>
+                                <span th:if="${o.createdAt != null}" th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm')}">01/10/2026 14:30</span>
+                                <span th:unless="${o.createdAt != null}" class="text-muted">--</span>
+                            </td>
+
+                            <!-- Giá trị đơn (Total Amount) -->
+                            <td>
+                                <span th:text="${#numbers.formatDecimal(o.totalAmount != null ? o.totalAmount : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">150,000 đ</span>
+                            </td>
+
+                            <!-- Số tiền giảm (Discount Amount) -->
+                            <td>
+                                <span class="fw-bold text-danger">
+                                    -<span th:text="${#numbers.formatDecimal(o.discountAmount != null ? o.discountAmount : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">20,000 đ</span>
+                                </span>
+                            </td>
+
+                            <!-- Khách thanh toán (Final Amount) -->
+                            <td>
+                                <span class="fw-bold text-success"
+                                      th:text="${#numbers.formatDecimal(o.finalAmount != null ? o.finalAmount : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">130,000 đ</span>
+                            </td>
+
+                            <!-- Trạng thái đơn -->
+                            <td>
+                                <span class="badge badge-order-status bg-secondary-subtle text-secondary"
+                                      th:if="${o.orderStatus == null}" th:text="'Chờ xử lý'">Chờ xử lý</span>
+                                <span class="badge badge-order-status bg-warning-subtle text-warning-emphasis"
+                                      th:if="${o.orderStatus != null and (o.orderStatus.name() == 'PENDING' or o.orderStatus.name() == 'CONFIRMED')}"
+                                      th:text="${o.orderStatus.name()}">Chờ xác nhận</span>
+                                <span class="badge badge-order-status bg-info-subtle text-info-emphasis"
+                                      th:if="${o.orderStatus != null and (o.orderStatus.name() == 'SHIPPING' or o.orderStatus.name() == 'DELIVERING')}"
+                                      th:text="${o.orderStatus.name()}">Đang giao</span>
+                                <span class="badge badge-order-status bg-success-subtle text-success"
+                                      th:if="${o.orderStatus != null and (o.orderStatus.name() == 'DELIVERED' or o.orderStatus.name() == 'SUCCESS')}"
+                                      th:text="${o.orderStatus.name()}">Thành công</span>
+                                <span class="badge badge-order-status bg-danger-subtle text-danger"
+                                      th:if="${o.orderStatus != null and (o.orderStatus.name() == 'CANCELLED' or o.orderStatus.name() == 'RETURNED')}"
+                                      th:text="${o.orderStatus.name()}">Đã hủy</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang -->
+            <div th:if="${totalPages > 1}" class="card-footer bg-white border-top p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <span class="text-muted small">
+                    Trang <strong th:text="${currentPage}">1</strong> / <strong th:text="${totalPages}">1</strong>
+                </span>
+                <nav aria-label="Phân trang đơn hàng">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled' : ''">
+                            <a class="page-link" th:href="@{/shop/coupons/{id}/usage(id=${coupon.couponId}, page=${currentPage - 1})}">Trước</a>
+                        </li>
+                        <li th:each="p : ${#numbers.sequence(1, totalPages)}"
+                            class="page-item" th:classappend="${p == currentPage} ? 'active' : ''">
+                            <a class="page-link" th:text="${p}" th:href="@{/shop/coupons/{id}/usage(id=${coupon.couponId}, page=${p})}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled' : ''">
+                            <a class="page-link" th:href="@{/shop/coupons/{id}/usage(id=${coupon.couponId}, page=${currentPage + 1})}">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+    </main>
+    </div>
+</body>
+</html>

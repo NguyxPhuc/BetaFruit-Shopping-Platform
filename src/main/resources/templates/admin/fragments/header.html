@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<header th:fragment="header" class="admin-top-header">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3">
+            <h1 class="admin-header-title">
+                <i class="bi bi-speedometer2"></i>
+                <span>Hệ Thống Quản Trị Sàn BetaFruit</span>
+            </h1>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <!-- System Live Status -->
+            <div class="system-status-badge">
+                <span class="system-status-dot"></span>
+                <span>Hệ thống hoạt động tốt</span>
+            </div>
+
+            <!-- Client Store Link -->
+            <a th:href="@{/}" href="/" target="_blank" class="btn-header-link">
+                <i class="bi bi-shop-window text-success"></i>
+                <span>Xem Website Sàn</span>
+                <i class="bi bi-box-arrow-up-right small text-muted"></i>
+            </a>
+
+            <!-- User Role-based Greeting -->
+            <div class="d-flex align-items-center ps-2 border-start border-2">
+                <span class="text-secondary small me-1">Xin chào,</span>
+                <span class="fw-bold text-dark" th:text="${session.LOGGED_IN_FULLNAME ?: session.LOGGED_IN_USERNAME ?: 'Quản trị viên'}">Khải</span>
+                <span class="text-muted small ms-1" th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">(Admin)</span>
+                <span class="text-muted small ms-1" th:if="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'STAFF') and !#strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">(Nhân viên Vận hành)</span>
+            </div>
+        </div>
+    </div>
+</header>
+</html>

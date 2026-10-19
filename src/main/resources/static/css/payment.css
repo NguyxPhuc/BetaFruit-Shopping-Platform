@@ -1,0 +1,468 @@
+/* ==========================================================================
+   BetaFruit - Payment Return & Receipt Stylesheet
+   Location: /css/payment.css
+   Used by: templates/payment/success.html & templates/payment/fail.html
+   ========================================================================== */
+
+:root {
+    --brand-green-50: #f0fdf4;
+    --brand-green-100: #dcfce7;
+    --brand-green-500: #22c55e;
+    --brand-green-600: #16a34a;
+    --brand-green-700: #15803d;
+
+    --brand-red-50: #fef2f2;
+    --brand-red-100: #fee2e2;
+    --brand-red-500: #ef4444;
+    --brand-red-600: #dc2626;
+    --brand-red-700: #b91c1c;
+
+    --brand-orange-50: #fff7ed;
+    --brand-orange-100: #ffedd5;
+    --brand-orange-500: #f97316;
+    --brand-orange-600: #ea580c;
+    --brand-orange-700: #c2410c;
+
+    --surface-bg: #f8fafc;
+    --card-border: #e2e8f0;
+    --text-heading: #0f172a;
+    --text-body: #334155;
+    --text-muted: #64748b;
+}
+
+/* Page Base */
+body.payment-result-page {
+    background-color: var(--surface-bg);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.result-container {
+    max-width: 660px;
+    margin: 2.5rem auto 4rem;
+    padding: 0 1.25rem;
+    width: 100%;
+}
+
+/* ═════════ RECEIPT CARD ═════════ */
+.receipt-card {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 45px -15px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.85);
+    overflow: hidden;
+    position: relative;
+}
+
+/* ═════════ STATUS HERO ═════════ */
+.status-hero {
+    padding: 3rem 2rem 2.25rem;
+    text-align: center;
+    position: relative;
+}
+
+/* Success Hero Background */
+.payment-success-hero {
+    background: radial-gradient(circle at 50% 20%, rgba(34, 197, 94, 0.12) 0%, rgba(240, 253, 244, 0.4) 60%, #ffffff 100%);
+}
+
+/* Fail Hero Background */
+.payment-fail-hero {
+    background: radial-gradient(circle at 50% 20%, rgba(239, 68, 68, 0.12) 0%, rgba(254, 242, 242, 0.4) 60%, #ffffff 100%);
+}
+
+/* Animated Pulsing Icon Badges */
+.icon-badge-pulse {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-size: 2.75rem;
+    color: #ffffff;
+    animation: badgeBounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.icon-badge-pulse.success {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    box-shadow: 0 12px 28px -6px rgba(22, 163, 74, 0.45);
+}
+
+.icon-badge-pulse.success::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px dashed #22c55e;
+    opacity: 0.4;
+    animation: ringRotate 16s linear infinite;
+}
+
+.icon-badge-pulse.fail {
+    background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+    box-shadow: 0 12px 28px -6px rgba(220, 38, 38, 0.45);
+}
+
+.icon-badge-pulse.fail::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px dashed #ef4444;
+    opacity: 0.4;
+    animation: ringRotate 16s linear infinite;
+}
+
+@keyframes badgeBounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    60% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+@keyframes ringRotate {
+    100% { transform: rotate(360deg); }
+}
+
+.status-title {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.status-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.55;
+}
+
+/* ═════════ TEAR TICKET NOTCHES & LINE ═════════ */
+.receipt-tear-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.receipt-notch {
+    width: 22px;
+    height: 22px;
+    background-color: var(--surface-bg);
+    border-radius: 50%;
+}
+
+.receipt-notch.left { margin-left: -11px; }
+.receipt-notch.right { margin-right: -11px; }
+
+.receipt-dashed {
+    flex: 1;
+    border-bottom: 2px dashed #cbd5e1;
+    margin: 0 6px;
+}
+
+/* ═════════ RECEIPT BODY & AMOUNT ═════════ */
+.receipt-body {
+    padding: 2rem 2.25rem 2.5rem;
+}
+
+.amount-hero-banner {
+    background: #f8fafc;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+}
+
+.amount-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.amount-val {
+    font-size: 1.65rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.amount-val.text-success-accent {
+    color: var(--brand-orange-600);
+}
+
+.amount-val.text-danger-accent {
+    color: #dc2626;
+}
+
+/* ═════════ FAILURE REASON CALLOUT ═════════ */
+.failure-reason-box {
+    background: var(--brand-red-50);
+    border: 1.5px solid var(--brand-red-100);
+    border-radius: 16px;
+    padding: 1.25rem 1.35rem;
+    margin-bottom: 1.75rem;
+    display: flex;
+    gap: 0.95rem;
+    align-items: flex-start;
+}
+
+.failure-icon {
+    font-size: 1.4rem;
+    color: var(--brand-red-500);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.failure-content h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--brand-red-700);
+    margin: 0 0 0.3rem;
+}
+
+.failure-content p {
+    font-size: 0.875rem;
+    color: #991b1b;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ═════════ DETAIL BREAKDOWN LIST ═════════ */
+.detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.925rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.detail-key {
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-key i {
+    font-size: 1.05rem;
+    color: #94a3b8;
+}
+
+.detail-val {
+    font-weight: 600;
+    color: var(--text-heading);
+    text-align: right;
+    word-break: break-word;
+}
+
+.order-badge-pill {
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    font-family: 'Consolas', monospace;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 1px solid #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.btn-copy-code {
+    background: transparent;
+    border: none;
+    color: var(--brand-orange-600);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.btn-copy-code:hover {
+    background: #fed7aa;
+}
+
+/* ═════════ ACTION BUTTONS ═════════ */
+.actions-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.btn-primary-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.5rem;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+/* Green Action Button for Success */
+.btn-primary-action.btn-action-green {
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(22, 163, 74, 0.3);
+}
+
+.btn-primary-action.btn-action-green:hover {
+    background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(22, 163, 74, 0.4);
+    color: #ffffff;
+}
+
+/* Orange Action Button for Retry / COD */
+.btn-primary-action.btn-action-orange {
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(234, 88, 12, 0.3);
+}
+
+.btn-primary-action.btn-action-orange:hover {
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(234, 88, 12, 0.4);
+    color: #ffffff;
+}
+
+.btn-secondary-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.5rem;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-heading);
+    background: #ffffff;
+    border: 1.5px solid var(--card-border);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary-action:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: var(--brand-orange-600);
+    transform: translateY(-1px);
+}
+
+.btn-print-mini {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+    transition: color 0.2s;
+}
+
+.btn-print-mini:hover {
+    color: var(--text-heading);
+}
+
+.support-info-card {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.support-info-card a {
+    color: var(--brand-orange-600);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* Confetti Canvas */
+#confettiCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* ═════════ RESPONSIVE DESIGN ═════════ */
+@media (max-width: 640px) {
+    .result-container {
+        margin: 1.5rem auto 3rem;
+    }
+    .status-hero {
+        padding: 2.25rem 1.25rem 1.75rem;
+    }
+    .status-title {
+        font-size: 1.4rem;
+    }
+    .receipt-body {
+        padding: 1.5rem 1.25rem 2rem;
+    }
+    .amount-val {
+        font-size: 1.35rem;
+    }
+}
+
+/* ═════════ PRINT OPTIMIZATION ═════════ */
+@media print {
+    header, footer, nav, .actions-group, .support-info-card, .btn-print-mini, #confettiCanvas {
+        display: none !important;
+    }
+
+    body.payment-result-page {
+        background: #ffffff !important;
+    }
+
+    .result-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .receipt-card {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 0 !important;
+    }
+}

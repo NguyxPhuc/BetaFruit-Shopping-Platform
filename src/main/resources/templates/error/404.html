@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Không tìm thấy trang | BetaFruit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Playfair+Display:wght@700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
+</head>
+<body class="error-page">
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="error-main">
+    <div class="error-decoration fruit-one" aria-hidden="true"></div>
+    <div class="error-decoration fruit-two" aria-hidden="true"></div>
+
+    <section class="error-content container">
+        <div class="error-illustration" aria-hidden="true">
+            <span class="error-digit">4</span>
+            <div class="orange">
+                <span class="orange-leaf"></span>
+                <span class="orange-face"><i></i><i></i><b></b></span>
+            </div>
+            <span class="error-digit">4</span>
+        </div>
+
+        <p class="error-eyebrow">Ối! Có vẻ bạn đã đi lạc</p>
+        <h1>Trang này không tồn tại</h1>
+        <p class="error-message">
+            Đường dẫn bạn vừa truy cập có thể đã được thay đổi hoặc không còn khả dụng.
+            Hãy quay lại trang chủ để tiếp tục chọn những sản phẩm tươi ngon nhé!
+        </p>
+        <div class="error-actions">
+            <a class="primary-button" th:href="@{/}" href="/">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 11 8-7 8 7"></path><path d="M6.5 10v10h11V10M10 20v-6h4v6"></path></svg>
+                Về trang chủ
+            </a>
+            <button class="secondary-button" type="button" onclick="history.back()">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6-6 6 6 6"></path><path d="M5 12h15"></path></svg>
+                Quay lại
+            </button>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
