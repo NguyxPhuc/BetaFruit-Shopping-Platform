@@ -11,13 +11,21 @@
 }
 
 .shop-theme .address-page {
-    background-color: #faf8f5;
+    background-color: transparent !important;
+    min-height: auto !important;
+    padding: 0 !important;
 }
 
 .address-container {
     max-width: 980px;
     margin: 0 auto;
     padding: 0 20px;
+}
+
+.shop-theme .address-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* Page Header Bar */
@@ -77,13 +85,13 @@
 }
 
 .shop-theme .btn-primary-action {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.3);
 }
 
 .shop-theme .btn-primary-action:hover {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    box-shadow: 0 6px 20px rgba(217, 119, 6, 0.35);
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4);
 }
 
 /* Alert Notification Banners */

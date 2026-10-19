@@ -91,9 +91,9 @@ public class AuthController {
             } else if (roles != null && roles.contains(RoleName.STAFF)) {
                 return "redirect:/staff/dashboard";
             } else if (roles != null && roles.contains(RoleName.DELIVERY_STAFF)) {
-                return "redirect:/shipper/dashboard";
+                return "redirect:/shipper/orders";
             } else if (roles != null && roles.contains(RoleName.SHOP_OWNER)) {
-                return "redirect:/shop/profile";
+                return "redirect:/shop/dashboard";
             } else {
                 return "redirect:/home";
             }

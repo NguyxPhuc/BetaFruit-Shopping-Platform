@@ -17,10 +17,7 @@ public interface ShopService {
     long countTotal();
 
     ShopProfileResponse getShopProfile(Integer id) throws Exception;
-
-   
     void editShopProfile(Integer id, ShopProfileRequest shopProfileRequest) throws Exception;
-
 
     java.util.Map<String, Object> getAdminShopPageData(String keyword, String statusStr, int page, int size, String sortBy, String sortDir);
     java.util.Map<String, Object> getAdminCommissionPageData(String keyword, String ownerStatus, String commissionTier, int page, int size, String sortBy, String sortDir);

@@ -67,7 +67,7 @@
                     <!-- Full Name -->
                     <div class="form-group" th:classappend="${#fields.hasErrors('fullName')} ? 'has-error' : ''">
                         <label for="fullName">
-                            Họ và tên <span class="required">*</span>
+                            Họ và tên chủ cửa hàng <span class="required">*</span>
                         </label>
                         <div class="input-wrapper">
                             <input type="text" id="fullName" th:field="*{fullName}"
@@ -76,6 +76,7 @@
                         </div>
                         <p class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">Lỗi</p>
                     </div>
+
 
                     <!-- Username -->
                     <div class="form-group" th:classappend="${#fields.hasErrors('username')} ? 'has-error' : ''">
