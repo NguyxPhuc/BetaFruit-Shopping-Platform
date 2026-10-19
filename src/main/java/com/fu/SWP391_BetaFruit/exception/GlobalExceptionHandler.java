@@ -1,12 +1,20 @@
 package com.fu.SWP391_BetaFruit.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.server.ResponseStatusException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ProblemDetail> handleResponseStatus(ResponseStatusException ex) {
+        return new ResponseEntity<>(ex.getBody(), ex.getHeaders(), ex.getStatusCode());
+    }
 
     @ExceptionHandler(Exception.class)
     public String handleException(Exception ex, HttpServletRequest request, RedirectAttributes redirectAttributes) {
