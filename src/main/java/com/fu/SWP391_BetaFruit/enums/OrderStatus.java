@@ -7,7 +7,8 @@ public enum OrderStatus {
         READY,         // Đã sẵn sàng giao cho Shipper
         PICKED_UP,     // Shipper đã lấy hàng
         DELIVERING,    // Đang giao hàng
-        SUCCESS,       // Giao thành công
+        DELIVERED,     // Shipper đã giao thành công
+        SUCCESS,       // Đơn hoàn tất
         FAILED,        // Giao thất bại
         CANCELLED,     // Đã hủy (bởi khách/shop)
         REJECTED       // Từ chối nhận đơn{

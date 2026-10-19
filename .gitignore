@@ -34,6 +34,7 @@ build/
 
 # Environments
 .env
+application-local.properties
 
 # Markdown files
 *.md
