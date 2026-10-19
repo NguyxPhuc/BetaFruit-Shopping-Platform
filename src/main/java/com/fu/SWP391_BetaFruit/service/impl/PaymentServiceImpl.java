@@ -97,17 +97,12 @@ public class PaymentServiceImpl implements PaymentService {
                 return response;
             }
             String responseCode = params.get("vnp_ResponseCode");
-            Order order = transaction.getOrder();
             if ("00".equals(responseCode)) {
-                deductStockForConfirmation(order);
                 transaction.setStatus(PaymentStatus.PAID);
-                // Cập nhật trạng thái đơn hàng
-                order.setOrderStatus(OrderStatus.CONFIRMED);
             } else {
                 transaction.setStatus(PaymentStatus.FAILED);
             }
             paymentTransactionRepository.save(transaction);
-            orderRepository.save(order);
             response.put("RspCode", "00");
             response.put("Message", "Confirm Success");
         } catch (Exception e) {
@@ -134,7 +129,6 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         boolean isValidSignature = false;
         try {
             isValidSignature = vnPayConfig.verifySignature(params);
@@ -154,7 +148,6 @@ public class PaymentServiceImpl implements PaymentService {
             failureReason = VnPayUtils.translateVnpayResponseCode(responseCode);
             friendlyMessage = "Thanh toán chưa hoàn tất. " + failureReason;
         }
-
         Integer orderId = null;
         String orderCode = txnRef != null ? txnRef : "---";
         String customerName = "Quý khách hàng";
@@ -171,30 +164,21 @@ public class PaymentServiceImpl implements PaymentService {
                 orderCode = String.format("DH%06d", orderId);
                 shippingAddress = order.getSnapshotShippingAddress() != null ? order.getSnapshotShippingAddress() : "";
                 if (order.getCustomer() != null) {
-                    customerName = order.getCustomer().getFullName() != null ? order.getCustomer().getFullName()
-                            : customerName;
+                    customerName = order.getCustomer().getFullName() != null ? order.getCustomer().getFullName() : customerName;
                     customerPhone = order.getCustomer().getPhone() != null ? order.getCustomer().getPhone() : "";
                 }
             }
             if (PaymentStatus.PENDING.equals(transaction.getStatus())) {
                 if (isSuccess) {
-                    if (order != null) {
-                        deductStockForConfirmation(order);
-                    }
                     transaction.setStatus(PaymentStatus.PAID);
-                    if (order != null)
-                        order.setOrderStatus(OrderStatus.CONFIRMED);
                 } else {
                     transaction.setStatus(PaymentStatus.FAILED);
                 }
                 paymentTransactionRepository.save(transaction);
-                if (order != null) {
-                    orderRepository.save(order);
-                }
             } else if (PaymentStatus.PAID.equals(transaction.getStatus())) {
                 isSuccess = true;
             }
-            if (amount.compareTo(java.math.BigDecimal.ZERO) == 0 && transaction.getAmount() != null) {
+            if (amount.compareTo(BigDecimal.ZERO) == 0 && transaction.getAmount() != null) {
                 amount = transaction.getAmount();
             }
         }
