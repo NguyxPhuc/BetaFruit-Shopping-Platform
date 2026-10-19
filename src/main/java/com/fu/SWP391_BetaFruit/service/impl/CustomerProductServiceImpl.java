@@ -1,11 +1,11 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
-import com.fu.SWP391_BetaFruit.dto.request.customer.ProductFilterRequest;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerProductCardResponse;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerProductDetailResponse;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerProductPageResponse;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerReviewResponse;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerVariantResponse;
+import com.fu.SWP391_BetaFruit.dto.request.ProductFilterRequest;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerProductCardResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerProductDetailResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerProductPageResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerReviewResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerVariantResponse;
 import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 import com.fu.SWP391_BetaFruit.entity.Product;
 import com.fu.SWP391_BetaFruit.entity.ProductImage;

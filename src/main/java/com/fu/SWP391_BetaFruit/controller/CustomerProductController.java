@@ -1,8 +1,8 @@
 package com.fu.SWP391_BetaFruit.controller;
 
-import com.fu.SWP391_BetaFruit.dto.request.customer.ProductFilterRequest;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerProductDetailResponse;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerProductPageResponse;
+import com.fu.SWP391_BetaFruit.dto.request.ProductFilterRequest;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerProductDetailResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerProductPageResponse;
 import com.fu.SWP391_BetaFruit.service.CustomerProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
