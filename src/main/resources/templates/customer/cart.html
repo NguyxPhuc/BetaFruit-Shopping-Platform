@@ -30,7 +30,7 @@
             </div>
             <article class="cart-item" th:each="item : ${cart.items}" th:classappend="${!item.available ? 'cart-item-unavailable' : ''}">
                 <div class="cart-item-info">
-                    <input type="checkbox" class="cart-item-select" th:value="${item.itemId}" th:checked="${item.available}" th:disabled="${!item.available}"
+                    <input type="checkbox" class="cart-item-select" name="itemIds" form="checkoutSelectionForm" th:value="${item.itemId}" th:checked="${item.available}" th:disabled="${!item.available}"
                            th:data-quantity="${item.quantity}" th:data-subtotal="${item.subtotal}" th:aria-label="'Chọn ' + ${item.productName} + ' - ' + ${item.variantName}">
                     <div class="cart-item-copy">
                         <a class="cart-product-name" th:href="@{/products/{id}(id=${item.productId})}" th:text="${item.productName}"></a>
@@ -79,7 +79,9 @@
             <p class="cart-summary-note">Chưa bao gồm phí giao hàng.</p>
             <p id="noSelection" class="cart-selection-note" hidden>Chọn sản phẩm để xem tổng tiền.</p>
             <p th:unless="${cart.valid}" class="cart-warning">Sản phẩm không khả dụng chưa được tính vào tổng tiền.</p>
-            <a th:href="@{/products}" class="cart-primary">Tiếp tục mua sắm →</a>
+            <form id="checkoutSelectionForm" method="get" th:action="@{/customer/checkout}">
+                <button id="checkoutButton" type="submit" class="cart-primary">Tiến hành thanh toán →</button>
+            </form>
             <div class="cart-summary-footnote">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3zM8 12l3 3 5-6"/></svg>
                 <span>Giá và tồn kho luôn được kiểm tra lại.</span>

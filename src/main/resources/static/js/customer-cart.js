@@ -19,6 +19,7 @@
             maximumFractionDigits: 2
         }).format(cents / 100) + 'đ';
         document.getElementById('noSelection').hidden = selected.length > 0;
+        document.getElementById('checkoutButton').disabled = selected.length === 0;
         selectAll.disabled = items.length === 0;
         selectAll.checked = items.length > 0 && selected.length === items.length;
         selectAll.indeterminate = selected.length > 0 && selected.length < items.length;

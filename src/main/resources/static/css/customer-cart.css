@@ -44,6 +44,8 @@
 .cart-summary-note { color: #8a9486; font-size: 12px; margin: 6px 0 22px; }
 .cart-primary { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 13px 18px; background: #26724b; color: #fff; border-radius: 9px; font-size: 14px; font-weight: 600; transition: background .15s; }
 .cart-primary:hover { background: #1c5039; }
+.cart-summary button.cart-primary { width: 100%; border: 0; font-family: inherit; cursor: pointer; }
+.cart-summary button.cart-primary:disabled { opacity: .5; cursor: not-allowed; }
 .cart-summary-footnote { display: flex; gap: 8px; align-items: flex-start; color: #8a9486; font-size: 11px; margin-top: 18px; }
 .cart-summary-footnote svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
 .cart-selection-note { font-size: 13px; color: #7d887f; }
