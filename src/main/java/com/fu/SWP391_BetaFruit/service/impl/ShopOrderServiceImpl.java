@@ -8,8 +8,6 @@ import com.fu.SWP391_BetaFruit.repository.PaymentTransactionRepository;
 import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.entity.OrderStatusHistory;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
-import com.fu.SWP391_BetaFruit.enums.PaymentMethod;
-import com.fu.SWP391_BetaFruit.enums.PaymentStatus;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderStatusHistoryRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
@@ -27,8 +25,6 @@ import org.springframework.http.HttpStatus;
 
 @Service
 public class ShopOrderServiceImpl implements ShopOrderService {
-    // Note 2.1: VNPay thành công đã trừ kho và xác nhận đơn trong cùng transaction.
-    // Xác nhận lại đơn VNPay đã thanh toán là no-op; không trừ kho hai lần.
     private final OrderRepository orderRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final UserRepository userRepository;
@@ -195,12 +191,6 @@ public class ShopOrderServiceImpl implements ShopOrderService {
     private void changeStatus(Integer orderId, Integer ownerId, OrderStatus expectedStatus,
                               OrderStatus nextStatus, String note) {
         Order order = getOwnedOrder(orderId, ownerId);
-        if (expectedStatus == OrderStatus.PENDING && nextStatus == OrderStatus.CONFIRMED
-                && order.getOrderStatus() == OrderStatus.CONFIRMED && order.getPaymentMethod() == PaymentMethod.VNPAY
-                && paymentTransactionRepository.existsByOrderOrderIdAndGatewayAndStatus(
-                        orderId, "VNPAY", PaymentStatus.PAID)) {
-            return;
-        }
         if (order.getOrderStatus() != expectedStatus) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Trạng thái đơn hàng không hợp lệ cho thao tác này");
         }

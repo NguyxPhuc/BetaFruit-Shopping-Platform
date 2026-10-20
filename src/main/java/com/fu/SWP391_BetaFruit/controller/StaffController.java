@@ -78,6 +78,24 @@ public class StaffController {
         return redirectUrl.toString();
     }
 
+    @PostMapping("/staff/shops/{id}/toggle-visibility")
+    public String toggleShopVisibility(@PathVariable("id") Integer id,
+                                       @RequestParam(value = "page", defaultValue = "1") int page,
+                                       @RequestParam(value = "keyword", required = false) String keyword,
+                                       @RequestParam(value = "status", required = false) String status,
+                                       RedirectAttributes redirectAttributes) {
+        shopService.toggleShopVisibility(id);
+        redirectAttributes.addFlashAttribute("successMessage", "Thay đổi trạng thái hoạt động của cửa hàng thành công!");
+        StringBuilder redirectUrl = new StringBuilder("redirect:/staff/shops?page=").append(page);
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            redirectUrl.append("&keyword=").append(keyword.trim());
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            redirectUrl.append("&status=").append(status.trim());
+        }
+        return redirectUrl.toString();
+    }
+
     // ================= 2. QUẢN LÝ SẢN PHẨM (PRODUCTS) =================
     @GetMapping("/staff/products")
     public String listProducts(@RequestParam(value = "tab", required = false, defaultValue = "ALL") String tab,

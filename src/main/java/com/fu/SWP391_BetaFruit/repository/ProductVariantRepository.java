@@ -20,11 +20,11 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     List<ProductVariant> findByProduct_ProductId(Integer productId);
     Optional<ProductVariant> findFirstByProduct_ProductId(Integer productId);
 
-    @org.springframework.data.jpa.repository.Query("SELECT v FROM ProductVariant v WHERE v.product.shop.shopId = :shopId AND (v.stockQuantity <= COALESCE(v.lowStockThreshold, 5) OR v.stockQuantity <= 0)")
-    List<ProductVariant> findLowStockVariantsByShopId(@org.springframework.data.repository.query.Param("shopId") Integer shopId);
+    @Query("SELECT v FROM ProductVariant v WHERE v.product.shop.shopId = :shopId AND (v.stockQuantity <= COALESCE(v.lowStockThreshold, 5) OR v.stockQuantity <= 0)")
+    List<ProductVariant> findLowStockVariantsByShopId(@Param("shopId") Integer shopId);
 
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(v) FROM ProductVariant v WHERE v.product.shop.shopId = :shopId AND (v.stockQuantity <= COALESCE(v.lowStockThreshold, 5) OR v.stockQuantity <= 0)")
-    long countLowStockVariantsByShopId(@org.springframework.data.repository.query.Param("shopId") Integer shopId);
+    @Query("SELECT COUNT(v) FROM ProductVariant v WHERE v.product.shop.shopId = :shopId AND (v.stockQuantity <= COALESCE(v.lowStockThreshold, 5) OR v.stockQuantity <= 0)")
+    long countLowStockVariantsByShopId(@Param("shopId") Integer shopId);
 
     @Query("SELECT v FROM ProductVariant v JOIN FETCH v.product p " +
             "WHERE p.shop.owner.userId = :ownerId AND p.approvalStatus = 'ACTIVE'")

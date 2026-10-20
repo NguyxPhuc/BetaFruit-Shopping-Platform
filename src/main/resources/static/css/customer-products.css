@@ -820,3 +820,6 @@
         align-items: stretch;
     }
 }
+.bf-detail-shop { display: flex; align-items: center; gap: 12px; margin: -2px 0 20px; padding: 11px 14px; background: #edf4e9; border: 1px solid #deead8; border-radius: 9px; font-size: 13px; }
+.bf-detail-shop > span { color: #748368; }
+.bf-detail-shop > strong { color: #245239; font-weight: 600; overflow-wrap: anywhere; }

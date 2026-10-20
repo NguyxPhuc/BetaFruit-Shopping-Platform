@@ -22,11 +22,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/")
-    public String home() {
-        return "index";
-    }
-
     @GetMapping("/customer/profile")
     public String getCustomerProfile(Model model, HttpSession session) throws Exception {
         Integer id = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
@@ -37,7 +32,7 @@ public class UserController {
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("errorMessage", e.getMessage());
-            return "index";
+            return "error/500";
         }
     }
 

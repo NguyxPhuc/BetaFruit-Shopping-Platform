@@ -11,6 +11,7 @@ public interface PaymentService {
     @Transactional(rollbackFor = Exception.class)
     PaymentResponse createPayment(PaymentRequest request) throws Exception;
 
+    @Transactional(rollbackFor = Exception.class)
     Map<String, String> processVnpayIpn(Map<String, String> params);
 
     PaymentResultResponse processVnpayReturn(Map<String, String> params);
