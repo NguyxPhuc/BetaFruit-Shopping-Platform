@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Chi Tiết Giao Dịch ' + ${detailResponse.transactionRef} + ' | BetaFruit'">Chi Tiết Giao Dịch | BetaFruit</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="stylesheet" th:href="@{/css/transaction.css}">
+</head>
+<body class="transaction-page">
+
+    <!-- Global Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Main Container -->
+    <main class="transaction-container" style="max-width: 860px;">
+
+        <!-- Breadcrumb -->
+        <nav class="txn-breadcrumb" aria-label="Đường dẫn">
+            <a th:href="@{/}" href="/"><i class="bi bi-house-door"></i> Trang chủ</a>
+            <span class="separator">/</span>
+            <a th:href="@{/customer/payment/transaction-list}" href="/customer/payment/transaction-list">Lịch sử giao dịch</a>
+            <span class="separator">/</span>
+            <span class="current" th:text="${detailResponse.transactionRef}">TXN123456</span>
+        </nav>
+
+        <!-- Transaction Detail Card -->
+        <div class="txn-detail-card">
+            
+            <!-- 1. Hero Status Header -->
+            <div class="txn-detail-hero" 
+                 th:classappend="${detailResponse.status == 'PAID' ? 'status-paid' : (detailResponse.status == 'FAILED' ? 'status-failed' : 'status-pending')}">
+                
+                <div>
+                    <span th:if="${detailResponse.status == 'PAID'}" class="status-pill status-paid" style="font-size: 0.9rem; padding: 0.45rem 1rem;">
+                        <span class="dot"></span> Giao Dịch Thành Công
+                    </span>
+                    <span th:if="${detailResponse.status == 'PENDING'}" class="status-pill status-pending" style="font-size: 0.9rem; padding: 0.45rem 1rem;">
+                        <span class="dot"></span> Đang Chờ Thanh Toán
+                    </span>
+                    <span th:if="${detailResponse.status == 'FAILED'}" class="status-pill status-failed" style="font-size: 0.9rem; padding: 0.45rem 1rem;">
+                        <span class="dot"></span> Giao Dịch Thất Bại
+                    </span>
+                </div>
+
+                <div class="txn-hero-amount" 
+                     th:text="${detailResponse.amount != null ? (#numbers.formatDecimal(detailResponse.amount, 0, 'POINT', 0, 'COMMA') + ' ₫') : '0 ₫'}">150.000 ₫</div>
+
+                <div class="text-muted small">
+                    <span>Mã giao dịch: </span>
+                    <span class="order-badge-pill" style="font-size: 0.85rem; padding: 0.2rem 0.5rem; background: #ffffff;">
+                        <span id="txnRefSpan" th:text="${detailResponse.transactionRef}">TXN123456</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- 2. Detail Grid -->
+            <div class="txn-detail-grid">
+                
+                <!-- Cột 1: Thông tin phiên giao dịch -->
+                <div>
+                    <h3 class="detail-section-title">
+                        <i class="bi bi-credit-card-2-front"></i> Thông Tin Thanh Toán
+                    </h3>
+
+                    <div class="txn-info-list">
+                        <div class="txn-info-row">
+                            <span class="txn-info-key">
+                                <i class="bi bi-wallet2"></i> Cổng thanh toán
+                            </span>
+                            <span class="txn-info-val">
+                                <span class="gateway-badge" 
+                                      th:classappend="${detailResponse.gateway != null && detailResponse.gateway.equalsIgnoreCase('VNPAY') ? 'vnpay' : (detailResponse.gateway != null && detailResponse.gateway.equalsIgnoreCase('COD') ? 'cod' : '')}">
+                                    <span th:text="${detailResponse.gateway ?: 'VNPAY'}">VNPAY</span>
+                                </span>
+                            </span>
+                        </div>
+
+                        <div class="txn-info-row">
+                            <span class="txn-info-key">
+                                <i class="bi bi-clock-history"></i> Thời gian tạo
+                            </span>
+                            <span class="txn-info-val" 
+                                  th:text="${detailResponse.createdAt != null ? #temporals.format(detailResponse.createdAt, 'HH:mm:ss dd/MM/yyyy') : '--:-- --/--/----'}">14:20:00 20/10/2026</span>
+                        </div>
+
+                        <div class="txn-info-row">
+                            <span class="txn-info-key">
+                                <i class="bi bi-cash-stack"></i> Số tiền ghi nhận
+                            </span>
+                            <span class="txn-info-val fw-bold" style="color: var(--txn-primary);" 
+                                  th:text="${detailResponse.amount != null ? (#numbers.formatDecimal(detailResponse.amount, 0, 'POINT', 0, 'COMMA') + ' ₫') : '0 ₫'}">150.000 ₫</span>
+                        </div>
+
+                        <div class="txn-info-row">
+                            <span class="txn-info-key">
+                                <i class="bi bi-shield-check"></i> Trạng thái cổng
+                            </span>
+                            <span class="txn-info-val">
+                                <span th:if="${detailResponse.status == 'PAID'}" class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">PAID</span>
+                                <span th:if="${detailResponse.status == 'PENDING'}" class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">PENDING</span>
+                                <span th:if="${detailResponse.status == 'FAILED'}" class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">FAILED</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cột 2: Thông tin đơn hàng & Người nhận -->
+                <div>
+                    <h3 class="detail-section-title">
+                        <i class="bi bi-box2-heart"></i> Thông Tin Đơn Hàng
+                    </h3>
+
+                    <div class="txn-info-list">
+                        <div class="txn-info-row">
+                            <span class="txn-info-key">
+                                <i class="bi bi-receipt"></i> Mã đơn hàng
+                            </span>
+                            <span class="txn-info-val fw-bold" th:text="${detailResponse.orderCode}">#DH000123</span>
+                        </div>
+
+                        <div class="txn-info-row">
+                            <span class="txn-info-key">
+                                <i class="bi bi-tag"></i> Trạng thái đơn
+                            </span>
+                            <span class="txn-info-val">
+                                <span class="badge bg-light text-dark border px-2 py-1" th:text="${detailResponse.orderStatus}">CONFIRMED</span>
+                            </span>
+                        </div>
+
+                        <div class="txn-info-row">
+                            <span class="txn-info-key">
+                                <i class="bi bi-person"></i> Người nhận
+                            </span>
+                            <span class="txn-info-val" th:text="${detailResponse.customerName}">Nguyễn Văn A</span>
+                        </div>
+
+                        <div class="txn-info-row" th:if="${detailResponse.shippingAddress != null and !detailResponse.shippingAddress.isEmpty()}">
+                            <span class="txn-info-key">
+                                <i class="bi bi-geo-alt"></i> Địa chỉ giao
+                            </span>
+                            <span class="txn-info-val" style="max-width: 65%; font-size: 0.85rem;" th:text="${detailResponse.shippingAddress}">Hà Nội</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 3. Actions Footer -->
+            <div class="txn-detail-actions">
+                <div>
+                    <a th:href="@{/customer/payment/transaction-list}" href="/customer/payment/transaction-list" class="btn-txn-view">
+                        <i class="bi bi-arrow-left"></i> Quay lại danh sách
+                    </a>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn-txn-view" onclick="window.print()">
+                        <i class="bi bi-printer"></i> In biên lai
+                    </button>
+                    <a th:href="@{/products}" href="/products" class="btn-empty-action" style="padding: 0.45rem 1.15rem; font-size: 0.875rem;">
+                        <i class="bi bi-basket2"></i> Mua sắm hoa quả
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Global Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>
