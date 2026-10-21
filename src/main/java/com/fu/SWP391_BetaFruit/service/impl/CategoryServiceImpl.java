@@ -4,6 +4,7 @@ import com.fu.SWP391_BetaFruit.dto.request.CategoryRequest;
 import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 import com.fu.SWP391_BetaFruit.repository.MasterCategoryRepository;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
+import com.fu.SWP391_BetaFruit.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -97,39 +98,33 @@ public class CategoryServiceImpl implements CategoryService {
     );
 
     @Override
-    public Page<MasterCategory> getAdminCategoryPage(String keyword, String status, int page, int size, String sortBy, String sortDir) {
-        int pageIndex = Math.max(0, page - 1);
-        int pageSize = size > 0 ? size : 5;
-
-        String safeSortBy = (sortBy != null && ALLOWED_CATEGORY_SORT_FIELDS.contains(sortBy.trim()))
-                ? sortBy.trim() : "categoryId";
-        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
-
-        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
-        Boolean isActive = parseActiveStatus(status);
-
-        return masterCategoryRepository.filterCategories(cleanKeyword, isActive, pageable);
+    public long countCategories() {
+        return masterCategoryRepository.count();
     }
 
     @Override
     public Map<String, Object> getAdminCategoryPageData(String keyword, String status, int page, int size, String sortBy, String sortDir) {
-        String cleanKeyword = (keyword != null) ? keyword.trim() : "";
+        int pageIndex = Math.max(0, page - 1);
+        int pageSize = size > 0 ? Math.min(size, 100) : 5;
+
         String safeSortBy = (sortBy != null && ALLOWED_CATEGORY_SORT_FIELDS.contains(sortBy.trim()))
                 ? sortBy.trim() : "categoryId";
         String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
 
-        Boolean parsedStatus = parseActiveStatus(status);
-        String currentStatus = (parsedStatus == null) ? "ALL" : (parsedStatus ? "ACTIVE" : "HIDDEN");
+        String cleanKeyword = StringUtils.sanitizeKeyword(keyword);
+        Boolean isActive = parseActiveStatus(status);
+        String currentStatus = (isActive == null) ? "ALL" : (isActive ? "ACTIVE" : "HIDDEN");
 
-        Page<MasterCategory> categoryPage = getAdminCategoryPage(cleanKeyword, currentStatus, page, size, safeSortBy, safeSortDir);
+        Page<MasterCategory> categoryPage = masterCategoryRepository.filterCategories(cleanKeyword, isActive, pageable);
 
         Map<String, Object> data = new HashMap<>();
         data.put("categories", categoryPage.getContent());
         data.put("categoryPage", categoryPage);
         data.put("pageData", categoryPage);
         data.put("newCategory", new CategoryRequest());
-        data.put("keyword", cleanKeyword);
+        data.put("keyword", cleanKeyword != null ? cleanKeyword : "");
         data.put("currentStatus", currentStatus);
         data.put("sortBy", safeSortBy);
         data.put("sortDir", safeSortDir);

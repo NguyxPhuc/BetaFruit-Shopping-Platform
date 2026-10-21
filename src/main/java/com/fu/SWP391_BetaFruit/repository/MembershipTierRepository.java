@@ -4,9 +4,11 @@ import com.fu.SWP391_BetaFruit.entity.MembershipTier;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface MembershipTierRepository extends JpaRepository<MembershipTier, Integer> {
     MembershipTier findTopByOrderByMinSpentRequiredAsc();
 
-    java.util.List<MembershipTier> findAllByOrderByMinSpentRequiredAsc();
+    List<MembershipTier> findAllByOrderByMinSpentRequiredAsc();
 }

@@ -1,6 +1,6 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
-import com.fu.SWP391_BetaFruit.dto.response.customer.*;
+import com.fu.SWP391_BetaFruit.dto.response.*;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.*;
 import com.fu.SWP391_BetaFruit.repository.*;
@@ -20,6 +20,7 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository itemRepository;
     private final ProductVariantRepository variantRepository;
     private final UserRepository userRepository;
+    private final ProductImageRepository imageRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -78,6 +79,14 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    public void clearShopCart(Integer customerId, Integer shopId) {
+        requireCustomer(customerId, true);
+        if (shopId == null || shopId <= 0) throw new IllegalArgumentException("Cửa hàng không hợp lệ.");
+        cartRepository.findByCustomer_UserId(customerId).ifPresent(cart ->
+                itemRepository.deleteByCart_CartIdAndVariant_Product_Shop_ShopId(cart.getCartId(), shopId));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public CartSummaryResponse getSummary(Integer customerId) {
         requireCustomer(customerId, false);
@@ -87,7 +96,21 @@ public class CartServiceImpl implements CartService {
         BigDecimal total = BigDecimal.ZERO;
         long quantity = 0;
         boolean valid = true;
-        for (CartItem item : itemRepository.findSummaryItems(cart.getCartId())) {
+        var cartItems = itemRepository.findSummaryItems(cart.getCartId());
+        var productIds = cartItems.stream().map(item -> item.getVariant().getProduct().getProductId()).distinct().toList();
+        var imageUrls = new java.util.HashMap<Integer, String>();
+        var primaryIds = new java.util.HashSet<Integer>();
+        if (!productIds.isEmpty()) {
+            for (var image : imageRepository.findByProduct_ProductIdInOrderByImageIdAsc(productIds)) {
+                if (image.getImageUrl() == null || image.getImageUrl().isBlank()) continue;
+                Integer productId = image.getProduct().getProductId();
+                if (!imageUrls.containsKey(productId) || (Boolean.TRUE.equals(image.getIsPrimary()) && primaryIds.add(productId))) {
+                    imageUrls.put(productId, image.getImageUrl().trim());
+                    if (Boolean.TRUE.equals(image.getIsPrimary())) primaryIds.add(productId);
+                }
+            }
+        }
+        for (CartItem item : cartItems) {
             ProductVariant variant = item.getVariant();
             String warning = null;
             BigDecimal price = BigDecimal.ZERO;
@@ -103,8 +126,8 @@ public class CartServiceImpl implements CartService {
             quantity += item.getQuantity();
             Product product = variant.getProduct();
             items.add(new CartItemResponse(item.getCartItemId(), product.getProductId(), product.getProductName(),
-                    variant.getVariantName(), product.getShop().getShopName(), item.getQuantity(),
-                    variant.getStockQuantity(), price, subtotal, warning == null, warning));
+                    variant.getVariantName(), product.getShop().getShopId(), product.getShop().getShopName(), item.getQuantity(),
+                    variant.getStockQuantity(), price, subtotal, warning == null, warning, imageUrls.get(product.getProductId())));
         }
         return new CartSummaryResponse(List.copyOf(items), quantity, total, valid);
     }

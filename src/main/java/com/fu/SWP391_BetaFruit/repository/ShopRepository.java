@@ -3,6 +3,7 @@ package com.fu.SWP391_BetaFruit.repository;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
+import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -83,21 +84,16 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
            " LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            " LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            " LOWER(s.bankAccountNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
-           "(:ownerStatus IS NULL OR :ownerStatus = 'ALL' OR " +
-           " (:ownerStatus = 'ACTIVE' AND u.status = com.fu.SWP391_BetaFruit.enums.UserStatus.ACTIVE) OR " +
-           " (:ownerStatus = 'DEACTIVATED' AND u.status = com.fu.SWP391_BetaFruit.enums.UserStatus.DEACTIVATED)) AND " +
+           "(:ownerStatus IS NULL OR u.status = :ownerStatus) AND " +
            "(:commissionTier IS NULL OR :commissionTier = 'ALL' OR " +
            " (:commissionTier = 'DEFAULT' AND s.commissionRate = 5.00) OR " +
            " (:commissionTier = 'DISCOUNTED' AND s.commissionRate < 5.00) OR " +
            " (:commissionTier = 'HIGH' AND s.commissionRate > 5.00))")
     Page<Shop> searchApprovedShopsForCommission(@Param("keyword") String keyword,
-                                                @Param("ownerStatus") String ownerStatus,
+                                                @Param("ownerStatus") UserStatus ownerStatus,
                                                 @Param("commissionTier") String commissionTier,
                                                 Pageable pageable);
 
-    @Query("SELECT COUNT(s) FROM Shop s JOIN s.owner u WHERE s.approvalStatus = 'APPROVED' AND u.status = com.fu.SWP391_BetaFruit.enums.UserStatus.ACTIVE")
-    long countApprovedActiveOwnerShops();
-
-    @Query("SELECT COUNT(s) FROM Shop s JOIN s.owner u WHERE s.approvalStatus = 'APPROVED' AND u.status = com.fu.SWP391_BetaFruit.enums.UserStatus.DEACTIVATED")
-    long countApprovedDeactivatedOwnerShops();
+    @Query("SELECT COUNT(s) FROM Shop s JOIN s.owner u WHERE s.approvalStatus = 'APPROVED' AND u.status = :status")
+    long countApprovedShopsByOwnerStatus(@Param("status") UserStatus status);
 }

@@ -19,6 +19,16 @@ public class Role {
     @Column(name = "RoleId")
     private Long roleId;
 
-    @Convert(converter = com.fu.SWP391_BetaFruit.entity.converter.RoleNameConverter.class)
+    @Enumerated(EnumType.STRING)
     private RoleName roleName;
+
+    @Transient
+    public boolean isActive() {
+        return roleName != null && roleName.isActive();
+    }
+
+    @Transient
+    public boolean isHidden() {
+        return roleName == null || roleName.isHidden();
+    }
 }

@@ -120,7 +120,6 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         boolean isValidSignature = false;
         try {
             isValidSignature = vnPayConfig.verifySignature(params);
@@ -140,7 +139,6 @@ public class PaymentServiceImpl implements PaymentService {
             failureReason = VnPayUtils.translateVnpayResponseCode(responseCode);
             friendlyMessage = "Thanh toán chưa hoàn tất. " + failureReason;
         }
-
         Integer orderId = null;
         String orderCode = txnRef != null ? txnRef : "---";
         String customerName = "Quý khách hàng";
@@ -157,8 +155,7 @@ public class PaymentServiceImpl implements PaymentService {
                 orderCode = String.format("DH%06d", orderId);
                 shippingAddress = order.getSnapshotShippingAddress() != null ? order.getSnapshotShippingAddress() : "";
                 if (order.getCustomer() != null) {
-                    customerName = order.getCustomer().getFullName() != null ? order.getCustomer().getFullName()
-                            : customerName;
+                    customerName = order.getCustomer().getFullName() != null ? order.getCustomer().getFullName() : customerName;
                     customerPhone = order.getCustomer().getPhone() != null ? order.getCustomer().getPhone() : "";
                 }
             }
@@ -172,7 +169,7 @@ public class PaymentServiceImpl implements PaymentService {
             } else if (PaymentStatus.PAID.equals(transaction.getStatus())) {
                 isSuccess = true;
             }
-            if (amount.compareTo(java.math.BigDecimal.ZERO) == 0 && transaction.getAmount() != null) {
+            if (amount.compareTo(BigDecimal.ZERO) == 0 && transaction.getAmount() != null) {
                 amount = transaction.getAmount();
             }
         }

@@ -1,9 +1,9 @@
 package com.fu.SWP391_BetaFruit.service;
 
-import com.fu.SWP391_BetaFruit.dto.request.customer.ProductFilterRequest;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerProductCardResponse;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerProductDetailResponse;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CustomerProductPageResponse;
+import com.fu.SWP391_BetaFruit.dto.request.ProductFilterRequest;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerProductCardResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerProductDetailResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerProductPageResponse;
 import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 
 import java.util.List;
