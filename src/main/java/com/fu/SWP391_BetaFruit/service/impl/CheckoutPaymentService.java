@@ -45,7 +45,7 @@ public class CheckoutPaymentService {
             throw new IllegalArgumentException("Đơn hàng không còn hợp lệ để thanh toán VNPAY.");
         if (paid(order)) throw new IllegalArgumentException("Đơn hàng đã được thanh toán thành công.");
         // The amount and method come from the stored order, never from the browser.
-        var response = payments.createPayment(new PaymentRequest(orderId, order.getFinalAmount(),
+        var response = payments.createPayment(new PaymentRequest(orderId, OrderPricing.customerAmount(order),
                 PaymentMethod.VNPAY, ipAddress, baseUrl));
         if (!response.isRequiresRedirect() || response.getPaymentUrl() == null || response.getPaymentUrl().isBlank())
             throw new IllegalStateException("Không tạo được liên kết thanh toán VNPAY.");

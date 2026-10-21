@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -59,19 +58,20 @@ public class CheckoutService {
         if (groups.size() > 1)
             throw new IllegalArgumentException("Chỉ được thanh toán các sản phẩm cùng một cửa hàng trong mỗi lần checkout. "
                     + "Vui lòng bỏ chọn sản phẩm của cửa hàng khác.");
-        BigDecimal fee = money(shippingFee);
+        BigDecimal fee = OrderPricing.shippingFee(shippingFee);
         List<CheckoutResponse.ShopGroup> shops = new ArrayList<>();
         for (var group : groups.entrySet()) {
             var items = group.getValue().stream().map(i -> byId.get(i.getCartItemId())).toList();
             var total = items.stream().map(CartItemResponse::subtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
             shops.add(new CheckoutResponse.ShopGroup(group.getKey(),
                     group.getValue().getFirst().getVariant().getProduct().getShop().getShopName(),
-                    items, total, fee, total.add(fee)));
+                    items, total, fee, OrderPricing.customerTotal(total, fee, BigDecimal.ZERO)));
         }
         BigDecimal subtotal = lines.stream().map(CartItemResponse::subtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal shipping = fee.multiply(BigDecimal.valueOf(shops.size()));
         var quote = new CheckoutResponse(List.copyOf(shops), lines.stream().map(CartItemResponse::itemId).toList(),
-                lines.stream().mapToLong(CartItemResponse::quantity).sum(), subtotal, shipping, subtotal.add(shipping));
+                lines.stream().mapToLong(CartItemResponse::quantity).sum(), subtotal, shipping,
+                OrderPricing.customerTotal(subtotal, shipping, BigDecimal.ZERO));
         if (couponCode == null || couponCode.isBlank()) return quote;
         Coupon coupon = coupons.findByCouponCodeIgnoreCase(couponCode.trim())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy mã giảm giá."));
@@ -83,16 +83,13 @@ public class CheckoutService {
             throw new IllegalArgumentException("Mã giảm giá chỉ áp dụng cho sản phẩm của cửa hàng phát hành.");
         if (coupon.getCouponCategory() == null)
             throw new IllegalArgumentException("Mã giảm giá chưa có loại áp dụng.");
-        BigDecimal base = coupon.getCouponCategory() == CouponCategory.SHIPPING ? shipping : subtotal;
-        BigDecimal discount = CheckoutCouponRules.discount(coupon, coupon.getCouponCategory(), subtotal,
-                base, java.time.LocalDateTime.now());
+        CheckoutCouponRules.validate(coupon, subtotal, java.time.LocalDateTime.now());
+        BigDecimal discount = OrderPricing.couponDiscount(coupon, subtotal, shipping);
         if (discount.signum() == 0)
             throw new IllegalArgumentException("Mã giảm giá không làm giảm số tiền đơn hàng này.");
         Shop shop = entities.getFirst().getVariant().getProduct().getShop();
-        var pricedOrder = pricedOrder(shop, subtotal, coupon, discount);
-        if (pricedOrder.getShopNetReceived().signum() < 0)
-            throw new IllegalArgumentException("Mức giảm của cửa hàng vượt số tiền cửa hàng có thể tài trợ.");
-        BigDecimal finalAmount = subtotal.add(shipping).subtract(discount);
+        var pricing = OrderPricing.quote(shop, coupon, subtotal, shipping, discount, defaultCommissionRate);
+        BigDecimal finalAmount = pricing.finalAmount();
         var discountedGroup = new CheckoutResponse.ShopGroup(group.shopId(), group.shopName(), group.items(),
                 subtotal, shipping, finalAmount);
         return new CheckoutResponse(List.of(discountedGroup), quote.itemIds(), quote.quantity(), subtotal,
@@ -145,12 +142,11 @@ public class CheckoutService {
             order.setCoupon(coupon);
             order.setDiscountAmount(current.discountAmount());
             order.setShippingFee(group.shippingFee());
-            order.setFinalAmount(group.finalAmount());
-            var pricing = pricedOrder(shop, group.subtotal(), coupon, current.discountAmount());
-            order.setPlatformFee(pricing.getPlatformFee());
-            order.setShopNetReceived(pricing.getShopNetReceived());
-            if (order.getShopNetReceived().signum() < 0)
-                throw new IllegalArgumentException("Mức giảm của cửa hàng vượt số tiền cửa hàng có thể tài trợ.");
+            var pricing = OrderPricing.quote(shop, coupon, group.subtotal(), group.shippingFee(),
+                    current.discountAmount(), defaultCommissionRate);
+            order.setFinalAmount(pricing.finalAmount());
+            order.setPlatformFee(pricing.shop().platformFee());
+            order.setShopNetReceived(pricing.shop().shopNetReceived());
             order.setPaymentMethod(paymentMethod);
             order.setOrderStatus(OrderStatus.PENDING);
             order.setIsSettled(false);
@@ -170,11 +166,12 @@ public class CheckoutService {
                 payment.setOrder(order);
                 payment.setGateway("COD");
                 payment.setTransactionRef("COD-" + UUID.randomUUID());
-                payment.setAmount(group.finalAmount());
+                payment.setAmount(OrderPricing.customerAmount(order));
                 payment.setStatus(PaymentStatus.PENDING);
                 payments.save(payment);
             }
-            result.add(new CheckoutResponse.PlacedOrder(order.getOrderId(), shop.getShopName(), group.finalAmount()));
+            result.add(new CheckoutResponse.PlacedOrder(order.getOrderId(), shop.getShopName(),
+                    OrderPricing.customerAmount(order)));
         }
         // Remove only purchased lines, after all orders were created in this transaction.
         if (coupon != null) {
@@ -192,23 +189,4 @@ public class CheckoutService {
         return cartItems.findSummaryItems(cart.getCartId()).stream().filter(i -> ids.contains(i.getCartItemId())).toList();
     }
 
-    private BigDecimal money(BigDecimal amount) {
-        if (amount == null || amount.signum() < 0 || amount.scale() > 2)
-            throw new IllegalArgumentException("Phí vận chuyển chưa được cấu hình hợp lệ.");
-        return amount.setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private Order pricedOrder(Shop shop, BigDecimal subtotal, Coupon coupon, BigDecimal discount) {
-        if (coupon != null && coupon.getShop() != null && discount.compareTo(subtotal) > 0)
-            throw new IllegalArgumentException("Mức giảm của cửa hàng vượt số tiền cửa hàng có thể tài trợ.");
-        BigDecimal rate = shop.getCommissionRate() == null ? defaultCommissionRate : shop.getCommissionRate();
-        if (rate == null || rate.signum() < 0 || rate.compareTo(new BigDecimal("100")) > 0)
-            throw new IllegalArgumentException("Tỷ lệ phí sàn của cửa hàng không hợp lệ.");
-        Order order = new Order();
-        order.setShop(shop); order.setCoupon(coupon); order.setTotalAmount(subtotal);
-        order.setDiscountAmount(discount);
-        order.setPlatformFee(subtotal.multiply(rate).movePointLeft(2).setScale(2, RoundingMode.HALF_UP));
-        order.setShopNetReceived(OrderPricing.calculate(order).shopNetReceived());
-        return order;
-    }
 }

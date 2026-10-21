@@ -98,7 +98,7 @@ public class CartServiceImpl implements CartService {
                 warning = ex.getMessage();
                 valid = false;
             }
-            BigDecimal subtotal = warning == null ? price.multiply(BigDecimal.valueOf(item.getQuantity())) : BigDecimal.ZERO;
+            BigDecimal subtotal = warning == null ? OrderPricing.lineTotal(price, item.getQuantity()) : BigDecimal.ZERO;
             total = total.add(subtotal);
             quantity += item.getQuantity();
             Product product = variant.getProduct();

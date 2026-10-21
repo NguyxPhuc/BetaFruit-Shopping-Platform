@@ -43,7 +43,7 @@ public class ShipperOrderQueryService {
         return new ShipperOrderResponse(order.getOrderId(), order.getOrderStatus().name(),
                 order.getCustomer().getFullName(), order.getCustomer().getPhone(),
                 order.getSnapshotShippingAddress(), order.getShop().getShopName(),
-                order.getPaymentMethod() == null ? null : order.getPaymentMethod().name(), order.getFinalAmount(),
+                order.getPaymentMethod() == null ? null : order.getPaymentMethod().name(), OrderPricing.customerAmount(order),
                 OrderPaymentRules.codAmount(order), OrderPaymentRules.amountToCollect(order),
                 OrderPaymentRules.codHeldAmount(order), OrderPaymentRules.remittanceStatus(order),
                 order.getPaymentMethod() == PaymentMethod.COD ? order.getIsCodRemitted() : null,

@@ -62,7 +62,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 .map(item -> new ShopOrderDetailResponse.Item(
                         item.getOrderItemId(), item.getSnapshotProductName(), item.getSnapshotVariantName(),
                         item.getQuantity(), item.getPriceSnapshot(),
-                        item.getPriceSnapshot().multiply(java.math.BigDecimal.valueOf(item.getQuantity())),
+                        OrderPricing.lineTotal(item.getPriceSnapshot(), item.getQuantity()),
                         item.getCostSnapshot()))
                 .toList();
         var history = orderStatusHistoryRepository.findByOrderOrderIdOrderByCreatedAtAscHistoryIdAsc(orderId).stream()
@@ -88,11 +88,10 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         BigDecimal totalCost = items.isEmpty() || items.stream().anyMatch(item -> item.costSnapshot() == null)
                 ? null
                 : items.stream()
-                        .map(item -> item.costSnapshot().multiply(BigDecimal.valueOf(item.quantity())))
+                        .map(item -> OrderPricing.lineTotal(item.costSnapshot(), item.quantity()))
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
         var pricing = OrderPricing.calculate(order);
-        BigDecimal estimatedProfit = totalCost == null
-                ? null : pricing.shopNetReceived().subtract(totalCost);
+        BigDecimal estimatedProfit = OrderPricing.estimatedProfit(pricing.shopNetReceived(), totalCost);
 
         return new ShopOrderDetailResponse(
                 toListItem(order, pricing), order.getShop().getShopId(), order.getShop().getShopName(),
@@ -131,7 +130,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 order.getOrderId(),
                 String.valueOf(order.getOrderId()),
                 order.getCustomer().getFullName(),
-                order.getFinalAmount(),
+                OrderPricing.customerAmount(order),
                 pricing.shopNetReceived(),
                 pricing.shopNetReceived(),
                 order.getOrderStatus() == null ? null : order.getOrderStatus().name(),
