@@ -1,4 +1,4 @@
-package com.fu.SWP391_BetaFruit.dto.response.customer;
+package com.fu.SWP391_BetaFruit.dto.response;
 
 import java.math.BigDecimal;
 import java.util.List;

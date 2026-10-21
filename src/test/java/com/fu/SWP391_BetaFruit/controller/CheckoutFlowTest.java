@@ -1,6 +1,6 @@
 package com.fu.SWP391_BetaFruit.controller;
 
-import com.fu.SWP391_BetaFruit.dto.response.customer.CheckoutResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CheckoutResponse;
 import com.fu.SWP391_BetaFruit.entity.Address;
 import com.fu.SWP391_BetaFruit.service.CartService;
 import com.fu.SWP391_BetaFruit.service.impl.CheckoutService;

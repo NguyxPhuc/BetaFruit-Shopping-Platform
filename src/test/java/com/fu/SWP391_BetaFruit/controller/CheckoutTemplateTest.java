@@ -1,6 +1,6 @@
 package com.fu.SWP391_BetaFruit.controller;
 
-import com.fu.SWP391_BetaFruit.dto.response.customer.*;
+import com.fu.SWP391_BetaFruit.dto.response.*;
 import com.fu.SWP391_BetaFruit.entity.Address;
 import org.junit.jupiter.api.Test;
 import org.thymeleaf.context.Context;
@@ -43,10 +43,10 @@ class CheckoutTemplateTest {
         context.setVariable("session", session);
         context.setVariable("cartCount", 3);
         context.setVariable("checkoutToken", "preview-only");
-        var item = new CartItemResponse(1, 1, "Táo Envy New Zealand", "Hộp 1 kg", "Vườn trái cây An Nhiên",
-                2, 10, new BigDecimal("129000"), new BigDecimal("258000"), true, null);
-        var otherItem = new CartItemResponse(2, 2, "Cam vàng mọng nước", "Túi 1 kg", "Nông trại Xanh",
-                1, 15, new BigDecimal("89000"), new BigDecimal("89000"), true, null);
+        var item = new CartItemResponse(1, 1, "Táo Envy New Zealand", "Hộp 1 kg", 1, "Vườn trái cây An Nhiên",
+                2, 10, new BigDecimal("129000"), new BigDecimal("258000"), true, null, null);
+        var otherItem = new CartItemResponse(2, 2, "Cam vàng mọng nước", "Túi 1 kg", 2, "Nông trại Xanh",
+                1, 15, new BigDecimal("89000"), new BigDecimal("89000"), true, null, null);
         var shops = List.of(new CheckoutResponse.ShopGroup(1, item.shopName(), List.of(item), item.subtotal(), BigDecimal.ZERO, item.subtotal()),
                 new CheckoutResponse.ShopGroup(2, otherItem.shopName(), List.of(otherItem), otherItem.subtotal(), BigDecimal.ZERO, otherItem.subtotal()));
         context.setVariable("checkout", new CheckoutResponse(shops, List.of(1, 2), 3,
@@ -95,10 +95,16 @@ class CheckoutTemplateTest {
         assertTrue(vnpayReceipt.contains("/customer/checkout/102/pay"));
         assertFalse(vnpayReceipt.contains("/customer/checkout/101/pay"));
         Files.writeString(preview.resolve("vnpay-receipt.html"), vnpayReceipt);
-        context.setVariable("cart", new CartSummaryResponse(List.of(item), 2, item.subtotal(), true));
+        context.setVariable("cart", new CartSummaryResponse(List.of(item, otherItem), 3,
+                item.subtotal().add(otherItem.subtotal()), true));
         context.setVariable("cartToken", "preview-only");
         String cart = engine.process("customer/cart", context);
-        assertTrue(cart.contains("form=\"checkoutSelectionForm\""));
-        assertTrue(cart.contains("/customer/checkout"));
+        assertTrue(cart.contains("form=\"checkout-shop-1\""));
+        assertTrue(cart.contains("form=\"checkout-shop-2\""));
+        assertTrue(cart.contains("id=\"checkout-shop-1\" action=\"/customer/checkout\""));
+        assertTrue(cart.contains("id=\"checkout-shop-2\" action=\"/customer/checkout\""));
+        assertEquals(2, cart.split("class=\"cart-order-actions\"", -1).length - 1);
+        assertEquals(2, cart.split("type=\"submit\" class=\"cart-primary cart-order-button\"", -1).length - 1);
+        assertFalse(cart.contains("checkoutSelectionForm"));
     }
 }

@@ -1,7 +1,7 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
-import com.fu.SWP391_BetaFruit.dto.response.customer.CartItemResponse;
-import com.fu.SWP391_BetaFruit.dto.response.customer.CheckoutResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CartItemResponse;
+import com.fu.SWP391_BetaFruit.dto.response.CheckoutResponse;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.*;
 import com.fu.SWP391_BetaFruit.repository.*;

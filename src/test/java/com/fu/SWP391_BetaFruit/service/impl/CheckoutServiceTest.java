@@ -1,6 +1,6 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
-import com.fu.SWP391_BetaFruit.dto.response.customer.*;
+import com.fu.SWP391_BetaFruit.dto.response.*;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.*;
 import com.fu.SWP391_BetaFruit.repository.*;
@@ -61,8 +61,8 @@ class CheckoutServiceTest {
         CartItem item = new CartItem(); item.setCartItemId(id); item.setVariant(variant); item.setQuantity(quantity);
         entities.add(item);
         BigDecimal unitPrice = new BigDecimal(price);
-        lines.add(new CartItemResponse(id, id, "Táo " + id, "1 kg", shopName, quantity, 10, unitPrice,
-                unitPrice.multiply(BigDecimal.valueOf(quantity)), true, null));
+        lines.add(new CartItemResponse(id, id, "Táo " + id, "1 kg", shopId, shopName, quantity, 10, unitPrice,
+                unitPrice.multiply(BigDecimal.valueOf(quantity)), true, null, null));
     }
 
     Coupon addCoupon(String code, CouponCategory category, boolean platform, String value) {
@@ -210,8 +210,8 @@ class CheckoutServiceTest {
 
     @Test void unavailableItemCannotBeOrdered() {
         var line = lines.getFirst();
-        lines.set(0, new CartItemResponse(1, 1, line.productName(), line.variantName(), line.shopName(),
-                2, 0, line.unitPrice(), BigDecimal.ZERO, false, "Hết hàng"));
+        lines.set(0, new CartItemResponse(1, 1, line.productName(), line.variantName(), line.shopId(), line.shopName(),
+                2, 0, line.unitPrice(), BigDecimal.ZERO, false, "Hết hàng", line.imageUrl()));
         assertThrows(IllegalArgumentException.class, () -> service.preview(7, List.of(1)));
     }
 
