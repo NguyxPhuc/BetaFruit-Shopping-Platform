@@ -16,9 +16,6 @@ public interface DeliveryAssignmentRepository extends JpaRepository<DeliveryAssi
     Optional<DeliveryAssignment> findByOrderOrderId(Integer orderId);
 
     @EntityGraph(attributePaths = {"order.customer", "order.shop"})
-    Page<DeliveryAssignment> findByShipperUserId(Integer shipperId, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"order.customer", "order.shop"})
     @Query("""
             select a from DeliveryAssignment a
             where a.shipper.userId = :shipperId
@@ -34,21 +31,4 @@ public interface DeliveryAssignmentRepository extends JpaRepository<DeliveryAssi
     @EntityGraph(attributePaths = {"order.customer", "order.shop"})
     Optional<DeliveryAssignment> findByOrderOrderIdAndShipperUserId(Integer orderId, Integer shipperId);
 
-    @Query("""
-            select count(a) from DeliveryAssignment a
-            where a.shipper.userId = :shipperId and a.order.paymentMethod = :method
-              and a.order.orderStatus in :statuses
-              and (a.order.isCodRemitted = false or a.order.isCodRemitted is null)
-            """)
-    long countUnremittedCOD(@Param("shipperId") Integer shipperId,
-            @Param("method") PaymentMethod method, @Param("statuses") java.util.List<OrderStatus> statuses);
-
-    @Query("""
-            select coalesce(sum(a.order.finalAmount), 0) from DeliveryAssignment a
-            where a.shipper.userId = :shipperId and a.order.paymentMethod = :method
-              and a.order.orderStatus in :statuses
-              and (a.order.isCodRemitted = false or a.order.isCodRemitted is null)
-            """)
-    java.math.BigDecimal sumUnremittedCOD(@Param("shipperId") Integer shipperId,
-            @Param("method") PaymentMethod method, @Param("statuses") java.util.List<OrderStatus> statuses);
 }
