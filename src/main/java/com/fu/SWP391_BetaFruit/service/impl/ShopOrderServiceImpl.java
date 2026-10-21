@@ -8,6 +8,8 @@ import com.fu.SWP391_BetaFruit.repository.PaymentTransactionRepository;
 import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.entity.OrderStatusHistory;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
+import com.fu.SWP391_BetaFruit.enums.PaymentMethod;
+import com.fu.SWP391_BetaFruit.enums.PaymentStatus;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderStatusHistoryRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
@@ -195,6 +197,16 @@ public class ShopOrderServiceImpl implements ShopOrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Trạng thái đơn hàng không hợp lệ cho thao tác này");
         }
         if (expectedStatus == OrderStatus.PENDING && nextStatus == OrderStatus.CONFIRMED) {
+            if (order.getPaymentMethod() == null) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Đơn hàng thiếu phương thức thanh toán");
+            }
+            if (order.getPaymentMethod() == PaymentMethod.VNPAY
+                    && paymentTransactionRepository.findByOrderOrderIdOrderByCreatedAtAscTransactionIdAsc(orderId)
+                            .stream().noneMatch(payment -> "VNPAY".equalsIgnoreCase(payment.getGateway())
+                                    && payment.getStatus() == PaymentStatus.PAID)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Đơn hàng VNPAY chưa thanh toán thành công (PAID), không thể xác nhận đơn hàng");
+            }
             OrderPricing.couponSource(order);
             orderStockService.deduct(order, ownerId);
         }

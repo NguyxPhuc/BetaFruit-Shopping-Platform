@@ -15,9 +15,6 @@ import com.fu.SWP391_BetaFruit.service.PaymentService;
 import com.fu.SWP391_BetaFruit.strategy.PaymentStrategy;
 import com.fu.SWP391_BetaFruit.strategy.PaymentStrategyFactory;
 import com.fu.SWP391_BetaFruit.utils.VnPayUtils;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
-import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,12 +37,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private VnPayConfig vnPayConfig;
-
-    @Autowired
-    private OrderStockService orderStockService;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -97,17 +88,12 @@ public class PaymentServiceImpl implements PaymentService {
                 return response;
             }
             String responseCode = params.get("vnp_ResponseCode");
-            Order order = transaction.getOrder();
             if ("00".equals(responseCode)) {
-                deductStockForConfirmation(order);
                 transaction.setStatus(PaymentStatus.PAID);
-                // Cập nhật trạng thái đơn hàng
-                order.setOrderStatus(OrderStatus.CONFIRMED);
             } else {
                 transaction.setStatus(PaymentStatus.FAILED);
             }
             paymentTransactionRepository.save(transaction);
-            orderRepository.save(order);
             response.put("RspCode", "00");
             response.put("Message", "Confirm Success");
         } catch (Exception e) {
@@ -178,19 +164,11 @@ public class PaymentServiceImpl implements PaymentService {
             }
             if (PaymentStatus.PENDING.equals(transaction.getStatus())) {
                 if (isSuccess) {
-                    if (order != null) {
-                        deductStockForConfirmation(order);
-                    }
                     transaction.setStatus(PaymentStatus.PAID);
-                    if (order != null)
-                        order.setOrderStatus(OrderStatus.CONFIRMED);
                 } else {
                     transaction.setStatus(PaymentStatus.FAILED);
                 }
                 paymentTransactionRepository.save(transaction);
-                if (order != null) {
-                    orderRepository.save(order);
-                }
             } else if (PaymentStatus.PAID.equals(transaction.getStatus())) {
                 isSuccess = true;
             }
@@ -216,14 +194,6 @@ public class PaymentServiceImpl implements PaymentService {
         paymentResultResponse.setShippingAddress(shippingAddress);
         paymentResultResponse.setPaymentMethod(PaymentMethod.VNPAY.name());
         return paymentResultResponse;
-    }
-
-    private void deductStockForConfirmation(Order order) {
-        // Re-read under the order lock so concurrent callbacks cannot deduct twice.
-        entityManager.refresh(order, LockModeType.PESSIMISTIC_WRITE);
-        if (OrderStatus.PENDING.equals(order.getOrderStatus())) {
-            orderStockService.deduct(order, order.getCustomer().getUserId());
-        }
     }
 
 }

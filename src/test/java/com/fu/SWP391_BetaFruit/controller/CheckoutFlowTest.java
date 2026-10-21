@@ -4,6 +4,7 @@ import com.fu.SWP391_BetaFruit.dto.response.customer.CheckoutResponse;
 import com.fu.SWP391_BetaFruit.entity.Address;
 import com.fu.SWP391_BetaFruit.service.CartService;
 import com.fu.SWP391_BetaFruit.service.impl.CheckoutService;
+import com.fu.SWP391_BetaFruit.service.impl.CheckoutPaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpSession;
@@ -43,7 +44,7 @@ class CheckoutFlowTest {
         resolver.setPrefix("src/main/resources/templates/"); resolver.setSuffix(".html");
         resolver.setCharacterEncoding("UTF-8"); resolver.setTemplateMode("HTML");
         var engine = new SpringTemplateEngine(); engine.setTemplateResolver(resolver);
-        mvc = MockMvcBuilders.standaloneSetup(new CheckoutController(checkout, mock(CartService.class)))
+        mvc = MockMvcBuilders.standaloneSetup(new CheckoutController(checkout, mock(CartService.class), mock(CheckoutPaymentService.class)))
                 .setViewResolvers((name, locale) -> {
                     if (name.startsWith("redirect:")) return new RedirectView(name.substring(9));
                     return new View() {

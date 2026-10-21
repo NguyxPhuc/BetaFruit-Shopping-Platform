@@ -24,6 +24,10 @@
 .checkout-shop-total { display: flex; justify-content: space-between; gap: 16px; margin-top: 18px; font-size: 14px; }
 .checkout-shop-total strong { color: #26724b; }
 .checkout-help { margin: 0; font-size: 13px; color: #77837b; line-height: 1.7; }
+.checkout-coupon-input { display: flex; gap: 10px; margin-top: 10px; }
+.checkout-coupon-input input { flex: 1; min-width: 0; border: 1px solid #b9cbb8; border-radius: 8px; padding: 12px; font: inherit; }
+.checkout-coupon-input button, .checkout-coupon-applied button { border: 1px solid #26724b; border-radius: 8px; padding: 10px 16px; color: #26724b; background: #f3f8ef; cursor: pointer; font: inherit; }
+.checkout-coupon-applied { margin-top: 12px; }
 .cart-primary { border: 0; width: 100%; cursor: pointer; font-family: inherit; }
 .cart-primary:disabled { opacity: .5; cursor: not-allowed; }
 .checkout-receipt { max-width: 720px; margin: 30px auto; }

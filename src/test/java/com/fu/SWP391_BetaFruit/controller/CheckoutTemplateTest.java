@@ -61,14 +61,40 @@ class CheckoutTemplateTest {
         assertTrue(html.contains("name=\"addressId\"")); assertFalse(html.contains("th:text"));
         Path preview = Path.of("target/checkout-preview"); Files.createDirectories(preview);
         Files.writeString(preview.resolve("checkout.html"), html);
+        var couponQuote = new CheckoutResponse(List.of(shops.getFirst()), List.of(1), 2,
+                item.subtotal(), new BigDecimal("15000"), item.subtotal(),
+                new CheckoutResponse.AppliedCoupon(51, "FREESHIP", com.fu.SWP391_BetaFruit.enums.CouponCategory.SHIPPING,
+                        new BigDecimal("15000"), true));
+        context.setVariable("checkout", couponQuote);
+        context.setVariable("selectedPaymentMethod", "VNPAY");
+        context.setVariable("selectedAddressId", 1);
+        String withCoupon = engine.process("customer/checkout", context);
+        assertTrue(withCoupon.contains("FREESHIP"));
+        assertTrue(withCoupon.contains("Giảm phí giao hàng"));
+        assertTrue(withCoupon.contains("-15.000đ"));
+        assertTrue(withCoupon.contains("formaction=\"/customer/checkout/coupon\""));
+        assertTrue(withCoupon.contains("value=\"remove\""));
+        Files.writeString(preview.resolve("checkout-coupon.html"), withCoupon);
         context.setVariable("addresses", List.of());
         String empty = engine.process("customer/checkout", context);
         assertTrue(empty.contains("Bạn chưa có địa chỉ")); assertTrue(empty.contains("disabled=\"disabled\""));
         Files.writeString(preview.resolve("checkout-empty.html"), empty);
         context.setVariable("orders", List.of(new CheckoutResponse.PlacedOrder(101, item.shopName(), item.subtotal())));
         String receipt = engine.process("customer/checkout-success", context);
-        assertTrue(receipt.contains("Đơn hàng #101")); assertTrue(receipt.contains("Chờ xác nhận"));
+        assertTrue(receipt.contains("Đơn hàng #101")); assertTrue(receipt.contains("Đã tạo đơn"));
         Files.writeString(preview.resolve("success.html"), receipt);
+        context.setVariable("paymentMethod", "VNPAY");
+        context.setVariable("paymentToken", "receipt-token");
+        context.setVariable("orders", List.of(new CheckoutResponse.PlacedOrder(101, item.shopName(), item.subtotal()),
+                new CheckoutResponse.PlacedOrder(102, otherItem.shopName(), otherItem.subtotal())));
+        context.setVariable("paymentStates", Map.of(101,
+                new com.fu.SWP391_BetaFruit.service.impl.CheckoutPaymentService.State(true, false), 102,
+                new com.fu.SWP391_BetaFruit.service.impl.CheckoutPaymentService.State(false, true)));
+        String vnpayReceipt = engine.process("customer/checkout-success", context);
+        assertTrue(vnpayReceipt.contains("Đã thanh toán VNPAY"));
+        assertTrue(vnpayReceipt.contains("/customer/checkout/102/pay"));
+        assertFalse(vnpayReceipt.contains("/customer/checkout/101/pay"));
+        Files.writeString(preview.resolve("vnpay-receipt.html"), vnpayReceipt);
         context.setVariable("cart", new CartSummaryResponse(List.of(item), 2, item.subtotal(), true));
         context.setVariable("cartToken", "preview-only");
         String cart = engine.process("customer/cart", context);

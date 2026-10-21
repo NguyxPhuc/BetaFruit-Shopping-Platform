@@ -35,6 +35,7 @@
                     <div class="cart-item-copy">
                         <a class="cart-product-name" th:href="@{/products/{id}(id=${item.productId})}" th:text="${item.productName}"></a>
                         <span class="cart-variant" th:text="${item.variantName}"></span>
+                        <span class="cart-variant" th:text="'Cửa hàng: ' + ${item.shopName}"></span>
                         <p class="cart-warning" th:unless="${item.available}" role="alert" th:text="${item.warning}"></p>
                     </div>
                 </div>
@@ -76,7 +77,7 @@
                 <div class="cart-summary-row"><span>Số lượng đã chọn</span><strong id="selectedQuantity" th:text="${cart.totalQuantity}"></strong></div>
                 <div class="cart-summary-total"><span>Tổng tiền hàng</span><strong id="selectedTotal" th:text="${#numbers.formatDecimal(cart.totalAmount, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></div>
             </div>
-            <p class="cart-summary-note">Chưa bao gồm phí giao hàng.</p>
+            <p class="cart-summary-note">Chưa bao gồm phí giao hàng. Mỗi lần thanh toán chỉ chọn sản phẩm của cùng một cửa hàng.</p>
             <p id="noSelection" class="cart-selection-note" hidden>Chọn sản phẩm để xem tổng tiền.</p>
             <p th:unless="${cart.valid}" class="cart-warning">Sản phẩm không khả dụng chưa được tính vào tổng tiền.</p>
             <form id="checkoutSelectionForm" method="get" th:action="@{/customer/checkout}">

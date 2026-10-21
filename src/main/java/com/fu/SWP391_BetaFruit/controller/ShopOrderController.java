@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.transaction.CannotCreateTransactionException;
@@ -85,10 +86,16 @@ public class ShopOrderController {
     @PostMapping("/{orderId}/confirm")
     public String confirmOrder(@PathVariable Integer orderId,
                                HttpSession session,
-                               @RequestParam(defaultValue = "false") boolean returnToDetail) {
+                               @RequestParam(defaultValue = "false") boolean returnToDetail,
+                               RedirectAttributes redirectAttributes) {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
-        shopOrderService.confirmOrder(orderId, ownerId);
+        try {
+            shopOrderService.confirmOrder(orderId, ownerId);
+        } catch (ResponseStatusException exception) {
+            if (exception.getStatusCode().value() != HttpStatus.CONFLICT.value()) throw exception;
+            redirectAttributes.addFlashAttribute("orderActionError", exception.getReason());
+        }
         return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "");
     }
 

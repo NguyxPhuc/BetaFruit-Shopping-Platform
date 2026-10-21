@@ -162,6 +162,8 @@
 
 <div class="shop-layout" th:with="order=${detail.summary}">
     <section class="shop-content detail-content">
+        <p th:if="${orderActionError}" th:text="${orderActionError}" role="alert"
+           style="padding: 14px 18px; border: 1px solid #f3b5b5; border-radius: 10px; background: #fff0f0; color: #a52222;"></p>
         <a class="back-link" th:href="@{/shop/orders}">← Quay lại danh sách đơn hàng</a>
         <header class="page-heading detail-heading">
             <div>
