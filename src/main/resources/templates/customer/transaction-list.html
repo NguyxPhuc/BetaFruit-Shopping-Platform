@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch Sử Giao Dịch | BetaFruit</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="stylesheet" th:href="@{/css/transaction.css}">
+</head>
+<body class="transaction-page">
+
+    <!-- Global Header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Main Container -->
+    <main class="transaction-container">
+
+        <!-- Breadcrumb -->
+        <nav class="txn-breadcrumb" aria-label="Đường dẫn">
+            <a th:href="@{/}" href="/"><i class="bi bi-house-door"></i> Trang chủ</a>
+            <span class="separator">/</span>
+            <a th:href="@{/customer/profile}" href="/customer/profile">Tài khoản</a>
+            <span class="separator">/</span>
+            <span class="current">Lịch sử giao dịch</span>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="txn-header">
+            <div>
+                <h1 class="txn-header-title">
+                    <i class="bi bi-wallet2"></i> Lịch Sử Giao Dịch
+                </h1>
+                <p class="txn-header-subtitle">Theo dõi toàn bộ các phiên thanh toán trực tuyến và đối soát giao dịch đơn hàng của bạn.</p>
+            </div>
+            <div>
+                <a th:href="@{/orders}" href="/orders" class="btn-header-order">
+                    <i class="bi bi-bag-check"></i> Xem đơn hàng
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats Overview (Pure Thymeleaf) -->
+        <div class="txn-stats-grid" th:if="${transactionResponseList != null and !transactionResponseList.empty}">
+            <div class="txn-stat-card">
+                <div class="txn-stat-icon total">
+                    <i class="bi bi-receipt-cutoff"></i>
+                </div>
+                <div class="txn-stat-content">
+                    <h4>Tổng giao dịch</h4>
+                    <div class="stat-val" th:text="${transactionResponseList.size()}">0</div>
+                </div>
+            </div>
+
+            <div class="txn-stat-card">
+                <div class="txn-stat-icon success">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="txn-stat-content">
+                    <h4>Đã thanh toán</h4>
+                    <div class="stat-val" th:text="${transactionResponseList.?[status == 'PAID'].size()}">0</div>
+                </div>
+            </div>
+
+            <div class="txn-stat-card">
+                <div class="txn-stat-icon pending">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="txn-stat-content">
+                    <h4>Đang xử lý</h4>
+                    <div class="stat-val" th:text="${transactionResponseList.?[status == 'PENDING'].size()}">0</div>
+                </div>
+            </div>
+
+            <div class="txn-stat-card">
+                <div class="txn-stat-icon failed">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+                <div class="txn-stat-content">
+                    <h4>Thất bại / Hủy</h4>
+                    <div class="stat-val" th:text="${transactionResponseList.?[status == 'FAILED'].size()}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Table Card -->
+        <div class="txn-table-card">
+            
+            <!-- When List Has Data -->
+            <div class="txn-table-responsive" th:if="${transactionResponseList != null and !transactionResponseList.empty}">
+                <table class="txn-table">
+                    <thead>
+                        <tr>
+                            <th>Mã Giao Dịch</th>
+                            <th>Số Tiền</th>
+                            <th>Trạng Thái</th>
+                            <th>Thời Gian Khởi Tạo</th>
+                            <th style="text-align: right;">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="txn : ${transactionResponseList}">
+                            <!-- Mã giao dịch -->
+                            <td>
+                                <span class="txn-ref-pill">
+                                    <span th:text="${txn.transactionRef}">TXN123456</span>
+                                </span>
+                            </td>
+
+                            <!-- Số tiền -->
+                            <td>
+                                <span class="table-amount" 
+                                      th:classappend="${txn.status == 'PAID' ? 'paid' : ''}" 
+                                      th:text="${txn.amount != null ? (#numbers.formatDecimal(txn.amount, 0, 'POINT', 0, 'COMMA') + ' ₫') : '0 ₫'}">150.000 ₫</span>
+                            </td>
+
+                            <!-- Trạng thái -->
+                            <td>
+                                <span th:if="${txn.status == 'PAID'}" class="status-pill status-paid">
+                                    <span class="dot"></span> Đã thanh toán
+                                </span>
+                                <span th:if="${txn.status == 'PENDING'}" class="status-pill status-pending">
+                                    <span class="dot"></span> Chờ xử lý
+                                </span>
+                                <span th:if="${txn.status == 'FAILED'}" class="status-pill status-failed">
+                                    <span class="dot"></span> Thất bại
+                                </span>
+                                <span th:if="${txn.status != 'PAID' and txn.status != 'PENDING' and txn.status != 'FAILED'}" class="status-pill status-pending">
+                                    <span class="dot"></span> <span th:text="${txn.status}">Khác</span>
+                                </span>
+                            </td>
+
+                            <!-- Thời gian -->
+                            <td>
+                                <span class="text-muted small" 
+                                      th:text="${txn.createdAt != null ? #temporals.format(txn.createdAt, 'HH:mm:ss dd/MM/yyyy') : '--:-- --/--/----'}">14:20 20/10/2026</span>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td style="text-align: right;">
+                                <a th:href="@{/customer/payment/transaction-detail/{txn}(txn=${txn.transactionRef})}" class="btn-txn-view">
+                                    <span>Chi tiết</span> <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State (Shown when list is null or empty) -->
+            <div class="txn-empty-state" th:if="${transactionResponseList == null or transactionResponseList.empty}">
+                <div class="txn-empty-icon">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <h3 class="txn-empty-title">Chưa có giao dịch nào</h3>
+                <p class="txn-empty-desc">Bạn chưa thực hiện giao dịch thanh toán nào tại BetaFruit. Các giao dịch mới sẽ tự động lưu lại ở đây để bạn tiện theo dõi và đối soát.</p>
+                <a th:href="@{/products}" href="/products" class="btn-empty-action">
+                    <i class="bi bi-basket2-fill"></i> Khám Phá Hoa Quả Ngay
+                </a>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Global Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>
