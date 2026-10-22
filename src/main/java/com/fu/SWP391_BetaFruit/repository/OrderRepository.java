@@ -58,4 +58,10 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     BigDecimal sumTotalDiscountByCouponIdAndShopId(@Param("couponId") Integer couponId, @Param("shopId") Integer shopId);
 
     Optional<Order> findByOrderId(Integer orderId);
+
+    long countByCustomer_UserIdAndOrderStatus(Integer customerId, OrderStatus orderStatus);
+
+    @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o WHERE o.customer.userId = :customerId AND o.orderStatus = :orderStatus")
+    BigDecimal sumTotalSpentByCustomerIdAndStatus(@Param("customerId") Integer customerId, @Param("orderStatus") OrderStatus orderStatus);
 }
+
