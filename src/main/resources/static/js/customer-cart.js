@@ -33,6 +33,7 @@
         const availableItems = () => Array.from(shop.querySelectorAll('.cart-item-select:not(:disabled)'));
         const selectAll = shop.querySelector('.cart-shop-select-all');
         const orderButton = shop.querySelector('.cart-order-button');
+        const pendingQuantityChanges = new Set();
         const storageKey = 'betafruit-shop-cart-' + cart.dataset.customerId + '-' + shop.dataset.shopId;
         try {
             const saved = JSON.parse(sessionStorage.getItem(storageKey));
@@ -51,7 +52,7 @@
             selectAll.disabled = items.length === 0;
             selectAll.checked = items.length > 0 && selected.length === items.length;
             selectAll.indeterminate = selected.length > 0 && selected.length < items.length;
-            orderButton.disabled = selected.length === 0;
+            orderButton.disabled = selected.length === 0 || pendingQuantityChanges.size > 0;
             try {
                 sessionStorage.setItem(storageKey, JSON.stringify(selected.map(item => item.value)));
             } catch (_) { /* No persistence is required to select items. */ }
@@ -60,6 +61,12 @@
         selectAll.addEventListener('change', () => {
             availableItems().forEach(item => item.checked = selectAll.checked);
             updateSummary();
+        });
+        shop.querySelector('.cart-order-actions').addEventListener('submit', event => {
+            if (pendingQuantityChanges.size > 0 || !availableItems().some(item => item.checked)) {
+                event.preventDefault();
+                updateSummary();
+            }
         });
         shop.querySelectorAll('.cart-quantity-form').forEach(form => {
             const input = form.querySelector('[name="quantity"]');
@@ -124,11 +131,18 @@
                     // Serialize saves so older responses cannot overwrite newer badge counts.
                     saveQueue = saveQueue.then(async () => {
                         queued = false;
-                        await save();
+                        try {
+                            await save();
+                        } finally {
+                            pendingQuantityChanges.delete(form);
+                            updateSummary();
+                        }
                     }).catch(() => { queued = false; });
             }
             function schedule(delay) {
                 clearTimeout(timer);
+                pendingQuantityChanges.add(form);
+                updateSummary();
                 timer = setTimeout(enqueueSave, delay);
             }
             input.addEventListener('input', () => schedule(450));

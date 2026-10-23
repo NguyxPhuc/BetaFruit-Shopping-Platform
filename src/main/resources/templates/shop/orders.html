@@ -87,6 +87,8 @@
 <div class="shop-layout">
 
     <section class="shop-content">
+        <p th:if="${orderActionError}" th:text="${orderActionError}" role="alert"
+           style="padding: 14px 18px; border: 1px solid #f3b5b5; border-radius: 10px; background: #fff0f0; color: #a52222;"></p>
         <header class="page-heading">
             <h1>Quản lý đơn hàng</h1>
             <p>Xem và xử lý các đơn hàng của khách</p>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt hàng thành công | BetaFruit</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="stylesheet" th:href="@{/css/customer-cart.css}">
+    <link rel="stylesheet" th:href="@{/css/customer-checkout.css}">
+</head>
+<body class="cart-page">
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="cart-container">
+    <section class="cart-empty checkout-receipt" aria-labelledby="successHeading">
+        <span class="checkout-success-icon" aria-hidden="true">✓</span>
+        <h1 id="successHeading">Đặt hàng thành công!</h1>
+        <p th:if="${paymentMethod != 'VNPAY'}">Cửa hàng đã nhận được đơn và sẽ xác nhận sớm.<br>Bạn sẽ thanh toán khi nhận hàng.</p>
+        <p th:if="${paymentMethod == 'VNPAY'}">Đơn hàng đã được tạo. Bạn có thể kiểm tra trạng thái hoặc tiếp tục thanh toán VNPAY bên dưới.<br>Cửa hàng sẽ kiểm tra thanh toán và tồn kho trước khi xác nhận.</p>
+        <p role="alert" class="cart-notice cart-warning" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+        <article class="checkout-card" th:each="order : ${orders}">
+            <div class="checkout-shop-heading"><h2 th:text="'Đơn hàng #' + ${order.orderId}"></h2><span class="checkout-badge">Đã tạo đơn</span></div>
+            <p th:text="${order.shopName}"></p>
+            <div class="checkout-shop-total"><span th:text="${paymentMethod == 'VNPAY'} ? 'Thanh toán VNPAY' : 'Thanh toán khi nhận hàng'"></span><strong th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></div>
+            <div th:if="${paymentMethod == 'VNPAY'}" th:with="state=${paymentStates[order.orderId]}">
+                <p th:if="${state.paid}" class="checkout-badge">Đã thanh toán VNPAY</p>
+                <form th:if="${state.canPay}" method="post" th:action="@{/customer/checkout/{id}/pay(id=${order.orderId})}">
+                    <input type="hidden" name="paymentToken" th:value="${paymentToken}">
+                    <button class="cart-primary" type="submit">Thanh toán VNPAY →</button>
+                </form>
+                <p th:if="${!state.paid and !state.canPay}">Đơn hàng không còn nhận thanh toán.</p>
+            </div>
+        </article>
+        <p>Sản phẩm chưa mua vẫn được giữ trong giỏ hàng.</p>
+        <a class="cart-primary" th:href="@{/products}">Tiếp tục mua sắm →</a>
+        <p><a th:href="@{/cart}">Xem giỏ hàng</a></p>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

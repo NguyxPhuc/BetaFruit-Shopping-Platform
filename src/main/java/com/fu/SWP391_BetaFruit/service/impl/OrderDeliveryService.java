@@ -58,13 +58,8 @@ public class OrderDeliveryService {
                 && Boolean.TRUE.equals(order.getIsCodRemitted())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Đơn COD chưa giao nhưng đã được ghi nhận nộp tiền");
         }
-        var pricing = OrderPricing.calculate(order);
-        if (pricing.shopNetReceived().signum() < 0) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Tiền shop thực nhận không hợp lệ");
-        }
         // Freeze the amount used by settlement; never recalculate it three days later.
-        order.setPlatformFee(pricing.platformFee());
-        order.setShopNetReceived(pricing.shopNetReceived());
+        OrderPricing.captureShopAmounts(order);
         order.setOrderStatus(OrderStatus.DELIVERED);
         order.setIsSettled(false);
         if (order.getPaymentMethod() == com.fu.SWP391_BetaFruit.enums.PaymentMethod.COD) {

@@ -139,7 +139,7 @@
                 <div class="actions-group">
                     
                     <a th:if="${result.orderId != null}" 
-                       th:href="@{/checkout(retryOrderId=${result.orderId})}" 
+                       th:href="@{/customer/checkout/success}"
                        href="/cart" 
                        class="btn-primary-action btn-action-orange">
                         <i class="bi bi-arrow-repeat"></i>
@@ -163,6 +163,7 @@
         </div>
 
         <!-- ═════════ 5. FOOTER SUPPORT ═════════ -->
+        <p style="text-align:center"><a th:href="@{/customer/checkout/success}" class="btn-secondary-action">Xem đơn hàng / Thử thanh toán lại</a></p>
         <div class="support-info-card">
             <span>Cần hỗ trợ về thanh toán hoặc đơn hàng? Hotline 24/7: </span>
             <a href="tel:19008888">1900 8888</a>

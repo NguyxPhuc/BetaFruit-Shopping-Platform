@@ -15,9 +15,6 @@ import com.fu.SWP391_BetaFruit.service.PaymentService;
 import com.fu.SWP391_BetaFruit.strategy.PaymentStrategy;
 import com.fu.SWP391_BetaFruit.strategy.PaymentStrategyFactory;
 import com.fu.SWP391_BetaFruit.utils.VnPayUtils;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
-import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,12 +37,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private VnPayConfig vnPayConfig;
-
-    @Autowired
-    private OrderStockService orderStockService;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -200,14 +191,6 @@ public class PaymentServiceImpl implements PaymentService {
         paymentResultResponse.setShippingAddress(shippingAddress);
         paymentResultResponse.setPaymentMethod(PaymentMethod.VNPAY.name());
         return paymentResultResponse;
-    }
-
-    private void deductStockForConfirmation(Order order) {
-        // Re-read under the order lock so concurrent callbacks cannot deduct twice.
-        entityManager.refresh(order, LockModeType.PESSIMISTIC_WRITE);
-        if (OrderStatus.PENDING.equals(order.getOrderStatus())) {
-            orderStockService.deduct(order, order.getCustomer().getUserId());
-        }
     }
 
 }
