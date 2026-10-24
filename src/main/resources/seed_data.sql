@@ -82,10 +82,15 @@ INSERT INTO [User] (UserId, Username, PasswordHash, Email, FullName, Phone, Avat
 -- Staff
 (2, 'staff_minh', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'staff.minh@betafruit.vn', N'Nguyễn Hoàng Minh (Kiểm Duyệt)', '0901000002', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'ACTIVE'),
 
--- Shop Owners
+-- Shop Owners (APPROVED)
 (3, 'shop_dalat', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'dalatfruit@gmail.com', N'Trần Văn Đà Lạt', '0912345671', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'ACTIVE'),
 (4, 'shop_mientay', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'mientayfarm@gmail.com', N'Lê Thị Miền Tây', '0912345672', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'ACTIVE'),
 (5, 'shop_import', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'organicfruit@gmail.com', N'Phạm Quốc Tế', '0912345673', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'ACTIVE'),
+
+-- Shop Owners (Để test luồng kiểm duyệt DRAFT / PENDING / REJECTED)
+(10, 'shop_draft', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'shopdraft@gmail.com', N'Chủ Shop Chưa Thiết Lập', '0912345674', NULL, 'ACTIVE'),
+(11, 'shop_pending', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'shoppending@gmail.com', N'Chủ Shop Đang Chờ Duyệt', '0912345675', NULL, 'ACTIVE'),
+(12, 'shop_rejected', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'shoprejected@gmail.com', N'Chủ Shop Bị Từ Chối', '0912345676', NULL, 'ACTIVE'),
 
 -- Shipper
 (6, 'shipper_nam', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'shipper.nam@gmail.com', N'Đỗ Thành Nam (Giao Hàng)', '0933221100', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'ACTIVE'),
@@ -101,15 +106,18 @@ SET IDENTITY_INSERT [User] OFF;
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang gán quyền UserRole...';
 INSERT INTO UserRole (UserId, RoleId) VALUES
-(1, 1), -- Admin
-(2, 2), -- Staff
-(3, 3), -- Shop Đà Lạt
-(4, 3), -- Shop Miền Tây
-(5, 3), -- Shop Import
-(6, 5), -- Shipper
-(7, 4), -- Customer Phúc
-(8, 4), -- Customer Hoa
-(9, 4); -- Customer Linh
+(1, 1),  -- Admin
+(2, 2),  -- Staff
+(3, 3),  -- Shop Đà Lạt (APPROVED)
+(4, 3),  -- Shop Miền Tây (APPROVED)
+(5, 3),  -- Shop Import (APPROVED)
+(10, 3), -- Shop Draft (DRAFT)
+(11, 3), -- Shop Pending (PENDING)
+(12, 3), -- Shop Rejected (REJECTED)
+(6, 5),  -- Shipper
+(7, 4),  -- Customer Phúc
+(8, 4),  -- Customer Hoa
+(9, 4);  -- Customer Linh
 
 -- ----------------------------------------------------------------------------------------------------
 -- 5. BẢNG HẠNG THÀNH VIÊN [MembershipTier]
@@ -138,9 +146,19 @@ INSERT INTO CustomerMembership (UserId, TotalCumulativeSpend, TierId) VALUES
 PRINT N'==> Đang thêm dữ liệu bảng [Shop]...';
 SET IDENTITY_INSERT Shop ON;
 INSERT INTO Shop (ShopId, OwnerId, ShopName, ShopDescription, LogoUrl, BannerUrl, BankName, BankAccountNumber, AccountName, AvailableBalance, CommissionRate, ApprovalStatus) VALUES
+-- Shop 1, 2, 3: Đã được sàn phê duyệt (APPROVED) - Có đầy đủ sản phẩm, đơn hàng
 (1, 3, N'Nông Sản Đà Lạt Xanh', N'Chuyên cung cấp dâu tây giống Nhật, bơ sáp 034, phúc bồn tử và hoa quả sạch thu hoạch tận vườn tại Đà Lạt.', 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200', 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1000', N'Ngân hàng Vietcombank', '0071001234567', N'TRAN VAN DA LAT', 25600000.00, 5.00, 'APPROVED'),
 (2, 4, N'Trái Cây Miền Tây Đặc Sản', N'Vựa trái cây Tiền Giang - Bến Tre: Sầu riêng Ri6 chín tự nhiên, xoài cát Hòa Lộc, bưởi da xanh ruột hồng xuất khẩu.', 'https://images.unsplash.com/photo-1546548970-71785318a17b?w=200', 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=1000', N'Ngân hàng Techcombank', '19034567891011', N'LE THI MIEN TAY', 18450000.00, 5.00, 'APPROVED'),
-(3, 5, N'Organic & Premium Fruit Imports', N'Nhập khẩu chính ngạch các loại trái cây thượng hạng: Nho mẫu đơn Shine Muscat Hàn Quốc, Cherry đỏ Mỹ, Táo Envy New Zealand.', 'https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=200', 'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=1000', N'Ngân hàng MBBank', '0388999888999', N'PHAM QUOC TE', 42000000.00, 5.00, 'APPROVED');
+(3, 5, N'Organic & Premium Fruit Imports', N'Nhập khẩu chính ngạch các loại trái cây thượng hạng: Nho mẫu đơn Shine Muscat Hàn Quốc, Cherry đỏ Mỹ, Táo Envy New Zealand.', 'https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=200', 'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=1000', N'Ngân hàng MBBank', '0388999888999', N'PHAM QUOC TE', 42000000.00, 5.00, 'APPROVED'),
+
+-- Shop 4: Trạng thái DRAFT (Mới đăng ký tài khoản, chưa thiết lập hồ sơ -> test điều hướng tới /shop/setup-profile)
+(4, 10, N'Cửa Hàng Chưa Thiết Lập', NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 5.00, 'DRAFT'),
+
+-- Shop 5: Trạng thái PENDING (Đã nộp hồ sơ, đang chờ sàn xét duyệt -> test điều hướng tới /shop/pending-approval)
+(5, 11, N'Vườn Cam Sành Hàm Yên', N'Chuyên cam sành mọng nước, tiêu chuẩn VietGAP từ Tuyên Quang.', 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=200', 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?w=1000', N'Ngân hàng Vietcombank', '09876543210', N'NGUYEN VAN CAM', 0.00, 5.00, 'PENDING'),
+
+-- Shop 6: Trạng thái REJECTED (Hồ sơ bị từ chối kiểm duyệt -> test điều hướng tới /shop/rejected)
+(6, 12, N'Hoa Quả Giá Rẻ Nhất', N'Bán buôn hoa quả.', NULL, NULL, N'Ngân hàng BIDV', '1234567890', N'LE VAN SAI', 0.00, 5.00, 'REJECTED');
 SET IDENTITY_INSERT Shop OFF;
 
 -- ----------------------------------------------------------------------------------------------------

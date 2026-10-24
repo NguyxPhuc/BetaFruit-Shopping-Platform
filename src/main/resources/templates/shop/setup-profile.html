@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Thiết lập hồ sơ cửa hàng BetaFruit - Khởi đầu hành trình kinh doanh nông sản tươi sạch">
+    <title>Thiết lập hồ sơ cửa hàng | BetaFruit Partner</title>
+
+    <!-- Google Fonts (Đồng bộ font DM Sans với Shop Portal) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom Onboarding CSS -->
+    <link rel="stylesheet" th:href="@{/css/shop-onboarding.css}">
+</head>
+<body class="onboarding-body">
+
+    <!-- ═══════════ HEADER ═══════════ -->
+    <header class="onboarding-header">
+        <div class="onboarding-header__container">
+            <a th:href="@{/}" class="onboarding-header__brand" title="Về trang chủ BetaFruit">
+                <div class="onboarding-header__logo-badge">
+                    <i class="bi bi-basket2-fill"></i>
+                </div>
+                <div class="onboarding-header__brand-text">
+                    <h1>Beta<span>Fruit</span></h1>
+                    <span class="onboarding-header__badge">Kênh Người Bán</span>
+                </div>
+            </a>
+
+            <div class="onboarding-header__actions">
+                <div class="onboarding-header__user-info" th:if="${session.LOGGED_IN_FULLNAME}">
+                    <div class="onboarding-header__avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <span th:text="${session.LOGGED_IN_FULLNAME}">Chủ cửa hàng</span>
+                </div>
+                <a th:href="@{/}" class="onboarding-header__home-btn" title="Về trang chủ BetaFruit">
+                    <i class="bi bi-house-door"></i>
+                    <span>Trang chủ</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════ MAIN CONTENT ═══════════ -->
+    <main class="onboarding-main">
+        <div class="onboarding-container">
+
+            <!-- ═════ STEPPER NAV (COMPACT) ═════ -->
+            <nav class="stepper-nav" aria-label="Tiến trình đăng ký gian hàng">
+                <div class="step-item completed">
+                    <div class="step-bubble">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div class="step-info">
+                        <span class="step-num">Bước 1</span>
+                        <span class="step-title">Tạo tài khoản</span>
+                    </div>
+                </div>
+
+                <div class="step-divider filled"></div>
+
+                <div class="step-item active">
+                    <div class="step-bubble">2</div>
+                    <div class="step-info">
+                        <span class="step-num">Bước 2</span>
+                        <span class="step-title">Thiết lập hồ sơ</span>
+                    </div>
+                </div>
+
+                <div class="step-divider"></div>
+
+                <div class="step-item pending">
+                    <div class="step-bubble">3</div>
+                    <div class="step-info">
+                        <span class="step-num">Bước 3</span>
+                        <span class="step-title">Sàn xét duyệt</span>
+                    </div>
+                </div>
+
+                <div class="step-divider"></div>
+
+                <div class="step-item pending">
+                    <div class="step-bubble">4</div>
+                    <div class="step-info">
+                        <span class="step-num">Bước 4</span>
+                        <span class="step-title">Bắt đầu bán hàng</span>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- ═════ ONBOARDING CARD ═════ -->
+            <div class="onboarding-card">
+                <div class="onboarding-card__hero">
+                    <div class="onboarding-card__hero-badge">
+                        <i class="bi bi-stars"></i>
+                        <span>Chào mừng đối tác mới</span>
+                    </div>
+                    <h2>Thiết Lập Hồ Sơ Gian Hàng</h2>
+                    <p>Hoàn thành thông tin cửa hàng và tài khoản ngân hàng để ban quản trị BetaFruit tiến hành thẩm định và kích hoạt quyền bán hàng.</p>
+                </div>
+
+                <!-- Global Server-side Error Alert -->
+                <div class="onboarding-alert alert-error" th:if="${errorMessage}" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill onboarding-alert__icon"></i>
+                    <div>
+                        <strong style="display: block; margin-bottom: 2px;">Không thể gửi hồ sơ:</strong>
+                        <span th:text="${errorMessage}">Đã xảy ra lỗi trong quá trình xử lý, vui lòng thử lại!</span>
+                    </div>
+                </div>
+
+                <!-- ═════ FORM ═════ -->
+                <form th:action="@{/shop/setup-profile}" th:object="${shopSetupRequest}" method="post" class="onboarding-form" novalidate>
+
+                    <!-- SECTION 1: SHOP INFORMATION -->
+                    <fieldset class="form-fieldset">
+                        <div class="form-fieldset__header">
+                            <div class="form-fieldset__icon">
+                                <i class="bi bi-shop"></i>
+                            </div>
+                            <div>
+                                <h3 class="form-fieldset__title">Thông tin gian hàng</h3>
+                                <p class="form-fieldset__desc">Thông tin hiển thị công khai tới người tiêu dùng trên sàn BetaFruit</p>
+                            </div>
+                        </div>
+
+                        <!-- Shop Name -->
+                        <div class="form-group">
+                            <label for="shopName" class="form-label">
+                                <span>Tên cửa hàng <span class="required">*</span></span>
+                                <span class="char-counter"><span id="shopNameCount">0</span>/255</span>
+                            </label>
+                            <div class="input-wrapper">
+                                <i class="bi bi-tag-fill input-icon"></i>
+                                <input type="text"
+                                       id="shopName"
+                                       th:field="*{shopName}"
+                                       class="form-input"
+                                       th:classappend="${#fields.hasErrors('shopName')} ? 'is-invalid' : ''"
+                                       placeholder="Ví dụ: Nông Sản Xanh Đà Lạt, Trái Cây Ba Miền..."
+                                       maxlength="255"
+                                       required
+                                       autofocus
+                                       oninput="updateCount('shopName', 'shopNameCount', 255)">
+                            </div>
+                            <span class="form-error" th:if="${#fields.hasErrors('shopName')}" th:errors="*{shopName}">
+                                <i class="bi bi-exclamation-circle"></i> Vui lòng nhập tên cửa hàng hợp lệ.
+                            </span>
+                        </div>
+
+                        <!-- Shop Description -->
+                        <div class="form-group">
+                            <label for="shopDescription" class="form-label">
+                                <span>Mô tả / Giới thiệu cửa hàng</span>
+                                <span class="char-counter"><span id="descCount">0</span>/2000</span>
+                            </label>
+                            <textarea id="shopDescription"
+                                      th:field="*{shopDescription}"
+                                      class="form-textarea"
+                                      th:classappend="${#fields.hasErrors('shopDescription')} ? 'is-invalid' : ''"
+                                      rows="3"
+                                      maxlength="2000"
+                                      placeholder="Mô tả nguồn gốc hoa quả, cam kết chất lượng sạch/VietGAP, chính sách đổi trả..."
+                                      oninput="updateCount('shopDescription', 'descCount', 2000)"></textarea>
+                            <span class="form-error" th:if="${#fields.hasErrors('shopDescription')}" th:errors="*{shopDescription}">
+                                <i class="bi bi-exclamation-circle"></i> Mô tả không được vượt quá 2000 ký tự.
+                            </span>
+                        </div>
+                    </fieldset>
+
+                    <!-- SECTION 2: BANK & FINANCIAL INFORMATION -->
+                    <fieldset class="form-fieldset">
+                        <div class="form-fieldset__header">
+                            <div class="form-fieldset__icon">
+                                <i class="bi bi-bank2"></i>
+                            </div>
+                            <div>
+                                <h3 class="form-fieldset__title">Tài khoản ngân hàng thụ hưởng</h3>
+                                <p class="form-fieldset__desc">Dùng để đối soát và nhận tiền thanh toán doanh thu định kỳ từ sàn</p>
+                            </div>
+                        </div>
+
+                        <!-- Bank Name -->
+                        <div class="form-group">
+                            <label for="bankName" class="form-label">
+                                <span>Ngân hàng thụ hưởng <span class="required">*</span></span>
+                            </label>
+                            <div class="input-wrapper">
+                                <i class="bi bi-building-fill-check input-icon"></i>
+                                <input type="text"
+                                       id="bankName"
+                                       th:field="*{bankName}"
+                                       list="bankSuggestions"
+                                       class="form-input"
+                                       th:classappend="${#fields.hasErrors('bankName')} ? 'is-invalid' : ''"
+                                       placeholder="Chọn hoặc nhập tên ngân hàng (Ví dụ: Vietcombank, MB Bank...)"
+                                       maxlength="100"
+                                       required>
+                                <datalist id="bankSuggestions">
+                                    <option value="Vietcombank - Ngân hàng Ngoại thương Việt Nam">
+                                    <option value="MB Bank - Ngân hàng Quân Đội">
+                                    <option value="Techcombank - Ngân hàng Kỹ Thương Việt Nam">
+                                    <option value="BIDV - Ngân hàng Đầu tư và Phát triển Việt Nam">
+                                    <option value="VietinBank - Ngân hàng Công Thương Việt Nam">
+                                    <option value="ACB - Ngân hàng Á Châu">
+                                    <option value="TPBank - Ngân hàng Tiên Phong">
+                                    <option value="VPBank - Ngân hàng Việt Nam Thịnh Vượng">
+                                    <option value="Sacombank - Ngân hàng Sài Gòn Thương Tín">
+                                    <option value="HDBank - Ngân hàng Phát triển TP.HCM">
+                                    <option value="VIB - Ngân hàng Quốc Tế">
+                                </datalist>
+                            </div>
+                            <span class="form-error" th:if="${#fields.hasErrors('bankName')}" th:errors="*{bankName}">
+                                <i class="bi bi-exclamation-circle"></i> Vui lòng chọn hoặc nhập tên ngân hàng.
+                            </span>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                            <!-- Bank Account Number -->
+                            <div class="form-group">
+                                <label for="bankAccountNumber" class="form-label">
+                                    <span>Số tài khoản ngân hàng <span class="required">*</span></span>
+                                </label>
+                                <div class="input-wrapper">
+                                    <i class="bi bi-credit-card-2-front-fill input-icon"></i>
+                                    <input type="text"
+                                           id="bankAccountNumber"
+                                           th:field="*{bankAccountNumber}"
+                                           class="form-input"
+                                           th:classappend="${#fields.hasErrors('bankAccountNumber')} ? 'is-invalid' : ''"
+                                           placeholder="Nhập số tài khoản"
+                                           inputmode="numeric"
+                                           pattern="^[0-9]+$"
+                                           maxlength="50"
+                                           required
+                                           style="letter-spacing: 0.04em; font-family: monospace; font-size: 0.95rem;">
+                                </div>
+                                <span class="form-error" th:if="${#fields.hasErrors('bankAccountNumber')}" th:errors="*{bankAccountNumber}">
+                                    <i class="bi bi-exclamation-circle"></i> Số tài khoản chỉ được chứa chữ số (tối đa 50 số).
+                                </span>
+                            </div>
+
+                            <!-- Account Holder Name -->
+                            <div class="form-group">
+                                <label for="accountName" class="form-label">
+                                    <span>Tên chủ tài khoản <span class="required">*</span></span>
+                                </label>
+                                <div class="input-wrapper">
+                                    <i class="bi bi-person-badge-fill input-icon"></i>
+                                    <input type="text"
+                                           id="accountName"
+                                           th:field="*{accountName}"
+                                           class="form-input"
+                                           th:classappend="${#fields.hasErrors('accountName')} ? 'is-invalid' : ''"
+                                           placeholder="NGUYEN VAN A"
+                                           maxlength="100"
+                                           required
+                                           style="text-transform: uppercase;"
+                                           oninput="this.value = this.value.toUpperCase()">
+                                </div>
+                                <span class="form-error" th:if="${#fields.hasErrors('accountName')}" th:errors="*{accountName}">
+                                    <i class="bi bi-exclamation-circle"></i> Vui lòng nhập tên chủ tài khoản.
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Security Note -->
+                        <div class="security-callout">
+                            <i class="bi bi-shield-lock-fill"></i>
+                            <div>
+                                <strong>Bảo mật thanh toán:</strong> Tài khoản này dùng để nhận thanh toán doanh thu từ BetaFruit. Vui lòng đảm bảo thông tin trùng khớp với tài khoản ngân hàng chính chủ.
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- FORM ACTIONS -->
+                    <div class="form-actions">
+                        <a th:href="@{/}" class="btn-outline">
+                            <i class="bi bi-house-door"></i>
+                            <span>Về trang chủ sàn</span>
+                        </a>
+                        <button type="submit" class="btn-primary" id="submitBtn">
+                            <i class="bi bi-send-check-fill"></i>
+                            <span>Hoàn tất &amp; Nộp hồ sơ duyệt</span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Support Help Box -->
+            <div class="support-box">
+                <i class="bi bi-headset"></i>
+                <span>Cần trợ giúp trong quá trình thiết lập? Hotline: <strong>1900 6868</strong> hoặc <a href="mailto:support@betafruit.vn">support@betafruit.vn</a></span>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Simple Script for dynamic counters & double submission prevention -->
+    <script>
+        function updateCount(inputId, countId, max) {
+            const el = document.getElementById(inputId);
+            const counter = document.getElementById(countId);
+            if (el && counter) {
+                counter.textContent = el.value.length;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCount('shopName', 'shopNameCount', 255);
+            updateCount('shopDescription', 'descCount', 2000);
+
+            const form = document.querySelector('.onboarding-form');
+            const submitBtn = document.getElementById('submitBtn');
+            if (form && submitBtn) {
+                form.addEventListener('submit', () => {
+                    if (form.checkValidity()) {
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Đang gửi hồ sơ...';
+                        submitBtn.style.pointerEvents = 'none';
+                        submitBtn.style.opacity = '0.75';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
