@@ -91,8 +91,12 @@ public class AdminController {
             redirectAttributes.addAttribute("commissionTier", commissionTier);
             return "redirect:/admin/shops/commission";
         }
-        shopService.updateCommissionRate(id, request.getCommissionRate());
-        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật tỷ lệ phí sàn thành công!");
+        try {
+            shopService.updateCommissionRate(id, request.getCommissionRate());
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật tỷ lệ phí sàn thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         redirectAttributes.addAttribute("page", page);
         if (cleanKeyword != null) {
             redirectAttributes.addAttribute("keyword", cleanKeyword);
@@ -193,8 +197,12 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return "redirect:/admin/users";
         }
-        userService.createUser(request);
-        redirectAttributes.addFlashAttribute("successMessage", "Tạo tài khoản người dùng [" + request.getUsername() + "] thành công!");
+        try {
+            userService.createUser(request);
+            redirectAttributes.addFlashAttribute("successMessage", "Tạo tài khoản người dùng [" + request.getUsername() + "] thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/users";
     }
 
@@ -225,8 +233,12 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return "redirect:/admin/categories";
         }
-        categoryService.createCategory(request);
-        redirectAttributes.addFlashAttribute("successMessage", "Tạo danh mục hoa quả mới thành công!");
+        try {
+            categoryService.createCategory(request);
+            redirectAttributes.addFlashAttribute("successMessage", "Tạo danh mục hoa quả mới thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/categories";
     }
 
@@ -242,8 +254,12 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return "redirect:/admin/categories";
         }
-        categoryService.updateCategory(id, request);
-        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật danh mục hoa quả thành công!");
+        try {
+            categoryService.updateCategory(id, request);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật danh mục hoa quả thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/categories";
     }
 
@@ -256,8 +272,12 @@ public class AdminController {
                                        @RequestParam(value = "keyword", required = false) String keyword,
                                        @RequestParam(value = "status", required = false) String status,
                                        RedirectAttributes redirectAttributes) {
-        categoryService.toggleCategoryStatus(id);
-        redirectAttributes.addFlashAttribute("successMessage", "Thay đổi trạng thái hiển thị danh mục thành công!");
+        try {
+            categoryService.toggleCategoryStatus(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Thay đổi trạng thái hiển thị danh mục thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         StringBuilder redirectUrl = new StringBuilder("redirect:/admin/categories?page=").append(page);
         if (keyword != null && !keyword.trim().isEmpty()) {
             redirectUrl.append("&keyword=").append(keyword.trim());
@@ -289,8 +309,12 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return "redirect:/admin/roles";
         }
-        roleService.createRole(roleRequest);
-        redirectAttributes.addFlashAttribute("successMessage", "Tạo vai trò mới thành công!");
+        try {
+            roleService.createRole(roleRequest);
+            redirectAttributes.addFlashAttribute("successMessage", "Tạo vai trò mới thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/roles";
     }
 
@@ -306,8 +330,12 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return "redirect:/admin/roles";
         }
-        roleService.updateRole(id, roleRequest);
-        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật vai trò thành công!");
+        try {
+            roleService.updateRole(id, roleRequest);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật vai trò thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/admin/roles";
     }
 
