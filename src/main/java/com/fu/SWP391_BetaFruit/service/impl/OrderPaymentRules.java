@@ -16,11 +16,7 @@ public final class OrderPaymentRules {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Đơn hàng thiếu phương thức thanh toán");
         }
         if (order.getPaymentMethod() != PaymentMethod.COD) return BigDecimal.ZERO;
-        BigDecimal amount = order.getFinalAmount();
-        if (amount == null || amount.signum() < 0) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Số tiền COD của đơn hàng không hợp lệ");
-        }
-        return amount;
+        return OrderPricing.customerAmount(order);
     }
 
     public static boolean delivered(Order order) {

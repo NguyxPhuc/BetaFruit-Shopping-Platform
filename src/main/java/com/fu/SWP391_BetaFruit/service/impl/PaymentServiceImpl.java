@@ -15,9 +15,6 @@ import com.fu.SWP391_BetaFruit.service.PaymentService;
 import com.fu.SWP391_BetaFruit.strategy.PaymentStrategy;
 import com.fu.SWP391_BetaFruit.strategy.PaymentStrategyFactory;
 import com.fu.SWP391_BetaFruit.utils.VnPayUtils;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
-import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,12 +37,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private VnPayConfig vnPayConfig;
-
-    @Autowired
-    private OrderStockService orderStockService;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -153,33 +144,31 @@ public class PaymentServiceImpl implements PaymentService {
         String customerName = "Quý khách hàng";
         String customerPhone = "";
         String shippingAddress = "";
-        PaymentTransaction transaction = null;
+
         if (txnRef != null) {
-            transaction = paymentTransactionRepository.findByTransactionRef(txnRef).orElse(null);
-        }
-        if (transaction != null) {
-            Order order = transaction.getOrder();
-            if (order != null) {
-                orderId = order.getOrderId();
-                orderCode = String.format("DH%06d", orderId);
-                shippingAddress = order.getSnapshotShippingAddress() != null ? order.getSnapshotShippingAddress() : "";
-                if (order.getCustomer() != null) {
-                    customerName = order.getCustomer().getFullName() != null ? order.getCustomer().getFullName() : customerName;
-                    customerPhone = order.getCustomer().getPhone() != null ? order.getCustomer().getPhone() : "";
+            PaymentTransaction transaction = paymentTransactionRepository.findByTransactionRef(txnRef).orElse(null);
+            if (transaction != null) {
+                Order order = transaction.getOrder();
+                if (order != null) {
+                    orderId = order.getOrderId();
+                    orderCode = String.format("DH%06d", orderId);
+                    shippingAddress = order.getSnapshotShippingAddress() != null ? order.getSnapshotShippingAddress() : "";
+                    if (order.getCustomer() != null) {
+                        customerName = order.getCustomer().getFullName() != null ? order.getCustomer().getFullName() : customerName;
+                        customerPhone = order.getCustomer().getPhone() != null ? order.getCustomer().getPhone() : "";
+                    }
                 }
-            }
-            if (PaymentStatus.PENDING.equals(transaction.getStatus())) {
-                if (isSuccess) {
-                    transaction.setStatus(PaymentStatus.PAID);
-                } else {
-                    transaction.setStatus(PaymentStatus.FAILED);
+
+                // Đồng bộ trạng thái UI với trạng thái thực tế do IPN đã chốt trước đó
+                if (PaymentStatus.PAID.equals(transaction.getStatus())) {
+                    isSuccess = true;
+                    friendlyMessage = "Giao dịch thanh toán trực tuyến qua cổng VNPay đã hoàn tất thành công.";
+                } else if (PaymentStatus.FAILED.equals(transaction.getStatus())) {
+                    isSuccess = false;
                 }
-                paymentTransactionRepository.save(transaction);
-            } else if (PaymentStatus.PAID.equals(transaction.getStatus())) {
-                isSuccess = true;
-            }
-            if (amount.compareTo(BigDecimal.ZERO) == 0 && transaction.getAmount() != null) {
-                amount = transaction.getAmount();
+                if (amount.compareTo(BigDecimal.ZERO) == 0 && transaction.getAmount() != null) {
+                    amount = transaction.getAmount();
+                }
             }
         }
         PaymentResultResponse paymentResultResponse = new PaymentResultResponse();
@@ -200,14 +189,6 @@ public class PaymentServiceImpl implements PaymentService {
         paymentResultResponse.setShippingAddress(shippingAddress);
         paymentResultResponse.setPaymentMethod(PaymentMethod.VNPAY.name());
         return paymentResultResponse;
-    }
-
-    private void deductStockForConfirmation(Order order) {
-        // Re-read under the order lock so concurrent callbacks cannot deduct twice.
-        entityManager.refresh(order, LockModeType.PESSIMISTIC_WRITE);
-        if (OrderStatus.PENDING.equals(order.getOrderStatus())) {
-            orderStockService.deduct(order, order.getCustomer().getUserId());
-        }
     }
 
 }

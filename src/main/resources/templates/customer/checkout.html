@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán | BetaFruit</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="stylesheet" th:href="@{/css/customer-cart.css}">
+    <link rel="stylesheet" th:href="@{/css/customer-checkout.css}">
+</head>
+<body class="cart-page">
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="cart-container">
+    <nav class="cart-breadcrumb" aria-label="Đường dẫn"><a th:href="@{/}">Trang chủ</a><span>/</span><a th:href="@{/cart}">Giỏ hàng</a><span>/</span><span>Thanh toán</span></nav>
+    <div class="cart-heading">
+        <div><h1>Hoàn tất đơn hàng</h1><p>Kiểm tra sản phẩm và địa chỉ trước khi đặt hàng.</p></div>
+        <a class="cart-back" th:href="@{/cart}">← Quay lại giỏ hàng</a>
+    </div>
+    <div class="checkout-steps" aria-label="Tiến trình đặt hàng"><span>01 · Giỏ hàng</span><span>→</span><strong aria-current="step">02 · Thanh toán</strong><span>→</span><span>03 · Hoàn tất</span></div>
+    <p role="alert" class="cart-notice cart-warning" th:if="${errorMessage}" th:text="${errorMessage}"></p>
+    <p role="status" class="cart-notice" th:if="${successMessage}" th:text="${successMessage}"></p>
+    <form method="post" th:action="@{/customer/checkout}" class="cart-layout">
+        <input type="hidden" name="checkoutToken" th:value="${checkoutToken}">
+        <div class="checkout-sections">
+            <section class="checkout-card" aria-labelledby="addressHeading">
+                <div class="checkout-card-heading"><h2 id="addressHeading">01. Địa chỉ nhận hàng</h2><a th:href="@{/customer/address/create}">+ Thêm địa chỉ</a></div>
+                <p th:if="${addresses.isEmpty()}">Bạn chưa có địa chỉ nhận hàng. Thêm địa chỉ rồi quay lại trang này để tiếp tục.</p>
+                <label class="checkout-address" th:each="address, state : ${addresses}">
+                    <input type="radio" name="addressId" th:value="${address.addressId}" th:checked="${selectedAddressId != null ? selectedAddressId == address.addressId : state.first}" required>
+                    <span><strong><span th:text="${address.receiverName}"></span> · <span th:text="${address.receiverPhone}"></span><span class="checkout-default" th:if="${address.isDefault}">Mặc định</span></strong>
+                        <small th:text="${address.addressLine + ', ' + address.ward + ', ' + address.district + ', ' + address.city}"></small></span>
+                </label>
+            </section>
+            <section class="checkout-card" aria-labelledby="productsHeading">
+                <h2 id="productsHeading">02. Sản phẩm đã chọn</h2>
+                <p class="checkout-help">Mỗi lần thanh toán chỉ gồm sản phẩm của cùng một cửa hàng.</p>
+                <div class="checkout-shop" th:each="shop : ${checkout.shops}">
+                    <div class="checkout-shop-heading"><h3 th:text="${shop.shopName}"></h3><span class="checkout-badge">Giao từ cửa hàng</span></div>
+                    <article class="checkout-line" th:each="item : ${shop.items}">
+                        <div><a th:href="@{/products/{id}(id=${item.productId})}" th:text="${item.productName}"></a>
+                            <small><span th:text="${item.variantName}"></span> · Số lượng: <span th:text="${item.quantity}"></span></small>
+                            <small th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'POINT', 0, 'COMMA')} + 'đ / sản phẩm'"></small></div>
+                        <strong th:text="${#numbers.formatDecimal(item.subtotal, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong>
+                    </article>
+                    <div class="checkout-shop-total"><span>Phí giao hàng</span><span th:text="${#numbers.formatDecimal(shop.shippingFee, 0, 'POINT', 0, 'COMMA')} + 'đ'"></span></div>
+                    <div class="checkout-shop-total"><span>Tổng đơn của cửa hàng</span><strong th:text="${#numbers.formatDecimal(shop.finalAmount, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></div>
+                </div>
+            </section>
+            <section class="checkout-card" aria-labelledby="couponHeading">
+                <h2 id="couponHeading">03. Mã giảm giá</h2>
+                <p>Mỗi đơn dùng tối đa một mã giảm sản phẩm hoặc phí giao hàng. Mã của cửa hàng chỉ áp dụng tại cửa hàng đó; mã toàn sàn dùng cho mọi cửa hàng.</p>
+                <label for="couponCode">Nhập mã giảm giá</label>
+                <div class="checkout-coupon-input">
+                    <input id="couponCode" name="couponCode" type="text" maxlength="50" autocomplete="off"
+                           placeholder="Ví dụ: GIAM10" th:value="${checkout.coupon != null ? checkout.coupon.code : ''}">
+                    <button type="submit" name="couponAction" value="apply" th:formaction="@{/customer/checkout/coupon}" formnovalidate>Áp dụng</button>
+                </div>
+                <div th:if="${checkout.coupon != null}" class="checkout-coupon-applied">
+                    <p><strong th:text="${checkout.coupon.code}"></strong> · <span th:text="${checkout.coupon.category.name() == 'SHIPPING' ? 'Giảm phí giao hàng' : 'Giảm tiền sản phẩm'}"></span>
+                        · <span th:text="${checkout.coupon.platform ? 'Mã toàn sàn' : 'Mã cửa hàng'}"></span></p>
+                    <button type="submit" name="couponAction" value="remove" th:formaction="@{/customer/checkout/coupon}" formnovalidate>Bỏ mã</button>
+                </div>
+            </section>
+            <section class="checkout-card" aria-labelledby="paymentHeading">
+                <h2 id="paymentHeading">04. Phương thức thanh toán</h2>
+                <label class="checkout-payment"><input type="radio" name="paymentMethod" value="COD" th:checked="${selectedPaymentMethod == null or selectedPaymentMethod == 'COD'}" required><span><strong>Thanh toán khi nhận hàng (COD)</strong><small>Thanh toán cho người giao hàng khi nhận sản phẩm.</small></span></label>
+                <label class="checkout-payment"><input type="radio" name="paymentMethod" value="VNPAY" th:checked="${selectedPaymentMethod == 'VNPAY'}" required><span><strong>Thanh toán trực tuyến qua VNPAY</strong><small>Bạn sẽ được chuyển đến VNPAY sau khi đặt hàng.</small></span></label>
+            </section>
+        </div>
+        <aside class="cart-summary">
+            <h2>Tóm tắt thanh toán</h2>
+            <div class="cart-summary-row"><span>Số lượng sản phẩm</span><strong th:text="${checkout.quantity}"></strong></div>
+            <div class="cart-summary-row"><span>Số đơn hàng</span><strong th:text="${checkout.shops.size()}"></strong></div>
+            <div class="cart-summary-row"><span>Tiền hàng</span><strong th:text="${#numbers.formatDecimal(checkout.subtotal, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></div>
+            <div class="cart-summary-row"><span>Phí giao hàng</span><strong th:text="${#numbers.formatDecimal(checkout.shippingFee, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></div>
+            <div class="cart-summary-row" th:if="${checkout.coupon != null}"><span th:text="${checkout.coupon.category.name() == 'SHIPPING' ? 'Giảm phí giao hàng' : 'Giảm sản phẩm'}"></span><strong th:text="'-' + ${#numbers.formatDecimal(checkout.discountAmount, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></div>
+            <div class="cart-summary-total"><span>Tổng thanh toán</span><strong th:text="${#numbers.formatDecimal(checkout.finalAmount, 0, 'POINT', 0, 'COMMA')} + 'đ'"></strong></div>
+            <p class="cart-summary-note">COD hoặc VNPAY · Đơn vị: VNĐ</p>
+            <button type="submit" class="cart-primary" th:disabled="${addresses.isEmpty()}">Đặt hàng →</button>
+            <p class="cart-summary-footnote">Đơn hàng sẽ được gửi đến cửa hàng để xác nhận. Giá và tồn kho được kiểm tra lại khi đặt hàng.</p>
+        </aside>
+    </form>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

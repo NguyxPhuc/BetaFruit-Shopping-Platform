@@ -8,6 +8,8 @@ import com.fu.SWP391_BetaFruit.repository.PaymentTransactionRepository;
 import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.entity.OrderStatusHistory;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
+import com.fu.SWP391_BetaFruit.enums.PaymentMethod;
+import com.fu.SWP391_BetaFruit.enums.PaymentStatus;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderStatusHistoryRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
@@ -60,7 +62,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 .map(item -> new ShopOrderDetailResponse.Item(
                         item.getOrderItemId(), item.getSnapshotProductName(), item.getSnapshotVariantName(),
                         item.getQuantity(), item.getPriceSnapshot(),
-                        item.getPriceSnapshot().multiply(java.math.BigDecimal.valueOf(item.getQuantity())),
+                        OrderPricing.lineTotal(item.getPriceSnapshot(), item.getQuantity()),
                         item.getCostSnapshot()))
                 .toList();
         var history = orderStatusHistoryRepository.findByOrderOrderIdOrderByCreatedAtAscHistoryIdAsc(orderId).stream()
@@ -86,11 +88,10 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         BigDecimal totalCost = items.isEmpty() || items.stream().anyMatch(item -> item.costSnapshot() == null)
                 ? null
                 : items.stream()
-                        .map(item -> item.costSnapshot().multiply(BigDecimal.valueOf(item.quantity())))
+                        .map(item -> OrderPricing.lineTotal(item.costSnapshot(), item.quantity()))
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
         var pricing = OrderPricing.calculate(order);
-        BigDecimal estimatedProfit = totalCost == null
-                ? null : pricing.shopNetReceived().subtract(totalCost);
+        BigDecimal estimatedProfit = OrderPricing.estimatedProfit(pricing.shopNetReceived(), totalCost);
 
         return new ShopOrderDetailResponse(
                 toListItem(order, pricing), order.getShop().getShopId(), order.getShop().getShopName(),
@@ -129,7 +130,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 order.getOrderId(),
                 String.valueOf(order.getOrderId()),
                 order.getCustomer().getFullName(),
-                order.getFinalAmount(),
+                OrderPricing.customerAmount(order),
                 pricing.shopNetReceived(),
                 pricing.shopNetReceived(),
                 order.getOrderStatus() == null ? null : order.getOrderStatus().name(),
@@ -195,6 +196,16 @@ public class ShopOrderServiceImpl implements ShopOrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Trạng thái đơn hàng không hợp lệ cho thao tác này");
         }
         if (expectedStatus == OrderStatus.PENDING && nextStatus == OrderStatus.CONFIRMED) {
+            if (order.getPaymentMethod() == null) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Đơn hàng thiếu phương thức thanh toán");
+            }
+            if (order.getPaymentMethod() == PaymentMethod.VNPAY
+                    && paymentTransactionRepository.findByOrderOrderIdOrderByCreatedAtAscTransactionIdAsc(orderId)
+                            .stream().noneMatch(payment -> "VNPAY".equalsIgnoreCase(payment.getGateway())
+                                    && payment.getStatus() == PaymentStatus.PAID)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Đơn hàng VNPAY chưa thanh toán thành công (PAID), không thể xác nhận đơn hàng");
+            }
             OrderPricing.couponSource(order);
             orderStockService.deduct(order, ownerId);
         }

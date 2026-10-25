@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import java.math.BigDecimal;
 
 @Service
 public class DelivererOrderDetailService {
@@ -29,7 +28,7 @@ public class DelivererOrderDetailService {
         var summary = orders.getOrder(orderId, shipperId);
         var lines = items.findByOrderOrderIdOrderByOrderItemIdAsc(orderId).stream()
                 .map(i -> new DelivererOrderDetailResponse.Item(i.getSnapshotProductName(), i.getSnapshotVariantName(),
-                        i.getQuantity(), i.getPriceSnapshot(), i.getPriceSnapshot().multiply(BigDecimal.valueOf(i.getQuantity()))))
+                        i.getQuantity(), i.getPriceSnapshot(), OrderPricing.lineTotal(i.getPriceSnapshot(), i.getQuantity())))
                 .toList();
         var events = history.findByOrderOrderIdOrderByCreatedAtAscHistoryIdAsc(orderId).stream()
                 .map(h -> new DelivererOrderDetailResponse.StatusHistory(ShipperOrderResponse.statusLabel(

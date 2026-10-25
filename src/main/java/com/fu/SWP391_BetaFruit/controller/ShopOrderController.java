@@ -1,7 +1,5 @@
 package com.fu.SWP391_BetaFruit.controller;
 
-import com.fu.SWP391_BetaFruit.dto.response.ShopOrderListItemResponse;
-import com.fu.SWP391_BetaFruit.dto.response.ShopOrderDetailResponse;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.service.ShopOrderService;
 import jakarta.servlet.http.HttpSession;
@@ -14,8 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.transaction.CannotCreateTransactionException;
@@ -85,10 +83,16 @@ public class ShopOrderController {
     @PostMapping("/{orderId}/confirm")
     public String confirmOrder(@PathVariable Integer orderId,
                                HttpSession session,
-                               @RequestParam(defaultValue = "false") boolean returnToDetail) {
+                               @RequestParam(defaultValue = "false") boolean returnToDetail,
+                               RedirectAttributes redirectAttributes) {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
-        shopOrderService.confirmOrder(orderId, ownerId);
+        try {
+            shopOrderService.confirmOrder(orderId, ownerId);
+        } catch (ResponseStatusException exception) {
+            if (exception.getStatusCode().value() != HttpStatus.CONFLICT.value()) throw exception;
+            redirectAttributes.addFlashAttribute("orderActionError", exception.getReason());
+        }
         return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "");
     }
 
@@ -122,35 +126,8 @@ public class ShopOrderController {
         return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "");
     }
 
-    @GetMapping("/api")
-    @ResponseBody
-    public Page<ShopOrderListItemResponse> getOrdersApi(
-            HttpSession session,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) OrderStatus status,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDirection,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return shopOrderService.getOrdersForShopOwner(requireUserId(session), keyword, status, sortBy, sortDirection, page, size);
-    }
-
-    @GetMapping("/api/{orderId}")
-    @ResponseBody
-    public ShopOrderDetailResponse getOrderDetailApi(
-            @PathVariable Integer orderId,
-            HttpSession session) {
-        return shopOrderService.getOrderDetailForShopOwner(orderId, requireUserId(session));
-    }
-
     private Integer currentUserId(HttpSession session) {
         return session != null && session.getAttribute("LOGGED_IN_USER_ID") instanceof Integer id ? id : null;
-    }
-
-    private Integer requireUserId(HttpSession session) {
-        Integer id = currentUserId(session);
-        if (id == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Vui lòng đăng nhập");
-        return id;
     }
 
     private void addOwnerName(HttpSession session, Model model) {

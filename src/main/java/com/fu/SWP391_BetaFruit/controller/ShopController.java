@@ -2,7 +2,9 @@ package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.ReviewReportRequest;
 import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ShopSetupRequest;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
+import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
 import com.fu.SWP391_BetaFruit.service.ReviewReportService;
 import com.fu.SWP391_BetaFruit.service.ShopService;
 import jakarta.servlet.http.HttpSession;
@@ -101,6 +103,41 @@ public class ShopController {
             model.addAttribute("errorMessage", e.getMessage());
             return "shop/edit-profile";
         }
+    }
+
+    @GetMapping("/setup-profile")
+    public String showSetupProfileForm(Model model, HttpSession session) {
+        ShopSetupRequest request = new ShopSetupRequest();
+        model.addAttribute("shopSetupRequest", request);
+        return "shop/setup-profile";
+    }
+
+    @PostMapping("/setup-profile")
+    public String setUpShopProfile(@Valid @ModelAttribute("shopSetupRequest") ShopSetupRequest request, BindingResult bindingResult, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", "Vui lòng kiểm tra lại các thông tin nhập chưa hợp lệ.");
+            return "shop/setup-profile";
+        }
+        try {
+            shopService.setUpProfileShop(userId, request);
+            session.setAttribute("SHOP_APPROVAL_STATUS", ShopApprovalStatus.PENDING);
+            redirectAttributes.addFlashAttribute("successMessage", "Nộp hồ sơ thành công! Đang chờ sàn phê duyệt.");
+            return "redirect:/shop/pending-approval";
+        }catch (Exception e){
+            model.addAttribute("errorMessage", e.getMessage());
+            return "shop/setup-profile";
+        }
+    }
+
+    @GetMapping("/pending-approval")
+    public String showPendingApproval() {
+        return "shop/pending-approval";
+    }
+
+    @GetMapping("/rejected")
+    public String showRejected() {
+        return "shop/rejected";
     }
 
     // =========================================================================

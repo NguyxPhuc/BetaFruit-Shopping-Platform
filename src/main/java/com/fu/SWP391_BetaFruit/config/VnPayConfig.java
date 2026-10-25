@@ -31,6 +31,7 @@ public class VnPayConfig {
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_TxnRef", txnRef);
         vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang " + txnRef);
+        vnp_Params.put("vnp_OrderType", "other");
         vnp_Params.put("vnp_Locale", "vn");
         String returnPath = returnUrl != null && !returnUrl.isEmpty() ? returnUrl : "/payment/vnpay-return";
         String context = contextPath != null ? contextPath : "";
