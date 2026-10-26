@@ -6,6 +6,7 @@ import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.enums.PaymentMethod;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
+import com.fu.SWP391_BetaFruit.repository.AddressRepository;
 import com.fu.SWP391_BetaFruit.repository.DeliveryAssignmentRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderStatusHistoryRepository;
@@ -51,6 +52,9 @@ class StaffDispatchTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private AddressRepository addressRepository;
 
     @InjectMocks
     private StaffDispatchServiceImpl staffDispatchService;

@@ -12,5 +12,6 @@ public record DispatchShipperCandidateResponse(
         long ongoingOrdersCount,
         BigDecimal codDebt,
         boolean isOverloaded,
-        boolean isCodWarning
+        boolean isCodWarning,
+        String operatingCity
 ) {}

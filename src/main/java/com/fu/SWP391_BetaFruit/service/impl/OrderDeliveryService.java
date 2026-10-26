@@ -3,6 +3,8 @@ package com.fu.SWP391_BetaFruit.service.impl;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.repository.*;
+import com.fu.SWP391_BetaFruit.service.AutoDispatchService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,9 @@ public class OrderDeliveryService {
     private final DeliveryAssignmentRepository assignments;
     private final OrderStatusHistoryRepository history;
     private final UserRepository users;
+
+    @Autowired(required = false)
+    private AutoDispatchService autoDispatchService;
 
     public OrderDeliveryService(OrderRepository orders, DeliveryAssignmentRepository assignments,
                                 OrderStatusHistoryRepository history, UserRepository users) {
@@ -86,6 +91,13 @@ public class OrderDeliveryService {
         Order order = assignedOrder(orderId, shipperId);
         history.save(new OrderStatusHistory(null, order, users.getReferenceById(shipperId),
                 order.getOrderStatus(), order.getOrderStatus(), "Shipper đã bàn giao kiện hàng tại trạm tiếp sức ảo", null));
+
+        // Tự động kích hoạt Auto-Dispatch Chặng 2 (Trạm ảo -> Khách hàng)
+        if (autoDispatchService != null) {
+            try {
+                autoDispatchService.autoDispatchLeg2(orderId, shipperId);
+            } catch (Exception ignored) {}
+        }
     }
 
     private Order assignedOrder(Integer orderId, Integer shipperId) {

@@ -95,10 +95,10 @@
                                 <!-- Reassign / Rescue Form -->
                                 <form method="post" th:action="@{/staff/deliveries/reassign}" class="d-inline-flex gap-2 align-items-center">
                                     <input type="hidden" name="orderId" th:value="${ex.orderId}">
-                                    <select name="shipperId" class="form-select form-select-sm" style="width: 170px;" required>
-                                        <option value="" disabled selected>-- Chọn tài xế --</option>
+                                    <select name="shipperId" class="form-select form-select-sm" style="width: 230px;" required>
+                                        <option value="" disabled selected>-- Chọn tài xế cứu viện --</option>
                                         <option th:each="s : ${shippers}" th:value="${s.shipperId}"
-                                                th:text="${s.fullName + ' (' + s.ongoingOrdersCount + ' đơn)'}"
+                                                th:text="${s.fullName + (s.operatingCity != null ? ' [' + s.operatingCity + ']' : '') + ' (' + s.ongoingOrdersCount + ' đơn)'}"
                                                 th:disabled="${s.isOverloaded}">
                                         </option>
                                     </select>
@@ -131,6 +131,7 @@
                         <tr>
                             <th class="ps-4">Mã Tài Xế</th>
                             <th>Họ Và Tên</th>
+                            <th>Khu Vực Hoạt Động</th>
                             <th>Số Điện Thoại</th>
                             <th>Đơn Dở Dang (Tải)</th>
                             <th>Công Nợ COD Hiện Tại</th>
@@ -141,6 +142,9 @@
                         <tr th:each="s : ${shippers}">
                             <td class="ps-4 font-monospace" th:text="'#SH' + ${s.shipperId}">#SH101</td>
                             <td class="fw-bold text-dark" th:text="${s.fullName}">Nguyễn Văn Tài</td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${s.operatingCity}">TP. Hồ Chí Minh</span>
+                            </td>
                             <td th:text="${s.phone}">0912345678</td>
                             <td>
                                 <span class="badge" th:classappend="${s.ongoingOrdersCount >= 5 ? 'bg-danger' : (s.ongoingOrdersCount >= 3 ? 'bg-warning text-dark' : 'bg-success')}"

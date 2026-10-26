@@ -3,18 +3,16 @@ package com.fu.SWP391_BetaFruit.service.impl;
 import com.fu.SWP391_BetaFruit.dto.response.DispatchExceptionOrderResponse;
 import com.fu.SWP391_BetaFruit.dto.response.DispatchShipperCandidateResponse;
 import com.fu.SWP391_BetaFruit.entity.*;
+import com.fu.SWP391_BetaFruit.enums.AddressType;
 import com.fu.SWP391_BetaFruit.enums.NotificationType;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
-import com.fu.SWP391_BetaFruit.repository.DeliveryAssignmentRepository;
-import com.fu.SWP391_BetaFruit.repository.OrderRepository;
-import com.fu.SWP391_BetaFruit.repository.OrderStatusHistoryRepository;
-import com.fu.SWP391_BetaFruit.repository.ShipperRepository;
-import com.fu.SWP391_BetaFruit.repository.UserRepository;
+import com.fu.SWP391_BetaFruit.repository.*;
 import com.fu.SWP391_BetaFruit.service.NotificationService;
 import com.fu.SWP391_BetaFruit.service.StaffDispatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +39,9 @@ public class StaffDispatchServiceImpl implements StaffDispatchService {
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+
+    @Autowired(required = false)
+    private AddressRepository addressRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -123,6 +124,13 @@ public class StaffDispatchServiceImpl implements StaffDispatchService {
             boolean isOverloaded = ongoingCount >= 5;
             boolean isCodWarning = codDebt.compareTo(new BigDecimal("3000000")) >= 0;
 
+            String operatingCity = "Chưa rõ";
+            if (addressRepository != null) {
+                operatingCity = addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(
+                        s.getUserId(), AddressType.OPERATING)
+                        .stream().findFirst().map(Address::getCity).orElse("Chưa rõ");
+            }
+
             candidates.add(DispatchShipperCandidateResponse.builder()
                     .shipperId(s.getUserId())
                     .fullName(user.getFullName())
@@ -131,6 +139,7 @@ public class StaffDispatchServiceImpl implements StaffDispatchService {
                     .codDebt(codDebt)
                     .isOverloaded(isOverloaded)
                     .isCodWarning(isCodWarning)
+                    .operatingCity(operatingCity)
                     .build());
         }
 
