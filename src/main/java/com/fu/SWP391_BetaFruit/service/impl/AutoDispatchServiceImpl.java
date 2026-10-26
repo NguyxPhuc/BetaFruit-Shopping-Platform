@@ -108,7 +108,7 @@ public class AutoDispatchServiceImpl implements AutoDispatchService {
             String shipperCity = "";
             if (addressRepository != null) {
                 shipperCity = addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(
-                        shipper.getUserId(), AddressType.OPERATING)
+                        shipper.getUserId(), AddressType.PICKUP)
                         .stream().findFirst().map(Address::getCity).orElse("");
             }
 
@@ -223,7 +223,7 @@ public class AutoDispatchServiceImpl implements AutoDispatchService {
             String shipperCity = "";
             if (addressRepository != null) {
                 shipperCity = addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(
-                        shipper.getUserId(), AddressType.OPERATING)
+                        shipper.getUserId(), AddressType.PICKUP)
                         .stream().findFirst().map(Address::getCity).orElse("");
             }
 

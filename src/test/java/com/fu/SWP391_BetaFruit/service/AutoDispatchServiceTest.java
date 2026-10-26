@@ -144,10 +144,10 @@ class AutoDispatchServiceTest {
                 .thenReturn(List.of(createAddress(1, "Lâm Đồng", AddressType.PICKUP)));
 
         // Shipper 101 ở Lâm Đồng, Shipper 102 ở TP. Hồ Chí Minh
-        when(addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(101, AddressType.OPERATING))
-                .thenReturn(List.of(createAddress(101, "Lâm Đồng", AddressType.OPERATING)));
-        when(addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(102, AddressType.OPERATING))
-                .thenReturn(List.of(createAddress(102, "TP. Hồ Chí Minh", AddressType.OPERATING)));
+        when(addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(101, AddressType.PICKUP))
+                .thenReturn(List.of(createAddress(101, "Lâm Đồng", AddressType.PICKUP)));
+        when(addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(102, AddressType.PICKUP))
+                .thenReturn(List.of(createAddress(102, "TP. Hồ Chí Minh", AddressType.PICKUP)));
 
         when(deliveryAssignmentRepository.countOngoingOrdersByShipper(eq(101), any())).thenReturn(0L);
         when(deliveryAssignmentRepository.countOngoingOrdersByShipper(eq(102), any())).thenReturn(0L);
@@ -182,8 +182,8 @@ class AutoDispatchServiceTest {
                 .thenReturn(List.of(createAddress(8, "TP. Hồ Chí Minh", AddressType.SHIPPING)));
 
         // Shipper 2 ở TP. Hồ Chí Minh
-        when(addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(102, AddressType.OPERATING))
-                .thenReturn(List.of(createAddress(102, "TP. Hồ Chí Minh", AddressType.OPERATING)));
+        when(addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(102, AddressType.PICKUP))
+                .thenReturn(List.of(createAddress(102, "TP. Hồ Chí Minh", AddressType.PICKUP)));
 
         when(deliveryAssignmentRepository.countOngoingOrdersByShipper(eq(102), any())).thenReturn(0L);
 

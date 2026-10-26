@@ -127,7 +127,7 @@ public class StaffDispatchServiceImpl implements StaffDispatchService {
             String operatingCity = "Chưa rõ";
             if (addressRepository != null) {
                 operatingCity = addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(
-                        s.getUserId(), AddressType.OPERATING)
+                        s.getUserId(), AddressType.PICKUP)
                         .stream().findFirst().map(Address::getCity).orElse("Chưa rõ");
             }
 
