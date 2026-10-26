@@ -548,7 +548,10 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         if (request.getMinSpentRequired() == null || request.getMinSpentRequired().compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Ngưỡng chi tiêu yêu cầu phải không âm (>= 0)!");
         }
-        if (request.getDiscountPercent() == null || request.getDiscountPercent().compareTo(BigDecimal.ZERO) < 0
+        if (request.getDiscountPercent() == null) {
+            request.setDiscountPercent(BigDecimal.ZERO);
+        }
+        if (request.getDiscountPercent().compareTo(BigDecimal.ZERO) < 0
                 || request.getDiscountPercent().compareTo(BigDecimal.valueOf(100)) > 0) {
             throw new IllegalArgumentException("Tỷ lệ chiết khấu giảm giá phải từ 0% đến 100%!");
         }
@@ -580,14 +583,18 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) == 0) {
                 throw new IllegalArgumentException("Ngưỡng chi tiêu " + request.getMinSpentRequired() + " ₫ đã trùng với hạng '" + t.getTierName() + "'!");
             }
-            // Quy tắc lũy tiến:
-            if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) > 0
-                    && t.getDiscountPercent().compareTo(request.getDiscountPercent()) < 0) {
-                throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu thấp hơn hạng '" + t.getTierName() + "' nhưng tỷ lệ giảm giá lại cao hơn (" + request.getDiscountPercent() + "% > " + t.getDiscountPercent() + "%)!");
-            }
-            if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) < 0
-                    && t.getDiscountPercent().compareTo(request.getDiscountPercent()) > 0) {
-                throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu cao hơn hạng '" + t.getTierName() + "' nhưng tỷ lệ giảm giá lại thấp hơn (" + request.getDiscountPercent() + "% < " + t.getDiscountPercent() + "%)!");
+            // Quy tắc lũy tiến (chỉ áp dụng khi cả 2 hạng đều cấu hình discountPercent > 0):
+            if (t.getDiscountPercent() != null && request.getDiscountPercent() != null
+                    && t.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0
+                    && request.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+                if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) > 0
+                        && t.getDiscountPercent().compareTo(request.getDiscountPercent()) < 0) {
+                    throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu thấp hơn hạng '" + t.getTierName() + "' nhưng tỷ lệ giảm giá lại cao hơn (" + request.getDiscountPercent() + "% > " + t.getDiscountPercent() + "%)!");
+                }
+                if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) < 0
+                        && t.getDiscountPercent().compareTo(request.getDiscountPercent()) > 0) {
+                    throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu cao hơn hạng '" + t.getTierName() + "' nhưng tỷ lệ giảm giá lại thấp hơn (" + request.getDiscountPercent() + "% < " + t.getDiscountPercent() + "%)!");
+                }
             }
         }
     }

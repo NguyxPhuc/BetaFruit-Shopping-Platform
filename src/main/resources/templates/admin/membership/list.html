@@ -74,15 +74,14 @@
                     <tr>
                         <th class="ps-3" style="width: 80px;">Mã Cấp</th>
                         <th style="min-width: 180px;">Tên Hạng Thành Viên</th>
-                        <th style="min-width: 200px;">Chi Tiêu Tích Lũy Yêu Cầu</th>
-                        <th style="min-width: 140px;">Chiết Khấu Đơn Hàng (%)</th>
-                        <th style="min-width: 280px;">Gói Voucher Đặc Quyền (Sàn Tài Trợ)</th>
+                        <th style="min-width: 220px;">Chi Tiêu Tích Lũy Yêu Cầu</th>
+                        <th style="min-width: 300px;">Gói Voucher Đặc Quyền (Sàn Tài Trợ)</th>
                         <th class="text-end pe-3" style="width: 230px;">Thao Tác</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${tiers == null or tiers.isEmpty()}">
-                        <td colspan="6" class="text-center py-5 text-muted">
+                        <td colspan="5" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
                             Chưa có cấp bậc thành viên nào được thiết lập. Hãy bấm nút "Thêm Hạng Thành Viên" để tạo mới!
                         </td>
@@ -106,12 +105,6 @@
                                 <span th:text="${#numbers.formatDecimal(tier.minSpentRequired, 0, 'COMMA', 0, 'POINT')}">0</span> ₫
                             </div>
                             <small class="text-muted">Tổng chi tiêu đơn giao thành công</small>
-                        </td>
-                        <td>
-                            <span class="badge bg-success-subtle text-success fs-6 px-3 py-2 border border-success-subtle">
-                                <i class="bi bi-percent me-1"></i>
-                                <span th:text="${tier.discountPercent}">0</span>%
-                            </span>
                         </td>
                         <td>
                             <div>
@@ -183,15 +176,10 @@
                                    placeholder="Ví dụ: 0, 2000000, 5000000..." required>
                             <div class="form-text">Mức chi tiêu tối thiểu từ các đơn giao thành công để đạt hạng này.</div>
                         </div>
-                        <div class="mb-3">
-                            <label for="createDiscountPercent" class="form-label fw-semibold">Tỷ Lệ Giảm Giá Đơn Hàng (%) <span class="text-danger">*</span></label>
-                            <input type="number" step="0.1" min="0" max="100" class="form-control" id="createDiscountPercent" name="discountPercent"
-                                   placeholder="Ví dụ: 0, 3, 5, 10..." required>
-                            <div class="form-text">Tỷ lệ chiết khấu tự động giảm khi khách hàng thuộc hạng này thanh toán.</div>
-                            <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
-                                <i class="bi bi-info-circle-fill me-2 fs-5"></i>
-                                <span>Hệ thống sẽ tự động đồng bộ mã giảm giá VIP toàn sàn (Sàn tài trợ, không trừ tiền gian hàng) tương ứng với tỷ lệ % bạn vừa cấu hình.</span>
-                            </div>
+                        <input type="hidden" name="discountPercent" value="0">
+                        <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
+                            <i class="bi bi-gift-fill me-2 fs-5 text-primary flex-shrink-0"></i>
+                            <span>Quyền lợi của Hạng được quy định 100% bằng <strong>Gói Voucher Đặc Quyền</strong> (Sàn tài trợ). Sau khi tạo hạng, bạn có thể bấm <strong>[⚙️ Gói Voucher]</strong> để tích chọn các mã ưu đãi cấp cho Hội viên đạt hạng này.</span>
                         </div>
                     </div>
                     <div class="modal-footer bg-light">
@@ -308,13 +296,10 @@
                                 <label class="form-label fw-semibold">Chi Tiêu Tích Lũy Yêu Cầu (VNĐ) <span class="text-danger">*</span></label>
                                 <input type="number" step="1000" min="0" class="form-control" name="minSpentRequired" th:value="${tier.minSpentRequired}" required>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Tỷ Lệ Giảm Giá Đơn Hàng (%) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.1" min="0" max="100" class="form-control" name="discountPercent" th:value="${tier.discountPercent}" required>
-                                <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
-                                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
-                                    <span>Hệ thống sẽ tự động đồng bộ mã giảm giá VIP toàn sàn (Sàn tài trợ, không trừ tiền gian hàng) tương ứng với tỷ lệ % bạn vừa cấu hình.</span>
-                                </div>
+                            <input type="hidden" name="discountPercent" th:value="${tier.discountPercent != null ? tier.discountPercent : 0}">
+                            <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
+                                <i class="bi bi-gift-fill me-2 fs-5 text-primary flex-shrink-0"></i>
+                                <span>Quyền lợi của Hạng được quy định 100% bằng <strong>Gói Voucher Đặc Quyền</strong> (Sàn tài trợ). Bấm nút <strong>[⚙️ Gói Voucher]</strong> trên danh sách để cấu hình các mã trong gói.</span>
                             </div>
                         </div>
                         <div class="modal-footer bg-light">

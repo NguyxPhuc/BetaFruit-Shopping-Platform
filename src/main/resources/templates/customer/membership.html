@@ -272,9 +272,8 @@
                 <div class="vip-card-body">
                     <h2 th:text="${membership.fullName}">Nguyễn Văn A</h2>
                     <div class="vip-card-discount">
-                        <span>Đặc quyền hiện tại: Giảm </span>
-                        <strong th:text="${membership.currentDiscountPercent} + '%'">5%</strong>
-                        <span> cho mọi đơn hàng</span>
+                        <span>Đặc quyền hiện tại: </span>
+                        <strong>Trọn bộ Gói Voucher Đặc Quyền Hội Viên</strong>
                     </div>
                 </div>
                 <div class="vip-card-footer">
@@ -411,7 +410,7 @@
                             <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Hạng Thành Viên</th>
                             <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Chi Tiêu Tối Thiểu</th>
                             <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Số Đơn Tối Thiểu</th>
-                            <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Chiết Khấu Mọi Đơn</th>
+                            <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Đặc Quyền Hội Viên</th>
                             <th style="padding: 14px 20px; font-weight: 600; color: #495057; text-align: center;">Trạng Thái Của Bạn</th>
                         </tr>
                         </thead>
@@ -428,8 +427,9 @@
                                 <span th:text="${tier.minOrdersRequired}">0</span> đơn
                             </td>
                             <td style="padding: 14px 20px;">
-                                <span class="badge" style="background: #e8f5e9; color: #2d6a4f; font-size: 0.9rem; padding: 6px 12px; border-radius: 8px;"
-                                      th:text="'Giảm ' + ${tier.discountPercent} + '%'">Giảm 0%</span>
+                                <span class="badge" style="background: #e8f5e9; color: #2d6a4f; font-size: 0.85rem; padding: 6px 12px; border-radius: 8px;">
+                                    Gói Voucher VIP &amp; Freeship
+                                </span>
                             </td>
                             <td style="padding: 14px 20px; text-align: center;">
                                 <span th:if="${tier.isCurrent}" style="color: #2d6a4f; font-weight: 700;">
