@@ -75,13 +75,14 @@
                         <th class="ps-3" style="width: 80px;">Mã Cấp</th>
                         <th style="min-width: 180px;">Tên Hạng Thành Viên</th>
                         <th style="min-width: 200px;">Chi Tiêu Tích Lũy Yêu Cầu</th>
-                        <th style="min-width: 150px;">Chiết Khấu Đơn Hàng (%)</th>
+                        <th style="min-width: 140px;">Chiết Khấu Đơn Hàng (%)</th>
+                        <th style="min-width: 220px;">Mã Voucher Tự Động Đồng Bộ</th>
                         <th class="text-end pe-3" style="width: 160px;">Thao Tác</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${tiers == null or tiers.isEmpty()}">
-                        <td colspan="5" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
                             Chưa có cấp bậc thành viên nào được thiết lập. Hãy bấm nút "Thêm Hạng Thành Viên" để tạo mới!
                         </td>
@@ -111,6 +112,28 @@
                                 <i class="bi bi-percent me-1"></i>
                                 <span th:text="${tier.discountPercent}">0</span>%
                             </span>
+                        </td>
+                        <td>
+                            <div th:if="${tier.discountPercent != null and tier.discountPercent > 0}">
+                                <span class="badge px-2 py-1 fs-7 fw-bold"
+                                      th:classappend="${#strings.containsIgnoreCase(tier.tierName, 'kim cương') ? 'bg-info-subtle text-info border border-info' :
+                                                      (#strings.containsIgnoreCase(tier.tierName, 'vàng') ? 'bg-warning-subtle text-warning-emphasis border border-warning' :
+                                                      (#strings.containsIgnoreCase(tier.tierName, 'bạc') ? 'bg-secondary-subtle text-secondary border' : 'bg-primary-subtle text-primary border'))}">
+                                    <i class="bi bi-ticket-perforated-fill me-1"></i>
+                                    <span th:text="${#strings.containsIgnoreCase(tier.tierName, 'kim cương') ? 'DIAMOND_VIP' :
+                                                   (#strings.containsIgnoreCase(tier.tierName, 'vàng') ? 'GOLD_VIP' :
+                                                   (#strings.containsIgnoreCase(tier.tierName, 'bạc') ? 'SILVER_VIP' : ('TIER_' + tier.tierId + '_VIP')))}">GOLD_VIP</span>
+                                </span>
+                                <div class="small text-muted mt-1">
+                                    <span th:text="${#strings.containsIgnoreCase(tier.tierName, 'kim cương') ? 'Tối đa 100.000 ₫ • 8 lượt/tháng' :
+                                                   (#strings.containsIgnoreCase(tier.tierName, 'vàng') ? 'Tối đa 50.000 ₫ • 4 lượt/tháng' :
+                                                   (#strings.containsIgnoreCase(tier.tierName, 'bạc') ? 'Tối đa 20.000 ₫ • 2 lượt/tháng' : 'Tối đa 30.000 ₫ • 2 lượt/tháng'))}">Tối đa 50.000 ₫ • 4 lượt/tháng</span>
+                                    <span class="badge bg-success-subtle text-success ms-1" style="font-size: 0.7rem;">Sàn tài trợ</span>
+                                </div>
+                            </div>
+                            <div th:unless="${tier.discountPercent != null and tier.discountPercent > 0}">
+                                <span class="badge bg-light text-muted border">Chưa có voucher</span>
+                            </div>
                         </td>
                         <td class="text-end pe-3">
                             <button type="button" class="btn btn-sm btn-outline-primary me-1"
@@ -159,6 +182,10 @@
                             <input type="number" step="0.1" min="0" max="100" class="form-control" id="createDiscountPercent" name="discountPercent"
                                    placeholder="Ví dụ: 0, 3, 5, 10..." required>
                             <div class="form-text">Tỷ lệ chiết khấu tự động giảm khi khách hàng thuộc hạng này thanh toán.</div>
+                            <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
+                                <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                                <span>Hệ thống sẽ tự động đồng bộ mã giảm giá VIP toàn sàn (Sàn tài trợ, không trừ tiền gian hàng) tương ứng với tỷ lệ % bạn vừa cấu hình.</span>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer bg-light">
@@ -197,6 +224,10 @@
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Tỷ Lệ Giảm Giá Đơn Hàng (%) <span class="text-danger">*</span></label>
                                 <input type="number" step="0.1" min="0" max="100" class="form-control" name="discountPercent" th:value="${tier.discountPercent}" required>
+                                <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
+                                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                                    <span>Hệ thống sẽ tự động đồng bộ mã giảm giá VIP toàn sàn (Sàn tài trợ, không trừ tiền gian hàng) tương ứng với tỷ lệ % bạn vừa cấu hình.</span>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer bg-light">
