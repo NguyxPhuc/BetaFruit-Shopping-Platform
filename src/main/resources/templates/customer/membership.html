@@ -378,7 +378,8 @@
                             <div class="voucher-action-row">
                                 <span class="voucher-code-pill" th:text="${v.couponCode}">GOLD_FREESHIP</span>
                                 <button type="button" class="btn-copy-code"
-                                        th:onclick="'copyVoucherCode(\'' + ${v.couponCode} + '\', this)'">
+                                        th:data-code="${v.couponCode}"
+                                        onclick="copyVoucherCode(this.getAttribute('data-code'), this)">
                                     Sao chép
                                 </button>
                             </div>
