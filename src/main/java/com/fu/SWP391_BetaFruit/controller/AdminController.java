@@ -419,4 +419,20 @@ public class AdminController {
         }
         return "redirect:/admin/membership-tiers";
     }
+
+    /**
+     * Cấu hình gói Voucher đặc quyền cho hạng thành viên (Shopee Rewards Platform Bundle)
+     */
+    @PostMapping("/admin/membership-tiers/{id}/coupons")
+    public String updateTierCoupons(@PathVariable("id") Integer tierId,
+                                    @RequestParam(value = "couponIds", required = false) List<Integer> couponIds,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            membershipTierService.updateTierCoupons(tierId, couponIds);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật gói voucher đặc quyền cho hạng thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể cập nhật gói voucher: " + e.getMessage());
+        }
+        return "redirect:/admin/membership-tiers";
+    }
 }

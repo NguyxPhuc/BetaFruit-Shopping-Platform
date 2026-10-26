@@ -8,6 +8,7 @@ import com.fu.SWP391_BetaFruit.dto.response.TierVoucherResponse;
 import com.fu.SWP391_BetaFruit.entity.Coupon;
 import com.fu.SWP391_BetaFruit.entity.CustomerMembership;
 import com.fu.SWP391_BetaFruit.entity.MembershipTier;
+import com.fu.SWP391_BetaFruit.entity.TierCoupon;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.CouponCategory;
 import com.fu.SWP391_BetaFruit.enums.DiscountType;
@@ -17,6 +18,7 @@ import com.fu.SWP391_BetaFruit.repository.CouponRepository;
 import com.fu.SWP391_BetaFruit.repository.CustomerMembershipRepository;
 import com.fu.SWP391_BetaFruit.repository.MembershipTierRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
+import com.fu.SWP391_BetaFruit.repository.TierCouponRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.MembershipTierService;
 import com.fu.SWP391_BetaFruit.service.NotificationService;
@@ -43,6 +45,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
     private final CouponRepository couponRepository;
+    private final TierCouponRepository tierCouponRepository;
 
     // =========================================================================
     // 1. PHÍA CUSTOMER (BR-LY-01, BR-LY-02, BR-LY-03 & TIÊU CHÍ KÉP SHOPEE)
@@ -223,6 +226,9 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             throw new IllegalStateException("Không thể xóa hạng '" + tier.getTierName() + "' vì đang có khách hàng thuộc hạng này!");
         }
 
+        if (tierCouponRepository != null) {
+            tierCouponRepository.deleteByTier_TierId(id);
+        }
         membershipTierRepository.delete(tier);
         deactivateTierVoucher(tier);
     }
@@ -231,11 +237,85 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     @Transactional(readOnly = true)
     public Map<String, Object> getAdminMembershipPageData() {
         List<MembershipTier> tiers = getAllTiers();
+        List<Coupon> platformCoupons = getAvailablePlatformCoupons();
+
+        Map<Integer, List<Coupon>> tierCouponsMap = new HashMap<>();
+        Map<Integer, Set<Integer>> tierCouponIdsMap = new HashMap<>();
+
+        for (MembershipTier tier : tiers) {
+            List<Coupon> assigned = (tierCouponRepository != null)
+                    ? tierCouponRepository.findByTier_TierId(tier.getTierId()).stream()
+                    .map(TierCoupon::getCoupon)
+                    .filter(Objects::nonNull)
+                    .toList()
+                    : Collections.emptyList();
+            tierCouponsMap.put(tier.getTierId(), assigned);
+
+            Set<Integer> ids = new HashSet<>();
+            for (Coupon c : assigned) {
+                ids.add(c.getCouponId());
+            }
+            tierCouponIdsMap.put(tier.getTierId(), ids);
+        }
+
         Map<String, Object> data = new HashMap<>();
         data.put("tiers", tiers);
         data.put("totalTiers", tiers.size());
         data.put("newTier", new MembershipTierRequest());
+        data.put("platformCoupons", platformCoupons);
+        data.put("tierCouponsMap", tierCouponsMap);
+        data.put("tierCouponIdsMap", tierCouponIdsMap);
         return data;
+    }
+
+    // =========================================================================
+    // QUẢN LÝ GÓI VOUCHER ĐẶC QUYỀN HỘI VIÊN (SHOPEE REWARDS N-N BUNDLE)
+    // =========================================================================
+    @Override
+    @Transactional(readOnly = true)
+    public List<Coupon> getAvailablePlatformCoupons() {
+        if (couponRepository == null) return Collections.emptyList();
+        return couponRepository.findByShopIsNullAndIsActiveTrue();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Coupon> getCouponsForTier(Integer tierId) {
+        if (tierCouponRepository == null || tierId == null) return Collections.emptyList();
+        return tierCouponRepository.findByTier_TierId(tierId).stream()
+                .map(TierCoupon::getCoupon)
+                .filter(c -> c != null && Boolean.TRUE.equals(c.getIsActive()))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void updateTierCoupons(Integer tierId, List<Integer> couponIds) {
+        MembershipTier tier = membershipTierRepository.findById(tierId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Hạng thành viên với ID: " + tierId));
+
+        if (tierCouponRepository != null) {
+            tierCouponRepository.deleteByTier_TierId(tierId);
+        }
+
+        if (couponIds == null || couponIds.isEmpty()) {
+            log.info("Đã xóa toàn bộ voucher trong gói của hạng {}", tier.getTierName());
+            return;
+        }
+
+        List<Coupon> selectedCoupons = couponRepository.findAllById(couponIds);
+        List<TierCoupon> newLinks = new ArrayList<>();
+        for (Coupon coupon : selectedCoupons) {
+            if (coupon.getShop() != null) {
+                throw new IllegalArgumentException("Mã [" + coupon.getCouponCode() + "] là mã riêng của Shop, không thể đưa vào gói quyền lợi Hạng của Sàn!");
+            }
+            newLinks.add(new TierCoupon(tier, coupon));
+        }
+
+        if (tierCouponRepository != null) {
+            tierCouponRepository.saveAll(newLinks);
+        }
+        log.info("Cập nhật thành công gói voucher cho hạng {}: {} mã", tier.getTierName(), newLinks.size());
     }
 
     // =========================================================================
@@ -608,6 +688,24 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             return Collections.emptyList();
         }
 
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        List<TierVoucherResponse> vouchers = new ArrayList<>();
+
+        // 1. Ưu tiên lấy từ Gói Voucher Động do Admin cấu hình (N-N Dynamic TierCoupon)
+        if (tierCouponRepository != null && currentTier.getTierId() != null) {
+            List<TierCoupon> configuredList = tierCouponRepository.findByTier_TierId(currentTier.getTierId());
+            if (configuredList != null && !configuredList.isEmpty()) {
+                for (TierCoupon tc : configuredList) {
+                    Coupon c = tc.getCoupon();
+                    if (c != null && Boolean.TRUE.equals(c.getIsActive())) {
+                        vouchers.add(mapCouponToTierVoucherResponse(c, currentTier, dtf));
+                    }
+                }
+                return vouchers;
+            }
+        }
+
+        // 2. Dự phòng: Nếu Admin chưa cấu hình gói N-N thì dùng danh sách mặc định theo cấp bậc
         List<String> targetCodes = new ArrayList<>();
         if (tierIndex >= 3) { // Hạng Kim Cương
             targetCodes.add("DIAMOND_FREESHIP");
@@ -628,52 +726,52 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             targetCodes.add("SILVER_VIP");
         }
 
-        List<TierVoucherResponse> vouchers = new ArrayList<>();
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
         for (String code : targetCodes) {
             Optional<Coupon> opt = (couponRepository != null) ? couponRepository.findByCouponCodeIgnoreCase(code) : Optional.empty();
             if (opt.isPresent()) {
-                Coupon c = opt.get();
-                String title;
-                if (c.getDiscountType() == DiscountType.PERCENT) {
-                    title = "Giảm " + c.getDiscountValue().stripTrailingZeros().toPlainString() + "%";
-                } else if (c.getCouponCategory() == CouponCategory.SHIPPING) {
-                    title = "Freeship " + formatVoucherMoney(c.getDiscountValue());
-                } else {
-                    title = "Giảm " + formatVoucherMoney(c.getDiscountValue());
-                }
-
-                String minSpend = (c.getMinOrderValue() != null)
-                        ? "Đơn tối thiểu " + formatVoucherMoney(c.getMinOrderValue())
-                        : "Không giới hạn đơn tối thiểu";
-
-                String maxDiscount = (c.getMaxDiscountAmount() != null)
-                        ? "Tối đa " + formatVoucherMoney(c.getMaxDiscountAmount())
-                        : null;
-
-                String expiry = (c.getEndDate() != null)
-                        ? "HSD: " + c.getEndDate().format(dtf)
-                        : "HSD: Đến hết chu kỳ";
-
-                String badge = (c.getCouponCategory() == CouponCategory.SHIPPING) ? "FREESHIP" : "GIẢM GIÁ";
-
-                vouchers.add(TierVoucherResponse.builder()
-                        .couponCode(c.getCouponCode())
-                        .title(title)
-                        .description("Voucher đặc quyền toàn sàn Shopee Rewards")
-                        .minOrderValueText(minSpend)
-                        .maxDiscountText(maxDiscount)
-                        .expiryDateText(expiry)
-                        .badgeType(badge)
-                        .targetTierName(currentTier.getTierName())
-                        .isAvailable(Boolean.TRUE.equals(c.getIsActive()))
-                        .build());
+                vouchers.add(mapCouponToTierVoucherResponse(opt.get(), currentTier, dtf));
             } else {
                 vouchers.add(createFallbackVoucher(code, currentTier));
             }
         }
         return vouchers;
+    }
+
+    private TierVoucherResponse mapCouponToTierVoucherResponse(Coupon c, MembershipTier currentTier, DateTimeFormatter dtf) {
+        String title;
+        if (c.getDiscountType() == DiscountType.PERCENT) {
+            title = "Giảm " + c.getDiscountValue().stripTrailingZeros().toPlainString() + "%";
+        } else if (c.getCouponCategory() == CouponCategory.SHIPPING) {
+            title = "Freeship " + formatVoucherMoney(c.getDiscountValue());
+        } else {
+            title = "Giảm " + formatVoucherMoney(c.getDiscountValue());
+        }
+
+        String minSpend = (c.getMinOrderValue() != null)
+                ? "Đơn tối thiểu " + formatVoucherMoney(c.getMinOrderValue())
+                : "Không giới hạn đơn tối thiểu";
+
+        String maxDiscount = (c.getMaxDiscountAmount() != null)
+                ? "Tối đa " + formatVoucherMoney(c.getMaxDiscountAmount())
+                : null;
+
+        String expiry = (c.getEndDate() != null)
+                ? "HSD: " + c.getEndDate().format(dtf)
+                : "HSD: Đến hết chu kỳ";
+
+        String badge = (c.getCouponCategory() == CouponCategory.SHIPPING) ? "FREESHIP" : "GIẢM GIÁ";
+
+        return TierVoucherResponse.builder()
+                .couponCode(c.getCouponCode())
+                .title(title)
+                .description("Voucher đặc quyền toàn sàn Shopee Rewards")
+                .minOrderValueText(minSpend)
+                .maxDiscountText(maxDiscount)
+                .expiryDateText(expiry)
+                .badgeType(badge)
+                .targetTierName(currentTier != null ? currentTier.getTierName() : "")
+                .isAvailable(Boolean.TRUE.equals(c.getIsActive()))
+                .build();
     }
 
     private String formatVoucherMoney(BigDecimal amount) {

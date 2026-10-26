@@ -13,6 +13,7 @@ import com.fu.SWP391_BetaFruit.repository.CouponRepository;
 import com.fu.SWP391_BetaFruit.repository.CustomerMembershipRepository;
 import com.fu.SWP391_BetaFruit.repository.MembershipTierRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
+import com.fu.SWP391_BetaFruit.repository.TierCouponRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.impl.MembershipTierServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +54,9 @@ class TierVoucherSyncTest {
 
     @Mock
     private CouponRepository couponRepository;
+
+    @Mock
+    private TierCouponRepository tierCouponRepository;
 
     @InjectMocks
     private MembershipTierServiceImpl membershipTierService;
