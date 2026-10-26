@@ -72,6 +72,22 @@ public class OrderDeliveryService {
         // AvailableBalance and SettledAt are deliberately untouched during the holding period.
     }
 
+    @Transactional
+    public void reportIncident(Integer orderId, Integer shipperId, String reason, String note) {
+        Order order = assignedOrder(orderId, shipperId);
+        String fullNote = "[SỰ CỐ TRÊN ĐƯỜNG] " + (reason != null ? reason : "Hỏng xe")
+                + (note != null && !note.trim().isEmpty() ? ": " + note.trim() : "");
+        history.save(new OrderStatusHistory(null, order, users.getReferenceById(shipperId),
+                order.getOrderStatus(), order.getOrderStatus(), fullNote, null));
+    }
+
+    @Transactional
+    public void handover(Integer orderId, Integer shipperId) {
+        Order order = assignedOrder(orderId, shipperId);
+        history.save(new OrderStatusHistory(null, order, users.getReferenceById(shipperId),
+                order.getOrderStatus(), order.getOrderStatus(), "Shipper đã bàn giao kiện hàng tại trạm tiếp sức ảo", null));
+    }
+
     private Order assignedOrder(Integer orderId, Integer shipperId) {
         Order order = orders.findLockedById(orderId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));
