@@ -2,7 +2,9 @@ package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
 import com.fu.SWP391_BetaFruit.service.ProductService;
+import com.fu.SWP391_BetaFruit.service.ReviewReportService;
 import com.fu.SWP391_BetaFruit.service.ShopService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +20,7 @@ public class StaffController {
 
     private final ShopService shopService;
     private final ProductService productService;
+    private final ReviewReportService reviewReportService;
 
     // ================= 0. TRANG TỔNG QUAN VẬN HÀNH (DASHBOARD) =================
     @GetMapping("/staff/dashboard")
@@ -26,6 +29,7 @@ public class StaffController {
         model.addAttribute("totalShopsCount", shopService.countTotal());
         model.addAttribute("pendingProductsCount", productService.countPending());
         model.addAttribute("totalProductsCount", productService.countTotal());
+        model.addAttribute("pendingReportsCount", reviewReportService.countPendingReports());
         return "operations-staff/operation-staff-dashboard";
     }
 
@@ -152,5 +156,38 @@ public class StaffController {
             redirectUrl.append("&keyword=").append(keyword.trim());
         }
         return redirectUrl.toString();
+    }
+
+    // ================= 3. KIỂM DUYỆT ĐÁNH GIÁ (FE-10.3 - REVIEW MODERATION) =================
+    /**
+     * Hiển thị hàng đợi khiếu nại đánh giá của Staff.
+     */
+    @GetMapping("/staff/reviews")
+    public String listReportedReviews(@RequestParam(value = "status", required = false, defaultValue = "PENDING") String status,
+                                      @RequestParam(value = "page", defaultValue = "1") int page,
+                                      @RequestParam(value = "size", defaultValue = "10") int size,
+                                      Model model) {
+        model.addAllAttributes(reviewReportService.getStaffReportPageData(status, page, size));
+        return "operations-staff/reviews/list";
+    }
+
+    /**
+     * Thụ lý phân xử đơn khiếu nại đánh giá (Duyệt ẩn review / Từ chối khiếu nại / Cảnh cáo).
+     */
+    @PostMapping("/staff/reviews/{reportId}/resolve")
+    public String resolveReviewReport(@PathVariable("reportId") Integer reportId,
+                                      @RequestParam("action") String action,
+                                      @RequestParam(value = "staffNote", required = false) String staffNote,
+                                      @RequestParam(value = "currentStatus", defaultValue = "PENDING") String currentStatus,
+                                      HttpSession session,
+                                      RedirectAttributes redirectAttributes) {
+        Integer staffId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        try {
+            reviewReportService.resolveReport(reportId, action, staffNote, staffId);
+            redirectAttributes.addFlashAttribute("successMessage", "Xử lý khiếu nại đánh giá thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi xử lý khiếu nại: " + e.getMessage());
+        }
+        return "redirect:/staff/reviews?status=" + currentStatus;
     }
 }

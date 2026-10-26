@@ -125,6 +125,13 @@
                         <span>Kiểm duyệt Hoa quả</span>
                     </a>
                 </li>
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/reviews}" href="/staff/reviews" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'reviews'} ? 'active' : ''">
+                        <i class="bi bi-chat-square-quote-fill"></i>
+                        <span>Kiểm duyệt Đánh giá</span>
+                    </a>
+                </li>
             </ul>
 
             <div class="admin-sidebar-divider"></div>

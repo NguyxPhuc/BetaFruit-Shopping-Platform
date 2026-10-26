@@ -3,6 +3,8 @@ package com.fu.SWP391_BetaFruit.service.impl;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.repository.*;
+import com.fu.SWP391_BetaFruit.service.AutoDispatchService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,9 @@ public class OrderDeliveryService {
     private final DeliveryAssignmentRepository assignments;
     private final OrderStatusHistoryRepository history;
     private final UserRepository users;
+
+    @Autowired(required = false)
+    private AutoDispatchService autoDispatchService;
 
     public OrderDeliveryService(OrderRepository orders, DeliveryAssignmentRepository assignments,
                                 OrderStatusHistoryRepository history, UserRepository users) {
@@ -70,6 +75,29 @@ public class OrderDeliveryService {
         history.save(new OrderStatusHistory(null, order, users.getReferenceById(shipperId),
                 OrderStatus.DELIVERING, OrderStatus.DELIVERED, "Shipper xác nhận giao thành công", null));
         // AvailableBalance and SettledAt are deliberately untouched during the holding period.
+    }
+
+    @Transactional
+    public void reportIncident(Integer orderId, Integer shipperId, String reason, String note) {
+        Order order = assignedOrder(orderId, shipperId);
+        String fullNote = "[SỰ CỐ TRÊN ĐƯỜNG] " + (reason != null ? reason : "Hỏng xe")
+                + (note != null && !note.trim().isEmpty() ? ": " + note.trim() : "");
+        history.save(new OrderStatusHistory(null, order, users.getReferenceById(shipperId),
+                order.getOrderStatus(), order.getOrderStatus(), fullNote, null));
+    }
+
+    @Transactional
+    public void handover(Integer orderId, Integer shipperId) {
+        Order order = assignedOrder(orderId, shipperId);
+        history.save(new OrderStatusHistory(null, order, users.getReferenceById(shipperId),
+                order.getOrderStatus(), order.getOrderStatus(), "Shipper đã bàn giao kiện hàng tại trạm tiếp sức ảo", null));
+
+        // Tự động kích hoạt Auto-Dispatch Chặng 2 (Trạm ảo -> Khách hàng)
+        if (autoDispatchService != null) {
+            try {
+                autoDispatchService.autoDispatchLeg2(orderId, shipperId);
+            } catch (Exception ignored) {}
+        }
     }
 
     private Order assignedOrder(Integer orderId, Integer shipperId) {

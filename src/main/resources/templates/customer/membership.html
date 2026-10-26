@@ -135,6 +135,105 @@
             border-radius: 12px;
             margin-left: 6px;
         }
+        /* Exclusive Tier Vouchers (Shopee Rewards Style) */
+        .exclusive-voucher-section {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 24px 28px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 28px;
+        }
+        .voucher-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 18px;
+        }
+        .tier-voucher-card {
+            display: flex;
+            background: #ffffff;
+            border: 1px solid #e0e7e3;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .tier-voucher-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+            border-color: #b7e4c7;
+        }
+        .voucher-badge-col {
+            width: 78px;
+            background: linear-gradient(135deg, #2d6a4f, #1b4332);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 6px;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .voucher-badge-col.freeship {
+            background: linear-gradient(135deg, #028090, #00a896);
+        }
+        .voucher-badge-col.discount {
+            background: linear-gradient(135deg, #e76f51, #f4a261);
+        }
+        .voucher-body {
+            flex: 1;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .voucher-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 4px;
+        }
+        .voucher-condition {
+            font-size: 0.78rem;
+            color: #6c757d;
+            margin-bottom: 2px;
+        }
+        .voucher-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed #e9ecef;
+        }
+        .voucher-code-pill {
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #2d6a4f;
+            background: #e8f5e9;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .btn-copy-code {
+            background: #2d6a4f;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-copy-code:hover {
+            background: #1b4332;
+        }
     </style>
 </head>
 <body>
@@ -154,10 +253,15 @@
                 </div>
             </div>
 
-            <!-- VIP Card (BR-LY-01 & BR-LY-03) -->
+            <!-- VIP Card (BR-LY-01 & BR-LY-03 & Chu kỳ Shopee) -->
             <div class="membership-vip-card">
                 <div class="vip-card-header">
-                    <span class="vip-card-title">BetaFruit Loyalty Card</span>
+                    <div>
+                        <span class="vip-card-title">BetaFruit Loyalty Card</span>
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.85); margin-top: 4px;">
+                            <span>Hiệu lực chu kỳ đến: </span><strong th:text="${membership.cycleExpiryDate}">30/06/2026</strong>
+                        </div>
+                    </div>
                     <div class="vip-card-tier-badge">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -168,16 +272,23 @@
                 <div class="vip-card-body">
                     <h2 th:text="${membership.fullName}">Nguyễn Văn A</h2>
                     <div class="vip-card-discount">
-                        <span>Đặc quyền hiện tại: Giảm </span>
-                        <strong th:text="${membership.currentDiscountPercent} + '%'">5%</strong>
-                        <span> cho mọi đơn hàng</span>
+                        <span>Đặc quyền hiện tại: </span>
+                        <strong>Trọn bộ Gói Voucher Đặc Quyền Hội Viên</strong>
                     </div>
                 </div>
                 <div class="vip-card-footer">
-                    <div>
-                        <div class="vip-spend-label">Tổng chi tiêu tích lũy (BR-LY-01: Đơn giao thành công)</div>
-                        <div class="vip-spend-val">
-                            <span th:text="${#numbers.formatDecimal(membership.totalCumulativeSpend, 0, 'COMMA', 0, 'POINT')}">1,500,000</span> ₫
+                    <div style="display: flex; gap: 32px; align-items: flex-end;">
+                        <div>
+                            <div class="vip-spend-label">Tổng chi tiêu tích lũy</div>
+                            <div class="vip-spend-val">
+                                <span th:text="${#numbers.formatDecimal(membership.totalCumulativeSpend, 0, 'COMMA', 0, 'POINT')}">1,500,000</span> ₫
+                            </div>
+                        </div>
+                        <div>
+                            <div class="vip-spend-label">Đơn hàng hoàn tất</div>
+                            <div class="vip-spend-val" style="color: #ffd166;">
+                                <span th:text="${membership.completedOrdersCount}">0</span> <span style="font-size: 1rem; font-weight: 500; color: #ffffff;">đơn</span>
+                            </div>
                         </div>
                     </div>
                     <div style="text-align: right; font-size: 0.85rem; color: rgba(255,255,255,0.75);">
@@ -187,28 +298,103 @@
                 </div>
             </div>
 
-            <!-- Progress to Next Tier (BR-LY-02) -->
+            <!-- Progress to Next Tier (BR-LY-02 & Shopee Dual Progress) -->
             <div class="progress-box">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center mb-2">
                     <h3 style="font-size: 1.15rem; font-weight: 700; color: #1b4332; margin: 0;">Tiến Trình Thăng Hạng</h3>
                     <span class="badge" style="background: #e8f5e9; color: #2d6a4f; font-weight: 700; padding: 6px 12px; border-radius: 20px;"
                           th:text="${#numbers.formatDecimal(membership.progressPercentage, 1, 1)} + '%'">75%</span>
                 </div>
 
-                <div class="progress-bar-container">
-                    <div class="progress-bar-fill" th:style="'width: ' + ${membership.progressPercentage} + '%;'"></div>
+                <!-- Tiến trình theo chi tiêu -->
+                <div style="margin-top: 14px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: #6c757d;">
+                        <span>Tiến trình chi tiêu:</span>
+                        <span th:text="${#numbers.formatDecimal(membership.totalCumulativeSpend, 0, 'COMMA', 0, 'POINT')} + ' ₫ / ' + (${membership.nextMinSpent != null ? #numbers.formatDecimal(membership.nextMinSpent, 0, 'COMMA', 0, 'POINT') + ' ₫' : 'Tối đa'})"></span>
+                    </div>
+                    <div class="progress-bar-container" style="margin: 6px 0 14px 0;">
+                        <div class="progress-bar-fill" th:style="'width: ' + ${membership.progressPercentage} + '%;'"></div>
+                    </div>
                 </div>
 
+                <!-- Tiến trình theo đơn hàng (Shopee dual criteria) -->
                 <div th:if="${membership.hasNextTier}">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: #6c757d;">
+                        <span>Tiến trình số đơn hoàn tất:</span>
+                        <span th:text="${membership.completedOrdersCount} + ' / ' + ${membership.nextTierOrdersRequired} + ' đơn'"></span>
+                    </div>
+                    <div class="progress-bar-container" style="margin: 6px 0 14px 0;">
+                        <div class="progress-bar-fill" style="background: linear-gradient(90deg, #1b4332, #ffd166);"
+                             th:style="'width: ' + ${membership.progressOrdersPercentage} + '%;'"></div>
+                    </div>
+                </div>
+
+                <div th:if="${membership.hasNextTier}" style="background: #f8f9fa; border-left: 4px solid #2d6a4f; padding: 12px 16px; border-radius: 6px; margin-top: 10px;">
                     <p style="margin: 0; color: #495057; font-size: 0.95rem;">
-                        Bạn cần chi tiêu thêm <strong style="color: #d90429;" th:text="${#numbers.formatDecimal(membership.amountNeeded, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500.000 ₫</strong>
-                        từ các đơn hàng thành công để nâng cấp lên hạng
+                        💡 <strong>Chuẩn Shopee Rewards:</strong> Bạn chỉ cần đạt thêm
+                        <strong style="color: #d90429;" th:text="${membership.ordersNeeded} + ' đơn hàng'">2 đơn</strong>
+                        HOẶC chi tiêu thêm
+                        <strong style="color: #d90429;" th:text="${#numbers.formatDecimal(membership.amountNeeded, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500.000 ₫</strong>
+                        để nâng cấp lên
                         <strong style="color: #2d6a4f;" th:text="${membership.nextTierName}">Hạng Kim Cương</strong>!
                     </p>
                 </div>
                 <div th:unless="${membership.hasNextTier}">
                     <p style="margin: 0; color: #2d6a4f; font-weight: 600; font-size: 0.95rem;">
                         🎉 Chúc mừng bạn đã đạt cấp bậc hội viên cao nhất trong hệ thống BetaFruit! Hãy tận hưởng các quyền lợi tối đa của bạn.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Exclusive Tier Vouchers (Shopee Rewards Style) -->
+            <div class="exclusive-voucher-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.15rem; font-weight: 700; color: #1b4332; margin: 0;">
+                            🎟️ Kho Voucher Đặc Quyền Dành Riêng Cho <span th:text="${membership.currentTierName}">Hạng Hội Viên</span>
+                        </h3>
+                        <p style="margin: 4px 0 0 0; font-size: 0.88rem; color: #6c757d;">
+                            Đặc quyền thành viên Shopee Rewards: Áp dụng trực tiếp mã voucher khi thanh toán đơn hàng hoa quả.
+                        </p>
+                    </div>
+                    <span class="badge" style="background: #e8f5e9; color: #2d6a4f; font-size: 0.82rem; padding: 6px 12px; border-radius: 20px; font-weight: 600;">
+                        Tự động cấp theo cấp bậc
+                    </span>
+                </div>
+
+                <!-- Có voucher: hiển thị lưới vé -->
+                <div th:if="${membership.tierVouchers != null and !membership.tierVouchers.isEmpty()}" class="voucher-grid">
+                    <div th:each="v : ${membership.tierVouchers}" class="tier-voucher-card">
+                        <div class="voucher-badge-col" th:classappend="${v.badgeType == 'FREESHIP' ? 'freeship' : 'discount'}">
+                            <span th:text="${v.badgeType}">FREESHIP</span>
+                            <span style="font-size: 0.6rem; opacity: 0.85; margin-top: 4px;">VIP</span>
+                        </div>
+                        <div class="voucher-body">
+                            <div>
+                                <div class="voucher-title" th:text="${v.title}">Freeship 40.000 ₫</div>
+                                <div class="voucher-condition" th:text="${v.minOrderValueText}">Đơn tối thiểu 200.000 ₫</div>
+                                <div th:if="${v.maxDiscountText != null}" class="voucher-condition" th:text="${v.maxDiscountText}"></div>
+                            </div>
+                            <div class="voucher-action-row">
+                                <span class="voucher-code-pill" th:text="${v.couponCode}">GOLD_FREESHIP</span>
+                                <button type="button" class="btn-copy-code"
+                                        th:data-code="${v.couponCode}"
+                                        onclick="copyVoucherCode(this.getAttribute('data-code'), this)">
+                                    Sao chép
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chưa có voucher (Hạng Đồng): Hiển thị banner khuyến khích nâng cấp -->
+                <div th:if="${membership.tierVouchers == null or membership.tierVouchers.isEmpty()}" 
+                     style="background: #f8f9fa; border: 1px dashed #ced4da; border-radius: 10px; padding: 24px; text-align: center; margin-top: 16px;">
+                    <p style="margin: 0 0 8px 0; font-size: 1.05rem; font-weight: 700; color: #495057;">
+                        🎁 Bạn hiện đang ở Hạng Đồng
+                    </p>
+                    <p style="margin: 0; font-size: 0.9rem; color: #6c757d;">
+                        Chỉ cần hoàn tất thêm <strong>3 đơn hàng</strong> hoặc chi tiêu thêm <strong>650.000 ₫</strong> để thăng lên <strong>Hạng Bạc</strong> và mở khóa trọn bộ Kho Voucher Freeship & Giảm giá độc quyền!
                     </p>
                 </div>
             </div>
@@ -224,7 +410,8 @@
                         <tr>
                             <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Hạng Thành Viên</th>
                             <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Chi Tiêu Tối Thiểu</th>
-                            <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Chiết Khấu Mọi Đơn</th>
+                            <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Số Đơn Tối Thiểu</th>
+                            <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Đặc Quyền Hội Viên</th>
                             <th style="padding: 14px 20px; font-weight: 600; color: #495057; text-align: center;">Trạng Thái Của Bạn</th>
                         </tr>
                         </thead>
@@ -238,8 +425,12 @@
                                 <span th:text="${#numbers.formatDecimal(tier.minSpentRequired, 0, 'COMMA', 0, 'POINT')}">0</span> ₫
                             </td>
                             <td style="padding: 14px 20px;">
-                                <span class="badge" style="background: #e8f5e9; color: #2d6a4f; font-size: 0.9rem; padding: 6px 12px; border-radius: 8px;"
-                                      th:text="'Giảm ' + ${tier.discountPercent} + '%'">Giảm 0%</span>
+                                <span th:text="${tier.minOrdersRequired}">0</span> đơn
+                            </td>
+                            <td style="padding: 14px 20px;">
+                                <span class="badge" style="background: #e8f5e9; color: #2d6a4f; font-size: 0.85rem; padding: 6px 12px; border-radius: 8px;">
+                                    Gói Voucher VIP &amp; Freeship
+                                </span>
                             </td>
                             <td style="padding: 14px 20px; text-align: center;">
                                 <span th:if="${tier.isCurrent}" style="color: #2d6a4f; font-weight: 700;">
@@ -254,13 +445,32 @@
                     </table>
                 </div>
             </div>
-
         </section>
     </div>
 </main>
 
 <!-- ═══════════════ FOOTER ═══════════════ -->
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+function copyVoucherCode(code, btn) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(function() {
+            var orig = btn.innerText;
+            btn.innerText = "✓ Đã chép";
+            btn.style.background = "#52b788";
+            setTimeout(function() {
+                btn.innerText = orig;
+                btn.style.background = "#2d6a4f";
+            }, 2000);
+        }).catch(function() {
+            alert("Mã voucher: " + code);
+        });
+    } else {
+        alert("Mã voucher: " + code);
+    }
+}
+</script>
 
 </body>
 </html>

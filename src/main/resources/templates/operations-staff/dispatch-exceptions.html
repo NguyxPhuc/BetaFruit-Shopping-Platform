@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'staff-deliveries', ~{::content})}">
+<head>
+    <title>Điều Phối Vận Chuyển &amp; Xử Lý Sự Cố - BetaFruit Staff</title>
+</head>
+<body>
+<div th:fragment="content">
+    <!-- Header Banner -->
+    <div class="card border-0 text-white mb-4 overflow-hidden position-relative"
+         style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);">
+        <div class="card-body p-4 position-relative" style="z-index: 2;">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-8">
+                    <span class="badge bg-danger text-white px-3 py-1 mb-2 fw-bold" style="font-size: 0.75rem;">
+                        <i class="bi bi-shield-exclamation me-1"></i>TRUNG TÂM GIÁM SÁT VẬN HÀNH &amp; CỨU VIỆN
+                    </span>
+                    <h2 class="fw-bold text-white mb-2">Hàng Đợi Điều Phối &amp; Xử Lý Sự Cố Vận Chuyển</h2>
+                    <p class="mb-0 text-white-50">
+                        Theo dõi thời gian thực các đơn hàng chưa tìm được tài xế tự động, bị quá giờ lấy hàng hoặc gặp sự cố hỏng xe/tai nạn trên đường để kịp thời điều động xe cứu viện.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <span class="badge bg-light text-dark fs-6 px-3 py-2 border shadow-sm">
+                        <i class="bi bi-bell-fill text-danger me-1"></i> <span th:text="${exceptions.size()}">0</span> sự cố / ngoại lệ cần xử lý
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notices -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- 1. Danh sách Đơn ngoại lệ & Sự cố khẩn cấp -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-exclamation-octagon-fill text-danger me-2"></i>Danh Sách Đơn Hàng Cần Can Thiệp Khẩn Cấp
+            </h5>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Cần xử lý ngay</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Mã Đơn</th>
+                            <th>Cửa Hàng</th>
+                            <th>Khách Hàng &amp; Địa Chỉ</th>
+                            <th>Trạng Thái &amp; Loại Ngoại Lệ</th>
+                            <th>Tài Xế Hiện Tại</th>
+                            <th>Chi Tiết Sự Cố</th>
+                            <th class="text-end pe-4">Hành Động Cứu Viện</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${exceptions.isEmpty()}">
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-check-circle text-success fs-1 d-block mb-2"></i>
+                                Tuyệt vời! Hiện tại không có đơn hàng nào bị sự cố hoặc cần can thiệp.
+                            </td>
+                        </tr>
+                        <tr th:each="ex : ${exceptions}" th:classappend="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'table-danger-subtle' : ''}">
+                            <td class="ps-4 fw-bold">
+                                <span class="badge bg-light text-dark border" th:text="${ex.orderCode}">#BF000001</span>
+                            </td>
+                            <td>
+                                <strong th:text="${ex.shopName}">Shop Hoa Quả</strong>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark" th:text="${ex.customerName}">Khách hàng</div>
+                                <small class="text-muted text-truncate d-inline-block" style="max-width: 200px;" th:text="${ex.shippingAddress}">Địa chỉ giao</small>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'bg-danger text-white' : 'bg-warning text-dark'}"
+                                      th:text="${ex.exceptionType == 'INCIDENT_REPORTED' ? '⚠️ SỰ CỐ TRÊN ĐƯỜNG' : '⏳ CHƯA CÓ TÀI XẾ'}">Loại</span>
+                                <div class="small text-muted mt-1" th:text="${ex.orderStatusLabel}">Sẵn sàng giao</div>
+                            </td>
+                            <td>
+                                <span th:if="${ex.currentShipperName != 'Chưa có'}" class="badge bg-secondary" th:text="${ex.currentShipperName}">Shipper A</span>
+                                <span th:if="${ex.currentShipperName == 'Chưa có'}" class="text-muted fst-italic">Chưa gán</span>
+                            </td>
+                            <td>
+                                <div class="small text-danger fw-semibold" th:text="${ex.incidentDetails}">Chi tiết sự cố</div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <!-- Reassign / Rescue Form -->
+                                <form method="post" th:action="@{/staff/deliveries/reassign}" class="d-inline-flex gap-2 align-items-center">
+                                    <input type="hidden" name="orderId" th:value="${ex.orderId}">
+                                    <select name="shipperId" class="form-select form-select-sm" style="width: 230px;" required>
+                                        <option value="" disabled selected>-- Chọn tài xế cứu viện --</option>
+                                        <option th:each="s : ${shippers}" th:value="${s.shipperId}"
+                                                th:text="${s.fullName + (s.operatingCity != null ? ' [' + s.operatingCity + ']' : '') + ' (' + s.ongoingOrdersCount + ' đơn)'}"
+                                                th:disabled="${s.isOverloaded}">
+                                        </option>
+                                    </select>
+                                    <input type="hidden" name="reason" value="Điều phối cứu viện do tài xế báo cáo sự cố">
+                                    <button type="submit" class="btn btn-sm btn-danger text-nowrap"
+                                            onclick="return confirm('Xác nhận phân công tài xế mới tiếp nhận đơn hàng này?');">
+                                        <i class="bi bi-truck me-1"></i> Cứu viện
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Danh sách Đội ngũ Shipper & Giám sát tải -->
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-people-fill text-primary me-2"></i>Đội Ngũ Shipper Khả Dụng &amp; Tải Hiện Tại
+            </h5>
+            <small class="text-muted">Tự động cân bằng tải: Tối đa 5 đơn / Shipper</small>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Mã Tài Xế</th>
+                            <th>Họ Và Tên</th>
+                            <th>Khu Vực Hoạt Động</th>
+                            <th>Số Điện Thoại</th>
+                            <th>Đơn Dở Dang (Tải)</th>
+                            <th>Công Nợ COD Hiện Tại</th>
+                            <th>Tình Trạng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="s : ${shippers}">
+                            <td class="ps-4 font-monospace" th:text="'#SH' + ${s.shipperId}">#SH101</td>
+                            <td class="fw-bold text-dark" th:text="${s.fullName}">Nguyễn Văn Tài</td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${s.operatingCity}">TP. Hồ Chí Minh</span>
+                            </td>
+                            <td th:text="${s.phone}">0912345678</td>
+                            <td>
+                                <span class="badge" th:classappend="${s.ongoingOrdersCount >= 5 ? 'bg-danger' : (s.ongoingOrdersCount >= 3 ? 'bg-warning text-dark' : 'bg-success')}"
+                                      th:text="${s.ongoingOrdersCount + ' / 5 đơn'}">1 / 5 đơn</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold" th:classappend="${s.isCodWarning ? 'text-danger' : 'text-dark'}"
+                                      th:text="${#numbers.formatDecimal(s.codDebt, 0, 'POINT', 0, 'COMMA')} + ' ₫'">500.000 ₫</span>
+                                <small th:if="${s.isCodWarning}" class="badge bg-danger-subtle text-danger ms-1">Chạm trần nợ</small>
+                            </td>
+                            <td>
+                                <span th:if="${!s.isOverloaded and !s.isCodWarning}" class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="bi bi-check-circle me-1"></i>Sẵn sàng nhận việc
+                                </span>
+                                <span th:if="${s.isOverloaded}" class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Quá tải (&ge; 5 đơn)
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

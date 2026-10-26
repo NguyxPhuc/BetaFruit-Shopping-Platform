@@ -54,7 +54,7 @@
         </a>
 
         <!-- NHÓM 4: BÁN HÀNG & KHUYẾN MÃI -->
-        <div class="shop-nav-group-title mt-2">Bán hàng & Khuyến mãi</div>
+        <div class="shop-nav-group-title mt-2">Bán hàng & Chăm sóc khách hàng</div>
         <a th:href="@{/shop/orders}" href="/shop/orders" class="shop-nav-link"
            th:classappend="${activeMenu == 'orders'} ? 'active' : ''">
             <i class="bi bi-bag-check-fill"></i>
@@ -64,6 +64,11 @@
            th:classappend="${activeMenu == 'coupons'} ? 'active' : ''">
             <i class="bi bi-ticket-perforated-fill"></i>
             <span>Mã Giảm Giá (Voucher)</span>
+        </a>
+        <a th:href="@{/shop/reviews}" href="/shop/reviews" class="shop-nav-link"
+           th:classappend="${activeMenu == 'reviews'} ? 'active' : ''">
+            <i class="bi bi-star-half"></i>
+            <span>Đánh Giá & Khiếu Nại</span>
         </a>
 
         <!-- NHÓM 5: CÀI ĐẶT CỬA HÀNG -->
