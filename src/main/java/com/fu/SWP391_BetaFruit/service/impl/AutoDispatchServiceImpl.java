@@ -1,0 +1,144 @@
+package com.fu.SWP391_BetaFruit.service.impl;
+
+import com.fu.SWP391_BetaFruit.entity.*;
+import com.fu.SWP391_BetaFruit.enums.NotificationType;
+import com.fu.SWP391_BetaFruit.enums.OrderStatus;
+import com.fu.SWP391_BetaFruit.enums.PaymentMethod;
+import com.fu.SWP391_BetaFruit.enums.UserStatus;
+import com.fu.SWP391_BetaFruit.repository.DeliveryAssignmentRepository;
+import com.fu.SWP391_BetaFruit.repository.OrderRepository;
+import com.fu.SWP391_BetaFruit.repository.ShipperRepository;
+import com.fu.SWP391_BetaFruit.service.AutoDispatchService;
+import com.fu.SWP391_BetaFruit.service.NotificationService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.*;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AutoDispatchServiceImpl implements AutoDispatchService {
+
+    public static final BigDecimal COD_CEILING_LIMIT = new BigDecimal("3000000"); // 3.000.000 ₫
+    public static final int MAX_ONGOING_ORDERS = 5;
+
+    private static final List<OrderStatus> ONGOING_STATUSES = List.of(
+            OrderStatus.READY,
+            OrderStatus.PICKED_UP,
+            OrderStatus.DELIVERING
+    );
+
+    private final OrderRepository orderRepository;
+    private final ShipperRepository shipperRepository;
+    private final DeliveryAssignmentRepository deliveryAssignmentRepository;
+    private final DeliveryAssignmentService deliveryAssignmentService;
+    private final NotificationService notificationService;
+
+    @Override
+    @Transactional
+    public Optional<DeliveryAssignment> autoDispatchOrder(Integer orderId) {
+        Order order = orderRepository.findLockedById(orderId).orElse(null);
+        if (order == null) {
+            log.warn("Không tìm thấy đơn hàng #{} để tự động gán Shipper", orderId);
+            return Optional.empty();
+        }
+
+        if (order.getOrderStatus() != OrderStatus.READY) {
+            log.info("Đơn hàng #{} không ở trạng thái READY (hiện tại: {}), bỏ qua auto-dispatch",
+                    orderId, order.getOrderStatus());
+            return Optional.empty();
+        }
+
+        if (deliveryAssignmentRepository.findByOrderOrderId(orderId).isPresent()) {
+            log.info("Đơn hàng #{} đã có bản ghi DeliveryAssignment, bỏ qua auto-dispatch", orderId);
+            return Optional.empty();
+        }
+
+        List<Shipper> allShippers = shipperRepository.findAll();
+        if (allShippers.isEmpty()) {
+            log.warn("Hệ thống chưa có tài khoản Shipper nào để điều phối đơn #{}", orderId);
+            return Optional.empty();
+        }
+
+        // Lọc và chấm điểm các ứng viên Shipper
+        record Candidate(Shipper shipper, long ongoingOrders, BigDecimal codDebt) {}
+        List<Candidate> candidates = new ArrayList<>();
+
+        BigDecimal orderAmount = (order.getFinalAmount() != null) ? order.getFinalAmount() : BigDecimal.ZERO;
+        boolean isCod = (order.getPaymentMethod() == PaymentMethod.COD);
+
+        for (Shipper shipper : allShippers) {
+            User user = shipper.getUser();
+            // Rule 1: Tài khoản ACTIVE
+            if (user == null || user.getStatus() != UserStatus.ACTIVE) {
+                continue;
+            }
+
+            // Rule 2: Cân bằng tải - số đơn dở dang < 5
+            long ongoingOrders = deliveryAssignmentRepository.countOngoingOrdersByShipper(
+                    shipper.getUserId(), ONGOING_STATUSES);
+            if (ongoingOrders >= MAX_ONGOING_ORDERS) {
+                continue;
+            }
+
+            // Rule 3: Kiểm soát rủi ro công nợ COD <= 3.000.000 ₫
+            BigDecimal currentDebt = (shipper.getCodDebt() != null) ? shipper.getCodDebt() : BigDecimal.ZERO;
+            if (isCod) {
+                BigDecimal projectedDebt = currentDebt.add(orderAmount);
+                if (projectedDebt.compareTo(COD_CEILING_LIMIT) > 0) {
+                    continue; // Bỏ qua nếu vượt trần nợ COD
+                }
+            }
+
+            candidates.add(new Candidate(shipper, ongoingOrders, currentDebt));
+        }
+
+        if (candidates.isEmpty()) {
+            log.warn("Tất cả Shipper đều quá tải hoặc chạm trần COD. Đơn hàng #{} cần Operations Staff can thiệp.", orderId);
+            return Optional.empty();
+        }
+
+        // Sắp xếp ưu tiên: ít đơn dở dang nhất -> nợ COD ít nhất
+        candidates.sort(Comparator.comparingLong(Candidate::ongoingOrders)
+                .thenComparing(Candidate::codDebt));
+
+        Shipper selectedShipper = candidates.get(0).shipper();
+        User assigner = (order.getShop() != null && order.getShop().getOwner() != null)
+                ? order.getShop().getOwner()
+                : selectedShipper.getUser();
+
+        try {
+            DeliveryAssignment assignment = deliveryAssignmentService.assign(
+                    orderId, selectedShipper.getUserId(), assigner.getUserId());
+
+            // Gửi thông báo đẩy cho Shipper
+            String shopName = (order.getShop() != null) ? order.getShop().getShopName() : "Cửa hàng";
+            String title = "🛵 Đơn hàng mới #" + orderId + " đã sẵn sàng lấy!";
+            String message = String.format("Cửa hàng %s đã chuẩn bị xong hoa quả. Vui lòng đến lấy hàng trong vòng 15 phút.", shopName);
+
+            try {
+                notificationService.createBaseNotification(
+                        selectedShipper.getUser(),
+                        title,
+                        message,
+                        NotificationType.ORDER_STATUS,
+                        "/shipper/orders/" + orderId
+                );
+            } catch (Exception e) {
+                log.warn("Không thể gửi thông báo cho Shipper #{}: {}", selectedShipper.getUserId(), e.getMessage());
+            }
+
+            log.info("Auto-Dispatch THÀNH CÔNG: Đơn hàng #{} đã được tự động gán cho Shipper #{} ({})",
+                    orderId, selectedShipper.getUserId(), selectedShipper.getUser().getFullName());
+
+            return Optional.of(assignment);
+        } catch (Exception e) {
+            log.error("Lỗi khi gán đơn hàng #{} cho Shipper #{}: {}", orderId, selectedShipper.getUserId(), e.getMessage());
+            return Optional.empty();
+        }
+    }
+}

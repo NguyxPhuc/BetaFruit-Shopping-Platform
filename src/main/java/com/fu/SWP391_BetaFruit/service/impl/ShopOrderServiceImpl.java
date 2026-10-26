@@ -34,6 +34,8 @@ public class ShopOrderServiceImpl implements ShopOrderService {
     private final DeliveryAssignmentRepository deliveryAssignmentRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final OrderStockService orderStockService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.fu.SWP391_BetaFruit.service.AutoDispatchService autoDispatchService;
 
     public ShopOrderServiceImpl(OrderRepository orderRepository,
                                 OrderStatusHistoryRepository orderStatusHistoryRepository,
@@ -174,6 +176,7 @@ public class ShopOrderServiceImpl implements ShopOrderService {
     @Transactional
     public void markOrderReady(Integer orderId, Integer ownerId) {
         changeStatus(orderId, ownerId, OrderStatus.PREPARING, OrderStatus.READY, "Shop đã chuẩn bị xong hàng");
+        if (autoDispatchService != null) { try { autoDispatchService.autoDispatchOrder(orderId); } catch (Exception ignored) {} }
     }
 
     @Override
