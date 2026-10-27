@@ -66,7 +66,6 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
     Page<Shop> searchShopsByStatus(@Param("keyword") String keyword, @Param("status") ShopApprovalStatus status, Pageable pageable);
 
     @Query(value = "SELECT s FROM Shop s JOIN s.owner u WHERE " +
-           "s.approvalStatus = 'APPROVED' AND " +
            "(:status IS NULL OR s.approvalStatus = :status) AND " +
            "(:keyword IS NULL OR :keyword = '' OR " +
            " LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
@@ -74,6 +73,19 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
            " LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Shop> searchShopsForAdmin(@Param("keyword") String keyword,
+                                   @Param("status") ShopApprovalStatus status,
+                                   Pageable pageable);
+
+    @Query(value = "SELECT s FROM Shop s JOIN s.owner u WHERE " +
+           "s.approvalStatus != com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.DRAFT AND " +
+           "(:status IS NULL OR s.approvalStatus = :status) AND " +
+           "(:keyword IS NULL OR :keyword = '' OR " +
+           " LOWER(s.shopName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           " LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           " LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           " LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Shop> searchShopsForStaff(@Param("keyword") String keyword,
                                    @Param("status") ShopApprovalStatus status,
                                    Pageable pageable);
 
