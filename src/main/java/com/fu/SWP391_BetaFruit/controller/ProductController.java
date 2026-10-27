@@ -41,10 +41,8 @@ public class ProductController {
     private final CategoryService categoryService;
     private final InventoryService inventoryService;
 
-    // =========================================================================
     // 1. DANH SÁCH HOA QUẢ CỦA CỬA HÀNG (SHOP OWNER)
     // URL chuẩn 3 cấp: /shop/products
-    // =========================================================================
     @GetMapping("/shop/products")
     public String listShopProducts(@RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "page", defaultValue = "1") int page,
@@ -78,11 +76,9 @@ public class ProductController {
         }
     }
 
-    // =========================================================================
     // 2. GIAO DIỆN THÊM HOA QUẢ MỚI (SHOP OWNER)
     // URL chuẩn 3 cấp: /shop/products/create
     // Chỉ hiển thị và gắn cho duy nhất 1 cửa hàng mà Shop Owner đang sở hữu
-    // =========================================================================
     @GetMapping("/shop/products/create")
     public String showCreateProductForm(HttpSession session, Model model) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
@@ -111,10 +107,8 @@ public class ProductController {
         }
     }
 
-    // =========================================================================
     // 3. XỬ LÝ LƯU HOA QUẢ MỚI (SHOP OWNER)
-    // URL chuẩn 3 cấp: /shop/products/create
-    // =========================================================================
+
     @PostMapping("/shop/products/create")
     public String processCreateProduct(@Valid @ModelAttribute("product") ProductCreateRequest request,
             BindingResult bindingResult,
@@ -137,7 +131,8 @@ public class ProductController {
         // Kiểm tra hình ảnh (chỉ chấp nhận tải tệp ảnh từ máy tính)
         boolean hasFile = request.getImageFile() != null && !request.getImageFile().isEmpty();
         if (!hasFile) {
-            bindingResult.rejectValue("imageUrl", "error.product", "Vui lòng tải lên hình ảnh đại diện của hoa quả từ máy tính.");
+            bindingResult.rejectValue("imageUrl", "error.product",
+                    "Vui lòng tải lên hình ảnh đại diện của hoa quả từ máy tính.");
         }
 
         // Kiểm tra hợp lệ danh sách thực thể (biến thể)
@@ -148,17 +143,21 @@ public class ProductController {
             for (int i = 0; i < effectiveVariants.size(); i++) {
                 VariantItemRequest v = effectiveVariants.get(i);
                 if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
-                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') phải có giá niêm yết từ 1,000 VNĐ trở lên.");
+                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                            + "') phải có giá niêm yết từ 1,000 VNĐ trở lên.");
                     break;
                 }
                 if (v.getSalePrice() != null) {
-                    if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
-                        model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
+                    if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0
+                            || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
+                        model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                                + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
                         break;
                     }
                 }
                 if (v.getStockQuantity() == null || v.getStockQuantity() < 0) {
-                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') có số lượng tồn kho không được âm.");
+                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                            + "') có số lượng tồn kho không được âm.");
                     break;
                 }
             }
@@ -221,14 +220,13 @@ public class ProductController {
         }
     }
 
-    // =========================================================================
     // 4. CHUYỂN ĐỔI TRẠNG THÁI ẨN / HIỆN HOA QUẢ (SHOP OWNER)
     // URL: /shop/products/{id}/toggle-visibility
-    // =========================================================================
+
     @PostMapping("/shop/products/{id}/toggle-visibility")
     public String toggleProductVisibility(@PathVariable("id") Integer id,
-                                          HttpSession session,
-                                          RedirectAttributes redirectAttributes) {
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (userId == null) {
             return "redirect:/auth/login";
@@ -240,20 +238,19 @@ public class ProductController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi cập nhật trạng thái hiển thị: " + ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Lỗi khi cập nhật trạng thái hiển thị: " + ex.getMessage());
         }
         return "redirect:/shop/products";
     }
 
-    // =========================================================================
     // 5. GIAO DIỆN CHỈNH SỬA HOA QUẢ (SHOP OWNER)
     // URL: /shop/products/{id}/edit
-    // =========================================================================
     @GetMapping("/shop/products/{id}/edit")
     public String showEditProductForm(@PathVariable("id") Integer id,
-                                      HttpSession session,
-                                      Model model,
-                                      RedirectAttributes redirectAttributes) {
+            HttpSession session,
+            Model model,
+            RedirectAttributes redirectAttributes) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (userId == null) {
             return "redirect:/auth/login";
@@ -304,17 +301,16 @@ public class ProductController {
         }
     }
 
-    // =========================================================================
     // 6. XỬ LÝ LƯU CẬP NHẬT HOA QUẢ (SHOP OWNER)
     // URL: /shop/products/{id}/edit
-    // =========================================================================
+
     @PostMapping("/shop/products/{id}/edit")
     public String processUpdateProduct(@PathVariable("id") Integer id,
-                                       @Valid @ModelAttribute("product") ProductUpdateRequest request,
-                                       BindingResult bindingResult,
-                                       HttpSession session,
-                                       RedirectAttributes redirectAttributes,
-                                       Model model) {
+            @Valid @ModelAttribute("product") ProductUpdateRequest request,
+            BindingResult bindingResult,
+            HttpSession session,
+            RedirectAttributes redirectAttributes,
+            Model model) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (userId == null) {
             return "redirect:/auth/login";
@@ -338,17 +334,21 @@ public class ProductController {
             for (int i = 0; i < effectiveVariants.size(); i++) {
                 VariantItemRequest v = effectiveVariants.get(i);
                 if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
-                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') phải có giá niêm yết từ 1,000 VNĐ trở lên.");
+                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                            + "') phải có giá niêm yết từ 1,000 VNĐ trở lên.");
                     break;
                 }
                 if (v.getSalePrice() != null) {
-                    if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
-                        model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
+                    if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0
+                            || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
+                        model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                                + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
                         break;
                     }
                 }
                 if (v.getStockQuantity() == null || v.getStockQuantity() < 0) {
-                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName() + "') có số lượng tồn kho không được âm.");
+                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                            + "') có số lượng tồn kho không được âm.");
                     break;
                 }
             }
