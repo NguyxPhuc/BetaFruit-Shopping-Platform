@@ -108,7 +108,6 @@ public class ProductController {
     }
 
     // 3. XỬ LÝ LƯU HOA QUẢ MỚI (SHOP OWNER)
-    // URL chuẩn 3 cấp: /shop/products/create
 
     @PostMapping("/shop/products/create")
     public String processCreateProduct(@Valid @ModelAttribute("product") ProductCreateRequest request,
