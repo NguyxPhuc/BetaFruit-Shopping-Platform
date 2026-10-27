@@ -204,6 +204,50 @@ public class ShopServiceImpl implements ShopService {
     }
 
     @Override
+    public Map<String, Object> getStaffShopPageData(String keyword, String statusStr, int page, int size, String sortBy, String sortDir) {
+        int pageIndex = Math.max(0, page - 1);
+        int pageSize = size > 0 ? size : 5;
+
+        String safeSortBy = (sortBy != null && ALLOWED_SHOP_SORT_FIELDS.contains(sortBy.trim()))
+                ? sortBy.trim() : "shopId";
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, safeSortBy));
+
+        ShopApprovalStatus filterStatus = null;
+        if (statusStr != null && !statusStr.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusStr.trim())) {
+            try {
+                filterStatus = ShopApprovalStatus.valueOf(statusStr.trim().toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
+        String cleanKeyword = StringUtils.sanitizeKeyword(keyword);
+        String trimmedKeyword = cleanKeyword != null ? cleanKeyword : "";
+        String safeSortDir = "desc".equalsIgnoreCase(sortDir) ? "desc" : "asc";
+
+        Page<Shop> shopPage = shopRepository.searchShopsForStaff(trimmedKeyword, filterStatus, pageable);
+
+        long pendingCount = countByStatus(ShopApprovalStatus.PENDING);
+        long approvedCount = countByStatus(ShopApprovalStatus.APPROVED);
+        long rejectedCount = countByStatus(ShopApprovalStatus.REJECTED);
+        long totalModerationCount = pendingCount + approvedCount + rejectedCount;
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("shops", shopPage.getContent());
+        data.put("pageData", shopPage);
+        data.put("currentStatus", filterStatus != null ? filterStatus.name() : "ALL");
+        data.put("keyword", trimmedKeyword);
+        data.put("sortBy", safeSortBy);
+        data.put("sortDir", safeSortDir);
+        data.put("totalCount", totalModerationCount);
+        data.put("pendingCount", pendingCount);
+        data.put("approvedCount", approvedCount);
+        data.put("rejectedCount", rejectedCount);
+
+        return data;
+    }
+
+    @Override
     public ShopProfileResponse getShopProfile(Integer id) throws Exception {
         ShopProfileResponse shopProfileResponse = new ShopProfileResponse();
         User user = userRepository.findById(id)
