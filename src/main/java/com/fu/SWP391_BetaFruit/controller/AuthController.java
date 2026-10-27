@@ -4,6 +4,7 @@ import com.fu.SWP391_BetaFruit.dto.request.LoginRequest;
 import com.fu.SWP391_BetaFruit.dto.request.RegisterRequest;
 import com.fu.SWP391_BetaFruit.dto.response.LoginResponse;
 import com.fu.SWP391_BetaFruit.enums.RoleName;
+import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
 import com.fu.SWP391_BetaFruit.service.AuthService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -93,6 +94,15 @@ public class AuthController {
             } else if (roles != null && roles.contains(RoleName.DELIVERY_STAFF)) {
                 return "redirect:/shipper/orders";
             } else if (roles != null && roles.contains(RoleName.SHOP_OWNER)) {
+                session.setAttribute("SHOP_APPROVAL_STATUS", loginResponse.getShopStatus());
+                ShopApprovalStatus status = loginResponse.getShopStatus();
+                if(status == null || status == ShopApprovalStatus.DRAFT){
+                    return "redirect:/shop/setup-profile";
+                } else if (status == ShopApprovalStatus.PENDING) {
+                    return "redirect:/shop/pending-approval";
+                } else if (status == ShopApprovalStatus.REJECTED) {
+                    return "redirect:/shop/rejected";
+                }
                 return "redirect:/shop/dashboard";
             } else {
                 return "redirect:/home";

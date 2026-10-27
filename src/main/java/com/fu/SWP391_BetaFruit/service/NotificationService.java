@@ -11,7 +11,9 @@ public interface NotificationService {
 
     int countUnreadNotifications(Integer userId);
 
-    List<NotificationResponse> getRecentNotifications(Integer userId) throws Exception;
+    List<NotificationResponse> getAllNotifications(Integer userId);
 
-    List<NotificationResponse> getAllNotifications(Integer userId) throws Exception;
+    void markAllAsRead(Integer userId);
+
+    void markAsRead(Integer userId, Integer notificationId);
 }

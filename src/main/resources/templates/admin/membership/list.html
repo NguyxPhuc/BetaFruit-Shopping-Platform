@@ -74,9 +74,9 @@
                     <tr>
                         <th class="ps-3" style="width: 80px;">Mã Cấp</th>
                         <th style="min-width: 180px;">Tên Hạng Thành Viên</th>
-                        <th style="min-width: 200px;">Chi Tiêu Tích Lũy Yêu Cầu</th>
-                        <th style="min-width: 150px;">Chiết Khấu Đơn Hàng (%)</th>
-                        <th class="text-end pe-3" style="width: 160px;">Thao Tác</th>
+                        <th style="min-width: 220px;">Chi Tiêu Tích Lũy Yêu Cầu</th>
+                        <th style="min-width: 300px;">Gói Voucher Đặc Quyền (Sàn Tài Trợ)</th>
+                        <th class="text-end pe-3" style="width: 230px;">Thao Tác</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -107,12 +107,34 @@
                             <small class="text-muted">Tổng chi tiêu đơn giao thành công</small>
                         </td>
                         <td>
-                            <span class="badge bg-success-subtle text-success fs-6 px-3 py-2 border border-success-subtle">
-                                <i class="bi bi-percent me-1"></i>
-                                <span th:text="${tier.discountPercent}">0</span>%
-                            </span>
+                            <div>
+                                <div th:if="${tierCouponsMap != null and tierCouponsMap.get(tier.tierId) != null and !tierCouponsMap.get(tier.tierId).isEmpty()}">
+                                    <div class="d-flex flex-wrap gap-1 mb-1">
+                                        <span th:each="c : ${tierCouponsMap.get(tier.tierId)}"
+                                              class="badge px-2 py-1 fs-7 fw-bold"
+                                              th:classappend="${#strings.containsIgnoreCase(tier.tierName, 'kim cương') ? 'bg-info-subtle text-info border border-info' :
+                                                              (#strings.containsIgnoreCase(tier.tierName, 'vàng') ? 'bg-warning-subtle text-warning-emphasis border border-warning' :
+                                                              (#strings.containsIgnoreCase(tier.tierName, 'bạc') ? 'bg-secondary-subtle text-secondary border' : 'bg-primary-subtle text-primary border'))}">
+                                            <i class="bi bi-ticket-perforated-fill me-1"></i>
+                                            <span th:text="${c.couponCode}">CODE</span>
+                                        </span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <span class="badge bg-success-subtle text-success" style="font-size: 0.7rem;">Sàn tài trợ</span>
+                                        <span class="ms-1" th:text="'(' + ${#lists.size(tierCouponsMap.get(tier.tierId))} + ' voucher trong gói)'"></span>
+                                    </div>
+                                </div>
+                                <div th:unless="${tierCouponsMap != null and tierCouponsMap.get(tier.tierId) != null and !tierCouponsMap.get(tier.tierId).isEmpty()}">
+                                    <span class="badge bg-light text-muted border">Chưa có voucher trong gói</span>
+                                </div>
+                            </div>
                         </td>
                         <td class="text-end pe-3">
+                            <button type="button" class="btn btn-sm btn-outline-info me-1"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="'#configCouponsModal' + ${tier.tierId}">
+                                <i class="bi bi-gear-fill me-1"></i> Gói Voucher
+                            </button>
                             <button type="button" class="btn btn-sm btn-outline-primary me-1"
                                     data-bs-toggle="modal"
                                     th:data-bs-target="'#editTierModal' + ${tier.tierId}">
@@ -154,11 +176,10 @@
                                    placeholder="Ví dụ: 0, 2000000, 5000000..." required>
                             <div class="form-text">Mức chi tiêu tối thiểu từ các đơn giao thành công để đạt hạng này.</div>
                         </div>
-                        <div class="mb-3">
-                            <label for="createDiscountPercent" class="form-label fw-semibold">Tỷ Lệ Giảm Giá Đơn Hàng (%) <span class="text-danger">*</span></label>
-                            <input type="number" step="0.1" min="0" max="100" class="form-control" id="createDiscountPercent" name="discountPercent"
-                                   placeholder="Ví dụ: 0, 3, 5, 10..." required>
-                            <div class="form-text">Tỷ lệ chiết khấu tự động giảm khi khách hàng thuộc hạng này thanh toán.</div>
+                        <input type="hidden" name="discountPercent" value="0">
+                        <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
+                            <i class="bi bi-gift-fill me-2 fs-5 text-primary flex-shrink-0"></i>
+                            <span>Quyền lợi của Hạng được quy định 100% bằng <strong>Gói Voucher Đặc Quyền</strong> (Sàn tài trợ). Sau khi tạo hạng, bạn có thể bấm <strong>[⚙️ Gói Voucher]</strong> để tích chọn các mã ưu đãi cấp cho Hội viên đạt hạng này.</span>
                         </div>
                     </div>
                     <div class="modal-footer bg-light">
@@ -174,6 +195,87 @@
 
     <!-- MODALS: Sửa và Xóa cho từng Tier -->
     <th:block th:each="tier : ${tiers}">
+        <!-- Modal Cấu Hình Gói Voucher Đặc Quyền (Shopee Rewards Platform Bundle) -->
+        <div class="modal fade" th:id="'configCouponsModal' + ${tier.tierId}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow">
+                    <form th:action="@{'/admin/membership-tiers/' + ${tier.tierId} + '/coupons'}" method="post">
+                        <div class="modal-header bg-dark text-white">
+                            <h5 class="modal-title fw-bold">
+                                <i class="bi bi-gift-fill text-warning me-2"></i>Cấu Hình Gói Voucher Đặc Quyền: <span th:text="${tier.tierName}"></span>
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-3" style="background-color: #e0f2fe; color: #0369a1;">
+                                <i class="bi bi-info-circle-fill me-2 fs-5 flex-shrink-0"></i>
+                                <div>
+                                    <strong>Chính sách Shopee Rewards:</strong> Chỉ các Voucher <strong>Toàn Sàn (ShopId = NULL, do Sàn BetaFruit tài trợ 100%)</strong> đang hoạt động mới được cấp cho Hội Viên. Tích chọn các mã bạn muốn gán vào gói của hạng này.
+                                </div>
+                            </div>
+
+                            <div th:if="${platformCoupons == null or platformCoupons.isEmpty()}" class="text-center py-4 text-muted">
+                                <i class="bi bi-ticket-perforated fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                Chưa có mã giảm giá toàn sàn nào đang hoạt động trong hệ thống.<br/>
+                                Vui lòng tạo mã toàn sàn mới tại menu <strong>Quản Lý Coupon</strong> trước!
+                            </div>
+
+                            <div th:if="${platformCoupons != null and !platformCoupons.isEmpty()}">
+                                <div class="table-responsive border rounded" style="max-height: 380px; overflow-y: auto;">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light small sticky-top">
+                                        <tr>
+                                            <th style="width: 50px;" class="text-center">Chọn</th>
+                                            <th style="min-width: 140px;">Mã Voucher</th>
+                                            <th style="min-width: 110px;">Phân Loại</th>
+                                            <th style="min-width: 130px;">Mức Giảm</th>
+                                            <th style="min-width: 130px;">Đơn Tối Thiểu</th>
+                                            <th style="min-width: 120px;">Hạn Dùng</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr th:each="c : ${platformCoupons}">
+                                            <td class="text-center">
+                                                <input class="form-check-input" type="checkbox" name="couponIds" th:value="${c.couponId}"
+                                                       th:checked="${tierCouponIdsMap != null and tierCouponIdsMap.get(tier.tierId) != null and tierCouponIdsMap.get(tier.tierId).contains(c.couponId)}">
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fw-bold" th:text="${c.couponCode}">GOLD_VIP</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge"
+                                                      th:classappend="${c.couponCategory == T(com.fu.SWP391_BetaFruit.enums.CouponCategory).SHIPPING ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle'}"
+                                                      th:text="${c.couponCategory == T(com.fu.SWP391_BetaFruit.enums.CouponCategory).SHIPPING ? 'Freeship' : 'Giảm Đơn'}">Freeship</span>
+                                            </td>
+                                            <td class="fw-semibold text-dark">
+                                                <span th:if="${c.discountType == T(com.fu.SWP391_BetaFruit.enums.DiscountType).PERCENT}" th:text="'Giảm ' + ${c.discountValue.stripTrailingZeros().toPlainString()} + '%'">Giảm 10%</span>
+                                                <span th:unless="${c.discountType == T(com.fu.SWP391_BetaFruit.enums.DiscountType).PERCENT}" th:text="'Giảm ' + ${#numbers.formatDecimal(c.discountValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giảm 50.000 ₫</span>
+                                            </td>
+                                            <td class="small text-muted">
+                                                <span th:if="${c.minOrderValue != null and c.minOrderValue > 0}" th:text="${#numbers.formatDecimal(c.minOrderValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100.000 ₫</span>
+                                                <span th:unless="${c.minOrderValue != null and c.minOrderValue > 0}">0 ₫</span>
+                                            </td>
+                                            <td class="small text-muted">
+                                                <span th:if="${c.endDate != null}" th:text="${#temporals.format(c.endDate, 'dd/MM/yyyy')}">31/12/2026</span>
+                                                <span th:unless="${c.endDate != null}">Không giới hạn</span>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-primary fw-semibold">
+                                <i class="bi bi-check2-circle me-1"></i> Lưu Cấu Hình Gói
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal Sửa -->
         <div class="modal fade" th:id="'editTierModal' + ${tier.tierId}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -194,9 +296,10 @@
                                 <label class="form-label fw-semibold">Chi Tiêu Tích Lũy Yêu Cầu (VNĐ) <span class="text-danger">*</span></label>
                                 <input type="number" step="1000" min="0" class="form-control" name="minSpentRequired" th:value="${tier.minSpentRequired}" required>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Tỷ Lệ Giảm Giá Đơn Hàng (%) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.1" min="0" max="100" class="form-control" name="discountPercent" th:value="${tier.discountPercent}" required>
+                            <input type="hidden" name="discountPercent" th:value="${tier.discountPercent != null ? tier.discountPercent : 0}">
+                            <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
+                                <i class="bi bi-gift-fill me-2 fs-5 text-primary flex-shrink-0"></i>
+                                <span>Quyền lợi của Hạng được quy định 100% bằng <strong>Gói Voucher Đặc Quyền</strong> (Sàn tài trợ). Bấm nút <strong>[⚙️ Gói Voucher]</strong> trên danh sách để cấu hình các mã trong gói.</span>
                             </div>
                         </div>
                         <div class="modal-footer bg-light">

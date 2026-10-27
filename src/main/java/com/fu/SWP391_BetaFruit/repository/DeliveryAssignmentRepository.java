@@ -9,14 +9,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.enums.PaymentMethod;
+
+import java.util.Collection;
 import java.util.Optional;
 
 public interface DeliveryAssignmentRepository extends JpaRepository<DeliveryAssignment, Integer> {
     @EntityGraph(attributePaths = "shipper.user")
     Optional<DeliveryAssignment> findByOrderOrderId(Integer orderId);
-
-    @EntityGraph(attributePaths = {"order.customer", "order.shop"})
-    Page<DeliveryAssignment> findByShipperUserId(Integer shipperId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"order.customer", "order.shop"})
     @Query("""
@@ -36,19 +35,9 @@ public interface DeliveryAssignmentRepository extends JpaRepository<DeliveryAssi
 
     @Query("""
             select count(a) from DeliveryAssignment a
-            where a.shipper.userId = :shipperId and a.order.paymentMethod = :method
-              and a.order.orderStatus in :statuses
-              and (a.order.isCodRemitted = false or a.order.isCodRemitted is null)
+            where a.shipper.userId = :shipperId
+              and a.order.orderStatus in :ongoingStatuses
             """)
-    long countUnremittedCOD(@Param("shipperId") Integer shipperId,
-            @Param("method") PaymentMethod method, @Param("statuses") java.util.List<OrderStatus> statuses);
-
-    @Query("""
-            select coalesce(sum(a.order.finalAmount), 0) from DeliveryAssignment a
-            where a.shipper.userId = :shipperId and a.order.paymentMethod = :method
-              and a.order.orderStatus in :statuses
-              and (a.order.isCodRemitted = false or a.order.isCodRemitted is null)
-            """)
-    java.math.BigDecimal sumUnremittedCOD(@Param("shipperId") Integer shipperId,
-            @Param("method") PaymentMethod method, @Param("statuses") java.util.List<OrderStatus> statuses);
+    long countOngoingOrdersByShipper(@Param("shipperId") Integer shipperId,
+            @Param("ongoingStatuses") Collection<OrderStatus> ongoingStatuses);
 }
