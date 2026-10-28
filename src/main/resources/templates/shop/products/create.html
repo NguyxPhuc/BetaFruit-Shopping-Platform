@@ -1109,7 +1109,7 @@
 
                         <!-- Dropzone tải ảnh trực tiếp từ máy tính -->
                         <div class="image-preview-wrapper" id="imagePreviewContainer" onclick="handleContainerClick()" title="Bấm vào đây để chọn ảnh từ máy tính">
-                            <img id="previewImg" class="preview-img" alt="Ảnh xem trước hoa quả">
+                            <img id="previewImg" class="preview-img" alt="Ảnh xem trước hoa quả" onerror="this.onerror=null; this.src='/images/betafruit-logo.png';">
                             
                             <div id="previewPlaceholder" class="preview-placeholder">
                                 <div class="upload-icon-graphic">
@@ -1401,22 +1401,6 @@
 
                 <div class="col-12 col-md-6">
                     <label class="form-label small fw-semibold text-muted mb-1">
-                        <span>Giá vốn <small>(Nội bộ)</small></span>
-                    </label>
-                    <div class="input-group input-group-sm">
-                        <input type="number"
-                               name="variants[${index}].costPrice"
-                               value="${cPrice}"
-                               class="form-control form-control-sm variant-input-cost"
-                               placeholder="VD: 55000"
-                               min="0"
-                               step="1000">
-                        <span class="input-group-text">VNĐ</span>
-                    </div>
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label small fw-semibold text-muted mb-1">
                         <span>Báo sắp hết</span>
                     </label>
                     <input type="number"
@@ -1426,6 +1410,7 @@
                            placeholder="5"
                            min="0">
                 </div>
+                <input type="hidden" name="variants[${index}].costPrice" value="${cPrice !== '' ? cPrice : 0}">
             </div>
         `;
 
