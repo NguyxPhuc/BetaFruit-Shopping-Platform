@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -182,9 +182,10 @@
                     <a th:href="@{/products/{id}(id=${product.productId})}" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%;">
                         <div class="bf-product-img-box">
                             <img th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
-                                 th:src="${product.imageUrl}"
+                                 th:src="@{${product.imageUrl}}"
                                  th:alt="${product.productName}"
-                                 loading="lazy" />
+                                 loading="lazy"
+                                 onerror="this.onerror=null; this.src='/images/betafruit-logo.png';" />
                             <span th:unless="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
                                   class="bf-img-placeholder-text">Ảnh sản phẩm</span>
                         </div>

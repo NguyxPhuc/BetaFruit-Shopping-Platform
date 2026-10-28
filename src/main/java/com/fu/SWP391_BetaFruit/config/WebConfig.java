@@ -9,7 +9,11 @@ import com.fu.SWP391_BetaFruit.interceptor.StaffInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -45,5 +49,17 @@ public class WebConfig implements WebMvcConfigurer {
 
                 registry.addInterceptor(shipperInterceptor)
                                 .addPathPatterns("/shipper/**");
+        }
+
+        @Override
+        public void addResourceHandlers(ResourceHandlerRegistry registry) {
+                Path uploadPath = Paths.get("uploads").toAbsolutePath().normalize();
+                String uploadUri = uploadPath.toUri().toString();
+                if (!uploadUri.endsWith("/")) {
+                        uploadUri += "/";
+                }
+
+                registry.addResourceHandler("/uploads/**")
+                                .addResourceLocations(uploadUri, "file:uploads/", "file:./uploads/");
         }
 }

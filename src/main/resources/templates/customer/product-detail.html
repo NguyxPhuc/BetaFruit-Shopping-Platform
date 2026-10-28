@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -22,8 +22,9 @@
             <div class="bf-detail-main-img">
                 <img th:if="${product.primaryImageUrl != null and !#strings.isEmpty(product.primaryImageUrl)}"
                      id="mainProductImage"
-                     th:src="${product.primaryImageUrl}"
-                     th:alt="${product.productName}" />
+                     th:src="@{${product.primaryImageUrl}}"
+                     th:alt="${product.productName}"
+                     onerror="this.onerror=null; this.src='/images/betafruit-logo.png';" />
                 <span th:unless="${product.primaryImageUrl != null and !#strings.isEmpty(product.primaryImageUrl)}"
                       class="bf-img-placeholder-text" style="font-size: 16px;">Ảnh sản phẩm</span>
             </div>
@@ -33,7 +34,7 @@
                      th:each="imgUrl, iter : ${product.imageUrls}"
                      th:classappend="${iter.first ? 'active' : ''}"
                      th:data-image="${imgUrl}" onclick="switchImage(this, this.dataset.image)">
-                    <img th:src="${imgUrl}" th:alt="'Ảnh ' + ${iter.index + 1}" />
+                    <img th:src="@{${imgUrl}}" th:alt="'Ảnh ' + ${iter.index + 1}" onerror="this.onerror=null; this.src='/images/betafruit-logo.png';" />
                 </div>
             </div>
         </div>

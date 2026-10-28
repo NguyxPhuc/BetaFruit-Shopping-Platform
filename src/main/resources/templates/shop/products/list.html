@@ -528,15 +528,16 @@
                     <tr th:each="prod : ${products}">
                         <!-- Ảnh -->
                         <td>
-                            <img th:if="${prod.images != null && !prod.images.empty}"
-                                 th:src="${prod.images[0].imageUrl}"
-                                 src="/images/placeholder-fruit.png"
+                            <img th:if="${prod.images != null && !prod.images.empty && prod.images[0].imageUrl != null && !#strings.isEmpty(prod.images[0].imageUrl)}"
+                                 th:src="@{${prod.images[0].imageUrl}}"
                                  class="product-thumb shadow-xs"
                                  referrerpolicy="no-referrer"
                                  alt="Ảnh hoa quả"
-                                 onerror="this.src='/images/betafruit-logo.png'">
-                            <div th:if="${prod.images == null || prod.images.empty}" class="product-thumb d-flex align-items-center justify-content-center text-muted">
-                                <i class="bi bi-image fs-5"></i>
+                                 loading="lazy"
+                                 onerror="this.onerror=null; this.src='/images/betafruit-logo.png';">
+                            <div th:if="${prod.images == null || prod.images.empty || prod.images[0].imageUrl == null || #strings.isEmpty(prod.images[0].imageUrl)}" 
+                                 class="product-thumb d-flex align-items-center justify-content-center text-muted bg-light border">
+                                <i class="bi bi-image fs-5 text-secondary"></i>
                             </div>
                         </td>
 

@@ -35,7 +35,7 @@
                     <input type="checkbox" class="cart-item-select" name="itemIds" th:attr="form='checkout-shop-' + ${shop.shopId}" th:value="${item.itemId}" th:checked="${item.available}" th:disabled="${!item.available}"
                            th:data-quantity="${item.quantity}" th:data-subtotal="${item.subtotal}" th:aria-label="'Chọn ' + ${item.productName} + ' - ' + ${item.variantName}">
                     <a class="cart-product-image" th:href="@{/products/{id}(id=${item.productId})}" tabindex="-1" aria-hidden="true">
-                        <img th:if="${item.imageUrl != null}" th:src="${item.imageUrl}" alt="" loading="lazy" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
+                        <img th:if="${item.imageUrl != null}" th:src="@{${item.imageUrl}}" alt="" loading="lazy" onerror="this.hidden=true; this.nextElementSibling.hidden=false;">
                         <span class="cart-image-fallback" th:hidden="${item.imageUrl != null}">Chưa có ảnh</span>
                     </a>
                     <div class="cart-item-copy">
