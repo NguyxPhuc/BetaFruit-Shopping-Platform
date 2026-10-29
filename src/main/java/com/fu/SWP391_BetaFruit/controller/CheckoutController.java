@@ -55,7 +55,7 @@ public class CheckoutController {
                 } catch (IllegalArgumentException ex) {
                     if (savedCode == null) throw ex;
                     preview = checkout.preview(id, ids);
-                    model.addAttribute("errorMessage", "Mã đã áp dụng không còn hợp lệ: " + ex.getMessage());
+                    model.addAttribute("couponError", "Mã đã áp dụng không còn hợp lệ: " + ex.getMessage());
                 }
                 // Adding an address or revisiting the same checkout must not invalidate
                 // a rendered form. Rotate only when the customer or reviewed cart changes.
@@ -96,14 +96,15 @@ public class CheckoutController {
                         ? checkout.preview(customerId(session), draft.preview().itemIds())
                         : checkout.preview(customerId(session), draft.preview().itemIds(), couponCode);
                 session.setAttribute("CHECKOUT_DRAFT", new Draft(customerId(session), preview, UUID.randomUUID().toString()));
-                redirect.addFlashAttribute("successMessage", "remove".equals(couponAction)
+                redirect.addFlashAttribute("couponSuccess", "remove".equals(couponAction)
                         ? "Đã bỏ mã giảm giá." : "Đã áp dụng mã giảm giá.");
             } catch (IllegalArgumentException ex) {
-                redirect.addFlashAttribute("errorMessage", ex.getMessage());
+                redirect.addFlashAttribute("couponError", ex.getMessage());
+                redirect.addFlashAttribute("enteredCouponCode", couponCode);
             }
             redirect.addFlashAttribute("selectedAddressId", addressId);
             redirect.addFlashAttribute("selectedPaymentMethod", paymentMethod.name());
-            return "redirect:/customer/checkout";
+            return "redirect:/customer/checkout#couponHeading";
         }
     }
 

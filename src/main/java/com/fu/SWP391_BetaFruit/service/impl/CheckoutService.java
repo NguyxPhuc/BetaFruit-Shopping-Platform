@@ -94,7 +94,10 @@ public class CheckoutService {
                 subtotal, shipping, finalAmount);
         return new CheckoutResponse(List.of(discountedGroup), quote.itemIds(), quote.quantity(), subtotal,
                 shipping, finalAmount, new CheckoutResponse.AppliedCoupon(coupon.getCouponId(),
-                coupon.getCouponCode(), coupon.getCouponCategory(), discount, platform));
+                coupon.getCouponCode(), coupon.getCouponCategory(), discount, platform,
+                coupon.getDiscountType(), coupon.getDiscountValue(), coupon.getMinOrderValue(),
+                coupon.getMaxDiscountAmount(), coupon.getStartDate(), coupon.getEndDate(),
+                platform ? null : coupon.getShop().getShopName()));
     }
 
     public List<Address> shippingAddresses(Integer customerId) {
