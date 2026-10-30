@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.service;
 
+import com.fu.SWP391_BetaFruit.dto.request.CouponDashboardFilterRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CouponDashboardResponse;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.CouponCategory;
@@ -260,5 +261,83 @@ class VoucherDashboardServiceTest {
         });
 
         assertEquals("Tài khoản của bạn chưa đăng ký cửa hàng hoặc cửa hàng không tồn tại.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Admin Dashboard với Bộ Lọc: Lọc theo thời gian và danh mục SHIPPING")
+    void getAdminVoucherDashboardData_WithFilter_FiltersCorrectly() {
+        // Arrange
+        when(orderRepository.findAllVoucherOrders()).thenReturn(List.of(platformOrder, shopOrder));
+        when(couponRepository.findAll()).thenReturn(List.of(platformCoupon, shopCoupon));
+        when(orderItemRepository.findTopFruitProductsForVoucherOrders()).thenReturn(Collections.emptyList());
+        when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc()).thenReturn(Collections.emptyList());
+
+        CouponDashboardFilterRequest filter = new CouponDashboardFilterRequest();
+        filter.setRangePreset("7DAYS");
+        filter.setCategory(CouponCategory.SHIPPING);
+
+        // Act
+        CouponDashboardResponse response = couponService.getAdminVoucherDashboardData(filter);
+
+        // Assert
+        assertNotNull(response);
+        assertNotNull(response.getFilter());
+        assertEquals(CouponCategory.SHIPPING, response.getFilter().getCategory());
+        // platformOrder (SHIPPING) is retained, shopOrder (PRODUCT) is filtered out
+        assertEquals(1L, response.getSummary().getVoucherOrderCount());
+        assertEquals(BigDecimal.valueOf(300000), response.getSummary().getTotalVoucherRevenue());
+        assertEquals(BigDecimal.valueOf(25000), response.getSummary().getTotalDiscountAmount());
+    }
+
+    @Test
+    @DisplayName("Báo Cáo Đối Soát: Xuất file CSV thành công có UTF-8 BOM và cấu trúc chuẩn")
+    void exportAdminVoucherReportCsv_Success() {
+        // Arrange
+        when(orderRepository.findAllVoucherOrders()).thenReturn(List.of(platformOrder));
+        when(couponRepository.findAll()).thenReturn(List.of(platformCoupon));
+        when(orderItemRepository.findTopFruitProductsForVoucherOrders()).thenReturn(Collections.emptyList());
+        when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc()).thenReturn(Collections.emptyList());
+
+        CouponDashboardFilterRequest filter = new CouponDashboardFilterRequest();
+        filter.setRangePreset("30DAYS");
+
+        // Act
+        byte[] csvBytes = couponService.exportAdminVoucherReportCsv(filter);
+
+        // Assert
+        assertNotNull(csvBytes);
+        assertTrue(csvBytes.length > 3);
+        // Verify UTF-8 BOM (0xEF, 0xBB, 0xBF)
+        assertEquals((byte) 0xEF, csvBytes[0]);
+        assertEquals((byte) 0xBB, csvBytes[1]);
+        assertEquals((byte) 0xBF, csvBytes[2]);
+
+        String csvContent = new String(csvBytes, java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue(csvContent.contains("BÁO CÁO THỐNG KÊ CHI PHÍ & HIỆU QUẢ VOUCHER"));
+        assertTrue(csvContent.contains("BETAFREESHIP"));
+        assertTrue(csvContent.contains("TỔNG HỢP CHỈ SỐ KINH DOANH"));
+    }
+
+    @Test
+    @DisplayName("Hộp Cảnh Báo Thông Minh: Phát hiện mã sắp hết ngân sách hoặc ROI thấp")
+    void getAdminVoucherDashboardData_AnomalyAlertsDetected() {
+        // platformCoupon has usageLimit 100, set usedCount = 95 (>= 90%)
+        platformCoupon.setUsedCount(95);
+
+        when(orderRepository.findAllVoucherOrders()).thenReturn(List.of(platformOrder));
+        when(couponRepository.findAll()).thenReturn(List.of(platformCoupon));
+        when(orderItemRepository.findTopFruitProductsForVoucherOrders()).thenReturn(Collections.emptyList());
+        when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc()).thenReturn(Collections.emptyList());
+
+        CouponDashboardFilterRequest filter = new CouponDashboardFilterRequest();
+        filter.setRangePreset("30DAYS");
+
+        // Act
+        CouponDashboardResponse response = couponService.getAdminVoucherDashboardData(filter);
+
+        // Assert
+        assertNotNull(response.getAnomalyAlerts());
+        assertFalse(response.getAnomalyAlerts().isEmpty());
+        assertTrue(response.getAnomalyAlerts().stream().anyMatch(a -> a.contains("95%")));
     }
 }

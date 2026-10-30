@@ -1,6 +1,8 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
+import com.fu.SWP391_BetaFruit.dto.request.CouponDashboardFilterRequest;
 import com.fu.SWP391_BetaFruit.dto.request.CouponRequest;
+import java.nio.charset.StandardCharsets;
 import com.fu.SWP391_BetaFruit.dto.response.CouponResponse;
 import com.fu.SWP391_BetaFruit.dto.response.*;
 import com.fu.SWP391_BetaFruit.enums.CouponCategory;
@@ -536,19 +538,55 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     public CouponDashboardResponse getAdminVoucherDashboardData() {
-        // 1. Thống kê số liệu thô cho thẻ Summary
-        BigDecimal rawPlatformDiscount = orderRepository.sumPlatformSponsoredDiscount();
-        BigDecimal rawShopDiscount = orderRepository.sumShopSponsoredDiscount();
-        BigDecimal rawRevenue = orderRepository.sumTotalVoucherRevenue();
-        long voucherOrders = orderRepository.countVoucherOrders();
+        return getAdminVoucherDashboardData(new CouponDashboardFilterRequest());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CouponDashboardResponse getAdminVoucherDashboardData(CouponDashboardFilterRequest filter) {
+        if (filter == null) {
+            filter = new CouponDashboardFilterRequest();
+        }
+        filter.resolveEffectiveDates();
+
+        List<Order> allOrders = orderRepository.findAllVoucherOrders();
+        List<Order> orders = filterOrdersByDateAndCategory(allOrders, filter);
+
+        BigDecimal platformDiscount = BigDecimal.ZERO;
+        BigDecimal shopDiscount = BigDecimal.ZERO;
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        long voucherOrders = orders.size();
         long totalOrders = orderRepository.countTotalValidOrders();
         BigDecimal rawCostPrice = orderItemRepository.sumTotalCostPriceForVoucherOrders();
-
-        BigDecimal platformDiscount = (rawPlatformDiscount != null) ? rawPlatformDiscount : BigDecimal.ZERO;
-        BigDecimal shopDiscount = (rawShopDiscount != null) ? rawShopDiscount : BigDecimal.ZERO;
-        BigDecimal totalDiscount = platformDiscount.add(shopDiscount);
-        BigDecimal totalRevenue = (rawRevenue != null) ? rawRevenue : BigDecimal.ZERO;
         BigDecimal totalCost = (rawCostPrice != null) ? rawCostPrice : BigDecimal.ZERO;
+
+        boolean isDefaultFilter = "14DAYS".equalsIgnoreCase(filter.getRangePreset()) && filter.getCategory() == null;
+        if (isDefaultFilter) {
+            BigDecimal rawPlatform = orderRepository.sumPlatformSponsoredDiscount();
+            BigDecimal rawShop = orderRepository.sumShopSponsoredDiscount();
+            BigDecimal rawRev = orderRepository.sumTotalVoucherRevenue();
+            Long vOrders = orderRepository.countVoucherOrders();
+
+            platformDiscount = (rawPlatform != null) ? rawPlatform : BigDecimal.ZERO;
+            shopDiscount = (rawShop != null) ? rawShop : BigDecimal.ZERO;
+            totalRevenue = (rawRev != null) ? rawRev : BigDecimal.ZERO;
+            if (vOrders != null && vOrders > 0) voucherOrders = vOrders;
+        } else {
+            for (Order o : orders) {
+                if (o.getDiscountAmount() != null) {
+                    if (o.getCoupon() != null && o.getCoupon().getShop() != null) {
+                        shopDiscount = shopDiscount.add(o.getDiscountAmount());
+                    } else {
+                        platformDiscount = platformDiscount.add(o.getDiscountAmount());
+                    }
+                }
+                if (o.getTotalAmount() != null) {
+                    totalRevenue = totalRevenue.add(o.getTotalAmount());
+                }
+            }
+        }
+
+        BigDecimal totalDiscount = platformDiscount.add(shopDiscount);
 
         BigDecimal roi = BigDecimal.ZERO;
         if (totalDiscount.compareTo(BigDecimal.ZERO) > 0) {
@@ -587,17 +625,10 @@ public class CouponServiceImpl implements CouponService {
                 .averageCustomerSavings(averageCustomerSavings)
                 .build();
 
-        // 2. Lấy danh sách toàn bộ đơn có dùng voucher
-        List<Order> orders = orderRepository.findAllVoucherOrders();
         List<Coupon> allCoupons = couponRepository.findAll();
-
-        // 3. Xây dựng Bảng xếp hạng hiệu quả từng mã (Leaderboard)
         List<CouponLeaderboardRowResponse> leaderboard = buildLeaderboard(allCoupons, orders);
+        List<CouponDailyTrendResponse> dailyTrends = buildDailyTrends(orders, filter.getStartDate(), filter.getEndDate());
 
-        // 4. Xây dựng Biểu đồ đường xu hướng theo ngày (Daily Trend)
-        List<CouponDailyTrendResponse> dailyTrends = buildDailyTrends(orders);
-
-        // Chuẩn bị chuỗi JSON để Chart.js vẽ trực tiếp
         String trendLabelsJson = dailyTrends.stream()
                 .map(d -> "\"" + d.getFormattedDate() + "\"")
                 .collect(Collectors.joining(", ", "[", "]"));
@@ -608,18 +639,14 @@ public class CouponServiceImpl implements CouponService {
                 .map(d -> d.getDiscountTotal().toPlainString())
                 .collect(Collectors.joining(", ", "[", "]"));
 
-        // 5. Phân bổ danh mục (Freeship vs Giảm giá quả)
         CouponCategoryDistributionResponse categoryDistribution = buildCategoryDistribution(orders);
-
-        // 6. Phân bổ phương thức thanh toán (COD vs VNPAY)
         CouponPaymentMethodResponse paymentMethodDistribution = buildPaymentMethodDistribution(orders);
 
-        // 7. Top 5 hoa quả bán chạy nhất nhờ voucher
         List<Object[]> rawTopFruits = orderItemRepository.findTopFruitProductsForVoucherOrders();
         List<CouponTopFruitProductResponse> topFruitProducts = buildTopFruitProducts(rawTopFruits);
 
-        // 8. Báo cáo voucher đặc quyền theo Hạng Hội Viên (TierCoupon)
         List<CouponTierPerformanceResponse> tierPerformances = buildTierPerformance(orders);
+        List<String> anomalyAlerts = buildAnomalyAlerts(leaderboard);
 
         return CouponDashboardResponse.builder()
                 .summary(summary)
@@ -629,6 +656,8 @@ public class CouponServiceImpl implements CouponService {
                 .paymentMethodDistribution(paymentMethodDistribution)
                 .topFruitProducts(topFruitProducts)
                 .tierPerformances(tierPerformances)
+                .filter(filter)
+                .anomalyAlerts(anomalyAlerts)
                 .trendLabelsJson(trendLabelsJson)
                 .trendRevenueJson(trendRevenueJson)
                 .trendDiscountJson(trendDiscountJson)
@@ -638,22 +667,59 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional(readOnly = true)
     public CouponDashboardResponse getShopVoucherDashboardData(Integer userId) {
+        return getShopVoucherDashboardData(userId, new CouponDashboardFilterRequest());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CouponDashboardResponse getShopVoucherDashboardData(Integer userId, CouponDashboardFilterRequest filter) {
+        if (filter == null) {
+            filter = new CouponDashboardFilterRequest();
+        }
+        filter.resolveEffectiveDates();
+
         Shop shop = getShopForUser(userId);
         Integer shopId = shop.getShopId();
 
-        // 1. Thống kê số liệu thô của Shop
-        BigDecimal rawShopDiscount = orderRepository.sumShopSponsoredDiscountForShop(shopId);
-        BigDecimal rawPlatformDiscount = orderRepository.sumPlatformSponsoredDiscountForShop(shopId);
-        BigDecimal rawRevenue = orderRepository.sumTotalVoucherRevenueForShop(shopId);
-        long voucherOrders = orderRepository.countVoucherOrdersForShop(shopId);
-        long totalOrders = orderRepository.countTotalValidOrdersForShop(shopId);
-        BigDecimal rawCostPrice = orderItemRepository.sumTotalCostPriceForShopVoucherOrders(shopId);
+        List<Order> allOrders = orderRepository.findAllVoucherOrdersByShopId(shopId);
+        List<Order> orders = filterOrdersByDateAndCategory(allOrders, filter);
 
-        BigDecimal shopDiscount = (rawShopDiscount != null) ? rawShopDiscount : BigDecimal.ZERO;
-        BigDecimal platformDiscount = (rawPlatformDiscount != null) ? rawPlatformDiscount : BigDecimal.ZERO;
-        BigDecimal totalDiscount = shopDiscount.add(platformDiscount);
-        BigDecimal totalRevenue = (rawRevenue != null) ? rawRevenue : BigDecimal.ZERO;
+        BigDecimal rawCostPrice = orderItemRepository.sumTotalCostPriceForShopVoucherOrders(shopId);
         BigDecimal totalCost = (rawCostPrice != null) ? rawCostPrice : BigDecimal.ZERO;
+        long totalOrders = orderRepository.countTotalValidOrdersForShop(shopId);
+
+        BigDecimal shopDiscount = BigDecimal.ZERO;
+        BigDecimal platformDiscount = BigDecimal.ZERO;
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        long voucherOrders = orders.size();
+
+        boolean isDefaultFilter = "14DAYS".equalsIgnoreCase(filter.getRangePreset()) && filter.getCategory() == null;
+        if (isDefaultFilter) {
+            BigDecimal rawShop = orderRepository.sumShopSponsoredDiscountForShop(shopId);
+            BigDecimal rawPlatform = orderRepository.sumPlatformSponsoredDiscountForShop(shopId);
+            BigDecimal rawRev = orderRepository.sumTotalVoucherRevenueForShop(shopId);
+            Long vOrders = orderRepository.countVoucherOrdersForShop(shopId);
+
+            shopDiscount = (rawShop != null) ? rawShop : BigDecimal.ZERO;
+            platformDiscount = (rawPlatform != null) ? rawPlatform : BigDecimal.ZERO;
+            totalRevenue = (rawRev != null) ? rawRev : BigDecimal.ZERO;
+            if (vOrders != null && vOrders > 0) voucherOrders = vOrders;
+        } else {
+            for (Order o : orders) {
+                if (o.getDiscountAmount() != null) {
+                    if (o.getCoupon() != null && o.getCoupon().getShop() != null) {
+                        shopDiscount = shopDiscount.add(o.getDiscountAmount());
+                    } else {
+                        platformDiscount = platformDiscount.add(o.getDiscountAmount());
+                    }
+                }
+                if (o.getTotalAmount() != null) {
+                    totalRevenue = totalRevenue.add(o.getTotalAmount());
+                }
+            }
+        }
+
+        BigDecimal totalDiscount = shopDiscount.add(platformDiscount);
 
         BigDecimal roi = BigDecimal.ZERO;
         if (shopDiscount.compareTo(BigDecimal.ZERO) > 0) {
@@ -692,15 +758,9 @@ public class CouponServiceImpl implements CouponService {
                 .averageCustomerSavings(averageCustomerSavings)
                 .build();
 
-        // 2. Lấy danh sách đơn của riêng Shop
-        List<Order> orders = orderRepository.findAllVoucherOrdersByShopId(shopId);
         List<Coupon> shopCoupons = couponRepository.findByShop_ShopId(shopId, Pageable.unpaged()).getContent();
-
-        // 3. Leaderboard riêng của shop
         List<CouponLeaderboardRowResponse> leaderboard = buildLeaderboard(shopCoupons, orders);
-
-        // 4. Daily Trends riêng của shop
-        List<CouponDailyTrendResponse> dailyTrends = buildDailyTrends(orders);
+        List<CouponDailyTrendResponse> dailyTrends = buildDailyTrends(orders, filter.getStartDate(), filter.getEndDate());
 
         String trendLabelsJson = dailyTrends.stream()
                 .map(d -> "\"" + d.getFormattedDate() + "\"")
@@ -712,15 +772,12 @@ public class CouponServiceImpl implements CouponService {
                 .map(d -> d.getDiscountTotal().toPlainString())
                 .collect(Collectors.joining(", ", "[", "]"));
 
-        // 5. Phân bổ danh mục
         CouponCategoryDistributionResponse categoryDistribution = buildCategoryDistribution(orders);
-
-        // 6. Phân bổ phương thức thanh toán
         CouponPaymentMethodResponse paymentMethodDistribution = buildPaymentMethodDistribution(orders);
 
-        // 7. Top 5 hoa quả bán chạy của shop
         List<Object[]> rawTopFruits = orderItemRepository.findTopFruitProductsForShopVoucherOrders(shopId);
         List<CouponTopFruitProductResponse> topFruitProducts = buildTopFruitProducts(rawTopFruits);
+        List<String> anomalyAlerts = buildAnomalyAlerts(leaderboard);
 
         return CouponDashboardResponse.builder()
                 .summary(summary)
@@ -729,73 +786,179 @@ public class CouponServiceImpl implements CouponService {
                 .categoryDistribution(categoryDistribution)
                 .paymentMethodDistribution(paymentMethodDistribution)
                 .topFruitProducts(topFruitProducts)
-                .tierPerformances(Collections.emptyList()) // Shop không quản lý tier toàn sàn
+                .tierPerformances(Collections.emptyList())
+                .filter(filter)
+                .anomalyAlerts(anomalyAlerts)
                 .trendLabelsJson(trendLabelsJson)
                 .trendRevenueJson(trendRevenueJson)
                 .trendDiscountJson(trendDiscountJson)
                 .build();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportAdminVoucherReportCsv(CouponDashboardFilterRequest filter) {
+        CouponDashboardResponse dashboard = getAdminVoucherDashboardData(filter);
+        return generateVoucherCsvReport("TOÀN SÀN BETAFRUIT", dashboard);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportShopVoucherReportCsv(Integer userId, CouponDashboardFilterRequest filter) {
+        Shop shop = getShopForUser(userId);
+        CouponDashboardResponse dashboard = getShopVoucherDashboardData(userId, filter);
+        return generateVoucherCsvReport("CỬA HÀNG " + shop.getShopName().toUpperCase(), dashboard);
+    }
+
     // =========================================================================
     // PRIVATE HELPER METHODS FOR DASHBOARD COMPUTATIONS
     // =========================================================================
 
+    private List<Order> filterOrdersByDateAndCategory(List<Order> orders, CouponDashboardFilterRequest filter) {
+        if (orders == null || orders.isEmpty()) return Collections.emptyList();
+        LocalDate start = filter.getStartDate();
+        LocalDate end = filter.getEndDate();
+        CouponCategory cat = filter.getCategory();
+
+        return orders.stream()
+                .filter(o -> {
+                    if (start != null && end != null && o.getCreatedAt() != null) {
+                        LocalDate d = o.getCreatedAt().toLocalDate();
+                        if (d.isBefore(start) || d.isAfter(end)) return false;
+                    }
+                    if (cat != null && o.getCoupon() != null) {
+                        if (o.getCoupon().getCouponCategory() != cat) return false;
+                    }
+                    return true;
+                })
+                .toList();
+    }
+
+    private List<String> buildAnomalyAlerts(List<CouponLeaderboardRowResponse> leaderboard) {
+        if (leaderboard == null || leaderboard.isEmpty()) return Collections.emptyList();
+        List<String> alerts = new ArrayList<>();
+        for (CouponLeaderboardRowResponse row : leaderboard) {
+            if (row.getUsagePercentage() != null && row.getUsagePercentage() >= 90) {
+                alerts.add("Mã [" + row.getCouponCode() + "] đã sử dụng " + row.getUsagePercentage() + "% ngân sách lượt dùng ("
+                        + row.getUsedCount() + "/" + (row.getUsageLimit() != null && row.getUsageLimit() > 0 ? row.getUsageLimit() : "∞")
+                        + "). Cân nhắc gia hạn thêm hạn mức.");
+            }
+            if (row.getReturnOnInvestment() != null && row.getReturnOnInvestment().compareTo(new BigDecimal("1.50")) < 0
+                    && row.getUsedCount() != null && row.getUsedCount() > 0) {
+                alerts.add("Mã [" + row.getCouponCode() + "] có tỷ suất sinh lời thấp (ROI " + row.getReturnOnInvestment()
+                        + "x < 1.5x). Đề xuất tối ưu mức giảm hoặc xem xét đối tượng khách hàng áp dụng.");
+            }
+        }
+        return alerts;
+    }
+
+    private byte[] generateVoucherCsvReport(String scopeTitle, CouponDashboardResponse dashboard) {
+        StringBuilder sb = new StringBuilder();
+        sb.append('\ufeff'); // UTF-8 BOM for Microsoft Excel
+
+        sb.append("BÁO CÁO THỐNG KÊ CHI PHÍ & HIỆU QUẢ VOUCHER - ").append(scopeTitle).append("\n");
+        sb.append("Thời gian xuất: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))).append("\n");
+        if (dashboard.getFilter() != null) {
+            sb.append("Khoảng thời gian: Từ ").append(dashboard.getFilter().getStartDate()).append(" đến ").append(dashboard.getFilter().getEndDate()).append("\n");
+            if (dashboard.getFilter().getCategory() != null) {
+                sb.append("Danh mục ưu đãi: ").append(dashboard.getFilter().getCategory().name()).append("\n");
+            }
+        }
+        sb.append("\n");
+
+        sb.append("=== 1. TỔNG HỢP CHỈ SỐ KINH DOANH ===\n");
+        sb.append("Chỉ Số,Giá Trị\n");
+        CouponSummaryResponse s = dashboard.getSummary();
+        if (s != null) {
+            sb.append("Doanh thu từ đơn có mã (đ),").append(s.getTotalVoucherRevenue() != null ? s.getTotalVoucherRevenue().toPlainString() : "0").append("\n");
+            sb.append("Tổng tiền giảm giá trợ giá (đ),").append(s.getTotalDiscountAmount() != null ? s.getTotalDiscountAmount().toPlainString() : "0").append("\n");
+            sb.append("  - Sàn BetaFruit tài trợ (đ),").append(s.getPlatformDiscountAmount() != null ? s.getPlatformDiscountAmount().toPlainString() : "0").append("\n");
+            sb.append("  - Cửa hàng tự tài trợ (đ),").append(s.getShopDiscountAmount() != null ? s.getShopDiscountAmount().toPlainString() : "0").append("\n");
+            sb.append("Hiệu suất sinh lời (ROI),").append(s.getReturnOnInvestment() != null ? s.getReturnOnInvestment().toPlainString() : "0").append(" lần\n");
+            sb.append("Lợi nhuận gộp ước tính (đ),").append(s.getEstimatedGrossProfit() != null ? s.getEstimatedGrossProfit().toPlainString() : "0").append("\n");
+            sb.append("Số đơn áp dụng mã,").append(s.getVoucherOrderCount()).append(" đơn\n");
+            sb.append("Tổng đơn toàn sàn,").append(s.getTotalOrderCount()).append(" đơn\n");
+            sb.append("Tỷ lệ đơn dùng mã,").append(s.getVoucherOrderRate() != null ? s.getVoucherOrderRate().toPlainString() : "0").append(" %\n");
+            sb.append("Giá trị đơn trung bình AOV (đ),").append(s.getAverageOrderValue() != null ? s.getAverageOrderValue().toPlainString() : "0").append("\n");
+            sb.append("Tiết kiệm trung bình mỗi đơn (đ),").append(s.getAverageCustomerSavings() != null ? s.getAverageCustomerSavings().toPlainString() : "0").append("\n");
+        }
+        sb.append("\n");
+
+        sb.append("=== 2. BẢNG XẾP HẠNG HIỆU QUẢ TỪNG MÃ VOUCHER ===\n");
+        sb.append("Hạng,Mã Voucher,Bên Tài Trợ,Loại Ưu Đãi,Lượt Dùng,Giới Hạn,Tiến Độ (%),Tiền Giảm (đ),Doanh Thu (đ),ROI (lần),Trạng Thái\n");
+        if (dashboard.getLeaderboard() != null) {
+            int rank = 1;
+            for (CouponLeaderboardRowResponse r : dashboard.getLeaderboard()) {
+                sb.append(rank++).append(",");
+                sb.append(escapeCsv(r.getCouponCode())).append(",");
+                sb.append(escapeCsv(r.getSponsorType())).append(",");
+                sb.append(escapeCsv(r.getCategoryName())).append(",");
+                sb.append(r.getUsedCount() != null ? r.getUsedCount() : 0).append(",");
+                sb.append(r.getUsageLimit() != null && r.getUsageLimit() > 0 ? r.getUsageLimit() : "Không giới hạn").append(",");
+                sb.append(r.getUsagePercentage() != null ? r.getUsagePercentage() : 0).append("%,");
+                sb.append(r.getDiscountTotal() != null ? r.getDiscountTotal().toPlainString() : "0").append(",");
+                sb.append(r.getRevenueTotal() != null ? r.getRevenueTotal().toPlainString() : "0").append(",");
+                sb.append(r.getReturnOnInvestment() != null ? r.getReturnOnInvestment().toPlainString() : "0").append(",");
+                sb.append(escapeCsv(r.getPerformanceStatus())).append("\n");
+            }
+        }
+
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String escapeCsv(String val) {
+        if (val == null) return "";
+        if (val.contains(",") || val.contains("\"") || val.contains("\n")) {
+            return "\"" + val.replace("\"", "\"\"") + "\"";
+        }
+        return val;
+    }
+
     private List<CouponLeaderboardRowResponse> buildLeaderboard(List<Coupon> coupons, List<Order> orders) {
         if (coupons == null || coupons.isEmpty()) return Collections.emptyList();
 
-        Map<Integer, List<Order>> ordersByCouponId = orders.stream()
-                .filter(o -> o.getCoupon() != null)
-                .collect(Collectors.groupingBy(o -> o.getCoupon().getCouponId()));
+        Map<Integer, List<Order>> ordersByCoupon = new HashMap<>();
+        for (Order o : orders) {
+            if (o.getCoupon() != null && o.getCoupon().getCouponId() != null) {
+                ordersByCoupon.computeIfAbsent(o.getCoupon().getCouponId(), k -> new ArrayList<>()).add(o);
+            }
+        }
 
         List<CouponLeaderboardRowResponse> rows = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
-
         for (Coupon c : coupons) {
-            List<Order> cOrders = ordersByCouponId.getOrDefault(c.getCouponId(), Collections.emptyList());
+            List<Order> couponOrders = ordersByCoupon.getOrDefault(c.getCouponId(), Collections.emptyList());
 
-            BigDecimal discountTotal = cOrders.stream()
-                    .map(Order::getDiscountAmount)
-                    .filter(Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal discountTotal = BigDecimal.ZERO;
+            BigDecimal revenueTotal = BigDecimal.ZERO;
 
-            BigDecimal revenueTotal = cOrders.stream()
-                    .map(Order::getTotalAmount)
-                    .filter(Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            for (Order o : couponOrders) {
+                if (o.getDiscountAmount() != null) {
+                    discountTotal = discountTotal.add(o.getDiscountAmount());
+                }
+                if (o.getTotalAmount() != null) {
+                    revenueTotal = revenueTotal.add(o.getTotalAmount());
+                }
+            }
 
             BigDecimal roi = BigDecimal.ZERO;
             if (discountTotal.compareTo(BigDecimal.ZERO) > 0) {
                 roi = revenueTotal.divide(discountTotal, 2, RoundingMode.HALF_UP);
             }
 
-            int used = (c.getUsedCount() != null) ? c.getUsedCount() : 0;
+            int used = (c.getUsedCount() != null) ? c.getUsedCount() : couponOrders.size();
             int limit = (c.getUsageLimit() != null) ? c.getUsageLimit() : 0;
-            int percent = (limit > 0) ? Math.min(100, (int) Math.round(((double) used / limit) * 100)) : 0;
+            int percent = (limit > 0) ? Math.min(100, (int) Math.round((double) used / limit * 100)) : 0;
 
-            String sponsor = (c.getShop() == null) ? "Sàn BetaFruit" : c.getShop().getShopName();
-            String category = (c.getCouponCategory() == CouponCategory.SHIPPING) ? "Vận chuyển (Freeship)" : "Sản phẩm";
-
-            boolean expired = c.getEndDate() != null && now.isAfter(c.getEndDate());
-            boolean outOfStock = limit > 0 && used >= limit;
-
-            String status = "Đang chạy";
-            String badge = "bg-success";
-            if (!Boolean.TRUE.equals(c.getIsActive())) {
-                status = "Tạm dừng";
-                badge = "bg-secondary";
-            } else if (expired) {
-                status = "Hết hạn";
-                badge = "bg-dark";
-            } else if (outOfStock) {
-                status = "Hết lượt";
-                badge = "bg-danger";
-            }
+            String sponsor = (c.getShop() == null) ? "Sàn tài trợ" : c.getShop().getShopName();
+            String catName = (c.getCouponCategory() == CouponCategory.SHIPPING) ? "Vận chuyển" : "Sản phẩm";
+            String status = Boolean.TRUE.equals(c.getIsActive()) ? "Đang chạy" : "Tạm dừng";
+            String badge = Boolean.TRUE.equals(c.getIsActive()) ? "bg-success" : "bg-secondary";
 
             rows.add(CouponLeaderboardRowResponse.builder()
                     .couponId(c.getCouponId())
                     .couponCode(c.getCouponCode())
                     .sponsorType(sponsor)
-                    .categoryName(category)
+                    .categoryName(catName)
                     .usedCount(used)
                     .usageLimit(limit)
                     .usagePercentage(percent)
@@ -807,27 +970,35 @@ public class CouponServiceImpl implements CouponService {
                     .build());
         }
 
-        // Sắp xếp: Ưu tiên mã có doanh thu cao nhất lên đầu
         rows.sort((a, b) -> b.getRevenueTotal().compareTo(a.getRevenueTotal()));
         return rows;
     }
 
-    private List<CouponDailyTrendResponse> buildDailyTrends(List<Order> orders) {
-        LocalDate today = LocalDate.now();
+    private List<CouponDailyTrendResponse> buildDailyTrends(List<Order> orders, LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
+            LocalDate today = LocalDate.now();
+            startDate = today.minusDays(13);
+            endDate = today;
+        }
+
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM");
         Map<LocalDate, List<Order>> ordersByDate = new HashMap<>();
 
-        // Khởi tạo sẵn 14 ngày gần nhất để biểu đồ không bị đứt đoạn
         List<LocalDate> dateList = new ArrayList<>();
-        for (int i = 13; i >= 0; i--) {
-            LocalDate d = today.minusDays(i);
-            dateList.add(d);
-            ordersByDate.put(d, new ArrayList<>());
+        LocalDate curr = startDate;
+        while (!curr.isAfter(endDate)) {
+            dateList.add(curr);
+            ordersByDate.put(curr, new ArrayList<>());
+            curr = curr.plusDays(1);
         }
 
-        // Nhóm các đơn theo ngày
         for (Order o : orders) {
-            ordersByDate.computeIfAbsent(today, k -> new ArrayList<>()).add(o);
+            if (o.getCreatedAt() != null) {
+                LocalDate d = o.getCreatedAt().toLocalDate();
+                if (ordersByDate.containsKey(d)) {
+                    ordersByDate.get(d).add(o);
+                }
+            }
         }
 
         List<CouponDailyTrendResponse> result = new ArrayList<>();
@@ -859,7 +1030,7 @@ public class CouponServiceImpl implements CouponService {
                 if (o.getCoupon().getCouponCategory() == CouponCategory.SHIPPING) {
                     shippingDisc = shippingDisc.add(disc);
                     shippingCount++;
-                } else {
+                } else if (o.getCoupon().getCouponCategory() == CouponCategory.PRODUCT) {
                     productDisc = productDisc.add(disc);
                     productCount++;
                 }
@@ -875,27 +1046,27 @@ public class CouponServiceImpl implements CouponService {
     }
 
     private CouponPaymentMethodResponse buildPaymentMethodDistribution(List<Order> orders) {
-        long codCount = 0;
-        long onlineCount = 0;
         BigDecimal codRev = BigDecimal.ZERO;
         BigDecimal onlineRev = BigDecimal.ZERO;
+        long codCount = 0;
+        long onlineCount = 0;
 
         for (Order o : orders) {
-            BigDecimal rev = (o.getTotalAmount() != null) ? o.getTotalAmount() : BigDecimal.ZERO;
+            BigDecimal amt = (o.getTotalAmount() != null) ? o.getTotalAmount() : BigDecimal.ZERO;
             if (o.getPaymentMethod() == PaymentMethod.COD) {
+                codRev = codRev.add(amt);
                 codCount++;
-                codRev = codRev.add(rev);
-            } else {
+            } else if (o.getPaymentMethod() == PaymentMethod.VNPAY) {
+                onlineRev = onlineRev.add(amt);
                 onlineCount++;
-                onlineRev = onlineRev.add(rev);
             }
         }
 
         return CouponPaymentMethodResponse.builder()
-                .codOrderCount(codCount)
-                .onlineOrderCount(onlineCount)
                 .codRevenueTotal(codRev)
                 .onlineRevenueTotal(onlineRev)
+                .codOrderCount(codCount)
+                .onlineOrderCount(onlineCount)
                 .build();
     }
 
@@ -905,7 +1076,7 @@ public class CouponServiceImpl implements CouponService {
         List<CouponTopFruitProductResponse> list = new ArrayList<>();
         int count = 0;
         for (Object[] row : rawList) {
-            if (count >= 5) break; // Chỉ lấy top 5 quả
+            if (count >= 5) break;
             String pName = (row[0] != null) ? row[0].toString() : "Trái cây";
             long qty = (row[1] instanceof Number) ? ((Number) row[1]).longValue() : 0L;
             BigDecimal rev = (row[2] instanceof BigDecimal) ? (BigDecimal) row[2]

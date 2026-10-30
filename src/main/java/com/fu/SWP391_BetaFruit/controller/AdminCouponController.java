@@ -1,7 +1,11 @@
 package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.CouponRequest;
+import com.fu.SWP391_BetaFruit.dto.request.CouponDashboardFilterRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CouponDashboardResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import com.fu.SWP391_BetaFruit.dto.response.CouponUsageResponse;
 import com.fu.SWP391_BetaFruit.entity.Coupon;
 import com.fu.SWP391_BetaFruit.enums.CouponCategory;
@@ -236,10 +240,20 @@ public class AdminCouponController {
     // URL: /admin/coupons/dashboard
     // =========================================================================
     @GetMapping("/dashboard")
-    public String viewDashboard(Model model) {
-        CouponDashboardResponse dashboardData = couponService.getAdminVoucherDashboardData();
+    public String viewDashboard(@ModelAttribute("filter") CouponDashboardFilterRequest filter, Model model) {
+        CouponDashboardResponse dashboardData = couponService.getAdminVoucherDashboardData(filter);
         model.addAttribute("dashboard", dashboardData);
+        model.addAttribute("filter", filter);
         model.addAttribute("activeMenu", "coupons");
         return "admin/coupons/dashboard";
+    }
+
+    @GetMapping("/dashboard/export")
+    public ResponseEntity<byte[]> exportDashboard(@ModelAttribute CouponDashboardFilterRequest filter) {
+        byte[] csvBytes = couponService.exportAdminVoucherReportCsv(filter);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"BaoCao_Voucher_BetaFruit_Admin.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(csvBytes);
     }
 }

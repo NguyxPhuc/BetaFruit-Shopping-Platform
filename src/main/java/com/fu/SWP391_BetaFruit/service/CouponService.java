@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.service;
 
+import com.fu.SWP391_BetaFruit.dto.request.CouponDashboardFilterRequest;
 import com.fu.SWP391_BetaFruit.dto.request.CouponRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CouponDashboardResponse;
 import com.fu.SWP391_BetaFruit.dto.response.CouponUsageResponse;
@@ -42,5 +43,13 @@ public interface CouponService {
     // ================= ANALYTICS DASHBOARD METHODS =================
     CouponDashboardResponse getAdminVoucherDashboardData();
 
+    CouponDashboardResponse getAdminVoucherDashboardData(CouponDashboardFilterRequest filter);
+
     CouponDashboardResponse getShopVoucherDashboardData(Integer userId);
+
+    CouponDashboardResponse getShopVoucherDashboardData(Integer userId, CouponDashboardFilterRequest filter);
+
+    byte[] exportAdminVoucherReportCsv(CouponDashboardFilterRequest filter);
+
+    byte[] exportShopVoucherReportCsv(Integer userId, CouponDashboardFilterRequest filter);
 }
