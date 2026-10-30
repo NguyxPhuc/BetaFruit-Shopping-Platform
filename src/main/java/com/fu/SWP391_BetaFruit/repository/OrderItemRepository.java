@@ -15,19 +15,19 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
             "WHERE i.order.orderStatus = :status GROUP BY i.variant.product.productId")
     List<Object[]> sumSoldQuantityByProduct(@Param("status") OrderStatus status);
 
-    @Query("SELECT SUM(i.costPrice * i.quantity) FROM OrderItem i WHERE i.order.coupon IS NOT NULL AND i.order.orderStatus != 'CANCELLED'")
+    @Query("SELECT SUM(i.costSnapshot * i.quantity) FROM OrderItem i WHERE i.order.coupon IS NOT NULL AND i.order.orderStatus != 'CANCELLED'")
     BigDecimal sumTotalCostPriceForVoucherOrders();
 
-    @Query("SELECT SUM(i.costPrice * i.quantity) FROM OrderItem i WHERE i.order.coupon IS NOT NULL AND i.order.shop.shopId = :shopId AND i.order.orderStatus != 'CANCELLED'")
+    @Query("SELECT SUM(i.costSnapshot * i.quantity) FROM OrderItem i WHERE i.order.coupon IS NOT NULL AND i.order.shop.shopId = :shopId AND i.order.orderStatus != 'CANCELLED'")
     BigDecimal sumTotalCostPriceForShopVoucherOrders(@Param("shopId") Integer shopId);
 
-    @Query("SELECT i.productName, SUM(i.quantity), SUM(i.price * i.quantity), COUNT(DISTINCT i.order.orderId) " +
+    @Query("SELECT i.snapshotProductName, SUM(i.quantity), SUM(i.priceSnapshot * i.quantity), COUNT(DISTINCT i.order.orderId) " +
             "FROM OrderItem i WHERE i.order.coupon IS NOT NULL AND i.order.orderStatus != 'CANCELLED' " +
-            "GROUP BY i.productName ORDER BY SUM(i.quantity) DESC")
+            "GROUP BY i.snapshotProductName ORDER BY SUM(i.quantity) DESC")
     List<Object[]> findTopFruitProductsForVoucherOrders();
 
-    @Query("SELECT i.productName, SUM(i.quantity), SUM(i.price * i.quantity), COUNT(DISTINCT i.order.orderId) " +
+    @Query("SELECT i.snapshotProductName, SUM(i.quantity), SUM(i.priceSnapshot * i.quantity), COUNT(DISTINCT i.order.orderId) " +
             "FROM OrderItem i WHERE i.order.coupon IS NOT NULL AND i.order.shop.shopId = :shopId AND i.order.orderStatus != 'CANCELLED' " +
-            "GROUP BY i.productName ORDER BY SUM(i.quantity) DESC")
+            "GROUP BY i.snapshotProductName ORDER BY SUM(i.quantity) DESC")
     List<Object[]> findTopFruitProductsForShopVoucherOrders(@Param("shopId") Integer shopId);
 }
