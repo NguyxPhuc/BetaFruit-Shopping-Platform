@@ -165,22 +165,27 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4">
+                        <div class="alert alert-info py-2 px-3 small border-0 mb-3" style="background-color: #f0fdf4; color: #166534; border-left: 3px solid #22c55e !important;">
+                            <div class="fw-bold mb-1"><i class="bi bi-info-circle-fill me-1 text-success"></i> Quy tắc cấu hình hạng:</div>
+                            <ul class="mb-0 ps-3" style="line-height: 1.5;">
+                                <li><strong>Tên hạng:</strong> Duy nhất, dài 2 - 50 ký tự.</li>
+                                <li><strong>Chi tiêu tích lũy:</strong> Không âm, không trùng lặp, tăng dần theo cấp bậc (luôn có 1 hạng 0 ₫).</li>
+                                <li><strong>Quyền lợi ưu đãi:</strong> Cấp qua <strong>Gói Voucher Đặc Quyền</strong> (bấm nút [⚙️ Gói Voucher] sau khi tạo hạng).</li>
+                            </ul>
+                        </div>
                         <div class="mb-3">
                             <label for="createTierName" class="form-label fw-semibold">Tên Hạng Thành Viên <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="createTierName" name="tierName"
                                    placeholder="Ví dụ: Đồng, Bạc, Vàng, Kim Cương..." required>
+                            <div class="form-text">Tên duy nhất (2 - 50 ký tự). Ví dụ: Bạc, Vàng, Kim Cương, Hội Viên VIP...</div>
                         </div>
                         <div class="mb-3">
                             <label for="createMinSpent" class="form-label fw-semibold">Chi Tiêu Tích Lũy Yêu Cầu (VNĐ) <span class="text-danger">*</span></label>
                             <input type="number" step="1000" min="0" class="form-control" id="createMinSpent" name="minSpentRequired"
                                    placeholder="Ví dụ: 0, 2000000, 5000000..." required>
-                            <div class="form-text">Mức chi tiêu tối thiểu từ các đơn giao thành công để đạt hạng này.</div>
+                            <div class="form-text">Mức chi tiêu tối thiểu từ các đơn giao thành công (VNĐ).</div>
                         </div>
                         <input type="hidden" name="discountPercent" value="0">
-                        <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
-                            <i class="bi bi-gift-fill me-2 fs-5 text-primary flex-shrink-0"></i>
-                            <span>Quyền lợi của Hạng được quy định 100% bằng <strong>Gói Voucher Đặc Quyền</strong> (Sàn tài trợ). Sau khi tạo hạng, bạn có thể bấm <strong>[⚙️ Gói Voucher]</strong> để tích chọn các mã ưu đãi cấp cho Hội viên đạt hạng này.</span>
-                        </div>
                     </div>
                     <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
@@ -288,19 +293,25 @@
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-4">
+                            <div class="alert alert-info py-2 px-3 small border-0 mb-3" style="background-color: #f0fdf4; color: #166534; border-left: 3px solid #22c55e !important;">
+                                <div class="fw-bold mb-1"><i class="bi bi-info-circle-fill me-1 text-success"></i> Quy tắc cấu hình hạng:</div>
+                                <ul class="mb-0 ps-3" style="line-height: 1.5;">
+                                    <li><strong>Tên hạng:</strong> Duy nhất, dài 2 - 50 ký tự.</li>
+                                    <li><strong>Chi tiêu tích lũy:</strong> Không âm, không trùng lặp, tăng dần theo cấp bậc (luôn có 1 hạng 0 ₫).</li>
+                                    <li><strong>Quyền lợi ưu đãi:</strong> Cấp qua <strong>Gói Voucher Đặc Quyền</strong> (bấm nút [⚙️ Gói Voucher] trên danh sách).</li>
+                                </ul>
+                            </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Tên Hạng Thành Viên <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="tierName" th:value="${tier.tierName}" required>
+                                <div class="form-text">Tên duy nhất (2 - 50 ký tự).</div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Chi Tiêu Tích Lũy Yêu Cầu (VNĐ) <span class="text-danger">*</span></label>
                                 <input type="number" step="1000" min="0" class="form-control" name="minSpentRequired" th:value="${tier.minSpentRequired}" required>
+                                <div class="form-text">Mức chi tiêu tối thiểu từ các đơn giao thành công (VNĐ).</div>
                             </div>
                             <input type="hidden" name="discountPercent" th:value="${tier.discountPercent != null ? tier.discountPercent : 0}">
-                            <div class="alert alert-info py-2 px-3 small border-0 d-flex align-items-center mb-0 mt-3" style="background-color: #e0f2fe; color: #0369a1;">
-                                <i class="bi bi-gift-fill me-2 fs-5 text-primary flex-shrink-0"></i>
-                                <span>Quyền lợi của Hạng được quy định 100% bằng <strong>Gói Voucher Đặc Quyền</strong> (Sàn tài trợ). Bấm nút <strong>[⚙️ Gói Voucher]</strong> trên danh sách để cấu hình các mã trong gói.</span>
-                            </div>
                         </div>
                         <div class="modal-footer bg-light">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>

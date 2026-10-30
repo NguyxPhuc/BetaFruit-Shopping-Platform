@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'cod-collections', ~{::content})}">
+<head>
+    <title>Quản Lý Thu Nợ &amp; Đối Soát COD - BetaFruit Staff</title>
+</head>
+<body>
+<div th:fragment="content">
+    <!-- Header Banner -->
+    <div class="card border-0 text-white mb-4 overflow-hidden position-relative"
+         style="background: linear-gradient(135deg, #065f46 0%, #047857 50%, #10b981 100%);">
+        <div class="card-body p-4 position-relative" style="z-index: 2;">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-8">
+                    <span class="badge bg-warning text-dark px-3 py-1 mb-2 fw-bold" style="font-size: 0.75rem;">
+                        <i class="bi bi-cash-stack me-1"></i>ĐỐI SOÁT DÒNG TIỀN MẶT COD (FE-06.4)
+                    </span>
+                    <h2 class="fw-bold text-white mb-2">Quản Lý Thu Tiền COD &amp; Đối Soát Tài Xế</h2>
+                    <p class="mb-0 text-white-50">
+                        Kiểm soát công nợ tiền mặt tài xế đang giữ, đối soát từng đơn hàng giao thành công và lập biên nhận tất toán tiền mặt về quỹ vận hành Hub.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a th:href="@{/staff/cod-collections/create}" class="btn btn-light fw-bold text-success shadow-sm px-4 py-2">
+                        <i class="bi bi-plus-circle-fill me-1"></i> Lập Phiếu Thu COD Mới
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- KPI Summary Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3 p-3 border-start border-warning border-4">
+                <div class="text-muted small text-uppercase fw-bold">Tổng Công Nợ COD Đang Giữ</div>
+                <div class="fs-3 fw-bold text-warning" th:text="${#numbers.formatDecimal(totalOutstandingDebt, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</div>
+                <small class="text-muted">Tiền mặt Shipper chưa nộp về Hub</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3 p-3 border-start border-danger border-4">
+                <div class="text-muted small text-uppercase fw-bold">Tài Xế Đang Ôm Nợ COD</div>
+                <div class="fs-3 fw-bold text-danger" th:text="${#lists.size(shippersWithDebt)}">0</div>
+                <small class="text-muted">Tài xế có công nợ &gt; 0đ</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-3 p-3 border-start border-primary border-4">
+                <div class="text-muted small text-uppercase fw-bold">Hạn Mức Trần Chặn Nhận Đơn</div>
+                <div class="fs-3 fw-bold text-primary">3.000.000 ₫</div>
+                <small class="text-muted">Vượt trần tự động dừng điều phối đơn COD</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 1: Shippers with Outstanding Debt -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-person-exclamation text-danger me-2"></i>Danh Sách Tài Xế Đang Giữ Tiền COD Cần Thu
+            </h5>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" th:text="${#lists.size(shippersWithDebt)} + ' tài xế'">0 tài xế</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>TÀI XẾ</th>
+                            <th>SỐ ĐIỆN THOẠI</th>
+                            <th>TIỀN COD ĐANG GIỮ</th>
+                            <th>TÌNH TRẠNG HẠN MỨC</th>
+                            <th class="text-end">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="s : ${shippersWithDebt}">
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${s.user.fullName}">Tài xế Nguyễn Văn A</div>
+                                <small class="text-muted" th:text="${s.user.email}">shipper@betafruit.vn</small>
+                            </td>
+                            <td th:text="${s.user.phone != null ? s.user.phone : 'Chưa cập nhật'}">0912345678</td>
+                            <td>
+                                <span class="fw-bold fs-6 text-danger" th:text="${#numbers.formatDecimal(s.codDebt, 0, 'POINT', 0, 'COMMA')} + ' ₫'">500.000 ₫</span>
+                            </td>
+                            <td>
+                                <span th:if="${s.codDebt >= 3000000}" class="badge bg-danger text-white">
+                                    <i class="bi bi-x-circle-fill me-1"></i>Chạm trần nợ (Dừng nhận đơn)
+                                </span>
+                                <span th:if="${s.codDebt < 3000000}" class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>Đang giữ tiền COD
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a th:href="@{/staff/cod-collections/create(shipperId=${s.userId})}" class="btn btn-sm btn-success fw-bold">
+                                    <i class="bi bi-cash-coin me-1"></i> Thu Tiền Ngay
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(shippersWithDebt)}">
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                <i class="bi bi-check-circle text-success fs-3 d-block mb-2"></i>
+                                Tất cả tài xế đã nộp đủ tiền COD! Không có công nợ tồn đọng.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Historical COD Collection Receipts -->
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-journal-check text-success me-2"></i>Lịch Sử Các Phiếu Thu &amp; Đối Soát COD
+            </h5>
+            <!-- Filter form -->
+            <form method="get" th:action="@{/staff/cod-collections}" class="d-flex align-items-center gap-2">
+                <select name="shipperId" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">-- Tất cả tài xế --</option>
+                    <option th:each="sh : ${allShippers}"
+                            th:value="${sh.userId}"
+                            th:text="${sh.user.fullName} + ' (#' + ${sh.userId} + ')'"
+                            th:selected="${selectedShipperId != null and selectedShipperId == sh.userId}">Tài xế Nam</option>
+                </select>
+                <a th:if="${selectedShipperId != null}" th:href="@{/staff/cod-collections}" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
+            </form>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>MÃ PHIẾU</th>
+                            <th>TÀI XẾ NỘP TIỀN</th>
+                            <th>NGƯỜI THU (STAFF)</th>
+                            <th>SỐ TIỀN THU HỘ</th>
+                            <th>THỜI GIAN LẬP</th>
+                            <th>TRẠNG THÁI</th>
+                            <th class="text-end">CHI TIẾT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c : ${collections.content}">
+                            <td class="fw-bold text-primary" th:text="'#PT-' + ${c.collectionId}">#PT-1</td>
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${c.shipper.user.fullName}">Tài xế Nam</div>
+                                <small class="text-muted" th:text="'ID: #' + ${c.shipper.userId}">ID: #6</small>
+                            </td>
+                            <td th:text="${c.collectedBy != null ? c.collectedBy.fullName : 'Điều phối Hub'}">Staff Minh</td>
+                            <td class="fw-bold text-success" th:text="${#numbers.formatDecimal(c.amountCollected, 0, 'POINT', 0, 'COMMA')} + ' ₫'">375.000 ₫</td>
+                            <td th:text="${c.createdAt != null ? #temporals.format(c.createdAt, 'HH:mm dd/MM/yyyy') : 'Ghi nhận hệ thống'}">14:30 28/10/2026</td>
+                            <td>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="bi bi-check2-circle me-1"></i>Đã tất toán nợ
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a th:href="@{/staff/cod-collections/{id}(id=${c.collectionId})}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Xem biên nhận
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${collections.empty}">
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                Không có phiếu thu COD nào phù hợp với điều kiện tìm kiếm.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Pagination -->
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3" th:if="${collections.totalPages > 1}">
+            <span class="text-muted small" th:text="'Hiển thị trang ' + ${collections.number + 1} + ' / ' + ${collections.totalPages}">Trang 1 / 1</span>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${collections.first} ? 'disabled' : ''">
+                    <a class="page-link" th:href="@{/staff/cod-collections(shipperId=${selectedShipperId}, page=${collections.number - 1})}">Trước</a>
+                </li>
+                <li class="page-item" th:each="p : ${#numbers.sequence(0, collections.totalPages - 1)}"
+                    th:classappend="${p == collections.number} ? 'active' : ''">
+                    <a class="page-link" th:href="@{/staff/cod-collections(shipperId=${selectedShipperId}, page=${p})}" th:text="${p + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${collections.last} ? 'disabled' : ''">
+                    <a class="page-link" th:href="@{/staff/cod-collections(shipperId=${selectedShipperId}, page=${collections.number + 1})}">Sau</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+</body>
+</html>

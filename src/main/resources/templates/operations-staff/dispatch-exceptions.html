@@ -29,15 +29,6 @@
         </div>
     </div>
 
-    <!-- Notices -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${successMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${errorMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
 
     <!-- 1. Danh sách Đơn ngoại lệ & Sự cố khẩn cấp -->
     <div class="card shadow-sm border-0 rounded-3 mb-4">
@@ -96,16 +87,19 @@
                                 <form method="post" th:action="@{/staff/deliveries/reassign}" class="d-inline-flex gap-2 align-items-center">
                                     <input type="hidden" name="orderId" th:value="${ex.orderId}">
                                     <select name="shipperId" class="form-select form-select-sm" style="width: 230px;" required>
-                                        <option value="" disabled selected>-- Chọn tài xế cứu viện --</option>
+                                        <option value="" disabled selected th:text="${ex.exceptionType == 'INCIDENT_REPORTED' ? '-- Chọn tài xế cứu viện --' : '-- Chọn tài xế phân công --'}">-- Chọn tài xế --</option>
                                         <option th:each="s : ${shippers}" th:value="${s.shipperId}"
                                                 th:text="${s.fullName + (s.operatingCity != null ? ' [' + s.operatingCity + ']' : '') + ' (' + s.ongoingOrdersCount + ' đơn)'}"
                                                 th:disabled="${s.isOverloaded}">
                                         </option>
                                     </select>
-                                    <input type="hidden" name="reason" value="Điều phối cứu viện do tài xế báo cáo sự cố">
-                                    <button type="submit" class="btn btn-sm btn-danger text-nowrap"
-                                            onclick="return confirm('Xác nhận phân công tài xế mới tiếp nhận đơn hàng này?');">
-                                        <i class="bi bi-truck me-1"></i> Cứu viện
+                                    <input type="hidden" name="reason" th:value="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'Điều phối cứu viện do tài xế báo cáo sự cố' : 'Điều phối thủ công do hệ thống chưa gán tự động'}">
+                                    <button type="submit" class="btn btn-sm text-nowrap"
+                                            th:classappend="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'btn-danger' : 'btn-primary'}"
+                                            th:attr="data-confirm-msg=${ex.exceptionType == 'INCIDENT_REPORTED' ? 'Xác nhận phân công tài xế cứu viện tiếp nhận đơn hàng này?' : 'Xác nhận gán đơn hàng cho tài xế này?'}"
+                                            onclick="return confirm(this.getAttribute('data-confirm-msg'));">
+                                        <i th:class="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'bi bi-truck me-1' : 'bi bi-person-check-fill me-1'}"></i>
+                                        <span th:text="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'Cứu viện' : 'Gán tài xế'}">Gán</span>
                                     </button>
                                 </form>
                             </td>

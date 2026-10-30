@@ -140,6 +140,81 @@
             padding-top: 0.75rem;
             margin-top: 0.5rem;
         }
+        /* Delivery Tracking Timeline */
+        .tracking-timeline {
+            display: flex;
+            flex-direction: column;
+            padding: 0.5rem 0.25rem;
+        }
+        .tracking-step {
+            display: flex;
+            gap: 1.25rem;
+            min-height: 55px;
+        }
+        .step-icon-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 24px;
+        }
+        .step-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            z-index: 2;
+        }
+        .tracking-step.active .step-dot {
+            background: #16a34a;
+            color: #ffffff;
+            box-shadow: 0 0 0 4px #dcfce7;
+            font-size: 13px;
+        }
+        .step-line {
+            width: 2px;
+            flex-grow: 1;
+            background: #e2e8f0;
+            margin: 4px 0;
+        }
+        .step-content {
+            padding-bottom: 1.25rem;
+            flex-grow: 1;
+        }
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .step-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #334155;
+        }
+        .tracking-step.active .step-title {
+            color: #16a34a;
+        }
+        .step-time {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .step-note {
+            margin: 0.15rem 0;
+            font-size: 0.88rem;
+            color: #475569;
+        }
+        .step-actor {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
     </style>
 </head>
 <body class="detail-page">
@@ -166,10 +241,10 @@
         </div>
 
         <!-- Success/Error Notices -->
-        <div th:if="${successMessage and !upgradeCelebration}" class="card-box" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46; font-weight: 600;">
+        <div th:if="${successMessage != null and !#bools.isTrue(upgradeCelebration)}" class="card-box" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46; font-weight: 600;">
             <i class="bi bi-check-circle-fill"></i> <span th:text="${successMessage}"></span>
         </div>
-        <div th:if="${errorMessage}" class="card-box" style="background: #fef2f2; border-color: #fecaca; color: #991b1b; font-weight: 600;">
+        <div th:if="${errorMessage != null}" class="card-box" style="background: #fef2f2; border-color: #fecaca; color: #991b1b; font-weight: 600;">
             <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${errorMessage}"></span>
         </div>
 
@@ -211,6 +286,32 @@
             </div>
         </div>
 
+        <!-- FE-07.2: Delivery Tracking Timeline Stepper -->
+        <div class="card-box" th:if="${order.timeline != null and !order.timeline.isEmpty()}">
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem 0; border-bottom: 1px solid #edf2f7; padding-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; color: #1e293b;">
+                <i class="bi bi-truck text-success"></i> Hành trình đơn hàng
+            </h3>
+
+            <div class="tracking-timeline">
+                <div class="tracking-step" th:each="step, iterStat : ${order.timeline}" th:classappend="${iterStat.last} ? 'active' : ''">
+                    <div class="step-icon-col">
+                        <div class="step-dot">
+                            <i class="bi" th:classappend="${iterStat.last} ? 'bi-check2-circle' : 'bi-circle-fill'"></i>
+                        </div>
+                        <div class="step-line" th:if="${!iterStat.last}"></div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-header">
+                            <span class="step-title" th:text="${step.statusLabel}">Đã giao hàng</span>
+                            <span class="step-time" th:text="${step.timestamp != null ? #temporals.format(step.timestamp, 'HH:mm - dd/MM/yyyy') : ''}">14:30 - 28/10/2026</span>
+                        </div>
+                        <p class="step-note" th:if="${step.note != null and !step.note.isEmpty()}" th:text="${step.note}">Giao kiện thành công cho khách</p>
+                        <span class="step-actor" th:if="${step.actor != null}" th:text="'Thực hiện bởi: ' + ${step.actor}">Thực hiện bởi: Shipper Tuấn</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Items Card -->
         <div class="card-box">
             <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem 0; border-bottom: 1px solid #edf2f7; padding-bottom: 0.75rem;">
@@ -233,7 +334,7 @@
                     <span>Tổng tiền hàng:</span>
                     <span th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">120.000 ₫</span>
                 </div>
-                <div class="summary-row" th:if="${order.discountAmount != null and order.discountAmount > 0}">
+                <div class="summary-row" th:if="${order.discountAmount != null and order.discountAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
                     <span>Giảm giá (Voucher &amp; Hội viên):</span>
                     <span style="color: #16a34a;" th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">-20.000 ₫</span>
                 </div>

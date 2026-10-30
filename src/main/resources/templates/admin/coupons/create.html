@@ -64,12 +64,6 @@
         </a>
     </div>
 
-    <!-- Error message if any -->
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
-        <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
 
     <form th:action="@{/admin/coupons/create}" th:object="${couponRequest}" method="post">
         <div class="row g-4">

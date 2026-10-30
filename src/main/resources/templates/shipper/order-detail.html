@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi tiết đơn giao hàng | BetaFruit</title>
     <style th:replace="~{shipper/fragments/sidebar :: sidebar-styles}"></style>
+    <style th:replace="~{shipper/fragments/topbar :: topbar-styles}"></style>
     <style>
         :root { color-scheme: light; }
         *, *::before, *::after { box-sizing: border-box; }
         body { margin: 0; background: #eef8ff; color: #18334c; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
         .deliverer-layout { display: flex; min-height: 100vh; }
-        .detail-content { flex: 1; min-width: 0; padding: 40px 5% 48px 4%; }
+        .detail-content { flex: 1; min-width: 0; padding: 36px 5% 48px 4%; }
         .detail-container { max-width: 1280px; }
         .back-link { display: inline-flex; margin-bottom: 22px; color: #526c81; font-size: 13px; text-decoration: none; }
         .back-link:hover { color: #3671ff; }
@@ -88,8 +89,8 @@
 <div class="deliverer-layout" th:with="order=${detail.summary}">
     <aside th:replace="~{shipper/fragments/sidebar :: sidebar('orders')}"></aside>
     <main class="detail-content"><div class="detail-container">
+        <header th:replace="~{shipper/fragments/topbar :: topbar('Chi tiết đơn hàng #' + ${order.orderId}, 'Theo dõi tiến trình và cập nhật trạng thái cuốc giao')}"></header>
         <a class="back-link" th:href="@{/shipper/orders}">← Danh sách đơn giao hàng</a>
-        <h1 class="page-heading" th:text="'Chi tiết đơn #' + ${order.orderId}"></h1>
         <p class="notice" role="status" th:if="${statusMessage}" th:text="${statusMessage}"></p>
         <p class="notice notice--error" role="alert" th:if="${statusError}" th:text="${statusError}"></p>
 
@@ -118,78 +119,107 @@
                     <button class="button button--primary" type="submit">Đã lấy hàng</button>
                 </form>
                 <form th:if="${detail.canStartDelivering}" class="status-change-form" method="post" th:action="@{/shipper/orders/{id}/delivering(id=${order.orderId})}" data-confirm="Xác nhận bắt đầu giao đơn hàng này đến khách?">
-                    <button class="button button--primary" type="submit">Bắt đầu giao hàng</button>
+                    <button class="button button--primary" type="submit">Bắt đầu giao</button>
                 </form>
-                <form th:if="${order.canMarkDelivered}" class="status-change-form" method="post" th:action="@{/shipper/orders/{id}/delivered(id=${order.orderId})}" data-confirm="Xác nhận đã giao hàng thành công cho khách?">
-                    <label class="cod-confirm" th:if="${order.paymentMethod == 'COD'}"><input type="checkbox" name="codCollected" value="true" required>
-                        <span>Tôi đã thu đủ <strong th:text="${#numbers.formatDecimal(order.codAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></strong> tiền COD từ khách hàng.</span>
+                <form th:if="${order.canMarkDelivered}" class="status-change-form" method="post" th:action="@{/shipper/orders/{id}/delivered(id=${order.orderId})}" data-confirm="Xác nhận đơn hàng đã giao thành công và tiền đã thu đủ (nếu COD)?">
+                    <label class="cod-confirm" th:if="${order.paymentMethod == 'COD'}">
+                        <input type="checkbox" name="codCollected" value="true" required>
+                        <span>Tôi xác nhận đã nhận đủ <strong th:text="${#numbers.formatDecimal(order.amountToCollect, 0, 'COMMA', (order.amountToCollect.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></strong> tiền mặt từ người nhận.</span>
                     </label>
                     <button class="button button--primary" type="submit">Giao thành công</button>
                 </form>
-                <form th:if="${detail.canStartDelivering}" class="status-change-form" method="post" th:action="@{/shipper/orders/{id}/handover(id=${order.orderId})}" data-confirm="Xác nhận bạn đã bàn giao kiện hàng tại trạm tiếp sức ảo?">
-                    <button class="button button--secondary" type="submit" style="background: #0284c7; color: white;">Bàn giao tại trạm ảo</button>
-                </form>
-                <form th:if="${detail.canStartDelivering or order.canMarkDelivered}" class="status-change-form" method="post" th:action="@{/shipper/orders/{id}/report-incident(id=${order.orderId})}" onsubmit="var r = prompt('Nhập lý do sự cố (Ví dụ: Hỏng xe, Thủng lốp, Ngập úng):', 'Hỏng xe trên đường'); if (!r) return false; this.reason.value = r; return true;">
-                    <input type="hidden" name="reason" value="Hỏng xe trên đường">
-                    <button class="button button--danger" type="submit" style="background: #dc2626; color: white;">⚠️ Báo sự cố</button>
-                </form>
             </div>
-            <p class="holding-note" th:if="${order.orderStatus == 'DELIVERED'}">Đơn đã giao thành công. Tiền chưa được chuyển vào số dư shop. Theo quy trình, đơn sẽ hoàn tất sau 72 giờ nếu không có tranh chấp; deliverer không tự chuyển sang SUCCESS.</p>
+            <div class="incident-action" style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #e2edf5;">
+                <details style="background: #fff8f8; border: 1px solid #ffd4d4; border-radius: 8px; padding: 12px 16px;">
+                    <summary style="color: #c53030; font-weight: 600; font-size: 13px; cursor: pointer;">
+                        ⚠️ Báo cáo sự cố trên đường (Hỏng xe / Không thể tiếp tục giao)
+                    </summary>
+                    <form method="post" th:action="@{/shipper/orders/{id}/incident(id=${order.orderId})}" style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                        <div>
+                            <label style="font-size: 12px; color: #4a5568; font-weight: 600; display: block; margin-bottom: 4px;">Nguyên nhân chính:</label>
+                            <select name="reason" style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
+                                <option value="Hỏng xe giữa đường">Hỏng xe giữa đường</option>
+                                <option value="Tai nạn giao thông">Tai nạn giao thông nhẹ</option>
+                                <option value="Sức khỏe khẩn cấp">Vấn đề sức khỏe khẩn cấp</option>
+                                <option value="Khác">Lý do khác</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #4a5568; font-weight: 600; display: block; margin-bottom: 4px;">Ghi chú chi tiết vị trí / tình trạng kiện hàng:</label>
+                            <textarea name="note" rows="2" placeholder="Ví dụ: Đang dừng tại 123 Cầu Giấy, xe bị thủng lốp cần cứu viện gấp..." style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px; resize: vertical;"></textarea>
+                        </div>
+                        <button type="submit" class="button" style="background: #e53e3e; color: #fff; border-color: #e53e3e; align-self: flex-start;" onclick="return confirm('Bạn có chắc chắn muốn báo cáo sự cố? Điều phối viên sẽ hỗ trợ chuyển giao tài xế cứu viện.')">
+                            Gửi báo cáo sự cố khẩn cấp
+                        </button>
+                    </form>
+                </details>
+            </div>
             </div>
         </details>
 
         <section class="detail-card" aria-labelledby="items-heading">
-            <h2 id="items-heading">Sản phẩm trong đơn</h2>
-            <div class="table-scroll"><table class="items-table">
-                <thead><tr><th scope="col">SẢN PHẨM / BIẾN THỂ</th><th scope="col">ĐƠN GIÁ</th><th scope="col">SỐ LƯỢNG</th><th scope="col">THÀNH TIỀN</th></tr></thead>
-                <tbody><tr th:each="item : ${detail.items}">
-                    <td><strong th:text="${item.productName}"></strong><span class="variant" th:text="${item.variantName}"></span></td>
-                    <td class="money" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
-                    <td th:text="${item.quantity}"></td>
-                    <td class="money" th:text="${#numbers.formatDecimal(item.lineTotal, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
-                </tr><tr th:if="${#lists.isEmpty(detail.items)}"><td colspan="4" class="empty-note">Chưa có thông tin sản phẩm.</td></tr></tbody>
-            </table></div>
+            <h2 id="items-heading">Kiện hàng hoa quả tươi</h2>
+            <div class="table-scroll">
+                <table class="items-table" aria-label="Danh sách món hàng">
+                    <thead><tr><th scope="col">MÓN HÀNG</th><th scope="col">PHÂN LOẠI</th><th scope="col">SỐ LƯỢNG</th><th scope="col">ĐƠN GIÁ</th><th scope="col">TẠM TÍNH</th></tr></thead>
+                    <tbody>
+                    <tr th:each="item : ${detail.items}">
+                        <td th:text="${item.productName}"></td>
+                        <td th:text="${item.variantName}"></td>
+                        <td th:text="${item.quantity}"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', (item.unitPrice.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', (item.subtotal.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <div class="lower-grid">
             <section class="detail-card" aria-labelledby="payment-heading">
-                <h2 id="payment-heading">Thanh toán &amp; thu hộ</h2>
-                <div class="cash-total" th:classappend="${order.paymentMethod == 'VNPAY'} ? ' cash-total--online' : ''">
-                    <span>Số tiền cần thu từ khách</span><strong th:text="${#numbers.formatDecimal(order.amountToCollect, 0, 'COMMA', 0, 'POINT')} + 'đ'"></strong>
-                </div>
-                <p class="payment-note" th:if="${order.paymentMethod == 'VNPAY'}">Đơn thanh toán VNPay. Không thu thêm tiền mặt từ khách.</p>
-                <p class="payment-note" th:if="${order.paymentMethod == 'COD' and (order.orderStatus == 'DELIVERED' or order.orderStatus == 'SUCCESS')}">Đơn đã giao, không thu tiền từ khách lần nữa.</p>
+                <h2 id="payment-heading">Thanh toán &amp; Thu hộ</h2>
                 <dl class="money-lines">
-                    <div><dt>Giá sản phẩm</dt><dd th:text="${#numbers.formatDecimal(detail.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
-                    <div><dt>Phí vận chuyển</dt><dd th:text="${#numbers.formatDecimal(detail.shippingFee ?: 0, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
-                    <div><dt>Giảm giá</dt><dd th:text="'− ' + ${#numbers.formatDecimal(detail.discountAmount ?: 0, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
-                    <div><dt>Tổng khách thanh toán</dt><dd th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
-                    <div th:if="${order.paymentMethod == 'COD'}"><dt>COD đang giữ, chưa nộp</dt><dd th:text="${#numbers.formatDecimal(order.codHeldAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
+                    <div><dt>Tiền hàng</dt><dd class="money" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', (order.totalAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                    <div><dt>Giảm giá voucher</dt><dd class="money" th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', (order.discountAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                    <div><dt>Phí vận chuyển</dt><dd class="money" th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'COMMA', (order.shippingFee.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
                 </dl>
-                <p class="payment-note" th:if="${order.paymentMethod == 'COD'}" th:switch="${order.codRemittanceStatus}">
-                    <span th:case="'NOT_COLLECTED'">Thu đủ COD khi giao thành công. Tiền được nộp lại cho hệ thống vào cuối ngày.</span>
-                    <span th:case="'PENDING_REMITTANCE'">Đã thu COD từ khách, chưa nộp lại cho hệ thống. Việc này độc lập với chuyển tiền cho shop.</span>
-                    <span th:case="'REMITTED'">Hệ thống đã nhận lại tiền COD từ shipper.</span>
-                </p>
+                <div class="cash-total" th:classappend="${order.paymentMethod == 'VNPAY'} ? ' cash-total--online' : ''">
+                    <span th:text="${order.paymentMethod == 'COD'} ? 'Số tiền cần thu khách' : 'Thanh toán trực tuyến'"></span>
+                    <strong th:text="${#numbers.formatDecimal(order.amountToCollect, 0, 'COMMA', (order.amountToCollect.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></strong>
+                </div>
+                <p class="payment-note" th:if="${order.paymentMethod == 'VNPAY'}">Khách đã thanh toán qua VNPay. Shipper tuyệt đối không thu thêm tiền khi giao.</p>
+                <p class="payment-note" th:if="${order.paymentMethod == 'COD'}">Shipper thu đúng số tiền hiển thị và xác nhận trong ứng dụng ngay khi nhận tiền mặt.</p>
+                <p class="holding-note" th:if="${order.orderStatus == 'DELIVERED'}">Giao hàng hoàn tất. Tiền hàng giữ trong thời gian khiếu nại (3 ngày) trước khi quyết toán về số dư khả dụng của cửa hàng.</p>
             </section>
+
             <section class="detail-card" aria-labelledby="history-heading">
-                <h2 id="history-heading">Lịch sử đơn hàng</h2>
-                <ol class="timeline" th:if="${not #lists.isEmpty(detail.history)}"><li th:each="entry : ${detail.history}">
-                    <strong th:text="${entry.statusLabel}"></strong><p th:if="${not #strings.isEmpty(entry.note)}" th:text="${entry.note}"></p>
-                    <small><span th:text="${entry.actor}"></span><span th:if="${entry.createdAt != null}" th:text="' · ' + ${#temporals.format(entry.createdAt, 'HH:mm dd/MM/yyyy')}"></span></small>
-                </li></ol>
-                <p class="empty-note" th:if="${#lists.isEmpty(detail.history)}">Chưa có lịch sử cập nhật.</p>
+                <h2 id="history-heading">Lịch sử trạng thái</h2>
+                <ol class="timeline" aria-label="Tiến trình giao hàng">
+                    <li th:each="entry : ${detail.history}">
+                        <strong th:text="${entry.statusLabel}"></strong>
+                        <p th:if="${not #strings.isEmpty(entry.note)}" th:text="${entry.note}"></p>
+                        <small th:text="${entry.createdAt != null ? #temporals.format(entry.createdAt, 'HH:mm dd/MM/yyyy') : ''}"></small>
+                    </li>
+                    <li th:if="${#lists.isEmpty(detail.history)}"><p class="empty-note">Chưa có lịch sử trạng thái.</p></li>
+                </ol>
             </section>
         </div>
     </div></main>
 </div>
-<dialog class="confirmation-dialog" id="status-confirmation" aria-labelledby="confirmation-heading">
-    <h2 id="confirmation-heading">Xác nhận cập nhật</h2><p id="confirmation-message"></p>
-    <div class="dialog-actions"><button class="button" id="confirmation-cancel" type="button">Quay lại</button><button class="button button--primary" id="confirmation-submit" type="button">Xác nhận</button></div>
+
+<dialog class="confirmation-dialog" id="confirmation-dialog">
+    <h2>Xác nhận thao tác</h2>
+    <p id="confirmation-message"></p>
+    <div class="dialog-actions">
+        <button class="button" id="confirmation-cancel" type="button">Hủy</button>
+        <button class="button button--primary" id="confirmation-submit" type="button">Đồng ý</button>
+    </div>
 </dialog>
+
+<script th:replace="~{shipper/fragments/topbar :: topbar-script}"></script>
 <script>
-    (() => {
-        const dialog = document.getElementById('status-confirmation');
+    (function () {
+        const dialog = document.getElementById('confirmation-dialog');
         let pendingForm;
         document.querySelectorAll('.status-change-form').forEach(form => {
             form.addEventListener('submit', event => {

@@ -1,32 +1,42 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.entity.*;
+import com.fu.SWP391_BetaFruit.enums.NotificationType;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.repository.*;
-import com.fu.SWP391_BetaFruit.service.AutoDispatchService;
+import com.fu.SWP391_BetaFruit.service.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
+
 /** Delivery confirmation must come from the shipper assigned to this order. */
 @Service
 public class OrderDeliveryService {
+    private static final Logger log = LoggerFactory.getLogger(OrderDeliveryService.class);
+
     private final OrderRepository orders;
     private final DeliveryAssignmentRepository assignments;
     private final OrderStatusHistoryRepository history;
     private final UserRepository users;
-
-    @Autowired(required = false)
-    private AutoDispatchService autoDispatchService;
+    private final ShipperRepository shippers;
+    private final NotificationService notificationService;
 
     public OrderDeliveryService(OrderRepository orders, DeliveryAssignmentRepository assignments,
-                                OrderStatusHistoryRepository history, UserRepository users) {
+                                OrderStatusHistoryRepository history, UserRepository users,
+                                ShipperRepository shippers,
+                                @Autowired(required = false) NotificationService notificationService) {
         this.orders = orders;
         this.assignments = assignments;
         this.history = history;
         this.users = users;
+        this.shippers = shippers;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -71,10 +81,50 @@ public class OrderDeliveryService {
             // Confirming a COD delivery also confirms that cash was collected from the customer.
             // The system has not received this cash from the shipper yet.
             order.setIsCodRemitted(false);
+
+            BigDecimal codAmount = OrderPaymentRules.codAmount(order);
+            if (codAmount != null && codAmount.compareTo(BigDecimal.ZERO) > 0) {
+                shippers.findById(shipperId).ifPresent(shipper -> {
+                    BigDecimal currentDebt = shipper.getCodDebt() != null ? shipper.getCodDebt() : BigDecimal.ZERO;
+                    BigDecimal newDebt = currentDebt.add(codAmount);
+                    shipper.setCodDebt(newDebt);
+                    shippers.save(shipper);
+
+                    // Cảnh báo công nợ COD tiệm cận trần (>= 2.400.000đ = 80% hạn mức 3.000.000đ)
+                    if (notificationService != null && newDebt.compareTo(new BigDecimal("2400000")) >= 0) {
+                        try {
+                            notificationService.createBaseNotification(
+                                    shipper.getUser(),
+                                    "⚠️ Cảnh báo hạn mức công nợ COD",
+                                    String.format("Bạn đang giữ %,d ₫ tiền COD (tiệm cận hạn mức trần 3.000.000 ₫). Vui lòng về trạm nộp tiền để tiếp tục nhận đơn mới.", newDebt.longValue()),
+                                    NotificationType.SYSTEM_ALERT,
+                                    "/shipper/orders/cod-history"
+                            );
+                        } catch (Exception e) {
+                            log.warn("Không thể gửi cảnh báo nợ COD cho Shipper #{}: {}", shipperId, e.getMessage());
+                        }
+                    }
+                });
+            }
         }
         history.save(new OrderStatusHistory(null, order, users.getReferenceById(shipperId),
                 OrderStatus.DELIVERING, OrderStatus.DELIVERED, "Shipper xác nhận giao thành công", null));
         // AvailableBalance and SettledAt are deliberately untouched during the holding period.
+
+        // Gửi thông báo đến Khách hàng khi đơn hàng giao thành công
+        if (notificationService != null && order.getCustomer() != null) {
+            try {
+                notificationService.createBaseNotification(
+                        order.getCustomer(),
+                        "📦 Đơn hàng #" + order.getOrderId() + " đã được giao đến bạn!",
+                        "Shipper đã giao kiện hàng hoa quả tươi đến địa chỉ của bạn. Vui lòng kiểm tra hoa quả và xác nhận 'Đã nhận được hàng' trên hệ thống.",
+                        NotificationType.ORDER_STATUS,
+                        "/orders/" + order.getOrderId()
+                );
+            } catch (Exception e) {
+                log.warn("Không thể gửi thông báo giao hàng cho Khách hàng #{}: {}", order.getCustomer().getUserId(), e.getMessage());
+            }
+        }
     }
 
     @Transactional
@@ -86,19 +136,6 @@ public class OrderDeliveryService {
                 order.getOrderStatus(), order.getOrderStatus(), fullNote, null));
     }
 
-    @Transactional
-    public void handover(Integer orderId, Integer shipperId) {
-        Order order = assignedOrder(orderId, shipperId);
-        history.save(new OrderStatusHistory(null, order, users.getReferenceById(shipperId),
-                order.getOrderStatus(), order.getOrderStatus(), "Shipper đã bàn giao kiện hàng tại trạm tiếp sức ảo", null));
-
-        // Tự động kích hoạt Auto-Dispatch Chặng 2 (Trạm ảo -> Khách hàng)
-        if (autoDispatchService != null) {
-            try {
-                autoDispatchService.autoDispatchLeg2(orderId, shipperId);
-            } catch (Exception ignored) {}
-        }
-    }
 
     private Order assignedOrder(Integer orderId, Integer shipperId) {
         Order order = orders.findLockedById(orderId).orElseThrow(() ->

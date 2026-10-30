@@ -12,9 +12,4 @@ public interface AutoDispatchService {
      */
     Optional<DeliveryAssignment> autoDispatchOrder(Integer orderId);
 
-    /**
-     * Tự động quét và điều phối Shipper chặng 2 (Trạm ảo -> Khách hàng).
-     * Tìm Shipper có khu vực hoạt động trùng với địa chỉ nhận hàng của khách.
-     */
-    Optional<DeliveryAssignment> autoDispatchLeg2(Integer orderId, Integer currentShipperId);
 }

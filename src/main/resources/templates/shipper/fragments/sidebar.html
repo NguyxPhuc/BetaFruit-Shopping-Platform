@@ -25,6 +25,26 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h14v4M4 5a2 2 0 0 0 0 4h16v11H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><path d="M20 12h-5v5h5"/><circle cx="16.5" cy="14.5" r=".6"/></svg>
             <span>Đơn COD đã giao</span>
         </a>
+        <a class="deliverer-sidebar__link" href="/shipper/orders/cod-history" th:href="@{/shipper/orders/cod-history}"
+           th:classappend="${active == 'cod-history'} ? ' deliverer-sidebar__link--active' : ''"
+           th:attr="aria-current=${active == 'cod-history' ? 'page' : null}"
+           aria-label="Ví nợ &amp; Lịch sử COD" title="Ví nợ &amp; Lịch sử COD">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M7 15h4M17 12h.01M3 10h18"/></svg>
+            <span>Ví nợ &amp; Lịch sử COD</span>
+        </a>
+        <a class="deliverer-sidebar__link" href="javascript:void(0)" onclick="toggleDelivererNotifDropdown(event)"
+           aria-label="Thông báo tài xế" title="Thông báo tài xế">
+            <div style="position: relative; display: inline-flex; align-items: center;">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="deliverer-sidebar-badge"
+                      th:if="${globalUnreadCount != null && globalUnreadCount > 0}"
+                      th:text="${globalUnreadCount > 99 ? '99+' : globalUnreadCount}">0</span>
+            </div>
+            <span>Thông báo</span>
+        </a>
     </nav>
 
     <div class="deliverer-sidebar__profile">
@@ -53,6 +73,24 @@
     .deliverer-sidebar__link--active, .deliverer-sidebar__link--active:hover { background: #3671ff; box-shadow: 0 8px 18px rgba(22,68,172,.35); color: #fff; }
     .deliverer-sidebar__link:focus-visible, .deliverer-sidebar__brand:focus-visible { outline: 2px solid #b9d5ff; outline-offset: 4px; }
     .deliverer-sidebar__link svg { width: 20px; height: 20px; flex: 0 0 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .deliverer-sidebar-badge {
+        position: absolute;
+        top: -6px;
+        right: -8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 17px;
+        height: 17px;
+        padding: 0 4px;
+        border-radius: 9999px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1;
+        border: 2px solid #102e5a;
+    }
     .deliverer-sidebar__profile { display: flex; align-items: center; gap: 11px; margin-top: auto; padding: 24px 10px 0; border-top: 1px solid rgba(178,201,229,.16); }
     .deliverer-sidebar__avatar { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%; object-fit: cover; }
     .deliverer-sidebar__avatar--fallback { display: grid; place-items: center; background: #264975; color: #dceaff; }
@@ -63,7 +101,7 @@
     @media (max-width: 700px) {
         .deliverer-sidebar { flex-basis: 72px; width: 72px; padding-inline: 10px; }
         .deliverer-sidebar__brand { margin-inline: 9px; }
-        .deliverer-sidebar__brand > span:last-child, .deliverer-sidebar__link span, .deliverer-sidebar__identity { display: none; }
+        .deliverer-sidebar__brand > span:last-child, .deliverer-sidebar__link span:last-child, .deliverer-sidebar__identity { display: none; }
         .deliverer-sidebar__link { justify-content: center; padding-inline: 0; }
         .deliverer-sidebar__profile { justify-content: center; padding-inline: 0; }
     }

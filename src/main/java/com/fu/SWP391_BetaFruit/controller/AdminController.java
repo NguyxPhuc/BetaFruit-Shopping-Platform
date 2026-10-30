@@ -379,7 +379,7 @@ public class AdminController {
             membershipTierService.createTier(request);
             redirectAttributes.addFlashAttribute("successMessage", "Tạo hạng thành viên mới thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", formatMembershipErrorMessage(e));
         }
         return "redirect:/admin/membership-tiers";
     }
@@ -400,7 +400,7 @@ public class AdminController {
             membershipTierService.updateTier(id, request);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hạng thành viên thành công!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", formatMembershipErrorMessage(e));
         }
         return "redirect:/admin/membership-tiers";
     }
@@ -434,5 +434,19 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể cập nhật gói voucher: " + e.getMessage());
         }
         return "redirect:/admin/membership-tiers";
+    }
+
+    private String formatMembershipErrorMessage(Exception e) {
+        if (e instanceof IllegalArgumentException || e instanceof IllegalStateException) {
+            return e.getMessage();
+        }
+        String msg = e.getMessage() != null ? e.getMessage() : "";
+        if (msg.contains("CHK_Coupon_DiscountValue") || msg.contains("Coupon")) {
+            return "⚠️ Ưu đãi hội viên được cấp qua [⚙️ Gói Voucher]. Giá trị giảm giá của mã ưu đãi phải lớn hơn 0.";
+        }
+        if (msg.contains("constraint") || msg.contains("conflicted") || msg.contains("Duplicate")) {
+            return "⚠️ Dữ liệu không hợp lệ do xung đột quy tắc ràng buộc hệ thống. Vui lòng kiểm tra lại thông tin.";
+        }
+        return e.getMessage();
     }
 }

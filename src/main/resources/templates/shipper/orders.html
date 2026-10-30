@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đơn giao hàng | BetaFruit</title>
     <style th:replace="~{shipper/fragments/sidebar :: sidebar-styles}"></style>
+    <style th:replace="~{shipper/fragments/topbar :: topbar-styles}"></style>
     <style>
         :root { color-scheme: light; }
         *, *::before, *::after { box-sizing: border-box; }
         body { margin: 0; background: #eef8ff; color: #18334c; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
         .deliverer-layout { display: flex; min-height: 100vh; }
-        .deliverer-content { flex: 1; min-width: 0; padding: 47px 5% 48px 4%; }
+        .deliverer-content { flex: 1; min-width: 0; padding: 36px 5% 48px 4%; }
         .page-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; max-width: 1280px; margin-bottom: 28px; }
         .page-heading h1 { margin: 0; color: #173149; font-size: clamp(28px, 3vw, 34px); letter-spacing: -.9px; line-height: 1.2; }
         .page-heading p { margin: 8px 0 0; color: #637f95; font-size: 14px; line-height: 1.5; }
@@ -62,10 +63,34 @@
 <div class="deliverer-layout">
     <aside th:replace="~{shipper/fragments/sidebar :: sidebar('orders')}"></aside>
     <main class="deliverer-content">
-        <header class="page-heading">
-            <div><h1>Đơn giao hàng</h1><p>Theo dõi các đơn được phân công và khoản cần thu từ khách.</p></div>
-            <span class="order-count" th:if="${orderLoadError == null}" th:text="${orders.totalElements} + ' đơn hàng'">0 đơn hàng</span>
-        </header>
+        <header th:replace="~{shipper/fragments/topbar :: topbar('Đơn giao hàng', 'Theo dõi các đơn được phân công và khoản cần thu từ khách.')}"></header>
+
+        <!-- FE-06.4: COD Debt & Quota Card -->
+        <div class="cod-debt-banner" th:if="${codDebt != null}" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: 1.25rem 1.5rem; background: #fff; border-radius: 12px; margin-bottom: 1.5rem; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 48px; height: 48px; border-radius: 10px; background: #fef3c7; color: #b45309; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    💰
+                </div>
+                <div>
+                    <div style="font-size: 0.82rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Tiền mặt COD đang giữ (Công nợ)</div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: #0f172a;" th:text="${#numbers.formatDecimal(codDebt, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;">
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748b;">Hạn mức trần COD: <strong>3.000.000 ₫</strong></div>
+                    <div th:if="${isCodLimitReached}" style="font-size: 0.85rem; color: #dc2626; font-weight: 700;">
+                        ⚠️ Đã chạm trần nợ! Cần nộp tiền COD cho Điều phối viên để tiếp tục nhận đơn mới.
+                    </div>
+                    <div th:unless="${isCodLimitReached}" style="font-size: 0.85rem; color: #16a34a; font-weight: 600;">
+                        ✓ Hạn mức an toàn. Có thể nhận thêm đơn COD.
+                    </div>
+                </div>
+                <a th:href="@{/shipper/orders/cod-history}" style="padding: 0.6rem 1.2rem; background: #102e5a; color: #fff; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 600; white-space: nowrap;">
+                    Ví nợ &amp; Lịch sử nộp &rarr;
+                </a>
+            </div>
+        </div>
 
         <form class="order-filters" method="get" th:action="@{/shipper/orders}">
             <label class="filter-field filter-field--search"><span>Tìm đơn hàng</span>
@@ -142,5 +167,6 @@
         </nav>
     </main>
 </div>
+<script th:replace="~{shipper/fragments/topbar :: topbar-script}"></script>
 </body>
 </html>

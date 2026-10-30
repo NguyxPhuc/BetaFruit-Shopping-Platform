@@ -139,25 +139,26 @@
             <!-- Điều phối vận chuyển (FE-12.3) -->
             <div class="admin-nav-category">Điều phối Vận chuyển</div>
             <ul class="admin-nav mb-3">
-                <li class="admin-nav-item opacity-75">
-                    <a href="javascript:void(0)" class="admin-nav-link pe-none">
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/deliveries/exceptions}" href="/staff/deliveries/exceptions" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'staff-deliveries'} ? 'active' : ''">
                         <i class="bi bi-truck"></i>
-                        <span>Gán đơn cho Shipper</span>
-                        <span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.65rem;">Sắp ra mắt</span>
+                        <span>Điều phối &amp; Gán Shipper</span>
                     </a>
                 </li>
             </ul>
 
             <div class="admin-sidebar-divider"></div>
 
-            <!-- Tài chính vận hành (FE-12.4) -->
+            <!-- Tài chính vận hành (FE-06.4 / FE-12.4) -->
             <div class="admin-nav-category">Tài chính Vận hành</div>
             <ul class="admin-nav">
-                <li class="admin-nav-item opacity-75">
-                    <a href="javascript:void(0)" class="admin-nav-link pe-none">
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/cod-collections}" href="/staff/cod-collections" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'cod-collections'} ? 'active' : ''">
                         <i class="bi bi-cash-stack"></i>
-                        <span>Thu COD & Duyệt Payout</span>
-                        <span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.65rem;">Sắp ra mắt</span>
+                        <span>Thu &amp; Đối soát COD</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle ms-auto" style="font-size: 0.65rem;">Mới</span>
                     </a>
                 </li>
             </ul>

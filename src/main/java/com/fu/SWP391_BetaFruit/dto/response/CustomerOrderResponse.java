@@ -23,7 +23,8 @@ public record CustomerOrderResponse(
         LocalDateTime createdAt,
         boolean canConfirmReceived,
         boolean isSuccess,
-        List<OrderItemResponse> items
+        List<OrderItemResponse> items,
+        List<OrderTimelineStep> timeline
 ) {
     public record OrderItemResponse(
             Integer orderItemId,
@@ -32,5 +33,13 @@ public record CustomerOrderResponse(
             Integer quantity,
             BigDecimal price,
             BigDecimal subtotal
+    ) {}
+
+    public record OrderTimelineStep(
+            String status,
+            String statusLabel,
+            String note,
+            String actor,
+            LocalDateTime timestamp
     ) {}
 }
