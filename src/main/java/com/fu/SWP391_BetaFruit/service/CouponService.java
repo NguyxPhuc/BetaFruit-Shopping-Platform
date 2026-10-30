@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.service;
 
 import com.fu.SWP391_BetaFruit.dto.request.CouponRequest;
+import com.fu.SWP391_BetaFruit.dto.response.CouponDashboardResponse;
 import com.fu.SWP391_BetaFruit.dto.response.CouponUsageResponse;
 import com.fu.SWP391_BetaFruit.entity.Coupon;
 
@@ -37,4 +38,9 @@ public interface CouponService {
     boolean toggleAdminCouponStatus(Integer couponId);
 
     CouponUsageResponse getAdminCouponUsage(Integer couponId, int page, int size);
+
+    // ================= ANALYTICS DASHBOARD METHODS =================
+    CouponDashboardResponse getAdminVoucherDashboardData();
+
+    CouponDashboardResponse getShopVoucherDashboardData(Integer userId);
 }

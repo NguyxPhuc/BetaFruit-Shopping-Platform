@@ -2,7 +2,15 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.CouponRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CouponResponse;
-import com.fu.SWP391_BetaFruit.dto.response.CouponUsageResponse;
+import com.fu.SWP391_BetaFruit.dto.response.*;
+import com.fu.SWP391_BetaFruit.enums.CouponCategory;
+import com.fu.SWP391_BetaFruit.enums.PaymentMethod;
+import com.fu.SWP391_BetaFruit.entity.MembershipTier;
+import com.fu.SWP391_BetaFruit.entity.TierCoupon;
+import com.fu.SWP391_BetaFruit.repository.*;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import com.fu.SWP391_BetaFruit.entity.Coupon;
 import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.entity.Shop;
@@ -32,6 +40,10 @@ public class CouponServiceImpl implements CouponService {
     private final CouponRepository couponRepository;
     private final OrderRepository orderRepository;
     private final ShopRepository shopRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final MembershipTierRepository membershipTierRepository;
+    private final CustomerMembershipRepository customerMembershipRepository;
+    private final TierCouponRepository tierCouponRepository;
 
     // =========================================================================
     // SHOP OWNER METHODS
@@ -512,7 +524,449 @@ public class CouponServiceImpl implements CouponService {
 
         // Usage limit
         if (request.getUsageLimit() == null || request.getUsageLimit() < 1) {
+
             throw new IllegalArgumentException("Số lượt sử dụng tối đa phải từ 1 lượt trở lên.");
         }
+    }
+
+    // =========================================================================
+    // VOUCHER ANALYTICS DASHBOARD IMPLEMENTATIONS
+    // =========================================================================
+
+    @Override
+    @Transactional(readOnly = true)
+    public CouponDashboardResponse getAdminVoucherDashboardData() {
+        // 1. Thống kê số liệu thô cho thẻ Summary
+        BigDecimal rawPlatformDiscount = orderRepository.sumPlatformSponsoredDiscount();
+        BigDecimal rawShopDiscount = orderRepository.sumShopSponsoredDiscount();
+        BigDecimal rawRevenue = orderRepository.sumTotalVoucherRevenue();
+        long voucherOrders = orderRepository.countVoucherOrders();
+        long totalOrders = orderRepository.countTotalValidOrders();
+        BigDecimal rawCostPrice = orderItemRepository.sumTotalCostPriceForVoucherOrders();
+
+        BigDecimal platformDiscount = (rawPlatformDiscount != null) ? rawPlatformDiscount : BigDecimal.ZERO;
+        BigDecimal shopDiscount = (rawShopDiscount != null) ? rawShopDiscount : BigDecimal.ZERO;
+        BigDecimal totalDiscount = platformDiscount.add(shopDiscount);
+        BigDecimal totalRevenue = (rawRevenue != null) ? rawRevenue : BigDecimal.ZERO;
+        BigDecimal totalCost = (rawCostPrice != null) ? rawCostPrice : BigDecimal.ZERO;
+
+        BigDecimal roi = BigDecimal.ZERO;
+        if (totalDiscount.compareTo(BigDecimal.ZERO) > 0) {
+            roi = totalRevenue.divide(totalDiscount, 2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal estimatedGrossProfit = totalRevenue.subtract(totalCost).subtract(totalDiscount);
+        if (estimatedGrossProfit.signum() < 0 && totalRevenue.signum() == 0) {
+            estimatedGrossProfit = BigDecimal.ZERO;
+        }
+
+        BigDecimal voucherOrderRate = BigDecimal.ZERO;
+        if (totalOrders > 0) {
+            voucherOrderRate = BigDecimal.valueOf((double) voucherOrders / totalOrders * 100)
+                    .setScale(1, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal averageOrderValue = BigDecimal.ZERO;
+        BigDecimal averageCustomerSavings = BigDecimal.ZERO;
+        if (voucherOrders > 0) {
+            averageOrderValue = totalRevenue.divide(BigDecimal.valueOf(voucherOrders), 0, RoundingMode.HALF_UP);
+            averageCustomerSavings = totalDiscount.divide(BigDecimal.valueOf(voucherOrders), 0, RoundingMode.HALF_UP);
+        }
+
+        CouponSummaryResponse summary = CouponSummaryResponse.builder()
+                .totalDiscountAmount(totalDiscount)
+                .platformDiscountAmount(platformDiscount)
+                .shopDiscountAmount(shopDiscount)
+                .totalVoucherRevenue(totalRevenue)
+                .returnOnInvestment(roi)
+                .estimatedGrossProfit(estimatedGrossProfit)
+                .voucherOrderCount(voucherOrders)
+                .totalOrderCount(totalOrders)
+                .voucherOrderRate(voucherOrderRate)
+                .averageOrderValue(averageOrderValue)
+                .averageCustomerSavings(averageCustomerSavings)
+                .build();
+
+        // 2. Lấy danh sách toàn bộ đơn có dùng voucher
+        List<Order> orders = orderRepository.findAllVoucherOrders();
+        List<Coupon> allCoupons = couponRepository.findAll();
+
+        // 3. Xây dựng Bảng xếp hạng hiệu quả từng mã (Leaderboard)
+        List<CouponLeaderboardRowResponse> leaderboard = buildLeaderboard(allCoupons, orders);
+
+        // 4. Xây dựng Biểu đồ đường xu hướng theo ngày (Daily Trend)
+        List<CouponDailyTrendResponse> dailyTrends = buildDailyTrends(orders);
+
+        // Chuẩn bị chuỗi JSON để Chart.js vẽ trực tiếp
+        String trendLabelsJson = dailyTrends.stream()
+                .map(d -> "\"" + d.getFormattedDate() + "\"")
+                .collect(Collectors.joining(", ", "[", "]"));
+        String trendRevenueJson = dailyTrends.stream()
+                .map(d -> d.getRevenueTotal().toPlainString())
+                .collect(Collectors.joining(", ", "[", "]"));
+        String trendDiscountJson = dailyTrends.stream()
+                .map(d -> d.getDiscountTotal().toPlainString())
+                .collect(Collectors.joining(", ", "[", "]"));
+
+        // 5. Phân bổ danh mục (Freeship vs Giảm giá quả)
+        CouponCategoryDistributionResponse categoryDistribution = buildCategoryDistribution(orders);
+
+        // 6. Phân bổ phương thức thanh toán (COD vs VNPAY)
+        CouponPaymentMethodResponse paymentMethodDistribution = buildPaymentMethodDistribution(orders);
+
+        // 7. Top 5 hoa quả bán chạy nhất nhờ voucher
+        List<Object[]> rawTopFruits = orderItemRepository.findTopFruitProductsForVoucherOrders();
+        List<CouponTopFruitProductResponse> topFruitProducts = buildTopFruitProducts(rawTopFruits);
+
+        // 8. Báo cáo voucher đặc quyền theo Hạng Hội Viên (TierCoupon)
+        List<CouponTierPerformanceResponse> tierPerformances = buildTierPerformance(orders);
+
+        return CouponDashboardResponse.builder()
+                .summary(summary)
+                .leaderboard(leaderboard)
+                .dailyTrends(dailyTrends)
+                .categoryDistribution(categoryDistribution)
+                .paymentMethodDistribution(paymentMethodDistribution)
+                .topFruitProducts(topFruitProducts)
+                .tierPerformances(tierPerformances)
+                .trendLabelsJson(trendLabelsJson)
+                .trendRevenueJson(trendRevenueJson)
+                .trendDiscountJson(trendDiscountJson)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CouponDashboardResponse getShopVoucherDashboardData(Integer userId) {
+        Shop shop = getShopForUser(userId);
+        Integer shopId = shop.getShopId();
+
+        // 1. Thống kê số liệu thô của Shop
+        BigDecimal rawShopDiscount = orderRepository.sumShopSponsoredDiscountForShop(shopId);
+        BigDecimal rawPlatformDiscount = orderRepository.sumPlatformSponsoredDiscountForShop(shopId);
+        BigDecimal rawRevenue = orderRepository.sumTotalVoucherRevenueForShop(shopId);
+        long voucherOrders = orderRepository.countVoucherOrdersForShop(shopId);
+        long totalOrders = orderRepository.countTotalValidOrdersForShop(shopId);
+        BigDecimal rawCostPrice = orderItemRepository.sumTotalCostPriceForShopVoucherOrders(shopId);
+
+        BigDecimal shopDiscount = (rawShopDiscount != null) ? rawShopDiscount : BigDecimal.ZERO;
+        BigDecimal platformDiscount = (rawPlatformDiscount != null) ? rawPlatformDiscount : BigDecimal.ZERO;
+        BigDecimal totalDiscount = shopDiscount.add(platformDiscount);
+        BigDecimal totalRevenue = (rawRevenue != null) ? rawRevenue : BigDecimal.ZERO;
+        BigDecimal totalCost = (rawCostPrice != null) ? rawCostPrice : BigDecimal.ZERO;
+
+        BigDecimal roi = BigDecimal.ZERO;
+        if (shopDiscount.compareTo(BigDecimal.ZERO) > 0) {
+            roi = totalRevenue.divide(shopDiscount, 2, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal estimatedGrossProfit = totalRevenue.subtract(totalCost).subtract(shopDiscount);
+        if (estimatedGrossProfit.signum() < 0 && totalRevenue.signum() == 0) {
+            estimatedGrossProfit = BigDecimal.ZERO;
+        }
+
+        BigDecimal voucherOrderRate = BigDecimal.ZERO;
+        if (totalOrders > 0) {
+            voucherOrderRate = BigDecimal.valueOf((double) voucherOrders / totalOrders * 100)
+                    .setScale(1, RoundingMode.HALF_UP);
+        }
+
+        BigDecimal averageOrderValue = BigDecimal.ZERO;
+        BigDecimal averageCustomerSavings = BigDecimal.ZERO;
+        if (voucherOrders > 0) {
+            averageOrderValue = totalRevenue.divide(BigDecimal.valueOf(voucherOrders), 0, RoundingMode.HALF_UP);
+            averageCustomerSavings = totalDiscount.divide(BigDecimal.valueOf(voucherOrders), 0, RoundingMode.HALF_UP);
+        }
+
+        CouponSummaryResponse summary = CouponSummaryResponse.builder()
+                .totalDiscountAmount(totalDiscount)
+                .platformDiscountAmount(platformDiscount)
+                .shopDiscountAmount(shopDiscount)
+                .totalVoucherRevenue(totalRevenue)
+                .returnOnInvestment(roi)
+                .estimatedGrossProfit(estimatedGrossProfit)
+                .voucherOrderCount(voucherOrders)
+                .totalOrderCount(totalOrders)
+                .voucherOrderRate(voucherOrderRate)
+                .averageOrderValue(averageOrderValue)
+                .averageCustomerSavings(averageCustomerSavings)
+                .build();
+
+        // 2. Lấy danh sách đơn của riêng Shop
+        List<Order> orders = orderRepository.findAllVoucherOrdersByShopId(shopId);
+        List<Coupon> shopCoupons = couponRepository.findByShop_ShopId(shopId, Pageable.unpaged()).getContent();
+
+        // 3. Leaderboard riêng của shop
+        List<CouponLeaderboardRowResponse> leaderboard = buildLeaderboard(shopCoupons, orders);
+
+        // 4. Daily Trends riêng của shop
+        List<CouponDailyTrendResponse> dailyTrends = buildDailyTrends(orders);
+
+        String trendLabelsJson = dailyTrends.stream()
+                .map(d -> "\"" + d.getFormattedDate() + "\"")
+                .collect(Collectors.joining(", ", "[", "]"));
+        String trendRevenueJson = dailyTrends.stream()
+                .map(d -> d.getRevenueTotal().toPlainString())
+                .collect(Collectors.joining(", ", "[", "]"));
+        String trendDiscountJson = dailyTrends.stream()
+                .map(d -> d.getDiscountTotal().toPlainString())
+                .collect(Collectors.joining(", ", "[", "]"));
+
+        // 5. Phân bổ danh mục
+        CouponCategoryDistributionResponse categoryDistribution = buildCategoryDistribution(orders);
+
+        // 6. Phân bổ phương thức thanh toán
+        CouponPaymentMethodResponse paymentMethodDistribution = buildPaymentMethodDistribution(orders);
+
+        // 7. Top 5 hoa quả bán chạy của shop
+        List<Object[]> rawTopFruits = orderItemRepository.findTopFruitProductsForShopVoucherOrders(shopId);
+        List<CouponTopFruitProductResponse> topFruitProducts = buildTopFruitProducts(rawTopFruits);
+
+        return CouponDashboardResponse.builder()
+                .summary(summary)
+                .leaderboard(leaderboard)
+                .dailyTrends(dailyTrends)
+                .categoryDistribution(categoryDistribution)
+                .paymentMethodDistribution(paymentMethodDistribution)
+                .topFruitProducts(topFruitProducts)
+                .tierPerformances(Collections.emptyList()) // Shop không quản lý tier toàn sàn
+                .trendLabelsJson(trendLabelsJson)
+                .trendRevenueJson(trendRevenueJson)
+                .trendDiscountJson(trendDiscountJson)
+                .build();
+    }
+
+    // =========================================================================
+    // PRIVATE HELPER METHODS FOR DASHBOARD COMPUTATIONS
+    // =========================================================================
+
+    private List<CouponLeaderboardRowResponse> buildLeaderboard(List<Coupon> coupons, List<Order> orders) {
+        if (coupons == null || coupons.isEmpty()) return Collections.emptyList();
+
+        Map<Integer, List<Order>> ordersByCouponId = orders.stream()
+                .filter(o -> o.getCoupon() != null)
+                .collect(Collectors.groupingBy(o -> o.getCoupon().getCouponId()));
+
+        List<CouponLeaderboardRowResponse> rows = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        for (Coupon c : coupons) {
+            List<Order> cOrders = ordersByCouponId.getOrDefault(c.getCouponId(), Collections.emptyList());
+
+            BigDecimal discountTotal = cOrders.stream()
+                    .map(Order::getDiscountAmount)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal revenueTotal = cOrders.stream()
+                    .map(Order::getTotalAmount)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal roi = BigDecimal.ZERO;
+            if (discountTotal.compareTo(BigDecimal.ZERO) > 0) {
+                roi = revenueTotal.divide(discountTotal, 2, RoundingMode.HALF_UP);
+            }
+
+            int used = (c.getUsedCount() != null) ? c.getUsedCount() : 0;
+            int limit = (c.getUsageLimit() != null) ? c.getUsageLimit() : 0;
+            int percent = (limit > 0) ? Math.min(100, (int) Math.round(((double) used / limit) * 100)) : 0;
+
+            String sponsor = (c.getShop() == null) ? "Sàn BetaFruit" : c.getShop().getShopName();
+            String category = (c.getCouponCategory() == CouponCategory.SHIPPING) ? "Vận chuyển (Freeship)" : "Sản phẩm";
+
+            boolean expired = c.getEndDate() != null && now.isAfter(c.getEndDate());
+            boolean outOfStock = limit > 0 && used >= limit;
+
+            String status = "Đang chạy";
+            String badge = "bg-success";
+            if (!Boolean.TRUE.equals(c.getIsActive())) {
+                status = "Tạm dừng";
+                badge = "bg-secondary";
+            } else if (expired) {
+                status = "Hết hạn";
+                badge = "bg-dark";
+            } else if (outOfStock) {
+                status = "Hết lượt";
+                badge = "bg-danger";
+            }
+
+            rows.add(CouponLeaderboardRowResponse.builder()
+                    .couponId(c.getCouponId())
+                    .couponCode(c.getCouponCode())
+                    .sponsorType(sponsor)
+                    .categoryName(category)
+                    .usedCount(used)
+                    .usageLimit(limit)
+                    .usagePercentage(percent)
+                    .discountTotal(discountTotal)
+                    .revenueTotal(revenueTotal)
+                    .returnOnInvestment(roi)
+                    .performanceStatus(status)
+                    .statusBadgeClass(badge)
+                    .build());
+        }
+
+        // Sắp xếp: Ưu tiên mã có doanh thu cao nhất lên đầu
+        rows.sort((a, b) -> b.getRevenueTotal().compareTo(a.getRevenueTotal()));
+        return rows;
+    }
+
+    private List<CouponDailyTrendResponse> buildDailyTrends(List<Order> orders) {
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM");
+        Map<LocalDate, List<Order>> ordersByDate = new HashMap<>();
+
+        // Khởi tạo sẵn 14 ngày gần nhất để biểu đồ không bị đứt đoạn
+        List<LocalDate> dateList = new ArrayList<>();
+        for (int i = 13; i >= 0; i--) {
+            LocalDate d = today.minusDays(i);
+            dateList.add(d);
+            ordersByDate.put(d, new ArrayList<>());
+        }
+
+        // Nhóm các đơn theo ngày
+        for (Order o : orders) {
+            ordersByDate.computeIfAbsent(today, k -> new ArrayList<>()).add(o);
+        }
+
+        List<CouponDailyTrendResponse> result = new ArrayList<>();
+        for (LocalDate d : dateList) {
+            List<Order> dayOrders = ordersByDate.getOrDefault(d, Collections.emptyList());
+            BigDecimal rev = dayOrders.stream().map(Order::getTotalAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal disc = dayOrders.stream().map(Order::getDiscountAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            result.add(CouponDailyTrendResponse.builder()
+                    .orderDate(d)
+                    .formattedDate(d.format(dtf))
+                    .revenueTotal(rev)
+                    .discountTotal(disc)
+                    .orderCount(dayOrders.size())
+                    .build());
+        }
+        return result;
+    }
+
+    private CouponCategoryDistributionResponse buildCategoryDistribution(List<Order> orders) {
+        BigDecimal shippingDisc = BigDecimal.ZERO;
+        BigDecimal productDisc = BigDecimal.ZERO;
+        long shippingCount = 0;
+        long productCount = 0;
+
+        for (Order o : orders) {
+            if (o.getCoupon() != null) {
+                BigDecimal disc = (o.getDiscountAmount() != null) ? o.getDiscountAmount() : BigDecimal.ZERO;
+                if (o.getCoupon().getCouponCategory() == CouponCategory.SHIPPING) {
+                    shippingDisc = shippingDisc.add(disc);
+                    shippingCount++;
+                } else {
+                    productDisc = productDisc.add(disc);
+                    productCount++;
+                }
+            }
+        }
+
+        return CouponCategoryDistributionResponse.builder()
+                .shippingDiscountTotal(shippingDisc)
+                .productDiscountTotal(productDisc)
+                .shippingOrderCount(shippingCount)
+                .productOrderCount(productCount)
+                .build();
+    }
+
+    private CouponPaymentMethodResponse buildPaymentMethodDistribution(List<Order> orders) {
+        long codCount = 0;
+        long onlineCount = 0;
+        BigDecimal codRev = BigDecimal.ZERO;
+        BigDecimal onlineRev = BigDecimal.ZERO;
+
+        for (Order o : orders) {
+            BigDecimal rev = (o.getTotalAmount() != null) ? o.getTotalAmount() : BigDecimal.ZERO;
+            if (o.getPaymentMethod() == PaymentMethod.COD) {
+                codCount++;
+                codRev = codRev.add(rev);
+            } else {
+                onlineCount++;
+                onlineRev = onlineRev.add(rev);
+            }
+        }
+
+        return CouponPaymentMethodResponse.builder()
+                .codOrderCount(codCount)
+                .onlineOrderCount(onlineCount)
+                .codRevenueTotal(codRev)
+                .onlineRevenueTotal(onlineRev)
+                .build();
+    }
+
+    private List<CouponTopFruitProductResponse> buildTopFruitProducts(List<Object[]> rawList) {
+        if (rawList == null || rawList.isEmpty()) return Collections.emptyList();
+
+        List<CouponTopFruitProductResponse> list = new ArrayList<>();
+        int count = 0;
+        for (Object[] row : rawList) {
+            if (count >= 5) break; // Chỉ lấy top 5 quả
+            String pName = (row[0] != null) ? row[0].toString() : "Trái cây";
+            long qty = (row[1] instanceof Number) ? ((Number) row[1]).longValue() : 0L;
+            BigDecimal rev = (row[2] instanceof BigDecimal) ? (BigDecimal) row[2]
+                    : (row[2] instanceof Number) ? BigDecimal.valueOf(((Number) row[2]).doubleValue()) : BigDecimal.ZERO;
+            long oCount = (row[3] instanceof Number) ? ((Number) row[3]).longValue() : 0L;
+
+            list.add(CouponTopFruitProductResponse.builder()
+                    .productName(pName)
+                    .totalQuantitySold(qty)
+                    .totalRevenue(rev)
+                    .orderCount(oCount)
+                    .build());
+            count++;
+        }
+        return list;
+    }
+
+    private List<CouponTierPerformanceResponse> buildTierPerformance(List<Order> orders) {
+        List<MembershipTier> tiers = membershipTierRepository.findAllByOrderByMinSpentRequiredAsc();
+        if (tiers == null || tiers.isEmpty()) return Collections.emptyList();
+
+        List<CouponTierPerformanceResponse> result = new ArrayList<>();
+
+        for (MembershipTier tier : tiers) {
+            long members = customerMembershipRepository.countByTier_TierId(tier.getTierId());
+            List<TierCoupon> tierCoupons = tierCouponRepository.findByTier_TierId(tier.getTierId());
+
+            Set<Integer> couponIds = (tierCoupons != null)
+                    ? tierCoupons.stream().map(tc -> tc.getCoupon().getCouponId()).collect(Collectors.toSet())
+                    : Collections.emptySet();
+
+            long usedCount = 0;
+            BigDecimal revenue = BigDecimal.ZERO;
+
+            if (!couponIds.isEmpty()) {
+                for (Order o : orders) {
+                    if (o.getCoupon() != null && couponIds.contains(o.getCoupon().getCouponId())) {
+                        usedCount++;
+                        if (o.getTotalAmount() != null) {
+                            revenue = revenue.add(o.getTotalAmount());
+                        }
+                    }
+                }
+            }
+
+            String badge = "bg-secondary";
+            String tName = tier.getTierName() != null ? tier.getTierName().toLowerCase() : "";
+            if (tName.contains("bạc") || tName.contains("silver")) badge = "bg-secondary";
+            else if (tName.contains("vàng") || tName.contains("gold")) badge = "bg-warning text-dark";
+            else if (tName.contains("kim cương") || tName.contains("diamond")) badge = "bg-info text-dark";
+            else if (tName.contains("đồng") || tName.contains("bronze")) badge = "bg-dark";
+
+            result.add(CouponTierPerformanceResponse.builder()
+                    .tierId(tier.getTierId())
+                    .tierName(tier.getTierName())
+                    .memberCount(members)
+                    .usedVoucherCount(usedCount)
+                    .revenueTotal(revenue)
+                    .tierBadgeClass(badge)
+                    .build());
+        }
+        return result;
     }
 }

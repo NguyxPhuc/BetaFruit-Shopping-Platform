@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'coupons', ~{::content})}">
+<head>
+    <title>Thống Kê Hiệu Quả Mã Giảm Giá | BetaFruit Shop</title>
+</head>
+<body class="shop-theme">
+
+<div th:fragment="content">
+    <style>
+        :root {
+            --fruit-orange: #ea580c;
+            --fruit-orange-hover: #c2410c;
+            --fruit-light: #fff7ed;
+            --fruit-border: #fed7aa;
+        }
+        .page-container {
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .kpi-card {
+            border-radius: 12px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+        }
+        .coupon-code-badge {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border: 1px dashed #cbd5e1;
+            display: inline-block;
+        }
+        .chart-container-card {
+            border-radius: 12px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+        .rank-badge {
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .rank-1 { background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+        .rank-2 { background-color: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; }
+        .rank-3 { background-color: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+        .rank-other { background-color: #f1f5f9; color: #64748b; }
+        .progress-thin {
+            height: 6px;
+            border-radius: 4px;
+            background-color: #e2e8f0;
+        }
+        .btn-fruit {
+            background-color: var(--fruit-orange);
+            color: #ffffff;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            padding: 0.55rem 1.15rem;
+            transition: all 0.2s;
+        }
+        .btn-fruit:hover {
+            background-color: var(--fruit-orange-hover);
+            color: #ffffff;
+        }
+    </style>
+
+    <main class="page-container py-3">
+
+        <!-- Breadcrumb & Tiêu đề -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 text-muted" style="font-size: 0.85rem;">
+                        <li class="breadcrumb-item"><a th:href="@{/shop/coupons}" class="text-decoration-none text-muted">Mã giảm giá</a></li>
+                        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Dashboard Thống Kê</li>
+                    </ol>
+                </nav>
+                <h1 class="h3 fw-bold text-dark mb-0">
+                    <i class="bi bi-graph-up-arrow text-warning me-2"></i>Thống Kê Chi Phí & Hiệu Quả Mã Khuyến Mãi
+                </h1>
+                <p class="text-muted small mb-0 mt-1">Phân tích chuyên sâu doanh thu bán hoa quả kích hoạt nhờ mã, chi phí tự trợ giá của shop và tỷ suất lợi nhuận ROI.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/shop/coupons}" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 shadow-sm bg-white">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Danh sách mã</span>
+                </a>
+                <a th:href="@{/shop/coupons/create}" class="btn btn-fruit d-inline-flex align-items-center gap-2 shadow-sm">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Tạo mã mới</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 1. TỔNG HỢP CHỈ SỐ KINH DOANH (KPI OVERVIEW) -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div class="row g-3 mb-4">
+            <!-- KPI 1: Doanh thu từ đơn có mã -->
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="kpi-card border-start border-warning border-4">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="text-secondary small fw-semibold">Doanh Thu Từ Đơn Có Mã</span>
+                            <h4 class="fw-bold text-dark mt-1 mb-0"
+                                th:text="${#numbers.formatDecimal(dashboard.summary.totalVoucherRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</h4>
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-receipt me-1 text-warning"></i>
+                                Doanh số bán hàng khi khách dùng mã của shop
+                            </div>
+                        </div>
+                        <div class="kpi-icon bg-warning-subtle text-warning">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 2: Tổng chi phí giảm giá cửa hàng tự tài trợ -->
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="kpi-card border-start border-danger border-4">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="text-secondary small fw-semibold">Chi Phí Shop Tự Tài Trợ</span>
+                            <h4 class="fw-bold text-danger mt-1 mb-0"
+                                th:text="${#numbers.formatDecimal(dashboard.summary.shopDiscountAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</h4>
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-tag-fill me-1 text-danger"></i>
+                                Tổng tiền giảm giá chiết khấu cho khách
+                            </div>
+                        </div>
+                        <div class="kpi-icon bg-danger-subtle text-danger">
+                            <i class="bi bi-piggy-bank"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 3: Tỷ suất sinh lời ROI -->
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="kpi-card border-start border-success border-4">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="text-secondary small fw-semibold">Hiệu Suất Sinh Lời (ROI)</span>
+                            <div class="d-flex align-items-baseline gap-2 mt-1 mb-0">
+                                <h4 class="fw-bold text-success mb-0"
+                                    th:text="${#numbers.formatDecimal(dashboard.summary.returnOnInvestment, 1, 2)} + ' lần'">0.00 lần</h4>
+                                <span th:if="${dashboard.summary.returnOnInvestment >= 5.0}" class="badge bg-success-subtle text-success border border-success-subtle">Rất cao</span>
+                                <span th:if="${dashboard.summary.returnOnInvestment >= 3.0 and dashboard.summary.returnOnInvestment < 5.0}" class="badge bg-primary-subtle text-primary border border-primary-subtle">Tốt</span>
+                                <span th:if="${dashboard.summary.returnOnInvestment >= 1.5 and dashboard.summary.returnOnInvestment < 3.0}" class="badge bg-warning-subtle text-warning border border-warning-subtle">Trung bình</span>
+                                <span th:if="${dashboard.summary.returnOnInvestment < 1.5}" class="badge bg-danger-subtle text-danger border border-danger-subtle">Cần tối ưu</span>
+                            </div>
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-arrow-repeat me-1 text-success"></i>
+                                1đ chi phí mang lại <strong th:text="${#numbers.formatDecimal(dashboard.summary.returnOnInvestment, 1, 2)}">0</strong>đ doanh thu
+                            </div>
+                        </div>
+                        <div class="kpi-icon bg-success-subtle text-success">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 4: Lợi nhuận gộp ước tính -->
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="kpi-card border-start border-info border-4">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="text-secondary small fw-semibold">Lợi Nhuận Gộp Ước Tính</span>
+                            <h4 class="fw-bold text-info mt-1 mb-0"
+                                th:text="${#numbers.formatDecimal(dashboard.summary.estimatedGrossProfit, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</h4>
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-wallet2 me-1 text-info"></i>
+                                Doanh thu trừ giá vốn nhập hàng & tiền giảm giá
+                            </div>
+                        </div>
+                        <div class="kpi-icon bg-info-subtle text-info">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 5: Số đơn có mã & Tỷ lệ thâm nhập -->
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="kpi-card border-start border-primary border-4">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="text-secondary small fw-semibold">Số Đơn Áp Dụng Mã</span>
+                            <div class="d-flex align-items-baseline gap-2 mt-1 mb-0">
+                                <h4 class="fw-bold text-dark mb-0"
+                                    th:text="${#numbers.formatDecimal(dashboard.summary.voucherOrderCount, 0, 'COMMA', 0, 'POINT')} + ' đơn'">0 đơn</h4>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold"
+                                      th:text="${#numbers.formatDecimal(dashboard.summary.voucherOrderRate, 1, 1)} + '% đơn shop'">0%</span>
+                            </div>
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-bag-check-fill me-1 text-primary"></i>
+                                Trên tổng số <strong th:text="${dashboard.summary.totalOrderCount}">0</strong> đơn hàng của shop
+                            </div>
+                        </div>
+                        <div class="kpi-icon bg-primary-subtle text-primary">
+                            <i class="bi bi-cart-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 6: Giá trị đơn & Tiết kiệm trung bình -->
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="kpi-card border-start border-secondary border-4">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="text-secondary small fw-semibold">Giá Trị Đơn Trung Bình (AOV)</span>
+                            <h4 class="fw-bold text-dark mt-1 mb-0"
+                                th:text="${#numbers.formatDecimal(dashboard.summary.averageOrderValue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</h4>
+                            <div class="text-muted small mt-2">
+                                <i class="bi bi-stars me-1 text-secondary"></i>
+                                Khách tiết kiệm: <strong class="text-success" th:text="${#numbers.formatDecimal(dashboard.summary.averageCustomerSavings, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong> / đơn
+                            </div>
+                        </div>
+                        <div class="kpi-icon bg-secondary-subtle text-secondary">
+                            <i class="bi bi-bar-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 2. BIỂU ĐỒ (CHARTS) -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div class="row g-3 mb-4">
+            <!-- Line Chart 14 ngày -->
+            <div class="col-12 col-lg-8">
+                <div class="card chart-container-card shadow-sm p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">Xu Hướng Doanh Thu & Chi Phí Khuyến Mãi</h5>
+                            <p class="text-secondary small mb-0">14 ngày gần nhất của cửa hàng</p>
+                        </div>
+                        <div class="badge bg-light text-dark border px-2.5 py-1.5">
+                            <i class="bi bi-calendar3 me-1"></i> 14 ngày qua
+                        </div>
+                    </div>
+                    <div style="position: relative; height: 310px;">
+                        <canvas id="shopTrendLineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Donut Charts: Phân loại & Thanh toán -->
+            <div class="col-12 col-lg-4">
+                <div class="card chart-container-card shadow-sm p-4 h-100">
+                    <h5 class="fw-bold text-dark mb-1">Cơ Cấu Khuyến Mãi</h5>
+                    <p class="text-secondary small mb-3">Tỷ trọng tiền giảm theo loại mã & thanh toán</p>
+
+                    <ul class="nav nav-pills nav-fill mb-3 bg-light p-1 rounded-2" id="shopChartTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active py-1 small fw-semibold" id="shop-category-tab" data-bs-toggle="pill" data-bs-target="#shop-category-pane" type="button" role="tab">
+                                Loại Khuyến Mãi
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-1 small fw-semibold" id="shop-payment-tab" data-bs-toggle="pill" data-bs-target="#shop-payment-pane" type="button" role="tab">
+                                Thanh Toán
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="shopChartTabContent">
+                        <!-- Tab 1: Loại khuyến mãi -->
+                        <div class="tab-pane fade show active" id="shop-category-pane" role="tabpanel">
+                            <div style="position: relative; height: 210px;">
+                                <canvas id="shopCategoryDonutChart"></canvas>
+                            </div>
+                            <div class="row g-2 mt-2 pt-2 border-top text-center small">
+                                <div class="col-6">
+                                    <span class="d-block text-muted">Freeship Vận Chuyển</span>
+                                    <strong class="text-success" th:text="${#numbers.formatDecimal(dashboard.categoryDistribution.shippingDiscountTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+                                </div>
+                                <div class="col-6">
+                                    <span class="d-block text-muted">Giảm Giá Đơn Hàng</span>
+                                    <strong class="text-warning" th:text="${#numbers.formatDecimal(dashboard.categoryDistribution.productDiscountTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Phương thức thanh toán -->
+                        <div class="tab-pane fade" id="shop-payment-pane" role="tabpanel">
+                            <div style="position: relative; height: 210px;">
+                                <canvas id="shopPaymentDonutChart"></canvas>
+                            </div>
+                            <div class="row g-2 mt-2 pt-2 border-top text-center small">
+                                <div class="col-6">
+                                    <span class="d-block text-muted">Tiền mặt (COD)</span>
+                                    <strong class="text-secondary" th:text="${#numbers.formatDecimal(dashboard.paymentMethodDistribution.codRevenueTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+                                </div>
+                                <div class="col-6">
+                                    <span class="d-block text-muted">Ví điện tử / VNPAY</span>
+                                    <strong class="text-info" th:text="${#numbers.formatDecimal(dashboard.paymentMethodDistribution.onlineRevenueTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 3. BẢNG XẾP HẠNG MÃ GIẢM GIÁ CỦA CỬA HÀNG -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card chart-container-card shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-trophy-fill text-warning me-2"></i>Bảng Hiệu Quả Từng Mã Khuyến Mãi Của Shop
+                    </h5>
+                    <p class="text-secondary small mb-0">Đo lường số tiền giảm, doanh thu mang lại và tỷ suất sinh lời</p>
+                </div>
+                <span class="badge bg-light text-secondary border fw-medium" th:text="'Tổng ' + ${#lists.size(dashboard.leaderboard)} + ' mã'">0 mã</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                    <tr>
+                        <th class="text-center" style="width: 60px; font-size: 0.8rem; color: #64748b;">Hạng</th>
+                        <th style="font-size: 0.8rem; color: #64748b;">Mã Voucher</th>
+                        <th style="font-size: 0.8rem; color: #64748b;">Loại Ưu Đãi</th>
+                        <th style="min-width: 140px; font-size: 0.8rem; color: #64748b;">Lượt Dùng / Giới Hạn</th>
+                        <th class="text-end" style="font-size: 0.8rem; color: #64748b;">Tiền Shop Giảm</th>
+                        <th class="text-end" style="font-size: 0.8rem; color: #64748b;">Doanh Thu Thu Về</th>
+                        <th class="text-center" style="font-size: 0.8rem; color: #64748b;">ROI</th>
+                        <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Trạng Thái</th>
+                        <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Chi Tiết</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(dashboard.leaderboard)}">
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                            Cửa hàng chưa có dữ liệu đơn hàng nào sử dụng mã giảm giá.
+                        </td>
+                    </tr>
+                    <tr th:each="row, iter : ${dashboard.leaderboard}">
+                        <td class="text-center">
+                            <span class="rank-badge"
+                                  th:classappend="${iter.count == 1 ? 'rank-1' : (iter.count == 2 ? 'rank-2' : (iter.count == 3 ? 'rank-3' : 'rank-other'))}"
+                                  th:text="${iter.count}">1</span>
+                        </td>
+                        <td>
+                            <span class="coupon-code-badge" th:text="${row.couponCode}">SHOP10</span>
+                        </td>
+                        <td>
+                            <span class="small fw-semibold text-dark" th:text="${row.categoryName}">Giảm Giá</span>
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span th:text="${row.usedCount} + ' / ' + (${row.usageLimit > 0} ? ${row.usageLimit} : '∞')">0 / 100</span>
+                                <span class="fw-bold text-dark" th:text="${#numbers.formatDecimal(row.usagePercentage, 1, 0)} + '%'">0%</span>
+                            </div>
+                            <div class="progress progress-thin">
+                                <div class="progress-bar bg-warning" role="progressbar"
+                                     th:style="'width: ' + ${row.usagePercentage > 100 ? 100 : row.usagePercentage} + '%;'">
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end fw-semibold text-danger"
+                            th:text="${#numbers.formatDecimal(row.discountTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                        <td class="text-end fw-bold text-dark"
+                            th:text="${#numbers.formatDecimal(row.revenueTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                        <td class="text-center">
+                            <span class="badge"
+                                  th:classappend="${row.returnOnInvestment >= 5.0 ? 'bg-success text-white' : (row.returnOnInvestment >= 3.0 ? 'bg-primary text-white' : (row.returnOnInvestment >= 1.5 ? 'bg-warning text-dark' : 'bg-secondary text-white'))}"
+                                  th:text="${#numbers.formatDecimal(row.returnOnInvestment, 1, 1)} + 'x'">0.0x</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge" th:classappend="${row.statusBadgeClass}" th:text="${row.performanceStatus}">Đang chạy</span>
+                        </td>
+                        <td class="text-center">
+                            <a th:href="@{/shop/coupons/{id}/usage(id=${row.couponId})}" class="btn btn-sm btn-outline-warning text-dark" title="Xem lịch sử đơn">
+                                <i class="bi bi-receipt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- 4. TOP HOA QUẢ BÁN CHẠY NHỜ VOUCHER CỦA SHOP -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div class="card chart-container-card shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="bi bi-basket2-fill text-warning me-2"></i>Top Hoa Quả Bán Chạy Nhất Nhờ Áp Dụng Mã Của Shop
+                    </h5>
+                    <span class="text-secondary small">Những mặt hàng kích thích sức mua mạnh nhất khi được cửa hàng giảm giá</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                        <tr>
+                            <th class="ps-3" style="font-size: 0.8rem; color: #64748b;">Sản Phẩm Hoa Quả</th>
+                            <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Số Lượng Đã Bán</th>
+                            <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Số Đơn Áp Mã</th>
+                            <th class="text-end pe-3" style="font-size: 0.8rem; color: #64748b;">Doanh Thu Thu Về</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(dashboard.topFruitProducts)}">
+                            <td colspan="4" class="text-center py-4 text-muted small">Cửa hàng chưa có dữ liệu sản phẩm nào bán qua mã giảm giá.</td>
+                        </tr>
+                        <tr th:each="fruit : ${dashboard.topFruitProducts}">
+                            <td class="ps-3">
+                                <div class="fw-semibold text-dark" th:text="${fruit.productName}">Tên hoa quả</div>
+                            </td>
+                            <td class="text-center fw-bold text-dark" th:text="${fruit.totalQuantitySold} + ' kg/hộp'">0</td>
+                            <td class="text-center text-muted small" th:text="${fruit.orderCount} + ' đơn'">0 đơn</td>
+                            <td class="text-end pe-3 fw-bold text-success"
+                                th:text="${#numbers.formatDecimal(fruit.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- CHART.JS INTEGRATION -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            const trendLabels = JSON.parse(/*[[${dashboard.trendLabelsJson}]]*/ '[]');
+            const trendRevenue = JSON.parse(/*[[${dashboard.trendRevenueJson}]]*/ '[]');
+            const trendDiscount = JSON.parse(/*[[${dashboard.trendDiscountJson}]]*/ '[]');
+
+            const shippingDiscount = /*[[${dashboard.categoryDistribution.shippingDiscountTotal}]]*/ 0;
+            const productDiscount = /*[[${dashboard.categoryDistribution.productDiscountTotal}]]*/ 0;
+
+            const codRev = /*[[${dashboard.paymentMethodDistribution.codRevenueTotal}]]*/ 0;
+            const onlineRev = /*[[${dashboard.paymentMethodDistribution.onlineRevenueTotal}]]*/ 0;
+
+            const formatVND = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+
+            // 1. Line Chart Xu Hướng Shop
+            const trendCtx = document.getElementById('shopTrendLineChart');
+            if (trendCtx) {
+                new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [
+                            {
+                                label: 'Doanh thu từ đơn có mã',
+                                data: trendRevenue,
+                                borderColor: '#ea580c',
+                                backgroundColor: 'rgba(234, 88, 12, 0.08)',
+                                fill: true,
+                                tension: 0.35,
+                                borderWidth: 2.5,
+                                pointRadius: 3,
+                                pointHoverRadius: 6
+                            },
+                            {
+                                label: 'Chi phí shop tự giảm giá',
+                                data: trendDiscount,
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                                fill: true,
+                                tension: 0.35,
+                                borderWidth: 2,
+                                borderDash: [4, 4],
+                                pointRadius: 3,
+                                pointHoverRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    font: { size: 12, family: "'Plus Jakarta Sans', sans-serif" }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return context.dataset.label + ': ' + formatVND(context.parsed.y);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        if (value >= 1000000) return (value / 1000000) + ' Tr';
+                                        if (value >= 1000) return (value / 1000) + ' K';
+                                        return value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Donut Chart Loại Khuyến Mãi
+            const catCtx = document.getElementById('shopCategoryDonutChart');
+            if (catCtx) {
+                const totalCat = (shippingDiscount || 0) + (productDiscount || 0);
+                new Chart(catCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Freeship Vận Chuyển', 'Giảm Giá Đơn Hàng'],
+                        datasets: [{
+                            data: totalCat === 0 ? [1, 1] : [shippingDiscount, productDiscount],
+                            backgroundColor: ['#10b981', '#ea580c'],
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) {
+                                        return ctx.label + ': ' + formatVND(ctx.raw);
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            }
+
+            // 3. Donut Chart Thanh Toán
+            const payCtx = document.getElementById('shopPaymentDonutChart');
+            if (payCtx) {
+                const totalPay = (codRev || 0) + (onlineRev || 0);
+                new Chart(payCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Tiền mặt (COD)', 'VNPAY / Ví điện tử'],
+                        datasets: [{
+                            data: totalPay === 0 ? [1, 1] : [codRev, onlineRev],
+                            backgroundColor: ['#64748b', '#06b6d4'],
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) {
+                                        return ctx.label + ': ' + formatVND(ctx.raw);
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            }
+        });
+    </script>
+</div>
+</body>
+</html>

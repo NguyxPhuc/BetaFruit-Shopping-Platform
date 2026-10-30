@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.CouponRequest;
+import com.fu.SWP391_BetaFruit.dto.response.CouponDashboardResponse;
 import com.fu.SWP391_BetaFruit.dto.response.CouponUsageResponse;
 import com.fu.SWP391_BetaFruit.entity.Coupon;
 import com.fu.SWP391_BetaFruit.enums.CouponCategory;
@@ -259,6 +260,25 @@ public class ShopCouponController {
             return "shop/coupons/usage";
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/shop/coupons";
+        }
+    }
+    // =========================================================================
+    // 8. DASHBOARD THỐNG KÊ CHI PHÍ & HIỆU QUẢ VOUCHER (SHOP)
+    // URL: /shop/coupons/dashboard
+    // =========================================================================
+    @GetMapping("/dashboard")
+    public String viewDashboard(HttpSession session, Model model) {
+        Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (userId == null) {
+            return "redirect:/auth/login";
+        }
+        try {
+            CouponDashboardResponse dashboardData = couponService.getShopVoucherDashboardData(userId);
+            model.addAttribute("dashboard", dashboardData);
+            return "shop/coupons/dashboard";
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("errorMessage", ex.getMessage());
             return "redirect:/shop/coupons";
         }
     }

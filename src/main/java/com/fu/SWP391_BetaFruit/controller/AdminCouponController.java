@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.CouponRequest;
+import com.fu.SWP391_BetaFruit.dto.response.CouponDashboardResponse;
 import com.fu.SWP391_BetaFruit.dto.response.CouponUsageResponse;
 import com.fu.SWP391_BetaFruit.entity.Coupon;
 import com.fu.SWP391_BetaFruit.enums.CouponCategory;
@@ -229,5 +230,16 @@ public class AdminCouponController {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/admin/coupons";
         }
+    }
+    // =========================================================================
+    // 8. DASHBOARD THỐNG KÊ CHI PHÍ & HIỆU QUẢ VOUCHER (ADMIN)
+    // URL: /admin/coupons/dashboard
+    // =========================================================================
+    @GetMapping("/dashboard")
+    public String viewDashboard(Model model) {
+        CouponDashboardResponse dashboardData = couponService.getAdminVoucherDashboardData();
+        model.addAttribute("dashboard", dashboardData);
+        model.addAttribute("activeMenu", "coupons");
+        return "admin/coupons/dashboard";
     }
 }
