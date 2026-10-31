@@ -27,6 +27,8 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     long countLowStockVariantsByShopId(@Param("shopId") Integer shopId);
 
     @Query("SELECT v FROM ProductVariant v JOIN FETCH v.product p " +
-            "WHERE p.shop.owner.userId = :ownerId AND p.approvalStatus = 'ACTIVE'")
-    List<ProductVariant> findAllActiveVariantsByShopOwner(@Param("ownerId") Integer ownerId);
+            "WHERE p.shop.owner.userId = :ownerId " +
+            "AND p.approvalStatus = 'APPROVED' " +
+            "ORDER BY p.productName ASC, v.variantName ASC")
+    List<ProductVariant> findAllApprovedVariantsByShopOwner(@Param("ownerId") Integer ownerId);
 }
