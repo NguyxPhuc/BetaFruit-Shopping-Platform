@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'payout-detail', ~{::content})}">
+<head>
+    <title>Chi Tiết Yêu Cầu Rút Tiền | BetaFruit</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="mb-4 pb-2 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <div class="text-muted small mb-1">
+                <a th:href="@{/shop/balance}" class="text-decoration-none text-muted">Ví Tài Chính</a> / 
+                <a th:href="@{/shop/payout-request}" class="text-decoration-none text-muted">Lịch Sử Rút</a> / 
+                <span>Chi Tiết</span>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">Chi Tiết Lệnh Rút Tiền</h3>
+            <p class="text-muted small mb-0">Biên lai giao dịch và tiến trình phê duyệt của bộ phận tài chính sàn BetaFruit.</p>
+        </div>
+        <div>
+            <a th:href="@{/shop/payout-request}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i>
+                <span>Quay Lại Danh Sách</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center" th:if="${detailResponse}">
+        <div class="col-12 col-lg-8 col-xl-7">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <!-- Header Receipt -->
+                <div class="card-header bg-light border-bottom p-4 text-center">
+                    <div class="badge rounded-circle p-3 mb-2"
+                         th:classappend="${detailResponse.status.name() == 'COMPLETED'} ? 'bg-success-subtle text-success' : (${detailResponse.status.name() == 'REJECTED'} ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning')">
+                        <i class="bi fs-2"
+                           th:classappend="${detailResponse.status.name() == 'COMPLETED'} ? 'bi-check2-circle' : (${detailResponse.status.name() == 'REJECTED'} ? 'bi-x-circle' : 'bi-hourglass-split')"></i>
+                    </div>
+                    <h6 class="text-muted text-uppercase tracking-wider small mb-1">SỐ TIỀN YÊU CẦU</h6>
+                    <h2 class="fw-bold text-dark font-monospace mb-2" th:text="${#numbers.formatDecimal(detailResponse.requestedAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</h2>
+                    
+                    <div>
+                        <span th:if="${detailResponse.status.name() == 'PENDING'}" class="badge bg-warning text-dark px-3 py-1 rounded-pill">
+                            <i class="bi bi-clock me-1"></i> Đang Chờ Bộ Phận Tài Chính Duyệt
+                        </span>
+                        <span th:if="${detailResponse.status.name() == 'COMPLETED'}" class="badge bg-success px-3 py-1 rounded-pill">
+                            <i class="bi bi-check-circle me-1"></i> Giao Dịch Thành Công (Đã Giải Ngân)
+                        </span>
+                        <span th:if="${detailResponse.status.name() == 'REJECTED'}" class="badge bg-danger px-3 py-1 rounded-pill">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Bị Từ Chối (Đã Hoàn Lại Ví)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Body Receipt -->
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Thông Tin Chuyển Khoản</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-5 text-muted small">Ngân hàng thụ hưởng:</div>
+                        <div class="col-sm-7 fw-bold text-dark text-sm-end" th:text="${detailResponse.bankName}">Vietcombank</div>
+
+                        <div class="col-sm-5 text-muted small">Số tài khoản:</div>
+                        <div class="col-sm-7 fw-bold font-monospace text-dark text-sm-end" th:text="${detailResponse.bankAccountNumber}">0071001234567</div>
+
+                        <div class="col-sm-5 text-muted small">Tên chủ tài khoản:</div>
+                        <div class="col-sm-7 fw-bold text-uppercase text-dark text-sm-end" th:text="${detailResponse.accountName}">NGUYEN VAN A</div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">Thông Tin Nhật Ký Hệ Thống</h6>
+                    <div class="row g-3">
+                        <div class="col-sm-5 text-muted small">Thời điểm tạo yêu cầu:</div>
+                        <div class="col-sm-7 text-dark text-sm-end" th:text="${#temporals.format(detailResponse.createdAt, 'dd/MM/yyyy HH:mm:ss')}">15/10/2026 10:30:00</div>
+
+                        <div class="col-sm-5 text-muted small">Nhân viên xử lý hồ sơ:</div>
+                        <div class="col-sm-7 text-dark text-sm-end">
+                            <span class="badge bg-light text-dark border px-2 py-1" th:text="${detailResponse.processesBy}">Chưa xử lý</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Receipt -->
+                <div class="card-footer bg-light p-3 text-center border-top">
+                    <small class="text-muted">
+                        Mọi thắc mắc về đối soát dòng tiền xin liên hệ bộ phận hỗ trợ đối tác BetaFruit: <strong>1900-BETAFRUIT</strong>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
