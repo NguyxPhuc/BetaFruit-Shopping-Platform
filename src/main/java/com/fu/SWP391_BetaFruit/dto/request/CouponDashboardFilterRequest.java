@@ -85,4 +85,12 @@ public class CouponDashboardFilterRequest {
                 break;
         }
     }
+
+    public LocalDate getEffectiveStartDate() {
+        return this.startDate;
+    }
+
+    public LocalDate getEffectiveEndDate() {
+        return this.endDate;
+    }
 }
