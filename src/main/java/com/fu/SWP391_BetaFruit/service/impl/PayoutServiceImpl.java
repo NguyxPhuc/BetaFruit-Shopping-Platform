@@ -58,15 +58,27 @@ public class PayoutServiceImpl implements PayoutService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void requestPayout(Integer userId, PayoutCreateRequest request) throws Exception {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin người dùng."));
-        Shop shop = shopRepository.findByOwner(user)
+        // Sử dụng PESSIMISTIC_WRITE lock để tránh race-condition khi bấm rút tiền liên tiếp
+        Shop shop = shopRepository.findByOwnerUserIdForUpdate(userId)
                 .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin cửa hàng."));
+
+        // Kiểm tra xem shop có yêu cầu nào đang chờ xử lý hay không
+        boolean hasPending = payoutRequestRepository.existsByShopAndStatus(shop, PayoutStatus.PENDING);
+        if (hasPending) {
+            throw new Exception("Bạn đang có một yêu cầu rút tiền đang chờ xử lý. Vui lòng chờ hoàn tất trước khi tạo yêu cầu mới.");
+        }
+
         BigDecimal balance = shop.getAvailableBalance() != null ? shop.getAvailableBalance() : BigDecimal.ZERO;
         BigDecimal amount = request.getRequestedAmount();
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new Exception("Số tiền rút không hợp lệ.");
+        }
+
         if (balance.compareTo(amount) < 0) {
             throw new Exception("Số dư khả dụng (" + balance.toString() + ") không đủ để thực hiện rút " + amount.toString());
         }
+
         shop.setAvailableBalance(balance.subtract(amount));
         shopRepository.save(shop);
 
@@ -79,7 +91,13 @@ public class PayoutServiceImpl implements PayoutService {
         payout.setStatus(PayoutStatus.PENDING);
         payoutRequestRepository.save(payout);
 
-        notificationService.createBaseNotification(user, "Yêu cầu rút tiền thành công", "Bạn đã gửi yêu cầu rút " + amount.toString() + " về " + request.getBankName() + ". Vui lòng chờ sàn phê duyệt trong 24h làm việc.", NotificationType.PAYMENT_UPDATE, "/shop/payouts");
+        notificationService.createBaseNotification(
+                shop.getOwner(),
+                "Yêu cầu rút tiền thành công",
+                "Bạn đã gửi yêu cầu rút " + amount.toString() + " về " + request.getBankName() + ". Vui lòng chờ sàn phê duyệt trong 24h làm việc.",
+                NotificationType.PAYMENT_UPDATE,
+                "/shop/payout-request"
+        );
     }
 
     private PayoutResponse toPayoutResponse(PayoutRequest payoutRequest) {
@@ -113,7 +131,8 @@ public class PayoutServiceImpl implements PayoutService {
                 .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin người dùng."));
         Shop shop = shopRepository.findByOwner(user)
                 .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin cửa hàng."));
-        PayoutRequest payoutRequest = payoutRequestRepository.findByRequestIdAndShop(requestId, shop).orElseThrow(() -> new Exception("Không tìm thấy yêu cầu rút tiền."));
+        PayoutRequest payoutRequest = payoutRequestRepository.findByRequestIdAndShop(requestId, shop)
+                .orElseThrow(() -> new Exception("Không tìm thấy yêu cầu rút tiền."));
         PayoutDetailResponse payoutDetailResponse = new PayoutDetailResponse();
         payoutDetailResponse.setAccountName(payoutRequest.getAccountName());
         payoutDetailResponse.setBankName(payoutRequest.getBankName());
@@ -124,8 +143,6 @@ public class PayoutServiceImpl implements PayoutService {
         payoutDetailResponse.setProcessesBy(payoutRequest.getProcessedBy() != null ? payoutRequest.getProcessedBy().getUsername() : "Chưa xử lý");
         return payoutDetailResponse;
     }
-
-
 
     @Override
     @Transactional(readOnly = true)
@@ -145,7 +162,8 @@ public class PayoutServiceImpl implements PayoutService {
     public PayoutDetailResponse getPayoutDetail(Integer requestId, Integer userId) throws Exception {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin nhân viên."));
-        PayoutRequest payoutRequest = payoutRequestRepository.findByRequestId(requestId).orElseThrow(() -> new Exception("Không tìm thấy yêu cầu rút tiền."));
+        PayoutRequest payoutRequest = payoutRequestRepository.findByRequestId(requestId)
+                .orElseThrow(() -> new Exception("Không tìm thấy yêu cầu rút tiền."));
         PayoutDetailResponse payoutDetailResponse = new PayoutDetailResponse();
         payoutDetailResponse.setAccountName(payoutRequest.getAccountName());
         payoutDetailResponse.setBankName(payoutRequest.getBankName());
@@ -169,9 +187,10 @@ public class PayoutServiceImpl implements PayoutService {
     }
 
     @Override
-    @Transactional(rollbackFor =  Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void processPayout(Integer requestId, Integer userId, ProcessPayoutRequest processPayoutRequest) throws Exception {
-        PayoutRequest payoutRequest = payoutRequestRepository.findByRequestId(requestId).orElseThrow(() -> new Exception("Không tìm thấy yêu cầu rút tiền."));
+        PayoutRequest payoutRequest = payoutRequestRepository.findByRequestId(requestId)
+                .orElseThrow(() -> new Exception("Không tìm thấy yêu cầu rút tiền."));
         if (payoutRequest.getStatus() != PayoutStatus.PENDING) {
             throw new Exception("Yêu cầu rút tiền này đã được xử lý trước đó!");
         }
@@ -180,7 +199,11 @@ public class PayoutServiceImpl implements PayoutService {
         payoutRequest.setProcessedBy(staff);
         payoutRequest.setStatus(processPayoutRequest.getPayoutStatus());
         payoutRequest.setUpdatedAt(LocalDateTime.now());
-        Shop shop = payoutRequest.getShop();
+
+        // Sử dụng PESSIMISTIC_WRITE lock để hoàn tiền an toàn nếu bị từ chối
+        Shop shop = shopRepository.findByIdForUpdate(payoutRequest.getShop().getShopId())
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin cửa hàng."));
+
         if (processPayoutRequest.getPayoutStatus() == PayoutStatus.COMPLETED) {
             payoutRequestRepository.save(payoutRequest);
             notificationService.createBaseNotification(
@@ -188,7 +211,7 @@ public class PayoutServiceImpl implements PayoutService {
                     "Rút tiền thành công!",
                     "Yêu cầu rút " + payoutRequest.getRequestedAmount().toString() + " của bạn đã được sàn duyệt và giải ngân vào tài khoản " + payoutRequest.getBankAccountNumber() + " (" + payoutRequest.getBankName() + ").",
                     NotificationType.PAYMENT_UPDATE,
-                    "/shop/payouts"
+                    "/shop/payout-request"
             );
         } else if (processPayoutRequest.getPayoutStatus() == PayoutStatus.REJECTED) {
             BigDecimal currentBalance = shop.getAvailableBalance() != null ? shop.getAvailableBalance() : BigDecimal.ZERO;
@@ -201,7 +224,7 @@ public class PayoutServiceImpl implements PayoutService {
                     "Yêu cầu rút tiền bị từ chối",
                     "Yêu cầu rút " + payoutRequest.getRequestedAmount().toString()  + " bị từ chối. Số tiền đã được hoàn trả lại ví của bạn. " + reason,
                     NotificationType.PAYMENT_UPDATE,
-                    "/shop/payouts"
+                    "/shop/payout-request"
             );
         }
     }

@@ -24,4 +24,6 @@ public interface PayoutRequestRepository extends JpaRepository<PayoutRequest,Int
     Optional<PayoutRequest> findByRequestId(Integer requestId);
 
     List<PayoutRequest> findAllByStatus(PayoutStatus status);
+
+    boolean existsByShopAndStatus(Shop shop, PayoutStatus status);
 }

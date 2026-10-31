@@ -153,11 +153,11 @@
             <!-- Tài chính vận hành (FE-12.4) -->
             <div class="admin-nav-category">Tài chính Vận hành</div>
             <ul class="admin-nav">
-                <li class="admin-nav-item opacity-75">
-                    <a href="javascript:void(0)" class="admin-nav-link pe-none">
+                <li class="admin-nav-item">
+                    <a th:href="@{/staff/payout-request}" href="/staff/payout-request" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'payout-management'} ? 'active' : ''">
                         <i class="bi bi-cash-stack"></i>
-                        <span>Thu COD & Duyệt Payout</span>
-                        <span class="badge bg-secondary-subtle text-secondary border ms-auto" style="font-size: 0.65rem;">Sắp ra mắt</span>
+                        <span>Duyệt Yêu Cầu Rút Tiền</span>
                     </a>
                 </li>
             </ul>

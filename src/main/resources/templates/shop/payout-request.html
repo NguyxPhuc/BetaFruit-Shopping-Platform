@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'payout-list', ~{::content})}">
+<head>
+    <title>Lịch Sử Rút Tiền | BetaFruit</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- Header Trang Chuẩn Shop -->
+    <div class="mb-4 pb-2 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <div class="text-muted small mb-1">
+                <a th:href="@{/shop/balance}" class="text-decoration-none text-muted">Ví Tài Chính</a> / <span>Lịch Sử Rút Tiền</span>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">Danh Sách Lệnh Rút Tiền</h3>
+            <p class="text-muted small mb-0">Theo dõi tiến trình xét duyệt và đối soát chuyển khoản ngân hàng từ Sàn BetaFruit.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a th:href="@{/shop/balance}" class="btn btn-outline-secondary fw-semibold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="bi bi-wallet2"></i>
+                <span>Xem Số Dư Ví</span>
+            </a>
+            <a th:href="@{/shop/payout-request-form}" class="btn btn-shop-primary fw-semibold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="bi bi-plus-lg"></i>
+                <span>Tạo Yêu Cầu Rút Mới</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Panel Card Bảng Dữ Liệu -->
+    <div class="import-panel-card">
+        <div class="import-panel-header align-items-center justify-content-between">
+            <h2>
+                <i class="bi bi-receipt-cutoff text-success"></i>
+                <span>Nhật Ký Yêu Cầu Thanh Toán</span>
+            </h2>
+            <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill small"
+                  th:text="'Tổng cộng: ' + (${payoutResponses != null ? payoutResponses.size() : 0}) + ' lệnh'">
+                Tổng cộng: 0 lệnh
+            </span>
+        </div>
+
+        <div class="import-panel-body p-0">
+            <!-- Khi có dữ liệu -->
+            <div class="table-responsive" th:if="${payoutResponses != null and !payoutResponses.isEmpty()}">
+                <table class="import-table" id="payoutTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 12%; text-align: center;">Mã Lệnh</th>
+                            <th style="width: 25%;">Thời Gian Đăng Ký</th>
+                            <th style="width: 25%; text-align: right;">Số Tiền Yêu Cầu</th>
+                            <th style="width: 23%; text-align: center;">Trạng Thái Duyệt</th>
+                            <th style="width: 15%; text-align: center;">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${payoutResponses}">
+                            <td class="text-center font-monospace fw-bold text-primary" th:text="'#PO-' + ${p.requestId}">
+                                #PO-1
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${#temporals.format(p.createdAt, 'dd/MM/yyyy HH:mm')}">15/10/2026 10:30</div>
+                                <small class="text-muted" th:text="${#temporals.format(p.createdAt, 'EEEE', new java.util.Locale('vi', 'VN'))}">Thứ Năm</small>
+                            </td>
+                            <td class="text-end font-monospace fw-bold fs-6 text-dark" th:text="${#numbers.formatDecimal(p.requestedAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
+                                5.000.000 ₫
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${p.status.name() == 'PENDING'}" class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-2 fw-semibold">
+                                    <i class="bi bi-hourglass-split me-1"></i> Chờ Sàn Duyệt
+                                </span>
+                                <span th:if="${p.status.name() == 'COMPLETED'}" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Đã Giải Ngân
+                                </span>
+                                <span th:if="${p.status.name() == 'REJECTED'}" class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold">
+                                    <i class="bi bi-x-circle-fill me-1"></i> Bị Từ Chối (Đã Hoàn Ví)
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{'/shop/payout-request/' + ${p.requestId}}"
+                                   class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3 py-1 shadow-sm d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-eye"></i>
+                                    <span>Chi tiết</span>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Khi rỗng -->
+            <div class="empty-import-box text-center py-5" th:if="${payoutResponses == null or payoutResponses.isEmpty()}">
+                <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary-subtle"></i>
+                <h5 class="fw-bold text-dark">Chưa có yêu cầu rút tiền nào</h5>
+                <p class="text-muted small mb-4">Khi số dư khả dụng từ 50.000 VNĐ trở lên, bạn có thể gửi yêu cầu rút tiền về ngân hàng.</p>
+                <a th:href="@{/shop/payout-request-form}" class="btn btn-shop-primary">
+                    <i class="bi bi-cash-stack me-1"></i> Tạo Yêu Cầu Rút Tiền Ngay
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

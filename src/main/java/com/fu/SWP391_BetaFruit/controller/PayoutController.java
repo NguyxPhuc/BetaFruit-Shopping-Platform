@@ -79,6 +79,7 @@ public class PayoutController {
         try {
             PayoutDetailResponse detailResponse = payoutService.getPayoutDetail(requestId, id);
             model.addAttribute("detailResponse", detailResponse);
+            model.addAttribute("requestId", requestId);
         }catch (Exception e){
             model.addAttribute("errorMessage", e.getMessage());
         }
@@ -108,7 +109,7 @@ public class PayoutController {
     public String handleRequestPayout(@Valid @ModelAttribute("payoutCreateRequest") PayoutCreateRequest request, BindingResult bindingResult, HttpSession session,RedirectAttributes redirectAttributes, Model model) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (bindingResult.hasErrors()) {
-            model.addAttribute("errorMessage", bindingResult.getFieldError());
+            // Trả về view, Thymeleaf tự bind message lỗi từ DTO qua th:errors
             return "shop/payout-request-form";
         }
         try {

@@ -12,7 +12,6 @@
         <div>
             <div class="text-muted small mb-1">Quản lý kho hàng / Lập phiếu nhập kho</div>
             <h3 class="fw-bold text-dark mb-1">Lập Phiếu Nhập Kho Hàng Hóa</h3>
-            <p class="text-muted small mb-0">Ghi nhận số lượng hoa quả nhập về kho từ nhà vườn và cập nhật giá vốn bình quân (MAC).</p>
         </div>
         <div>
             <a th:href="@{/shop/inventory/import-note}" href="/shop/inventory/import-note" class="btn btn-outline-secondary rounded-pill fw-semibold px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2">
@@ -101,7 +100,7 @@
                                                        th:field="*{details[__${itemStat.index}__].importPrice}"
                                                        class="form-control form-control-sm text-end price-input"
                                                        min="0"
-                                                       step="1000"
+                                                       step="any"
                                                        placeholder="VD: 35000"
                                                        required
                                                        oninput="recalculateTotals()">
@@ -278,15 +277,15 @@
                 options.forEach(opt => {
                     if (!opt.value) return; // Bỏ qua option placeholder mặc định
 
-                    // Nếu variant này đã được chọn ở dòng khác -> disable
+                    // Luôn dọn dẹp sạch sẽ hậu tố cũ trước
+                    opt.textContent = opt.textContent.replace(/\s*\(Đã chọn ở dòng khác\)/g, '').trim();
+
+                    // Nếu variant này đã được chọn ở dòng khác -> disable và gắn nhãn
                     if (selectedValues.includes(opt.value) && opt.value !== currentValue) {
                         opt.disabled = true;
-                        if (!opt.textContent.includes('(Đã chọn)')) {
-                            opt.textContent = opt.textContent + ' (Đã chọn ở dòng khác)';
-                        }
+                        opt.textContent = opt.textContent + ' (Đã chọn ở dòng khác)';
                     } else {
                         opt.disabled = false;
-                        opt.textContent = opt.textContent.replace(' (Đã chọn ở dòng khác)', '');
                     }
                 });
             });
@@ -322,7 +321,7 @@
                 </td>
                 <td>
                     <div class="input-group input-group-sm">
-                        <input type="number" name="details[${newIndex}].importPrice" class="form-control form-control-sm text-end price-input" min="0" step="1000" placeholder="VD: 35000" required oninput="recalculateTotals()">
+                        <input type="number" name="details[${newIndex}].importPrice" class="form-control form-control-sm text-end price-input" min="0" step="any" placeholder="VD: 35000" required oninput="recalculateTotals()">
                         <span class="input-group-text">₫</span>
                     </div>
                 </td>
