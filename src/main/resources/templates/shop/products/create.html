@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{shop/layout :: layout(~{::title}, 'products-create', ~{::content})}">
 <head>
@@ -1109,7 +1109,7 @@
 
                         <!-- Dropzone tải ảnh trực tiếp từ máy tính -->
                         <div class="image-preview-wrapper" id="imagePreviewContainer" onclick="handleContainerClick()" title="Bấm vào đây để chọn ảnh từ máy tính">
-                            <img id="previewImg" class="preview-img" alt="Ảnh xem trước hoa quả">
+                            <img id="previewImg" class="preview-img" alt="Ảnh xem trước hoa quả" onerror="this.onerror=null; this.src='/images/betafruit-logo.png';">
                             
                             <div id="previewPlaceholder" class="preview-placeholder">
                                 <div class="upload-icon-graphic">
@@ -1386,34 +1386,7 @@
                     <div class="sale-price-feedback text-danger" style="display: none; font-size: 0.75rem; margin-top: 2px;"></div>
                 </div>
 
-                <div class="col-12 col-md-6">
-                    <label class="form-label small fw-bold mb-1">
-                        <span>Tồn kho ban đầu <span class="required-badge">*</span></span>
-                    </label>
-                    <input type="number"
-                           name="variants[${index}].stockQuantity"
-                           value="${sQty}"
-                           class="form-control form-control-sm"
-                           placeholder="VD: 100"
-                           min="0"
-                           required>
-                </div>
-
-                <div class="col-12 col-md-6">
-                    <label class="form-label small fw-semibold text-muted mb-1">
-                        <span>Giá vốn <small>(Nội bộ)</small></span>
-                    </label>
-                    <div class="input-group input-group-sm">
-                        <input type="number"
-                               name="variants[${index}].costPrice"
-                               value="${cPrice}"
-                               class="form-control form-control-sm variant-input-cost"
-                               placeholder="VD: 55000"
-                               min="0"
-                               step="1000">
-                        <span class="input-group-text">VNĐ</span>
-                    </div>
-                </div>
+                <input type="hidden" name="variants[${index}].stockQuantity" value="0">
 
                 <div class="col-12 col-md-6">
                     <label class="form-label small fw-semibold text-muted mb-1">
@@ -1426,6 +1399,7 @@
                            placeholder="5"
                            min="0">
                 </div>
+                <input type="hidden" name="variants[${index}].costPrice" value="${cPrice !== '' ? cPrice : 0}">
             </div>
         `;
 

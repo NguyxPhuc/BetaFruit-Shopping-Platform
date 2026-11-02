@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,6 +21,14 @@ import java.util.Optional;
 public interface ShopRepository extends JpaRepository<Shop, Integer> {
     Optional<Shop> findByOwner(User owner);
     Optional<Shop> findByOwner_UserId(Integer userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM Shop s WHERE s.shopId = :shopId")
+    Optional<Shop> findByIdForUpdate(@Param("shopId") Integer shopId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM Shop s WHERE s.owner.userId = :ownerId")
+    Optional<Shop> findByOwnerUserIdForUpdate(@Param("ownerId") Integer ownerId);
 
     long countByApprovalStatus(ShopApprovalStatus status);
 

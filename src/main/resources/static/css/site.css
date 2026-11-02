@@ -317,11 +317,205 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ==========================================================================
-   Shop Owner Header Specifics
+   Shop Owner Layout & Vertical Sidebar
    ========================================================================== */
+body.shop-theme {
+    padding-left: 260px;
+    transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.shop-theme.shop-sidebar-collapsed {
+    padding-left: 0;
+}
+
+/* Vertical Sidebar */
+.shop-vertical-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    background: #ffffff;
+    border-right: 1px solid #fae8d4;
+    box-shadow: 2px 0 18px rgba(228, 126, 30, 0.07);
+    z-index: 1045;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+body.shop-theme.shop-sidebar-collapsed .shop-vertical-sidebar {
+    transform: translateX(-100%);
+}
+
+.shop-sidebar-brand-box {
+    padding: 1.15rem 1.15rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f5ede4;
+}
+
+.shop-sidebar-brand-box .brand-logo {
+    width: 135px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.btn-sidebar-collapse {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94a3b8;
+    padding: 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-sidebar-collapse:hover {
+    background: #fff7ed;
+    color: var(--orange-dark);
+}
+
+.shop-sidebar-badge-bar {
+    padding: 0.65rem 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fffcf8;
+    border-bottom: 1px solid #f5ede4;
+}
+
+.shop-status-dot-wrap {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #15803d;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.shop-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.shop-sidebar-nav-wrap {
+    flex: 1;
+    padding: 1rem 0.85rem;
+    overflow-y: auto;
+}
+
+.shop-nav-category {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 700;
+    color: #94a3b8;
+    padding: 0.5rem 0.75rem 0.35rem;
+}
+
+.shop-vnav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.75rem;
+}
+
+.shop-vnav-item {
+    margin-bottom: 4px;
+}
+
+.shop-vnav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #475569;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.shop-vnav-link .vnav-icon {
+    width: 19px;
+    height: 19px;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    fill: none;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+
+.shop-vnav-link:hover {
+    background-color: #fff7ed;
+    color: var(--orange-dark);
+    transform: translateX(2px);
+}
+
+.shop-vnav-link.active {
+    background-color: #fef3e2;
+    color: var(--orange-dark);
+    border-left-color: var(--orange-dark);
+    font-weight: 700;
+}
+
+.shop-sidebar-divider {
+    border-top: 1px solid #f5ede4;
+    margin: 0.85rem 0;
+}
+
+/* Sidebar support footer */
+.shop-sidebar-support-card {
+    margin: 0.85rem;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border: 1px solid #fed7aa;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.support-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--orange-dark);
+    box-shadow: 0 2px 6px rgba(228, 126, 30, 0.15);
+    flex-shrink: 0;
+}
+
+.support-info strong {
+    display: block;
+    font-size: 12px;
+    color: #9a3412;
+}
+
+.support-info span {
+    font-size: 11.5px;
+    color: #c2410c;
+    font-weight: 600;
+}
+
+/* Shop Owner Header */
 .site-header-shop {
-    position: relative;
-    z-index: 20;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
     background: rgba(255, 255, 255, .98);
     border-bottom: 1px solid #fae8d4;
     box-shadow: 0 4px 22px rgba(228, 126, 30, .07);
@@ -330,6 +524,28 @@ a { color: inherit; text-decoration: none; }
 .header-accent-shop {
     height: 4px;
     background: linear-gradient(90deg, #f59e36, #e47e1e 52%, #c9650d);
+}
+
+/* Toggle Button in Top Header */
+.btn-shop-toggle-sidebar {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    border: 1.5px solid #fed7aa;
+    background: #ffffff;
+    color: var(--orange-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-shop-toggle-sidebar:hover {
+    background: #fff7ed;
+    transform: scale(1.05);
+    box-shadow: 0 3px 10px rgba(228, 126, 30, 0.12);
 }
 
 .brand-shop-wrap {
@@ -352,12 +568,38 @@ a { color: inherit; text-decoration: none; }
     border: 1px solid #ffd59e;
 }
 
-.shop-nav-links a::after {
-    background: var(--orange-dark);
+/* Overlay for Mobile */
+.shop-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 1040;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-.shop-nav-links a:hover {
-    color: var(--orange-dark);
+@media (max-width: 991px) {
+    body.shop-theme {
+        padding-left: 0 !important;
+    }
+
+    .shop-vertical-sidebar {
+        transform: translateX(-100%);
+    }
+
+    body.shop-theme.shop-sidebar-open .shop-vertical-sidebar {
+        transform: translateX(0);
+    }
+
+    body.shop-theme.shop-sidebar-open .shop-sidebar-overlay {
+        display: block;
+        opacity: 1;
+    }
 }
 
 .site-header-shop .user-avatar-mini {

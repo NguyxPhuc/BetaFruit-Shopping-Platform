@@ -12,7 +12,6 @@
         <div>
             <div class="text-muted small mb-1">Quản lý kho hàng / Lập phiếu nhập kho</div>
             <h3 class="fw-bold text-dark mb-1">Lập Phiếu Nhập Kho Hàng Hóa</h3>
-            <p class="text-muted small mb-0">Ghi nhận số lượng hoa quả nhập về kho từ nhà vườn và cập nhật giá vốn bình quân (MAC).</p>
         </div>
         <div>
             <a th:href="@{/shop/inventory/import-note}" href="/shop/inventory/import-note" class="btn btn-outline-secondary rounded-pill fw-semibold px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2">
@@ -67,12 +66,12 @@
                                         <td>
                                             <select th:field="*{details[__${itemStat.index}__].variantId}"
                                                     class="form-select form-select-sm variant-select"
-                                                    required>
+                                                    required
+                                                    onchange="recalculateTotals()">
                                                 <option value="" disabled th:selected="*{details[__${itemStat.index}__].variantId == null}">-- Chọn loại hoa quả nhập --</option>
                                                 <option th:each="v : ${variantList}"
                                                         th:value="${v.variantId}"
-                                                        th:text="${v.productName + ' - ' + v.variantName}"
-                                                        th:selected="*{details[__${itemStat.index}__].variantId == v.variantId}">
+                                                        th:text="${v.productName + ' - ' + v.variantName}">
                                                     Xoài Cát - Hộp 1kg
                                                 </option>
                                             </select>
@@ -82,17 +81,14 @@
 
                                         <!-- Số lượng nhập -->
                                         <td>
-                                            <div class="input-group input-group-sm">
-                                                <input type="number"
-                                                       th:field="*{details[__${itemStat.index}__].quantity}"
-                                                       class="form-control form-control-sm text-center qty-input"
-                                                       min="1"
-                                                       step="1"
-                                                       placeholder="VD: 50"
-                                                       required
-                                                       oninput="recalculateTotals()">
-                                                <span class="input-group-text text-muted" style="font-size: 0.75rem;">Quy cách</span>
-                                            </div>
+                                            <input type="number"
+                                                   th:field="*{details[__${itemStat.index}__].quantity}"
+                                                   class="form-control form-control-sm text-center qty-input"
+                                                   min="1"
+                                                   step="1"
+                                                   placeholder="Nhập SL (VD: 50)"
+                                                   required
+                                                   oninput="recalculateTotals()">
                                             <div class="text-danger small mt-1" th:if="${#fields.hasErrors('details[' + itemStat.index + '].quantity')}"
                                                  th:errors="*{details[__${itemStat.index}__].quantity}"></div>
                                         </td>
@@ -104,7 +100,7 @@
                                                        th:field="*{details[__${itemStat.index}__].importPrice}"
                                                        class="form-control form-control-sm text-end price-input"
                                                        min="0"
-                                                       step="1000"
+                                                       step="any"
                                                        placeholder="VD: 35000"
                                                        required
                                                        oninput="recalculateTotals()">
@@ -210,155 +206,186 @@
 
     </form>
 
-</div>
+    <!-- ════════ JAVASCRIPT ĐẶT BÊN TRONG FRAGMENT CONTENT ĐỂ ĐƯỢC LAYOUT RENDER ════════ -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Nhận danh sách biến thể từ Controller sang JavaScript để tái sử dụng khi thêm dòng động
+        const rawVariantList = /*[[${variantList}]]*/ [];
+        /*]]>*/
+    </script>
 
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    // Nhận danh sách biến thể từ Controller sang JavaScript để tái sử dụng khi thêm dòng động
-    const rawVariantList = /*[[${variantList}]]*/ [];
-    /*]]>*/
+    <script th:inline="none">
+        // Hàm định dạng tiền tệ Việt Nam (VNĐ)
+        function formatCurrency(amount) {
+            if (!amount || isNaN(amount)) return '0 ₫';
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        }
 
-    // Hàm định dạng tiền tệ Việt Nam (VNĐ)
-    function formatCurrency(amount) {
-        if (!amount || isNaN(amount)) return '0 ₫';
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-    }
+        // Hàm tính toán tổng tiền tự động thời gian thực
+        function recalculateTotals() {
+            const rows = document.querySelectorAll('#itemsTableBody tr.item-row');
+            let grandTotal = 0;
+            let totalQty = 0;
+            let validItemCount = 0;
 
-    // Hàm tính toán tổng tiền tự động thời gian thực
-    function recalculateTotals() {
-        const rows = document.querySelectorAll('#itemsTableBody tr.item-row');
-        let grandTotal = 0;
-        let totalQty = 0;
-        let validItemCount = 0;
+            rows.forEach(row => {
+                const qtyInput = row.querySelector('.qty-input');
+                const priceInput = row.querySelector('.price-input');
+                const lineTotalCell = row.querySelector('.line-total');
+                const variantSelect = row.querySelector('.variant-select');
 
-        rows.forEach(row => {
-            const qtyInput = row.querySelector('.qty-input');
-            const priceInput = row.querySelector('.price-input');
-            const lineTotalCell = row.querySelector('.line-total');
-            const variantSelect = row.querySelector('.variant-select');
+                const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+                const price = parseFloat(priceInput ? priceInput.value : 0) || 0;
+                const lineTotal = qty * price;
 
-            const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
-            const price = parseFloat(priceInput ? priceInput.value : 0) || 0;
-            const lineTotal = qty * price;
+                if (lineTotalCell) {
+                    lineTotalCell.textContent = formatCurrency(lineTotal);
+                }
 
-            if (lineTotalCell) {
-                lineTotalCell.textContent = formatCurrency(lineTotal);
-            }
+                grandTotal += lineTotal;
+                totalQty += qty;
+                if (variantSelect && variantSelect.value) {
+                    validItemCount++;
+                }
+            });
 
-            grandTotal += lineTotal;
-            totalQty += qty;
-            if (variantSelect && variantSelect.value) {
-                validItemCount++;
-            }
-        });
+            const grandTotalDisplay = document.getElementById('grandTotalDisplay');
+            const totalQuantityBadge = document.getElementById('totalQuantityBadge');
+            const totalItemCountBadge = document.getElementById('totalItemCountBadge');
 
-        const grandTotalDisplay = document.getElementById('grandTotalDisplay');
-        const totalQuantityBadge = document.getElementById('totalQuantityBadge');
-        const totalItemCountBadge = document.getElementById('totalItemCountBadge');
+            if (grandTotalDisplay) grandTotalDisplay.textContent = formatCurrency(grandTotal);
+            if (totalQuantityBadge) totalQuantityBadge.textContent = totalQty;
+            if (totalItemCountBadge) totalItemCountBadge.textContent = validItemCount + ' loại';
 
-        if (grandTotalDisplay) grandTotalDisplay.textContent = formatCurrency(grandTotal);
-        if (totalQuantityBadge) totalQuantityBadge.textContent = totalQty;
-        if (totalItemCountBadge) totalItemCountBadge.textContent = validItemCount + ' loại';
-    }
+            updateDisabledVariantOptions();
+        }
 
-    // Hàm thêm dòng mặt hàng mới bằng JavaScript
-    function addNewItemRow() {
-        const tbody = document.getElementById('itemsTableBody');
-        if (!tbody) return;
+        // Tự động làm mờ (disable) các phân loại đã được chọn ở các dòng khác để tránh chọn trùng
+        function updateDisabledVariantOptions() {
+            const selects = document.querySelectorAll('#itemsTableBody select.variant-select');
+            const selectedValues = [];
+            selects.forEach(select => {
+                if (select.value) {
+                    selectedValues.push(select.value);
+                }
+            });
 
-        const currentRows = tbody.querySelectorAll('tr.item-row');
-        const newIndex = currentRows.length;
+            selects.forEach(select => {
+                const currentValue = select.value;
+                const options = select.querySelectorAll('option');
 
-        let optionsHtml = '<option value="" disabled selected>-- Chọn loại hoa quả nhập --</option>';
-        if (rawVariantList && rawVariantList.length > 0) {
-            rawVariantList.forEach(v => {
-                optionsHtml += `<option value="${v.variantId}">${escapeHtml(v.productName)} - ${escapeHtml(v.variantName)}</option>`;
+                options.forEach(opt => {
+                    if (!opt.value) return; // Bỏ qua option placeholder mặc định
+
+                    // Luôn dọn dẹp sạch sẽ hậu tố cũ trước
+                    opt.textContent = opt.textContent.replace(/\s*\(Đã chọn ở dòng khác\)/g, '').trim();
+
+                    // Nếu variant này đã được chọn ở dòng khác -> disable và gắn nhãn
+                    if (selectedValues.includes(opt.value) && opt.value !== currentValue) {
+                        opt.disabled = true;
+                        opt.textContent = opt.textContent + ' (Đã chọn ở dòng khác)';
+                    } else {
+                        opt.disabled = false;
+                    }
+                });
             });
         }
 
-        const newRow = document.createElement('tr');
-        newRow.id = `row-${newIndex}`;
-        newRow.className = 'item-row';
-        newRow.innerHTML = `
-            <td class="text-center fw-bold text-muted row-index">${newIndex + 1}</td>
-            <td>
-                <select name="details[${newIndex}].variantId" class="form-select form-select-sm variant-select" required onchange="recalculateTotals()">
-                    ${optionsHtml}
-                </select>
-            </td>
-            <td>
-                <div class="input-group input-group-sm">
-                    <input type="number" name="details[${newIndex}].quantity" class="form-control form-control-sm text-center qty-input" min="1" step="1" placeholder="VD: 50" required oninput="recalculateTotals()">
-                    <span class="input-group-text text-muted" style="font-size: 0.75rem;">Quy cách</span>
-                </div>
-            </td>
-            <td>
-                <div class="input-group input-group-sm">
-                    <input type="number" name="details[${newIndex}].importPrice" class="form-control form-control-sm text-end price-input" min="0" step="1000" placeholder="VD: 35000" required oninput="recalculateTotals()">
-                    <span class="input-group-text">₫</span>
-                </div>
-            </td>
-            <td class="text-end fw-bold text-success line-total" style="font-size: 0.95rem;">
-                0 ₫
-            </td>
-            <td class="text-center">
-                <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeItemRow(this)" title="Xóa dòng này">
-                    <i class="bi bi-trash3-fill"></i>
-                </button>
-            </td>
-        `;
+        // Hàm thêm dòng mặt hàng mới bằng JavaScript
+        function addNewItemRow() {
+            const tbody = document.getElementById('itemsTableBody');
+            if (!tbody) return;
 
-        tbody.appendChild(newRow);
-        reorderRowIndices();
-        recalculateTotals();
-    }
+            const currentRows = tbody.querySelectorAll('tr.item-row');
+            const newIndex = currentRows.length;
 
-    // Hàm xóa dòng mặt hàng
-    function removeItemRow(btn) {
-        const tbody = document.getElementById('itemsTableBody');
-        const rows = tbody.querySelectorAll('tr.item-row');
-        if (rows.length <= 1) {
-            alert('Phiếu nhập kho phải có ít nhất 1 mặt hàng!');
-            return;
-        }
+            let optionsHtml = '<option value="" disabled selected>-- Chọn loại hoa quả nhập --</option>';
+            if (typeof rawVariantList !== 'undefined' && rawVariantList && rawVariantList.length > 0) {
+                rawVariantList.forEach(v => {
+                    optionsHtml += `<option value="${v.variantId}">${escapeHtml(v.productName)} - ${escapeHtml(v.variantName)}</option>`;
+                });
+            }
 
-        const row = btn.closest('tr');
-        if (row) {
-            row.remove();
+            const newRow = document.createElement('tr');
+            newRow.id = `row-${newIndex}`;
+            newRow.className = 'item-row';
+            newRow.innerHTML = `
+                <td class="text-center fw-bold text-muted row-index">${newIndex + 1}</td>
+                <td>
+                    <select name="details[${newIndex}].variantId" class="form-select form-select-sm variant-select" required onchange="recalculateTotals()">
+                        ${optionsHtml}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" name="details[${newIndex}].quantity" class="form-control form-control-sm text-center qty-input" min="1" step="1" placeholder="Nhập SL (VD: 50)" required oninput="recalculateTotals()">
+                </td>
+                <td>
+                    <div class="input-group input-group-sm">
+                        <input type="number" name="details[${newIndex}].importPrice" class="form-control form-control-sm text-end price-input" min="0" step="any" placeholder="VD: 35000" required oninput="recalculateTotals()">
+                        <span class="input-group-text">₫</span>
+                    </div>
+                </td>
+                <td class="text-end fw-bold text-success line-total" style="font-size: 0.95rem;">
+                    0 ₫
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeItemRow(this)" title="Xóa dòng này">
+                        <i class="bi bi-trash3-fill"></i>
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(newRow);
             reorderRowIndices();
             recalculateTotals();
         }
-    }
 
-    // Cập nhật lại chỉ số index để Spring Boot binding danh sách list đúng thứ tự: details[0], details[1]...
-    function reorderRowIndices() {
-        const rows = document.querySelectorAll('#itemsTableBody tr.item-row');
-        rows.forEach((row, idx) => {
-            row.id = `row-${idx}`;
-            const sttCell = row.querySelector('.row-index');
-            if (sttCell) sttCell.textContent = idx + 1;
+        // Hàm xóa dòng mặt hàng
+        function removeItemRow(btn) {
+            const tbody = document.getElementById('itemsTableBody');
+            const rows = tbody.querySelectorAll('tr.item-row');
+            if (rows.length <= 1) {
+                alert('Phiếu nhập kho phải có ít nhất 1 mặt hàng!');
+                return;
+            }
 
-            const select = row.querySelector('.variant-select');
-            if (select) select.name = `details[${idx}].variantId`;
+            const row = btn.closest('tr');
+            if (row) {
+                row.remove();
+                reorderRowIndices();
+                recalculateTotals();
+            }
+        }
 
-            const qty = row.querySelector('.qty-input');
-            if (qty) qty.name = `details[${idx}].quantity`;
+        // Cập nhật lại chỉ số index để Spring Boot binding danh sách list đúng thứ tự: details[0], details[1]...
+        function reorderRowIndices() {
+            const rows = document.querySelectorAll('#itemsTableBody tr.item-row');
+            rows.forEach((row, idx) => {
+                row.id = `row-${idx}`;
+                const sttCell = row.querySelector('.row-index');
+                if (sttCell) sttCell.textContent = idx + 1;
 
-            const price = row.querySelector('.price-input');
-            if (price) price.name = `details[${idx}].importPrice`;
+                const select = row.querySelector('.variant-select');
+                if (select) select.name = `details[${idx}].variantId`;
+
+                const qty = row.querySelector('.qty-input');
+                if (qty) qty.name = `details[${idx}].quantity`;
+
+                const price = row.querySelector('.price-input');
+                if (price) price.name = `details[${idx}].importPrice`;
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Khởi tạo tính toán ban đầu khi tải trang
+        document.addEventListener('DOMContentLoaded', function () {
+            recalculateTotals();
         });
-    }
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-
-    // Khởi tạo tính toán ban đầu khi tải trang
-    document.addEventListener('DOMContentLoaded', function () {
-        recalculateTotals();
-    });
-</script>
-
+    </script>
+</div>
 </body>
 </html>

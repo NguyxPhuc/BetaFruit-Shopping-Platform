@@ -47,11 +47,6 @@
             <i class="bi bi-receipt-cutoff"></i>
             <span>Lịch Sử Nhập Kho</span>
         </a>
-        <a th:href="@{/shop/inventory/history}" href="/shop/inventory/history" class="shop-nav-link"
-           th:classappend="${activeMenu == 'inventory-history'} ? 'active' : ''">
-            <i class="bi bi-clock-history"></i>
-            <span>Biến Động Tồn Kho</span>
-        </a>
 
         <!-- NHÓM 4: BÁN HÀNG & KHUYẾN MÃI -->
         <div class="shop-nav-group-title mt-2">Bán hàng & Chăm sóc khách hàng</div>
@@ -71,7 +66,20 @@
             <span>Đánh Giá & Khiếu Nại</span>
         </a>
 
-        <!-- NHÓM 5: CÀI ĐẶT CỬA HÀNG -->
+        <!-- NHÓM 5: TÀI CHÍNH & RÚT TIỀN -->
+        <div class="shop-nav-group-title mt-2">Tài chính & Doanh thu</div>
+        <a th:href="@{/shop/balance}" href="/shop/balance" class="shop-nav-link"
+           th:classappend="${activeMenu == 'balance'} ? 'active' : ''">
+            <i class="bi bi-wallet2"></i>
+            <span>Ví Doanh Thu</span>
+        </a>
+        <a th:href="@{/shop/payout-request}" href="/shop/payout-request" class="shop-nav-link"
+           th:classappend="${activeMenu == 'payout-list' || activeMenu == 'payout-create' || activeMenu == 'payout-detail'} ? 'active' : ''">
+            <i class="bi bi-cash-stack"></i>
+            <span>Yêu Cầu Rút Tiền</span>
+        </a>
+
+        <!-- NHÓM 6: CÀI ĐẶT CỬA HÀNG -->
         <div class="shop-nav-group-title mt-2">Cài đặt cửa hàng</div>
         <a th:href="@{/shop/address}" href="/shop/address" class="shop-nav-link"
            th:classappend="${activeMenu == 'address'} ? 'active' : ''">

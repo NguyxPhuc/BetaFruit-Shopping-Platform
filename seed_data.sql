@@ -18,14 +18,54 @@
 -- ====================================================================================================
 
 SET NOCOUNT ON;
-SET QUOTED_IDENTIFIER ON;
-SET ANSI_NULLS ON;
+
+-- ----------------------------------------------------------------------------------------------------
+-- 0. ĐẢM BẢO CÁC BẢNG MỚI ĐÃ ĐƯỢC TẠO NẾU CHƯA TỒN TẠI (SCHEMA CHECK)
+-- ----------------------------------------------------------------------------------------------------
+IF OBJECT_ID('TierCoupon', 'U') IS NULL
+BEGIN
+    CREATE TABLE TierCoupon (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        TierId INT NOT NULL FOREIGN KEY REFERENCES MembershipTier(TierId) ON DELETE CASCADE,
+        CouponId INT NOT NULL FOREIGN KEY REFERENCES Coupon(CouponId) ON DELETE CASCADE,
+        CONSTRAINT UQ_Tier_Coupon UNIQUE (TierId, CouponId)
+    );
+END
+
+IF OBJECT_ID('ReviewReport', 'U') IS NULL
+BEGIN
+    CREATE TABLE ReviewReport (
+        ReportId INT IDENTITY(1,1),
+        ReviewId INT NOT NULL,
+        ShopId INT NOT NULL,
+        ReasonCategory VARCHAR(50) NOT NULL,
+        Explanation NVARCHAR(1000) NOT NULL,
+        EvidenceUrls NVARCHAR(MAX) NULL,
+        Status VARCHAR(30) CONSTRAINT DF_ReviewReport_Status DEFAULT 'PENDING',
+        StaffNote NVARCHAR(500) NULL,
+        ProcessedBy INT NULL,
+        CreatedAt DATETIME CONSTRAINT DF_ReviewReport_CreatedAt DEFAULT GETDATE(),
+        ResolvedAt DATETIME NULL,
+
+        CONSTRAINT PK_ReviewReport PRIMARY KEY (ReportId),
+        CONSTRAINT CHK_ReviewReport_Reason CHECK (ReasonCategory IN (
+            'INAPPROPRIATE_LANGUAGE', 'FALSE_INFORMATION', 'IRRELEVANT_CONTENT', 'COMPETITOR_SABOTAGE', 'WRONG_PRODUCT'
+        )),
+        CONSTRAINT CHK_ReviewReport_Status CHECK (Status IN (
+            'PENDING', 'UNDER_REVIEW', 'APPROVED_HIDDEN', 'REJECTED', 'REJECTED_WITH_WARNING'
+        )),
+        CONSTRAINT FK_ReviewReport_Review FOREIGN KEY (ReviewId) REFERENCES Review(ReviewId),
+        CONSTRAINT FK_ReviewReport_Shop FOREIGN KEY (ShopId) REFERENCES Shop(ShopId),
+        CONSTRAINT FK_ReviewReport_Staff FOREIGN KEY (ProcessedBy) REFERENCES [User](UserId)
+    );
+END
 
 -- ----------------------------------------------------------------------------------------------------
 -- 1. XÓA DỮ LIỆU CŨ THEO THỨ TỰ RÀNG BUỘC KHÓA NGOẠI (CLEANUP)
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang dọn dẹp dữ liệu cũ (nếu có)...';
 
+IF OBJECT_ID('ReviewReport', 'U') IS NOT NULL DELETE FROM ReviewReport;
 IF OBJECT_ID('ReviewMedia', 'U') IS NOT NULL DELETE FROM ReviewMedia;
 IF OBJECT_ID('Review', 'U') IS NOT NULL DELETE FROM Review;
 IF OBJECT_ID('CODDetail', 'U') IS NOT NULL DELETE FROM CODDetail;
@@ -37,6 +77,7 @@ IF OBJECT_ID('OrderItem', 'U') IS NOT NULL DELETE FROM OrderItem;
 IF OBJECT_ID('[Order]', 'U') IS NOT NULL DELETE FROM [Order];
 IF OBJECT_ID('CartItem', 'U') IS NOT NULL DELETE FROM CartItem;
 IF OBJECT_ID('Cart', 'U') IS NOT NULL DELETE FROM Cart;
+IF OBJECT_ID('TierCoupon', 'U') IS NOT NULL DELETE FROM TierCoupon;
 IF OBJECT_ID('Coupon', 'U') IS NOT NULL DELETE FROM Coupon;
 IF OBJECT_ID('PayoutRequest', 'U') IS NOT NULL DELETE FROM PayoutRequest;
 IF OBJECT_ID('InventoryTransaction', 'U') IS NOT NULL DELETE FROM InventoryTransaction;
@@ -61,7 +102,7 @@ IF OBJECT_ID('[Role]', 'U') IS NOT NULL DELETE FROM [Role];
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [Role]...';
 SET IDENTITY_INSERT [Role] ON;
-INSERT INTO [Role] (RoleId, roleName) VALUES 
+INSERT INTO [Role] (RoleId, roleName) VALUES
 (1, 'ADMIN'),
 (2, 'STAFF'),
 (3, 'SHOP_OWNER'),
@@ -84,10 +125,15 @@ INSERT INTO [User] (UserId, Username, PasswordHash, Email, FullName, Phone, Avat
 -- Staff
 (2, 'staff_minh', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'staff.minh@betafruit.vn', N'Nguyễn Hoàng Minh (Kiểm Duyệt)', '0901000002', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', 'ACTIVE'),
 
--- Shop Owners
+-- Shop Owners (APPROVED)
 (3, 'shop_dalat', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'dalatfruit@gmail.com', N'Trần Văn Đà Lạt', '0912345671', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', 'ACTIVE'),
 (4, 'shop_mientay', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'mientayfarm@gmail.com', N'Lê Thị Miền Tây', '0912345672', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', 'ACTIVE'),
 (5, 'shop_import', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'organicfruit@gmail.com', N'Phạm Quốc Tế', '0912345673', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', 'ACTIVE'),
+
+-- Shop Owners (Để test luồng kiểm duyệt DRAFT / PENDING / REJECTED)
+(10, 'shop_draft', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'shopdraft@gmail.com', N'Chủ Shop Chưa Thiết Lập', '0912345674', NULL, 'ACTIVE'),
+(11, 'shop_pending', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'shoppending@gmail.com', N'Chủ Shop Đang Chờ Duyệt', '0912345675', NULL, 'ACTIVE'),
+(12, 'shop_rejected', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'shoprejected@gmail.com', N'Chủ Shop Bị Từ Chối', '0912345676', NULL, 'ACTIVE'),
 
 -- Shipper
 (6, 'shipper_nam', '$2a$10$fF6CUrlQslFM00lb9txlyeUIBtCwRKvIbPBg/Sp64HLCORlLq9rtC', 'shipper.nam@gmail.com', N'Đỗ Thành Nam (Giao Hàng)', '0933221100', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', 'ACTIVE'),
@@ -103,15 +149,18 @@ SET IDENTITY_INSERT [User] OFF;
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang gán quyền UserRole...';
 INSERT INTO UserRole (UserId, RoleId) VALUES
-(1, 1), -- Admin
-(2, 2), -- Staff
-(3, 3), -- Shop Đà Lạt
-(4, 3), -- Shop Miền Tây
-(5, 3), -- Shop Import
-(6, 5), -- Shipper
-(7, 4), -- Customer Phúc
-(8, 4), -- Customer Hoa
-(9, 4); -- Customer Linh
+(1, 1),  -- Admin
+(2, 2),  -- Staff
+(3, 3),  -- Shop Đà Lạt (APPROVED)
+(4, 3),  -- Shop Miền Tây (APPROVED)
+(5, 3),  -- Shop Import (APPROVED)
+(10, 3), -- Shop Draft (DRAFT)
+(11, 3), -- Shop Pending (PENDING)
+(12, 3), -- Shop Rejected (REJECTED)
+(6, 5),  -- Shipper
+(7, 4),  -- Customer Phúc
+(8, 4),  -- Customer Hoa
+(9, 4);  -- Customer Linh
 
 -- ----------------------------------------------------------------------------------------------------
 -- 5. BẢNG HẠNG THÀNH VIÊN [MembershipTier]
@@ -140,9 +189,19 @@ INSERT INTO CustomerMembership (UserId, TotalCumulativeSpend, TierId) VALUES
 PRINT N'==> Đang thêm dữ liệu bảng [Shop]...';
 SET IDENTITY_INSERT Shop ON;
 INSERT INTO Shop (ShopId, OwnerId, ShopName, ShopDescription, LogoUrl, BannerUrl, BankName, BankAccountNumber, AccountName, AvailableBalance, CommissionRate, ApprovalStatus) VALUES
+-- Shop 1, 2, 3: Đã được sàn phê duyệt (APPROVED) - Có đầy đủ sản phẩm, đơn hàng
 (1, 3, N'Nông Sản Đà Lạt Xanh', N'Chuyên cung cấp dâu tây giống Nhật, bơ sáp 034, phúc bồn tử và hoa quả sạch thu hoạch tận vườn tại Đà Lạt.', 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200', 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1000', N'Ngân hàng Vietcombank', '0071001234567', N'TRAN VAN DA LAT', 25600000.00, 5.00, 'APPROVED'),
 (2, 4, N'Trái Cây Miền Tây Đặc Sản', N'Vựa trái cây Tiền Giang - Bến Tre: Sầu riêng Ri6 chín tự nhiên, xoài cát Hòa Lộc, bưởi da xanh ruột hồng xuất khẩu.', 'https://images.unsplash.com/photo-1546548970-71785318a17b?w=200', 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=1000', N'Ngân hàng Techcombank', '19034567891011', N'LE THI MIEN TAY', 18450000.00, 5.00, 'APPROVED'),
-(3, 5, N'Organic & Premium Fruit Imports', N'Nhập khẩu chính ngạch các loại trái cây thượng hạng: Nho mẫu đơn Shine Muscat Hàn Quốc, Cherry đỏ Mỹ, Táo Envy New Zealand.', 'https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=200', 'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=1000', N'Ngân hàng MBBank', '0388999888999', N'PHAM QUOC TE', 42000000.00, 5.00, 'APPROVED');
+(3, 5, N'Organic & Premium Fruit Imports', N'Nhập khẩu chính ngạch các loại trái cây thượng hạng: Nho mẫu đơn Shine Muscat Hàn Quốc, Cherry đỏ Mỹ, Táo Envy New Zealand.', 'https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=200', 'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=1000', N'Ngân hàng MBBank', '0388999888999', N'PHAM QUOC TE', 42000000.00, 5.00, 'APPROVED'),
+
+-- Shop 4: Trạng thái DRAFT (Mới đăng ký tài khoản, chưa thiết lập hồ sơ -> test điều hướng tới /shop/setup-profile)
+(4, 10, N'Cửa Hàng Chưa Thiết Lập', NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 5.00, 'DRAFT'),
+
+-- Shop 5: Trạng thái PENDING (Đã nộp hồ sơ, đang chờ sàn xét duyệt -> test điều hướng tới /shop/pending-approval)
+(5, 11, N'Vườn Cam Sành Hàm Yên', N'Chuyên cam sành mọng nước, tiêu chuẩn VietGAP từ Tuyên Quang.', 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=200', 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?w=1000', N'Ngân hàng Vietcombank', '09876543210', N'NGUYEN VAN CAM', 0.00, 5.00, 'PENDING'),
+
+-- Shop 6: Trạng thái REJECTED (Hồ sơ bị từ chối kiểm duyệt -> test điều hướng tới /shop/rejected)
+(6, 12, N'Hoa Quả Giá Rẻ Nhất', N'Bán buôn hoa quả.', NULL, NULL, N'Ngân hàng BIDV', '1234567890', N'LE VAN SAI', 0.00, 5.00, 'REJECTED');
 SET IDENTITY_INSERT Shop OFF;
 
 -- ----------------------------------------------------------------------------------------------------
@@ -313,11 +372,33 @@ INSERT INTO Coupon (CouponId, ShopId, CouponCode, CouponCategory, DiscountType, 
 -- Mã của riêng Shop Đà Lạt
 (3, 1, 'DALAT20K', 'PRODUCT', 'FIXED_AMOUNT', 20000.00, 150000.00, 20000.00, 100, 9, 1, '2026-01-01', '2026-12-31'),
 -- Mã của riêng Shop Miền Tây
-(4, 2, 'MIENTAY5P', 'PRODUCT', 'PERCENT', 5.00, 250000.00, 30000.00, 100, 5, 1, '2026-01-01', '2026-12-31');
+(4, 2, 'MIENTAY5P', 'PRODUCT', 'PERCENT', 5.00, 250000.00, 30000.00, 100, 5, 1, '2026-01-01', '2026-12-31'),
+-- Mã đặc quyền theo hạng hội viên (Shopee Rewards Loyalty Coupons - ShopId = NULL)
+(5, NULL, 'SILVER_VIP', 'PRODUCT', 'PERCENT', 5.00, 200000.00, 30000.00, 500, 0, 1, '2026-01-01', '2026-12-31'),
+(6, NULL, 'GOLD_VIP', 'PRODUCT', 'PERCENT', 8.00, 300000.00, 60000.00, 300, 0, 1, '2026-01-01', '2026-12-31'),
+(7, NULL, 'DIAMOND_VIP', 'PRODUCT', 'PERCENT', 12.00, 400000.00, 100000.00, 200, 0, 1, '2026-01-01', '2026-12-31');
 SET IDENTITY_INSERT Coupon OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 17. BẢNG GIỎ HÀNG [Cart] & [CartItem]
+-- 17. BẢNG GÓI MÃ GIẢM GIÁ ĐẶC QUYỀN HỘI VIÊN [TierCoupon]
+-- ----------------------------------------------------------------------------------------------------
+PRINT N'==> Đang thêm dữ liệu bảng [TierCoupon]...';
+SET IDENTITY_INSERT TierCoupon ON;
+INSERT INTO TierCoupon (Id, TierId, CouponId) VALUES
+-- Hạng Bạc (Tier 2): SILVER_VIP (Coupon 5) và BETAFRUIT10 (Coupon 2)
+(1, 2, 5),
+(2, 2, 2),
+-- Hạng Vàng (Tier 3): GOLD_VIP (Coupon 6) và BETAFRUIT10 (Coupon 2)
+(3, 3, 6),
+(4, 3, 2),
+-- Hạng Kim Cương (Tier 4): DIAMOND_VIP (Coupon 7), FREESHIP50 (Coupon 1) và BETAFRUIT10 (Coupon 2)
+(5, 4, 7),
+(6, 4, 1),
+(7, 4, 2);
+SET IDENTITY_INSERT TierCoupon OFF;
+
+-- ----------------------------------------------------------------------------------------------------
+-- 18. BẢNG GIỎ HÀNG [Cart] & [CartItem]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [Cart] và [CartItem]...';
 SET IDENTITY_INSERT Cart ON;
@@ -336,23 +417,9 @@ INSERT INTO CartItem (CartItemId, CartId, VariantId, Quantity) VALUES
 SET IDENTITY_INSERT CartItem OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 18. BẢNG ĐƠN HÀNG [Order]
+-- 19. BẢNG ĐƠN HÀNG [Order]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [Order]...';
-
--- Đảm bảo Check Constraints trên bảng [Order] hỗ trợ đúng các Enum trong Java (VNPAY và DELIVERED)
-IF EXISTS (SELECT * FROM sys.check_constraints WHERE name = 'CHK_Order_Payment')
-BEGIN
-    ALTER TABLE [Order] DROP CONSTRAINT CHK_Order_Payment;
-    ALTER TABLE [Order] ADD CONSTRAINT CHK_Order_Payment CHECK (PaymentMethod IN ('ONLINE', 'COD', 'VNPAY'));
-END
-
-IF EXISTS (SELECT * FROM sys.check_constraints WHERE name = 'CHK_Order_Status')
-BEGIN
-    ALTER TABLE [Order] DROP CONSTRAINT CHK_Order_Status;
-    ALTER TABLE [Order] ADD CONSTRAINT CHK_Order_Status CHECK (OrderStatus IN ('PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'PICKED_UP', 'DELIVERING', 'DELIVERED', 'SUCCESS', 'FAILED', 'CANCELLED', 'REJECTED'));
-END
-
 SET IDENTITY_INSERT [Order] ON;
 INSERT INTO [Order] (OrderId, CustomerId, ShopId, CouponId, SnapshotShippingAddress, TotalAmount, DiscountAmount, ShippingFee, FinalAmount, PlatformFee, ShopNetReceived, PaymentMethod, OrderStatus, IsSettled, IsCODRemitted) VALUES
 -- Đơn hàng 1: Khách Phúc mua dâu Đà Lạt (Thanh toán VNPAY, đã hoàn tất thành công)
@@ -368,11 +435,17 @@ INSERT INTO [Order] (OrderId, CustomerId, ShopId, CouponId, SnapshotShippingAddr
 (4, 9, 1, NULL, N'Phạm Thùy Linh - 0966554433, 45 Nguyễn Văn Cừ, Phường Hải Châu 1, Quận Hải Châu, Đà Nẵng', 110000.00, 0.00, 20000.00, 130000.00, 5500.00, 104500.00, 'COD', 'PREPARING', 0, 0),
 
 -- Đơn hàng 5: Khách Phúc mua Cherry đỏ (VNPAY, đã hủy đơn)
-(5, 7, 3, NULL, N'Nguyễn Phúc Hoàng - 0988776655, Số 88 Phố Huế, Phường Hàng Bài, Quận Hai Bà Trưng, Hà Nội', 250000.00, 0.00, 25000.00, 275000.00, 12500.00, 237500.00, 'VNPAY', 'CANCELLED', 0, 0);
+(5, 7, 3, NULL, N'Nguyễn Phúc Hoàng - 0988776655, Số 88 Phố Huế, Phường Hàng Bài, Quận Hai Bà Trưng, Hà Nội', 250000.00, 0.00, 25000.00, 275000.00, 12500.00, 237500.00, 'VNPAY', 'CANCELLED', 0, 0),
+
+-- Đơn hàng 6: Khách Hoa mua Cherry đỏ Shop Import (Thanh toán VNPAY, đã hoàn tất thành công)
+(6, 8, 3, NULL, N'Nguyễn Thị Kim Hoa - 0977889900, 125 Đường Lê Lợi, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh', 500000.00, 0.00, 25000.00, 525000.00, 25000.00, 475000.00, 'VNPAY', 'SUCCESS', 1, 0),
+
+-- Đơn hàng 7: Khách Linh mua Bơ sáp Đà Lạt (COD, đã hoàn tất thành công)
+(7, 9, 1, NULL, N'Phạm Thùy Linh - 0966554433, 45 Nguyễn Văn Cừ, Phường Hải Châu 1, Quận Hải Châu, Đà Nẵng', 110000.00, 0.00, 20000.00, 130000.00, 5500.00, 104500.00, 'COD', 'SUCCESS', 1, 1);
 SET IDENTITY_INSERT [Order] OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 19. BẢNG CHI TIẾT ĐƠN HÀNG [OrderItem]
+-- 20. BẢNG CHI TIẾT ĐƠN HÀNG [OrderItem]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [OrderItem]...';
 SET IDENTITY_INSERT OrderItem ON;
@@ -386,11 +459,15 @@ INSERT INTO OrderItem (OrderItemId, OrderId, VariantId, Quantity, PriceSnapshot,
 -- Cho Đơn 4
 (4, 4, 3, 2, 55000.00, 35000.00, N'Bơ Sáp 034 Lâm Đồng Cơm Vàng Dẻo', N'Túi 1kg (3-4 quả)'),
 -- Cho Đơn 5
-(5, 5, 12, 1, 250000.00, 180000.00, N'Cherry Đỏ Mỹ Size 9.5 Premium', N'Hộp 500g Size 9.5');
+(5, 5, 12, 1, 250000.00, 180000.00, N'Cherry Đỏ Mỹ Size 9.5 Premium', N'Hộp 500g Size 9.5'),
+-- Cho Đơn 6
+(6, 6, 12, 2, 250000.00, 180000.00, N'Cherry Đỏ Mỹ Size 9.5 Premium', N'Hộp 500g Size 9.5'),
+-- Cho Đơn 7
+(7, 7, 3, 2, 55000.00, 35000.00, N'Bơ Sáp 034 Lâm Đồng Cơm Vàng Dẻo', N'Túi 1kg (3-4 quả)');
 SET IDENTITY_INSERT OrderItem OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 20. BẢNG LỊCH SỬ TRẠNG THÁI ĐƠN [OrderStatusHistory]
+-- 21. BẢNG LỊCH SỬ TRẠNG THÁI ĐƠN [OrderStatusHistory]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [OrderStatusHistory]...';
 SET IDENTITY_INSERT OrderStatusHistory ON;
@@ -402,61 +479,96 @@ INSERT INTO OrderStatusHistory (HistoryId, OrderId, UpdatedBy, StatusFrom, Statu
 (5, 1, 1, 'DELIVERED', 'SUCCESS', N'Hệ thống quyết toán đơn hàng hoàn tất'),
 (6, 2, 7, NULL, 'PENDING', N'Khách hàng đặt đơn chọn phương thức COD'),
 (7, 2, 6, 'DELIVERING', 'DELIVERED', N'Shipper Nam đã thu tiền COD 375.000đ'),
-(8, 5, 7, 'PENDING', 'CANCELLED', N'Khách hàng thay đổi ý định muốn đổi size khác');
+(8, 5, 7, 'PENDING', 'CANCELLED', N'Khách hàng thay đổi ý định muốn đổi size khác'),
+(9, 6, 8, NULL, 'PENDING', N'Khách hàng thanh toán VNPAY thành công'),
+(10, 6, 1, 'DELIVERED', 'SUCCESS', N'Đơn hàng giao thành công và quyết toán hoàn tất'),
+(11, 7, 9, NULL, 'PENDING', N'Khách hàng tạo đơn phương thức COD'),
+(12, 7, 1, 'DELIVERED', 'SUCCESS', N'Giao hàng COD thành công');
 SET IDENTITY_INSERT OrderStatusHistory OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 21. BẢNG GIAO DỊCH THANH TOÁN TRỰC TUYẾN [PaymentTransaction]
+-- 22. BẢNG GIAO DỊCH THANH TOÁN TRỰC TUYẾN [PaymentTransaction]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [PaymentTransaction]...';
 SET IDENTITY_INSERT PaymentTransaction ON;
 INSERT INTO PaymentTransaction (TransactionId, OrderId, Gateway, TransactionRef, Amount, Status) VALUES
 (1, 1, 'VNPAY', 'TXN2026102001', 275000.00, 'PAID'),
 (2, 3, 'VNPAY', 'TXN2026102002', 452000.00, 'PAID'),
-(3, 5, 'VNPAY', 'TXN2026102003', 275000.00, 'FAILED');
+(3, 5, 'VNPAY', 'TXN2026102003', 275000.00, 'FAILED'),
+(4, 6, 'VNPAY', 'TXN2026102004', 525000.00, 'PAID');
 SET IDENTITY_INSERT PaymentTransaction OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 22. BẢNG PHÂN CÔNG GIAO HÀNG [DeliveryAssignment]
+-- 23. BẢNG PHÂN CÔNG GIAO HÀNG [DeliveryAssignment]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [DeliveryAssignment]...';
 SET IDENTITY_INSERT DeliveryAssignment ON;
 INSERT INTO DeliveryAssignment (AssignmentId, OrderId, ShipperId, AssignedBy) VALUES
 (1, 1, 6, 2), -- Đơn 1 giao cho shipper Nam
 (2, 2, 6, 2), -- Đơn 2 giao cho shipper Nam
-(3, 3, 6, 2); -- Đơn 3 giao cho shipper Nam
+(3, 3, 6, 2), -- Đơn 3 giao cho shipper Nam
+(4, 6, 6, 2), -- Đơn 6 giao cho shipper Nam
+(5, 7, 6, 2); -- Đơn 7 giao cho shipper Nam
 SET IDENTITY_INSERT DeliveryAssignment OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 23. BẢNG THU HỘ TIỀN COD [CODCollection] & [CODDetail]
+-- 24. BẢNG THU HỘ TIỀN COD [CODCollection] & [CODDetail]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [CODCollection] và [CODDetail]...';
 SET IDENTITY_INSERT CODCollection ON;
 INSERT INTO CODCollection (CollectionId, ShipperId, AmountCollected, CollectedBy) VALUES
-(1, 6, 375000.00, 2); -- Staff Minh đối soát nhận nộp tiền COD từ Shipper Nam
+(1, 6, 505000.00, 2); -- Staff Minh đối soát nhận nộp tiền COD từ Shipper Nam (Đơn 2 + Đơn 7)
 SET IDENTITY_INSERT CODCollection OFF;
 
 SET IDENTITY_INSERT CODDetail ON;
 INSERT INTO CODDetail (DetailId, CollectionId, OrderId, Amount) VALUES
-(1, 1, 2, 375000.00);
+(1, 1, 2, 375000.00),
+(2, 1, 7, 130000.00);
 SET IDENTITY_INSERT CODDetail OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 24. BẢNG ĐÁNH GIÁ SẢN PHẨM [Review] & MEDIA [ReviewMedia]
+-- 25. BẢNG ĐÁNH GIÁ SẢN PHẨM [Review] & MEDIA [ReviewMedia]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [Review] và [ReviewMedia]...';
 SET IDENTITY_INSERT Review ON;
 INSERT INTO Review (ReviewId, OrderItemId, CustomerId, Rating, Comment, ShopReply, VisibilityStatus, IsReported) VALUES
-(1, 1, 7, 5, N'Dâu tây tươi rói, quả thơm ngát ngọt lịm không hề bị dập nát quả nào. Shop đóng gói thùng xốp rất cẩn thận!', N'Shop Nông Sản Đà Lạt Xanh cảm ơn anh Phúc rất nhiều ạ! Chúc anh ngon miệng và luôn ủng hộ shop nhé!', 'VISIBLE', 0);
+-- Review 1: Dâu tây Đà Lạt (Đơn 1, Shop 1) - 5 sao, hợp lệ
+(1, 1, 7, 5, N'Dâu tây tươi rói, quả thơm ngát ngọt lịm không hề bị dập nát quả nào. Shop đóng gói thùng xốp rất cẩn thận!', N'Shop Nông Sản Đà Lạt Xanh cảm ơn anh Phúc rất nhiều ạ! Chúc anh ngon miệng và luôn ủng hộ shop nhé!', 'VISIBLE', 0),
+
+-- Review 2: Sầu riêng Ri6 (Đơn 2, Shop 2) - 1 sao vu khống, xúc phạm -> Có báo cáo PENDING
+(2, 2, 7, 1, N'Shop làm ăn lừa đảo gian manh, cân thiếu nửa ký sầu riêng, trái cây thối rữa như rác rưởi!', NULL, 'VISIBLE', 1),
+
+-- Review 3: Cherry đỏ Mỹ (Đơn 6, Shop 3) - 1 sao dìm hàng đối thủ -> Đã được duyệt ẩn (APPROVED_HIDDEN)
+(3, 6, 8, 1, N'Sản phẩm của shop đối thủ cạnh tranh tốt hơn nhiều, shop này bán đồ dỏm đừng mua!', NULL, 'HIDDEN', 1),
+
+-- Review 4: Bơ sáp 034 (Đơn 7, Shop 1) - 2 sao phản ánh thực tế -> Shop báo cáo nhưng bị từ chối (REJECTED)
+(4, 7, 9, 2, N'Bơ nhận được hơi chín quá, ăn liền thì được chứ để 2 hôm là nhũn.', NULL, 'VISIBLE', 1);
 SET IDENTITY_INSERT Review OFF;
 
 SET IDENTITY_INSERT ReviewMedia ON;
 INSERT INTO ReviewMedia (MediaId, ReviewId, MediaUrl, MediaType) VALUES
-(1, 1, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=500', 'IMAGE');
+(1, 1, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=500', 'IMAGE'),
+(2, 2, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=500', 'IMAGE');
 SET IDENTITY_INSERT ReviewMedia OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 25. BẢNG YÊU CẦU RÚT TIỀN [PayoutRequest]
+-- 26. BẢNG KHIẾU NẠI & KIỂM DUYỆT ĐÁNH GIÁ [ReviewReport]
+-- ----------------------------------------------------------------------------------------------------
+PRINT N'==> Đang thêm dữ liệu bảng [ReviewReport]...';
+SET IDENTITY_INSERT ReviewReport ON;
+INSERT INTO ReviewReport (ReportId, ReviewId, ShopId, ReasonCategory, Explanation, EvidenceUrls, Status, StaffNote, ProcessedBy, CreatedAt, ResolvedAt) VALUES
+-- Report 1: Shop 2 khiếu nại Review 2 (Dùng từ ngữ xúc phạm) -> Đang chờ kiểm duyệt (PENDING)
+(1, 2, 2, 'INAPPROPRIATE_LANGUAGE', N'Khách hàng dùng từ ngữ xúc phạm uy tín người bán (lừa đảo, rác rưởi), thông tin sai sự thật.', 'https://images.unsplash.com/photo-1543528176-61b239494933?w=500', 'PENDING', NULL, NULL, DATEADD(DAY, -2, GETDATE()), NULL),
+
+-- Report 2: Shop 3 khiếu nại Review 3 (Đối thủ dìm hàng) -> Staff Minh đã chấp thuận ẩn (APPROVED_HIDDEN)
+(2, 3, 3, 'COMPETITOR_SABOTAGE', N'Nghi ngờ đối thủ chơi xấu dìm hàng vô căn cứ, so sánh thiếu lành mạnh.', NULL, 'APPROVED_HIDDEN', N'Đã xác minh đánh giá có dấu hiệu cạnh tranh không lành mạnh, chấp thuận ẩn đánh giá.', 2, DATEADD(DAY, -5, GETDATE()), DATEADD(DAY, -4, GETDATE())),
+
+-- Report 3: Shop 1 khiếu nại Review 4 (Khách chê bơ nhũn) -> Staff Minh từ chối (REJECTED) vì khách nêu đúng trải nghiệm thực tế
+(3, 4, 1, 'FALSE_INFORMATION', N'Shop giao bơ già chuẩn đóng hộp cẩn thận, khách khiếu nại bơ bị nhũn.', NULL, 'REJECTED', N'Khách hàng phản ánh đúng trải nghiệm nhận hàng thực tế, không có từ ngữ vi phạm tiêu chuẩn cộng đồng.', 2, DATEADD(DAY, -3, GETDATE()), DATEADD(DAY, -2, GETDATE()));
+SET IDENTITY_INSERT ReviewReport OFF;
+
+-- ----------------------------------------------------------------------------------------------------
+-- 27. BẢNG YÊU CẦU RÚT TIỀN [PayoutRequest]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [PayoutRequest]...';
 SET IDENTITY_INSERT PayoutRequest ON;
@@ -466,7 +578,7 @@ INSERT INTO PayoutRequest (RequestId, ShopId, RequestedAmount, BankName, BankAcc
 SET IDENTITY_INSERT PayoutRequest OFF;
 
 -- ----------------------------------------------------------------------------------------------------
--- 26. BẢNG THÔNG BÁO [Notification]
+-- 28. BẢNG THÔNG BÁO [Notification]
 -- ----------------------------------------------------------------------------------------------------
 PRINT N'==> Đang thêm dữ liệu bảng [Notification]...';
 SET IDENTITY_INSERT Notification ON;
@@ -478,5 +590,5 @@ INSERT INTO Notification (NotificationId, UserId, Title, Message, NotificationTy
 SET IDENTITY_INSERT Notification OFF;
 
 PRINT N'====================================================================================================';
-PRINT N'==> TẠO DỮ LIỆU MẪU (SEED DATA) HOÀN TẤT THÀNH CÔNG VỚI 28 BẢNG TRONG HỆ THỐNG BETAFRUIT!';
+PRINT N'==> TẠO DỮ LIỆU MẪU (SEED DATA) HOÀN TẤT THÀNH CÔNG VỚI 30 BẢNG TRONG HỆ THỐNG BETAFRUIT!';
 PRINT N'====================================================================================================';
