@@ -196,14 +196,19 @@
         <!-- ═══════════════════════════════════════════════════════════════════ -->
         <div th:if="${dashboard.anomalyAlerts != null and !#lists.isEmpty(dashboard.anomalyAlerts)}"
              class="alert alert-warning border-start border-warning border-4 shadow-sm mb-4">
-            <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center justify-content-between" style="cursor: pointer;" onclick="toggleAnomalyAlerts()">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
                     <h6 class="fw-bold mb-0 text-dark">Hệ Thống Cảnh Báo Thông Minh (Smart Anomaly & Budget Alerts)</h6>
                 </div>
-                <span class="badge bg-warning text-dark px-2 py-1" th:text="${#lists.size(dashboard.anomalyAlerts)} + ' Cảnh Báo Cần Chú Ý'">1 Cảnh Báo</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark px-2 py-1" th:text="${#lists.size(dashboard.anomalyAlerts)} + ' Cảnh Báo Cần Chú Ý'">1 Cảnh Báo</span>
+                    <button type="button" class="btn btn-sm btn-outline-dark py-0 px-2 fw-semibold" id="toggleAlertsBtn" style="font-size: 0.78rem;">
+                        <i class="bi bi-chevron-down" id="toggleAlertsIcon"></i> <span id="toggleAlertsText">Xem Chi Tiết</span>
+                    </button>
+                </div>
             </div>
-            <ul class="mb-0 ps-3 small text-secondary">
+            <ul class="mb-0 ps-3 small text-secondary mt-3 pt-2 border-top border-warning-subtle d-none" id="anomalyAlertsList">
                 <li th:each="alert : ${dashboard.anomalyAlerts}" th:text="${alert}" class="mb-1"></li>
             </ul>
         </div>
@@ -355,8 +360,14 @@
                             <h5 class="fw-bold text-dark mb-0">Xu Hướng Doanh Thu & Chi Phí Khuyến Mãi</h5>
                             <p class="text-secondary small mb-0">14 ngày gần nhất của cửa hàng</p>
                         </div>
-                        <div class="badge bg-light text-dark border px-2.5 py-1.5">
-                            <i class="bi bi-calendar3 me-1"></i> 14 ngày qua
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1"
+                                    onclick="exportChartDailyTrends()" title="Xuất dữ liệu biểu đồ xu hướng sang Excel/CSV">
+                                <i class="bi bi-file-earmark-excel"></i> <span>Xuất Excel</span>
+                            </button>
+                            <div class="badge bg-light text-dark border px-2.5 py-1.5">
+                                <i class="bi bi-calendar3 me-1"></i> 14 ngày qua
+                            </div>
                         </div>
                     </div>
                     <div style="position: relative; height: 310px;">
@@ -368,8 +379,16 @@
             <!-- Donut Charts: Phân loại & Thanh toán -->
             <div class="col-12 col-lg-4">
                 <div class="card chart-container-card shadow-sm p-4 h-100">
-                    <h5 class="fw-bold text-dark mb-1">Cơ Cấu Khuyến Mãi</h5>
-                    <p class="text-secondary small mb-3">Tỷ trọng tiền giảm theo loại mã & thanh toán</p>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1">Cơ Cấu Khuyến Mãi</h5>
+                            <p class="text-secondary small mb-0">Tỷ trọng tiền giảm theo loại mã &amp; thanh toán</p>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1"
+                                onclick="exportChartDistribution()" title="Xuất dữ liệu cơ cấu khuyến mãi sang Excel/CSV">
+                            <i class="bi bi-file-earmark-excel"></i> <span>Xuất Excel</span>
+                        </button>
+                    </div>
 
                     <ul class="nav nav-pills nav-fill mb-3 bg-light p-1 rounded-2" id="shopChartTab" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -505,43 +524,102 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <!-- 4. TOP HOA QUẢ BÁN CHẠY NHỜ VOUCHER CỦA SHOP -->
+        <!-- 4. HAI CỘT PHÂN TÍCH: TOP HOA QUẢ & HIỆU QUẢ THEO HẠNG HỘI VIÊN -->
         <!-- ═══════════════════════════════════════════════════════════════════ -->
-        <div class="card chart-container-card shadow-sm mb-4">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="fw-bold text-dark mb-0">
-                        <i class="bi bi-basket2-fill text-warning me-2"></i>Top Hoa Quả Bán Chạy Nhất Nhờ Áp Dụng Mã Của Shop
-                    </h5>
-                    <span class="text-secondary small">Những mặt hàng kích thích sức mua mạnh nhất khi được cửa hàng giảm giá</span>
+        <div class="row g-3 mb-4">
+            <!-- Cột trái: Top Hoa Quả Bán Chạy Nhờ Voucher Của Shop -->
+            <div class="col-12 col-lg-6">
+                <div class="card chart-container-card shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold text-dark mb-0">
+                                <i class="bi bi-basket2-fill text-warning me-2"></i>Top Hoa Quả Bán Chạy Nhất Nhờ Voucher
+                            </h6>
+                            <span class="text-secondary small">Những mặt hàng kích thích sức mua mạnh nhất khi có ưu đãi</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1"
+                                onclick="exportTableToCsv('tableTopFruits', 'Shop_Top_HoaQua_BanChay_Voucher.csv')" title="Xuất danh sách Top hoa quả sang Excel/CSV">
+                            <i class="bi bi-file-earmark-excel"></i> <span>Xuất Excel</span>
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="tableTopFruits">
+                                <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3" style="font-size: 0.8rem; color: #64748b;">Sản Phẩm Hoa Quả</th>
+                                    <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Số Lượng Đã Bán</th>
+                                    <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Số Đơn Áp Mã</th>
+                                    <th class="text-end pe-3" style="font-size: 0.8rem; color: #64748b;">Doanh Thu Thu Về</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(dashboard.topFruitProducts)}">
+                                    <td colspan="4" class="text-center py-4 text-muted small">Cửa hàng chưa có dữ liệu sản phẩm nào bán qua mã giảm giá.</td>
+                                </tr>
+                                <tr th:each="fruit : ${dashboard.topFruitProducts}">
+                                    <td class="ps-3">
+                                        <div class="fw-semibold text-dark small" th:text="${fruit.productName}">Tên hoa quả</div>
+                                    </td>
+                                    <td class="text-center fw-bold text-dark small" th:text="${fruit.totalQuantitySold} + ' kg/hộp'">0</td>
+                                    <td class="text-center text-muted small" th:text="${fruit.orderCount} + ' đơn'">0 đơn</td>
+                                    <td class="text-end pe-3 fw-bold text-success small"
+                                        th:text="${#numbers.formatDecimal(fruit.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                        <tr>
-                            <th class="ps-3" style="font-size: 0.8rem; color: #64748b;">Sản Phẩm Hoa Quả</th>
-                            <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Số Lượng Đã Bán</th>
-                            <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Số Đơn Áp Mã</th>
-                            <th class="text-end pe-3" style="font-size: 0.8rem; color: #64748b;">Doanh Thu Thu Về</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:if="${#lists.isEmpty(dashboard.topFruitProducts)}">
-                            <td colspan="4" class="text-center py-4 text-muted small">Cửa hàng chưa có dữ liệu sản phẩm nào bán qua mã giảm giá.</td>
-                        </tr>
-                        <tr th:each="fruit : ${dashboard.topFruitProducts}">
-                            <td class="ps-3">
-                                <div class="fw-semibold text-dark" th:text="${fruit.productName}">Tên hoa quả</div>
-                            </td>
-                            <td class="text-center fw-bold text-dark" th:text="${fruit.totalQuantitySold} + ' kg/hộp'">0</td>
-                            <td class="text-center text-muted small" th:text="${fruit.orderCount} + ' đơn'">0 đơn</td>
-                            <td class="text-end pe-3 fw-bold text-success"
-                                th:text="${#numbers.formatDecimal(fruit.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
-                        </tr>
-                        </tbody>
-                    </table>
+
+            <!-- Cột phải: Hiệu Quả Voucher Theo Hạng Hội Viên -->
+            <div class="col-12 col-lg-6">
+                <div class="card chart-container-card shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold text-dark mb-0">
+                                <i class="bi bi-award-fill text-warning me-2"></i>Hiệu Quả Voucher Hội Viên Thân Thiết
+                            </h6>
+                            <span class="text-secondary small">Thống kê theo các hạng thành viên mua hàng của Shop</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1"
+                                onclick="exportTableToCsv('tableTierPerformance', 'Shop_HieuQua_Voucher_HoiVien.csv')" title="Xuất báo cáo hội viên sang Excel/CSV">
+                            <i class="bi bi-file-earmark-excel"></i> <span>Xuất Excel</span>
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="tableTierPerformance">
+                                <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3" style="font-size: 0.8rem; color: #64748b;">Hạng Hội Viên</th>
+                                    <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Khách Hàng</th>
+                                    <th class="text-center" style="font-size: 0.8rem; color: #64748b;">Đơn Dùng Mã</th>
+                                    <th class="text-end pe-3" style="font-size: 0.8rem; color: #64748b;">Doanh Thu Mang Lại</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:if="${#lists.isEmpty(dashboard.tierPerformances)}">
+                                    <td colspan="4" class="text-center py-4 text-muted small">Chưa có dữ liệu đơn hàng theo hạng thành viên.</td>
+                                </tr>
+                                <tr th:each="tier : ${dashboard.tierPerformances}">
+                                    <td class="ps-3">
+                                        <span class="badge" th:classappend="${tier.tierBadgeClass}" th:text="${tier.tierName}">Bạc</span>
+                                    </td>
+                                    <td class="text-center small text-muted">
+                                        <strong class="text-dark" th:text="${tier.memberCount}">0</strong> người
+                                    </td>
+                                    <td class="text-center small text-muted">
+                                        <strong class="text-dark" th:text="${tier.usedVoucherCount}">0</strong> đơn
+                                    </td>
+                                    <td class="text-end pe-3 fw-bold text-dark small"
+                                        th:text="${#numbers.formatDecimal(tier.revenueTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -553,16 +631,103 @@
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script th:inline="javascript">
+        // Global data cache for Widget Export
+        window.trendLabelsData = JSON.parse(/*[[${dashboard.trendLabelsJson}]]*/ '[]');
+        window.trendRevenueData = JSON.parse(/*[[${dashboard.trendRevenueJson}]]*/ '[]');
+        window.trendDiscountData = JSON.parse(/*[[${dashboard.trendDiscountJson}]]*/ '[]');
+        window.shippingDiscountVal = /*[[${dashboard.categoryDistribution.shippingDiscountTotal}]]*/ 0;
+        window.productDiscountVal = /*[[${dashboard.categoryDistribution.productDiscountTotal}]]*/ 0;
+        window.codRevVal = /*[[${dashboard.paymentMethodDistribution.codRevenueTotal}]]*/ 0;
+        window.onlineRevVal = /*[[${dashboard.paymentMethodDistribution.onlineRevenueTotal}]]*/ 0;
+
+        // Toggle Ẩn / Hiện Cảnh Báo Thông Minh (Mặc định: Ẩn)
+        function toggleAnomalyAlerts() {
+            const list = document.getElementById('anomalyAlertsList');
+            const icon = document.getElementById('toggleAlertsIcon');
+            const text = document.getElementById('toggleAlertsText');
+            if (!list) return;
+            const isHidden = list.classList.contains('d-none');
+            if (isHidden) {
+                list.classList.remove('d-none');
+                if (icon) { icon.className = 'bi bi-chevron-up'; }
+                if (text) { text.textContent = 'Ẩn Chi Tiết'; }
+            } else {
+                list.classList.add('d-none');
+                if (icon) { icon.className = 'bi bi-chevron-down'; }
+                if (text) { text.textContent = 'Xem Chi Tiết'; }
+            }
+        }
+
+        // Helper tải CSV UTF-8 BOM
+        function downloadCsvWithBom(filename, csvContent) {
+            const bom = '\uFEFF';
+            const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Xuất dữ liệu biểu đồ đường xu hướng sang CSV
+        function exportChartDailyTrends() {
+            const labels = window.trendLabelsData || [];
+            const revs = window.trendRevenueData || [];
+            const discs = window.trendDiscountData || [];
+            let csv = "Ngày,Doanh Thu Từ Đơn Có Mã (đ),Tổng Chi Phí Giảm Giá (đ),Doanh Thu Ròng (đ)\n";
+            for (let i = 0; i < labels.length; i++) {
+                const rev = revs[i] || 0;
+                const disc = discs[i] || 0;
+                const net = rev - disc;
+                csv += `"${labels[i]}",${rev},${disc},${net}\n`;
+            }
+            downloadCsvWithBom("Shop_BieuDo_XuHuong_DoanhThu_ChiPhi.csv", csv);
+        }
+
+        // Xuất dữ liệu biểu đồ tròn cơ cấu sang CSV
+        function exportChartDistribution() {
+            let csv = "=== 1. TỶ TRỌNG THEO LOẠI KHUYẾN MÃI ===\n";
+            csv += "Loại Khuyến Mãi,Số Tiền Giảm (đ)\n";
+            csv += `"Giảm Giá Đơn Hàng",${window.productDiscountVal || 0}\n`;
+            csv += `"Freeship Vận Chuyển",${window.shippingDiscountVal || 0}\n\n`;
+            csv += "=== 2. DOANH THU THEO PHƯƠNG THỨC THANH TOÁN ===\n";
+            csv += "Phương Thức Thanh Toán,Doanh Thu Đơn Có Mã (đ)\n";
+            csv += `"Tiền mặt (COD)",${window.codRevVal || 0}\n`;
+            csv += `"VNPAY / Ví điện tử",${window.onlineRevVal || 0}\n`;
+            downloadCsvWithBom("Shop_BieuDo_CoCau_KhuyenMai_ThanhToan.csv", csv);
+        }
+
+        // Xuất dữ liệu bất kỳ table HTML nào sang CSV
+        function exportTableToCsv(tableId, filename) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            let csv = "";
+            const rows = table.querySelectorAll('tr');
+            rows.forEach(row => {
+                const cols = row.querySelectorAll('th, td');
+                if (cols.length === 0) return;
+                const rowData = [];
+                cols.forEach(col => {
+                    let text = col.innerText.trim().replace(/\s+/g, ' ');
+                    text = text.replace(/"/g, '""');
+                    rowData.push(`"${text}"`);
+                });
+                csv += rowData.join(",") + "\n";
+            });
+            downloadCsvWithBom(filename, csv);
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
-            const trendLabels = JSON.parse(/*[[${dashboard.trendLabelsJson}]]*/ '[]');
-            const trendRevenue = JSON.parse(/*[[${dashboard.trendRevenueJson}]]*/ '[]');
-            const trendDiscount = JSON.parse(/*[[${dashboard.trendDiscountJson}]]*/ '[]');
+            const trendLabels = window.trendLabelsData;
+            const trendRevenue = window.trendRevenueData;
+            const trendDiscount = window.trendDiscountData;
 
-            const shippingDiscount = /*[[${dashboard.categoryDistribution.shippingDiscountTotal}]]*/ 0;
-            const productDiscount = /*[[${dashboard.categoryDistribution.productDiscountTotal}]]*/ 0;
+            const shippingDiscount = window.shippingDiscountVal;
+            const productDiscount = window.productDiscountVal;
 
-            const codRev = /*[[${dashboard.paymentMethodDistribution.codRevenueTotal}]]*/ 0;
-            const onlineRev = /*[[${dashboard.paymentMethodDistribution.onlineRevenueTotal}]]*/ 0;
+            const codRev = window.codRevVal;
+            const onlineRev = window.onlineRevVal;
 
             const formatVND = (value) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 

@@ -777,6 +777,7 @@ public class CouponServiceImpl implements CouponService {
 
         List<Object[]> rawTopFruits = orderItemRepository.findTopFruitProductsForShopVoucherOrders(shopId);
         List<CouponTopFruitProductResponse> topFruitProducts = buildTopFruitProducts(rawTopFruits);
+        List<CouponTierPerformanceResponse> tierPerformances = buildTierPerformance(orders);
         List<String> anomalyAlerts = buildAnomalyAlerts(leaderboard);
 
         return CouponDashboardResponse.builder()
@@ -786,7 +787,7 @@ public class CouponServiceImpl implements CouponService {
                 .categoryDistribution(categoryDistribution)
                 .paymentMethodDistribution(paymentMethodDistribution)
                 .topFruitProducts(topFruitProducts)
-                .tierPerformances(Collections.emptyList())
+                .tierPerformances(tierPerformances)
                 .filter(filter)
                 .anomalyAlerts(anomalyAlerts)
                 .trendLabelsJson(trendLabelsJson)
@@ -900,6 +901,62 @@ public class CouponServiceImpl implements CouponService {
                 sb.append(r.getRevenueTotal() != null ? r.getRevenueTotal().toPlainString() : "0").append(",");
                 sb.append(r.getReturnOnInvestment() != null ? r.getReturnOnInvestment().toPlainString() : "0").append(",");
                 sb.append(escapeCsv(r.getPerformanceStatus())).append("\n");
+            }
+        }
+        sb.append("\n");
+
+        sb.append("=== 3. SỐ LIỆU BIỂU ĐỒ: XU HƯỚNG DOANH THU & CHI PHÍ THEO NGÀY ===\n");
+        sb.append("Ngày,Doanh Thu Từ Đơn Có Mã (đ),Tổng Chi Phí Giảm Giá (đ),Doanh Thu Ròng (đ)\n");
+        if (dashboard.getDailyTrends() != null) {
+            for (CouponDailyTrendResponse d : dashboard.getDailyTrends()) {
+                BigDecimal rev = d.getRevenueTotal() != null ? d.getRevenueTotal() : BigDecimal.ZERO;
+                BigDecimal disc = d.getDiscountTotal() != null ? d.getDiscountTotal() : BigDecimal.ZERO;
+                BigDecimal net = rev.subtract(disc);
+                String dateStr = d.getFormattedDate() != null ? d.getFormattedDate() : (d.getOrderDate() != null ? d.getOrderDate().toString() : "");
+                sb.append(escapeCsv(dateStr)).append(",");
+                sb.append(rev.toPlainString()).append(",");
+                sb.append(disc.toPlainString()).append(",");
+                sb.append(net.toPlainString()).append("\n");
+            }
+        }
+        sb.append("\n");
+
+        sb.append("=== 4. SỐ LIỆU BIỂU ĐỒ: CƠ CẤU KHUYẾN MÃI & THANH TOÁN ===\n");
+        sb.append("Phân Loại,Danh Mục / Phương Thức,Giá Trị (đ)\n");
+        if (dashboard.getCategoryDistribution() != null) {
+            CouponCategoryDistributionResponse cd = dashboard.getCategoryDistribution();
+            sb.append("Loại Khuyến Mãi,Giảm Giá Đơn Hàng,").append(cd.getProductDiscountTotal() != null ? cd.getProductDiscountTotal().toPlainString() : "0").append("\n");
+            sb.append("Loại Khuyến Mãi,Freeship Vận Chuyển,").append(cd.getShippingDiscountTotal() != null ? cd.getShippingDiscountTotal().toPlainString() : "0").append("\n");
+        }
+        if (dashboard.getPaymentMethodDistribution() != null) {
+            CouponPaymentMethodResponse pm = dashboard.getPaymentMethodDistribution();
+            sb.append("Phương Thức Thanh Toán,Thanh Toán COD (Tiền mặt),").append(pm.getCodRevenueTotal() != null ? pm.getCodRevenueTotal().toPlainString() : "0").append("\n");
+            sb.append("Phương Thức Thanh Toán,Thanh Toán VNPAY (Trực tuyến),").append(pm.getOnlineRevenueTotal() != null ? pm.getOnlineRevenueTotal().toPlainString() : "0").append("\n");
+        }
+        sb.append("\n");
+
+        sb.append("=== 5. BẢNG TOP HOA QUẢ BÁN CHẠY NHỜ VOUCHER ===\n");
+        sb.append("Hạng,Tên Sản Phẩm Hoa Quả,Số Lượng Đã Bán (kg/hộp),Số Đơn Hàng Áp Mã,Doanh Thu Thu Về (đ)\n");
+        if (dashboard.getTopFruitProducts() != null) {
+            int fruitRank = 1;
+            for (CouponTopFruitProductResponse f : dashboard.getTopFruitProducts()) {
+                sb.append(fruitRank++).append(",");
+                sb.append(escapeCsv(f.getProductName())).append(",");
+                sb.append(f.getTotalQuantitySold()).append(",");
+                sb.append(f.getOrderCount()).append(",");
+                sb.append(f.getTotalRevenue() != null ? f.getTotalRevenue().toPlainString() : "0").append("\n");
+            }
+        }
+        sb.append("\n");
+
+        sb.append("=== 6. BẢNG HIỆU QUẢ VOUCHER THEO HẠNG HỘI VIÊN THÂN THIẾT ===\n");
+        sb.append("Hạng Hội Viên,Số Khách Hàng,Số Đơn Dùng Mã,Doanh Thu Mang Lại (đ)\n");
+        if (dashboard.getTierPerformances() != null) {
+            for (CouponTierPerformanceResponse t : dashboard.getTierPerformances()) {
+                sb.append(escapeCsv(t.getTierName())).append(",");
+                sb.append(t.getMemberCount()).append(",");
+                sb.append(t.getUsedVoucherCount()).append(",");
+                sb.append(t.getRevenueTotal() != null ? t.getRevenueTotal().toPlainString() : "0").append("\n");
             }
         }
 
