@@ -37,6 +37,7 @@ public record CustomerOrderResponse(
             Integer reviewId,
             Integer rating,
             String comment,
-            ReviewVisibility reviewVisibility
+            ReviewVisibility reviewVisibility,
+            boolean reviewCanEdit
     ) {}
 }

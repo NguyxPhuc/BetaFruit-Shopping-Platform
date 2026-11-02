@@ -135,7 +135,14 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 review == null ? null : review.getReviewId(),
                 review == null ? null : review.getRating(),
                 review == null ? null : review.getComment(),
-                review == null ? null : review.getVisibilityStatus());
+                review == null ? null : review.getVisibilityStatus(),
+                review == null || !hasCustomerUsedEdit(review));
+    }
+
+    private boolean hasCustomerUsedEdit(Review review) {
+        return review.getUpdatedAt() != null
+                && review.getCreatedAt() != null
+                && review.getUpdatedAt().isAfter(review.getCreatedAt().plusSeconds(2));
     }
 
     private String formatStatusLabel(OrderStatus status) {
