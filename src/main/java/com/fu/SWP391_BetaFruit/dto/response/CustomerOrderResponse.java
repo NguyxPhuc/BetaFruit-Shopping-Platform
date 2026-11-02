@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.dto.response;
 
 import lombok.Builder;
+import com.fu.SWP391_BetaFruit.enums.ReviewVisibility;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,10 +28,15 @@ public record CustomerOrderResponse(
 ) {
     public record OrderItemResponse(
             Integer orderItemId,
+            Integer productId,
             String productName,
             String variantName,
             Integer quantity,
             BigDecimal price,
-            BigDecimal subtotal
+            BigDecimal subtotal,
+            Integer reviewId,
+            Integer rating,
+            String comment,
+            ReviewVisibility reviewVisibility
     ) {}
 }

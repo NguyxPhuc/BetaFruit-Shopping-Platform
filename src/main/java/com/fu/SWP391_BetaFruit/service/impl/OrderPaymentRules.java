@@ -20,7 +20,9 @@ public final class OrderPaymentRules {
     }
 
     public static boolean delivered(Order order) {
-        return order.getOrderStatus() == OrderStatus.DELIVERED || order.getOrderStatus() == OrderStatus.SUCCESS;
+        return order.getOrderStatus() == OrderStatus.DELIVERED
+                || order.getOrderStatus() == OrderStatus.RECEIVED
+                || order.getOrderStatus() == OrderStatus.SUCCESS;
     }
 
     public static boolean awaitingDelivery(Order order) {

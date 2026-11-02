@@ -180,6 +180,7 @@
             <a th:href="@{/orders(status='PENDING')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'PENDING' ? 'active' : ''}">Chờ xác nhận</a>
             <a th:href="@{/orders(status='DELIVERING')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERING' ? 'active' : ''}">Đang giao</a>
             <a th:href="@{/orders(status='DELIVERED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERED' ? 'active' : ''}">Đã giao</a>
+            <a th:href="@{/orders(status='RECEIVED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'RECEIVED' ? 'active' : ''}">Đã nhận hàng</a>
             <a th:href="@{/orders(status='SUCCESS')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'SUCCESS' ? 'active' : ''}">Hoàn tất</a>
             <a th:href="@{/orders(status='CANCELLED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'CANCELLED' ? 'active' : ''}">Đã hủy</a>
         </nav>

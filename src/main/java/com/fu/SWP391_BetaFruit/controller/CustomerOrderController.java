@@ -73,7 +73,7 @@ public class CustomerOrderController {
 
         try {
             TierUpgradeResult upgradeResult = customerOrderService.confirmReceived(orderId, customerId);
-            redirectAttributes.addFlashAttribute("successMessage", "Xác nhận nhận hàng thành công! Đơn hàng đã hoàn tất.");
+            redirectAttributes.addFlashAttribute("successMessage", "Xác nhận đã nhận hàng thành công.");
 
             if (upgradeResult != null && upgradeResult.isUpgraded()) {
                 redirectAttributes.addFlashAttribute("upgradeCelebration", true);

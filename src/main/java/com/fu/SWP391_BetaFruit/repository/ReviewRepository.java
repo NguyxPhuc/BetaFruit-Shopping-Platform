@@ -9,9 +9,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Integer> {
+
+    Optional<Review> findByOrderItem_OrderItemId(Integer orderItemId);
 
     @Query("SELECT r FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
            "AND (r.visibilityStatus IS NULL OR r.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ReviewVisibility.VISIBLE) " +

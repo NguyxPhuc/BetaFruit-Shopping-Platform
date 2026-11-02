@@ -146,6 +146,8 @@
     <div th:replace="~{fragments/header :: header}"></div>
 
     <main class="detail-container">
+        <div th:if="${reviewSuccess}" class="card-box" style="color:#166534;background:#f0fdf4;" th:text="${reviewSuccess}"></div>
+        <div th:if="${reviewError}" class="card-box" style="color:#991b1b;background:#fef2f2;" th:text="${reviewError}"></div>
         <!-- Breadcrumb -->
         <nav class="breadcrumb-nav">
             <a th:href="@{/orders}"><i class="bi bi-arrow-left"></i> Danh sách đơn mua</a>
@@ -216,14 +218,47 @@
             <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem 0; border-bottom: 1px solid #edf2f7; padding-bottom: 0.75rem;">
                 <i class="bi bi-basket2"></i> Danh sách hoa quả đã đặt
             </h3>
-            <div th:each="item : ${order.items}" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9;">
-                <div>
-                    <div style="font-weight: 700; color: #1e293b;" th:text="${item.productName}">Cam sành bóc vỏ</div>
-                    <div style="font-size: 0.85rem; color: #64748b;" th:if="${item.variantName != null and item.variantName != ''}" th:text="'Phân loại: ' + ${item.variantName}"></div>
-                    <div style="font-size: 0.85rem; color: #94a3b8;" th:text="'Số lượng: ' + ${item.quantity}">Số lượng: 1</div>
+            <div th:each="item : ${order.items}" style="padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 700; color: #1e293b;" th:text="${item.productName}">Cam sành bóc vỏ</div>
+                        <div style="font-size: 0.85rem; color: #64748b;" th:if="${item.variantName != null and item.variantName != ''}" th:text="'Phân loại: ' + ${item.variantName}"></div>
+                        <div style="font-size: 0.85rem; color: #94a3b8;" th:text="'Số lượng: ' + ${item.quantity}">Số lượng: 1</div>
+                    </div>
+                    <div style="font-weight: 700; color: #0f172a;" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
+                        120.000 ₫
+                    </div>
                 </div>
-                <div style="font-weight: 700; color: #0f172a;" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
-                    120.000 ₫
+                <div th:if="${order.orderStatus == 'RECEIVED' or order.orderStatus == 'SUCCESS'}" style="margin-top:.75rem;">
+                    <form th:if="${item.reviewId == null}" th:action="@{/customer/reviews}" method="post" style="display:grid;gap:.5rem;max-width:520px;">
+                        <input type="hidden" name="orderId" th:value="${order.orderId}">
+                        <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
+                        <input type="hidden" name="productId" th:value="${item.productId}">
+                        <label>Đánh giá sản phẩm
+                            <select name="rating" required>
+                                <option value="5">5 sao</option><option value="4">4 sao</option><option value="3">3 sao</option><option value="2">2 sao</option><option value="1">1 sao</option>
+                            </select>
+                        </label>
+                        <textarea name="comment" maxlength="5000" rows="3" placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"></textarea>
+                        <button type="submit" class="confirm-btn-hero">Gửi đánh giá</button>
+                    </form>
+                    <div th:if="${item.reviewId != null and item.reviewVisibility?.name() == 'HIDDEN_BY_ADMIN'}" class="text-muted">Đánh giá này đã bị quản trị viên ẩn.</div>
+                    <form th:if="${item.reviewId != null and item.reviewVisibility?.name() != 'HIDDEN_BY_ADMIN'}"
+                          th:action="@{/customer/reviews/{id}/edit(id=${item.reviewId})}" method="post" style="display:grid;gap:.5rem;max-width:520px;">
+                        <input type="hidden" name="orderId" th:value="${order.orderId}">
+                        <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
+                        <input type="hidden" name="productId" th:value="${item.productId}">
+                        <label>Đánh giá của bạn
+                            <select name="rating" required>
+                                <option value="5" th:selected="${item.rating == 5}">5 sao</option><option value="4" th:selected="${item.rating == 4}">4 sao</option><option value="3" th:selected="${item.rating == 3}">3 sao</option><option value="2" th:selected="${item.rating == 2}">2 sao</option><option value="1" th:selected="${item.rating == 1}">1 sao</option>
+                            </select>
+                        </label>
+                        <textarea name="comment" maxlength="5000" rows="3" th:text="${item.comment}" placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"></textarea>
+                        <div style="display:flex;gap:.5rem;">
+                            <button type="submit" class="confirm-btn-hero">Cập nhật đánh giá</button>
+                            <button th:if="${item.reviewVisibility?.name() != 'HIDDEN_BY_USER'}" type="submit" class="btn-detail" th:formaction="@{/customer/reviews/{id}/hide(id=${item.reviewId})}" formmethod="post" onclick="return confirm('Ẩn đánh giá này khỏi trang sản phẩm?');">Ẩn đánh giá</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 

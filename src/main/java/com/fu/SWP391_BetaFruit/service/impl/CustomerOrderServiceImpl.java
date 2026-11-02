@@ -4,12 +4,14 @@ import com.fu.SWP391_BetaFruit.dto.response.CustomerOrderResponse;
 import com.fu.SWP391_BetaFruit.dto.response.TierUpgradeResult;
 import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.entity.OrderItem;
+import com.fu.SWP391_BetaFruit.entity.Review;
 import com.fu.SWP391_BetaFruit.entity.OrderStatusHistory;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.repository.OrderItemRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderStatusHistoryRepository;
+import com.fu.SWP391_BetaFruit.repository.ReviewRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.CustomerOrderService;
 import com.fu.SWP391_BetaFruit.service.MembershipTierService;
@@ -36,6 +38,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
+    private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final MembershipTierService membershipTierService;
 
@@ -72,13 +75,13 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Đơn hàng chỉ có thể xác nhận khi ở trạng thái Đã giao hàng");
         }
 
-        order.setOrderStatus(OrderStatus.SUCCESS);
+        order.setOrderStatus(OrderStatus.RECEIVED);
         orderRepository.save(order);
 
         User customer = userRepository.getReferenceById(customerId);
         orderStatusHistoryRepository.save(new OrderStatusHistory(
-                null, order, customer, OrderStatus.DELIVERED, OrderStatus.SUCCESS,
-                "Khách hàng đã nhận hàng và xác nhận hài lòng", null
+                null, order, customer, OrderStatus.DELIVERED, OrderStatus.RECEIVED,
+                "Khách hàng xác nhận đã nhận hàng", null
         ));
 
         // Kích hoạt Loyalty Engine thăng hạng
@@ -95,14 +98,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     private CustomerOrderResponse toResponse(Order order) {
         List<OrderItem> items = orderItemRepository.findByOrderOrderIdOrderByOrderItemIdAsc(order.getOrderId());
         List<CustomerOrderResponse.OrderItemResponse> itemResponses = items.stream()
-                .map(item -> new CustomerOrderResponse.OrderItemResponse(
-                        item.getOrderItemId(),
-                        item.getSnapshotProductName(),
-                        item.getSnapshotVariantName(),
-                        item.getQuantity(),
-                        item.getPriceSnapshot(),
-                        item.getPriceSnapshot().multiply(BigDecimal.valueOf(item.getQuantity()))
-                ))
+                .map(item -> toOrderItemResponse(item, order))
                 .toList();
 
         boolean canConfirm = (order.getOrderStatus() == OrderStatus.DELIVERED);
@@ -128,6 +124,20 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .build();
     }
 
+    private CustomerOrderResponse.OrderItemResponse toOrderItemResponse(OrderItem item, Order order) {
+        Review review = reviewRepository.findByOrderItem_OrderItemId(item.getOrderItemId())
+                .filter(found -> Objects.equals(found.getCustomer().getUserId(), order.getCustomer().getUserId()))
+                .orElse(null);
+        return new CustomerOrderResponse.OrderItemResponse(
+                item.getOrderItemId(), item.getVariant().getProduct().getProductId(),
+                item.getSnapshotProductName(), item.getSnapshotVariantName(), item.getQuantity(),
+                item.getPriceSnapshot(), item.getPriceSnapshot().multiply(BigDecimal.valueOf(item.getQuantity())),
+                review == null ? null : review.getReviewId(),
+                review == null ? null : review.getRating(),
+                review == null ? null : review.getComment(),
+                review == null ? null : review.getVisibilityStatus());
+    }
+
     private String formatStatusLabel(OrderStatus status) {
         if (status == null) return "Chưa xác định";
         return switch (status) {
@@ -138,6 +148,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             case PICKED_UP -> "Shipper đã lấy hàng";
             case DELIVERING -> "Đang giao hàng";
             case DELIVERED -> "Đã giao hàng";
+            case RECEIVED -> "Đã nhận hàng";
             case SUCCESS -> "Hoàn tất";
             case FAILED -> "Giao thất bại";
             case CANCELLED -> "Đã hủy";
