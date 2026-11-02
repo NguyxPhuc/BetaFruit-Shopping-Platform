@@ -46,7 +46,7 @@ public class ProductController {
     @GetMapping("/shop/products")
     public String listShopProducts(@RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "8") int size,
+            @RequestParam(value = "size", defaultValue = "5") int size,
             HttpSession session,
             Model model) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
