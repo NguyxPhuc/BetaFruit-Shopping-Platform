@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Chi tiết đơn hàng ' + ${order.orderCode} + ' | BetaFruit'">Chi tiết đơn hàng | BetaFruit</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <style>
+        .detail-page {
+            background-color: #f6f9f5;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #1a202c;
+            min-height: 100vh;
+        }
+        .detail-container {
+            max-width: 860px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 1.5rem;
+        }
+        .breadcrumb-nav a {
+            color: #1e5631;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .card-box {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            border: 1px solid #edf2f7;
+        }
+        .celebration-banner {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px dashed #f59e0b;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+        }
+        .celebration-icon {
+            font-size: 2.8rem;
+            line-height: 1;
+        }
+        .celebration-text h3 {
+            margin: 0 0 0.35rem 0;
+            color: #92400e;
+            font-weight: 800;
+        }
+        .celebration-text p {
+            margin: 0;
+            color: #78350f;
+            font-size: 0.95rem;
+        }
+        .voucher-pill {
+            display: inline-block;
+            background: #ffffff;
+            color: #b45309;
+            font-weight: 800;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #fcd34d;
+            margin-top: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+        .status-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #edf2f7;
+            padding-bottom: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        .status-pill {
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 0.45rem 1.1rem;
+            border-radius: 20px;
+        }
+        .status-DELIVERED { background: #c6f6d5; color: #22543d; border: 1px solid #48bb78; }
+        .status-SUCCESS { background: #d1fae5; color: #065f46; }
+        .confirm-alert-box {
+            background: #f0fdf4;
+            border: 1.5px solid #86efac;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+        .confirm-btn-hero {
+            padding: 0.75rem 1.75rem;
+            background: #16a34a;
+            color: #ffffff;
+            font-weight: 800;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+            transition: all 0.2s;
+        }
+        .confirm-btn-hero:hover {
+            background: #15803d;
+            transform: translateY(-2px);
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            font-size: 0.95rem;
+            color: #4a5568;
+        }
+        .summary-total {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #e53e3e;
+            border-top: 1.5px solid #edf2f7;
+            padding-top: 0.75rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="detail-page">
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="detail-container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb-nav">
+            <a th:href="@{/orders}"><i class="bi bi-arrow-left"></i> Danh sách đơn mua</a>
+            <span>/</span>
+            <span th:text="${order.orderCode}">#BF000001</span>
+        </nav>
+
+        <!-- Celebration Banner when Tier Upgrade triggered! -->
+        <div class="celebration-banner" th:if="${upgradeCelebration}">
+            <div class="celebration-icon">👑</div>
+            <div class="celebration-text">
+                <h3 th:text="'Chúc mừng bạn đã thăng hạng ' + ${newTierName} + '!'">Chúc mừng bạn đã thăng hạng Vàng!</h3>
+                <p>Đặc quyền chiết khấu hội viên đã được kích hoạt. Hãy dùng mã Voucher độc quyền bên dưới cho lần mua sắm tới!</p>
+                <div class="voucher-pill">
+                    <i class="bi bi-ticket-perforated"></i> <span th:text="${welcomeCoupon}">GOLD_DISCOUNT50K</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success/Error Notices -->
+        <div th:if="${successMessage and !upgradeCelebration}" class="card-box" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46; font-weight: 600;">
+            <i class="bi bi-check-circle-fill"></i> <span th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="card-box" style="background: #fef2f2; border-color: #fecaca; color: #991b1b; font-weight: 600;">
+            <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${errorMessage}"></span>
+        </div>
+
+        <!-- Header Card -->
+        <div class="card-box">
+            <div class="status-hero">
+                <div>
+                    <h2 style="margin: 0 0 0.35rem 0; font-size: 1.25rem;" th:text="'Đơn hàng ' + ${order.orderCode}">Đơn hàng #BF000001</h2>
+                    <span style="font-size: 0.85rem; color: #718096;" th:text="'Cửa hàng: ' + ${order.shopName}">Cửa hàng Nông sản ABC</span>
+                </div>
+                <div>
+                    <span class="status-pill" th:classappend="'status-' + ${order.orderStatus}" th:text="${order.orderStatusLabel}">Đã giao hàng</span>
+                </div>
+            </div>
+
+            <!-- Confirm Received Box for Customer when status is DELIVERED -->
+            <div class="confirm-alert-box" th:if="${order.canConfirmReceived}">
+                <div>
+                    <h4 style="margin: 0 0 0.25rem 0; color: #15803d; font-weight: 800;">
+                        <i class="bi bi-box2-heart"></i> Bạn đã nhận được kiện hoa quả?
+                    </h4>
+                    <p style="margin: 0; font-size: 0.9rem; color: #166534;">
+                        Vui lòng kiểm tra hoa quả tươi ngon. Bấm xác nhận để hoàn tất đơn hàng và tích lũy điểm thăng hạng Hội viên!
+                    </p>
+                </div>
+                <form method="post" th:action="@{/orders/{id}/confirm-received(id=${order.orderId})}">
+                    <button type="submit" class="confirm-btn-hero" onclick="return confirm('Bạn xác nhận đã nhận đầy đủ hoa quả và hài lòng với chất lượng?');">
+                        <i class="bi bi-check-circle-fill"></i> Đã nhận hàng &amp; Hài lòng
+                    </button>
+                </form>
+            </div>
+
+            <!-- Address Snapshot -->
+            <div style="margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 10px;">
+                <h5 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #475569; text-transform: uppercase;">
+                    <i class="bi bi-geo-alt"></i> Địa chỉ nhận hàng
+                </h5>
+                <p style="margin: 0; font-weight: 600; color: #1e293b;" th:text="${order.snapshotShippingAddress}">Số 123 Đường Xuân Thủy, Cầu Giấy, Hà Nội</p>
+            </div>
+        </div>
+
+        <!-- Items Card -->
+        <div class="card-box">
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem 0; border-bottom: 1px solid #edf2f7; padding-bottom: 0.75rem;">
+                <i class="bi bi-basket2"></i> Danh sách hoa quả đã đặt
+            </h3>
+            <div th:each="item : ${order.items}" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9;">
+                <div>
+                    <div style="font-weight: 700; color: #1e293b;" th:text="${item.productName}">Cam sành bóc vỏ</div>
+                    <div style="font-size: 0.85rem; color: #64748b;" th:if="${item.variantName != null and item.variantName != ''}" th:text="'Phân loại: ' + ${item.variantName}"></div>
+                    <div style="font-size: 0.85rem; color: #94a3b8;" th:text="'Số lượng: ' + ${item.quantity}">Số lượng: 1</div>
+                </div>
+                <div style="font-weight: 700; color: #0f172a;" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
+                    120.000 ₫
+                </div>
+            </div>
+
+            <!-- Payment Summary -->
+            <div style="margin-top: 1.25rem;">
+                <div class="summary-row">
+                    <span>Tổng tiền hàng:</span>
+                    <span th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">120.000 ₫</span>
+                </div>
+                <div class="summary-row" th:if="${order.discountAmount != null and order.discountAmount > 0}">
+                    <span>Giảm giá (Voucher &amp; Hội viên):</span>
+                    <span style="color: #16a34a;" th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">-20.000 ₫</span>
+                </div>
+                <div class="summary-row" th:if="${order.shippingFee != null}">
+                    <span>Phí vận chuyển:</span>
+                    <span th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'POINT', 0, 'COMMA')} + ' ₫'">15.000 ₫</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Thành tiền:</span>
+                    <span th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">115.000 ₫</span>
+                </div>
+                <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #64748b; text-align: right;">
+                    <span>Phương thức: </span>
+                    <strong th:text="${order.paymentMethod}">VNPAY / COD</strong>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

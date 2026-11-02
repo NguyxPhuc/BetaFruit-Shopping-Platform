@@ -21,11 +21,10 @@ public class ShipperInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        Object rawRoles = session.getAttribute("LOGGED_IN_ROLES");
-        if (rawRoles instanceof List<?> roles && roles.contains(RoleName.DELIVERY_STAFF)) {
+        List<RoleName> roles = (List<RoleName>) session.getAttribute("LOGGED_IN_ROLES");
+        if (roles != null && roles.contains(RoleName.DELIVERY_STAFF)) {
             return true;
         }
-
         response.sendRedirect(request.getContextPath() + "/403");
         return false;
     }

@@ -11,9 +11,6 @@ import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.InventoryService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -86,47 +83,6 @@ public class InventoryServiceImpl implements InventoryService {
         inventoryTransactionRepository.save(tx);
 
         return saved;
-    }
-
-    @Override
-    @Transactional
-    public ProductVariant restockVariant(Integer userId, Integer variantId, int additionalQuantity) {
-        if (additionalQuantity <= 0) {
-            throw new IllegalArgumentException("Số lượng nhập thêm phải lớn hơn 0!");
-        }
-
-        User user = getUserOrThrow(userId);
-        ProductVariant variant = getVariantAndVerifyShop(userId, variantId);
-
-        int previous = variant.getStockQuantity() != null ? variant.getStockQuantity() : 0;
-        int newStock = previous + additionalQuantity;
-
-        variant.setStockQuantity(newStock);
-        ProductVariant saved = productVariantRepository.save(variant);
-
-        // Ghi lại lịch sử giao dịch nhập thêm hàng
-        InventoryTransaction tx = new InventoryTransaction();
-        tx.setVariant(saved);
-        tx.setUser(user);
-        tx.setTransactionType(InventoryTransactionType.RESTOCK);
-        tx.setPreviousStock(previous);
-        tx.setNewStock(newStock);
-        tx.setQuantityChanged(additionalQuantity);
-        inventoryTransactionRepository.save(tx);
-
-        return saved;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<InventoryTransaction> getShopInventoryHistory(Integer userId, InventoryTransactionType type, int page, int size) {
-        Shop shop = getShopOrThrow(userId);
-        Pageable pageable = PageRequest.of(Math.max(0, page - 1), size);
-
-        if (type != null) {
-            return inventoryTransactionRepository.findByShopIdAndType(shop.getShopId(), type, pageable);
-        }
-        return inventoryTransactionRepository.findByShopId(shop.getShopId(), pageable);
     }
 
     @Override

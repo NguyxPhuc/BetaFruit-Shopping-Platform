@@ -751,3 +751,296 @@ html, body.shop-portal-body {
     background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%) !important;
     box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4) !important;
 }
+
+/* ════════ NOTIFICATION POPOVER DROPDOWN (SHOP) ════════ */
+.notif-dropdown {
+    position: relative;
+}
+
+.notif-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1050;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.notif-dropdown:hover .notif-menu,
+.notif-dropdown.is-open .notif-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.notif-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.notif-header-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.notif-header-form,
+.notif-single-form {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+}
+
+button.btn-mark-all-read,
+a.btn-mark-all-read {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 14px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    border: 1px solid #e0e7ff !important;
+    outline: none !important;
+    cursor: pointer;
+    line-height: 1.2;
+    transition: all 0.15s ease;
+}
+
+button.btn-mark-all-read:hover,
+a.btn-mark-all-read:hover {
+    background: #e0e7ff !important;
+    color: #4338ca !important;
+    border-color: #c7d2fe !important;
+}
+
+.notif-list {
+    max-height: 360px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transition: max-height 0.3s ease;
+}
+
+.notif-list::-webkit-scrollbar {
+    width: 5px;
+}
+
+.notif-list::-webkit-scrollbar-track {
+    background: #f8fafc;
+}
+
+.notif-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.notif-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Mặc định: Chỉ hiển thị 5 thông báo đầu tiên trên giao diện */
+.notif-menu:not(.is-expanded) .notif-item:nth-child(n+6) {
+    display: none !important;
+}
+
+.notif-menu.is-expanded .notif-list,
+.notif-menu.expanded .notif-list {
+    max-height: 480px;
+}
+
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+.notif-item:hover {
+    background: #f8fafc;
+}
+
+.notif-item.is-unread {
+    background: #f8fafc;
+}
+
+.notif-item.is-unread:hover {
+    background: #f1f5f9;
+}
+
+.notif-indicator-col {
+    width: 12px;
+    flex-shrink: 0;
+    padding-top: 5px;
+    display: flex;
+    justify-content: center;
+}
+
+.notif-blue-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3b82f6;
+    box-shadow: 0 0 0 3px #dbeafe;
+    display: inline-block;
+}
+
+.notif-body-col {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-top-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.notif-title-text {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.35;
+    text-decoration: none;
+    flex: 1;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.notif-title-text.has-link {
+    cursor: pointer;
+}
+
+.notif-title-text.has-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.notif-time-text {
+    font-size: 11.5px;
+    color: #94a3b8;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.notif-desc-text {
+    font-size: 12.5px;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.notif-action-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+button.btn-mark-single-read,
+a.btn-mark-single-read {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 12px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: inherit;
+    color: #475569 !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    outline: none !important;
+    cursor: pointer;
+    line-height: 1.2;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+button.btn-mark-single-read:hover,
+a.btn-mark-single-read:hover {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+
+.notif-empty {
+    padding: 32px 20px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.notif-empty p {
+    font-size: 13px;
+    margin: 0;
+}
+
+.notif-footer {
+    padding: 10px 16px;
+    background: #ffffff;
+    border-top: 1px solid #f1f5f9;
+    text-align: center;
+}
+
+button.btn-load-more-notifs,
+a.btn-load-more-notifs {
+    width: 100%;
+    border: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    color: #4f46e5 !important;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    outline: none !important;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    display: block;
+    line-height: 1.2;
+}
+
+button.btn-load-more-notifs:hover,
+a.btn-load-more-notifs:hover {
+    background: #eef2ff !important;
+    color: #4338ca !important;
+    border-color: #c7d2fe !important;
+}
+

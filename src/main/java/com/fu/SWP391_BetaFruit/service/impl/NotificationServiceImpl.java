@@ -6,12 +6,13 @@ import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.NotificationType;
 import com.fu.SWP391_BetaFruit.repository.NotificationRepository;
 import com.fu.SWP391_BetaFruit.service.NotificationService;
-import com.fu.SWP391_BetaFruit.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -19,9 +20,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Autowired
     private NotificationRepository notificationRepository;
-
-    @Autowired
-    private UserService userService;
 
     @Override
     public void createBaseNotification(User user, String title, String message, NotificationType type, String actionUrl) {
@@ -32,7 +30,7 @@ public class NotificationServiceImpl implements NotificationService {
         notif.setUser(user);
         notif.setTitle(title);
         notif.setMessage(message);
-        notif.setNotificationType(type); // VD: "ORDER", "SYSTEM", "PROMOTION"
+        notif.setNotificationType(type);
         notif.setIsRead(false);
         notif.setIsHidden(false);
         notif.setCreatedAt(LocalDateTime.now());
@@ -43,6 +41,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public int countUnreadNotifications(Integer userId) {
+        if (userId == null) return 0;
         return notificationRepository.countByUser_UserIdAndIsReadFalseAndIsHiddenFalse(userId);
     }
 
@@ -57,33 +56,44 @@ public class NotificationServiceImpl implements NotificationService {
         return response;
     }
 
+
     @Override
-    public List<NotificationResponse> getRecentNotifications(Integer userId) throws Exception {
-        List<Notification> notificationList = notificationRepository.findTop5ByUser_UserIdAndIsHiddenFalseOrderByCreatedAtDesc(userId);
-        if(notificationList.isEmpty() || notificationList == null) {
-            throw new Exception("Chưa có thông báo nào.");
+    public List<NotificationResponse> getAllNotifications(Integer userId) {
+        if (userId == null) return Collections.emptyList();
+        List<Notification> notificationList = notificationRepository.findByUser_UserIdAndIsHiddenFalseOrderByCreatedAtDesc(userId);
+        if (notificationList == null || notificationList.isEmpty()) {
+            return Collections.emptyList();
         }
         List<NotificationResponse> responses = new ArrayList<>();
-        NotificationResponse response = new NotificationResponse();
         for (Notification notification : notificationList) {
-            response = toNotificationResponse(notification);
-            responses.add(response);
+            responses.add(toNotificationResponse(notification));
         }
         return responses;
     }
 
     @Override
-    public List<NotificationResponse> getAllNotifications(Integer userId) throws Exception {
-        List<NotificationResponse> responses = new ArrayList<>();
-        List<Notification> notificationList = notificationRepository.findByUser_UserIdAndIsHiddenFalseOrderByCreatedAtDesc(userId);
-        if(notificationList.isEmpty() || notificationList == null) {
-            throw new Exception("Chưa có thông báo nào.");
+    @Transactional(rollbackFor = Exception.class)
+    public void markAllAsRead(Integer userId) {
+        if (userId == null) return;
+        List<Notification> unreadList = notificationRepository.findByUser_UserIdAndIsHiddenFalseAndIsReadFalse(userId);
+        if (unreadList != null && !unreadList.isEmpty()) {
+            for (Notification notification : unreadList) {
+                notification.setIsRead(true);
+            }
+            notificationRepository.saveAll(unreadList);
         }
-        NotificationResponse response = new NotificationResponse();
-        for (Notification notification : notificationList) {
-            response = toNotificationResponse(notification);
-            responses.add(response);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void markAsRead(Integer userId, Integer notificationId) {
+        if (userId == null || notificationId == null) {
+            return;
         }
-        return responses;
+        Notification notification = notificationRepository.findByNotificationIdAndUser_UserIdAndIsHiddenFalse(notificationId, userId);
+        if (notification != null && !Boolean.TRUE.equals(notification.getIsRead())) {
+            notification.setIsRead(true);
+            notificationRepository.save(notification);
+        }
     }
 }

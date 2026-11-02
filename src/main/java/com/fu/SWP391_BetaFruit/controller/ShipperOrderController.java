@@ -106,6 +106,25 @@ public class ShipperOrderController {
         return change(orderId, () -> delivery.markDelivered(orderId, shipperId, codCollected), redirect);
     }
 
+    @PostMapping("/{orderId}/report-incident")
+    public String reportIncident(@PathVariable Integer orderId,
+            @RequestParam(defaultValue = "Hỏng xe trên đường") String reason,
+            @RequestParam(required = false) String note,
+            HttpSession session, RedirectAttributes redirect) {
+        var user = currentUser(session);
+        if (user == null) return "redirect:/auth/login";
+        Integer shipperId = user.getUserId();
+        return change(orderId, () -> delivery.reportIncident(orderId, shipperId, reason, note), redirect);
+    }
+
+    @PostMapping("/{orderId}/handover")
+    public String handover(@PathVariable Integer orderId, HttpSession session, RedirectAttributes redirect) {
+        var user = currentUser(session);
+        if (user == null) return "redirect:/auth/login";
+        Integer shipperId = user.getUserId();
+        return change(orderId, () -> delivery.handover(orderId, shipperId), redirect);
+    }
+
     private String change(Integer orderId, Runnable action, RedirectAttributes redirect) {
         try {
             action.run();

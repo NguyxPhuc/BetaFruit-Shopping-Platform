@@ -26,6 +26,8 @@ public interface CouponRepository extends JpaRepository<Coupon, Integer> {
     // Admin queries (platform-wide coupons where shop is null)
     Page<Coupon> findByShopIsNull(Pageable pageable);
 
+    List<Coupon> findByShopIsNullAndIsActiveTrue();
+
     Page<Coupon> findByShopIsNullAndCouponCodeContainingIgnoreCase(String keyword, Pageable pageable);
 
     long countByShopIsNull();

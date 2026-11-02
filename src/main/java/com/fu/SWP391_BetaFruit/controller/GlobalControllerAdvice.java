@@ -32,8 +32,8 @@ public class GlobalControllerAdvice {
                 int unreadCount = notificationService.countUnreadNotifications(userId);
                 model.addAttribute("globalUnreadCount", unreadCount);
 
-                List<NotificationResponse> recentNotifications = notificationService.getRecentNotifications(userId);
-                model.addAttribute("globalRecentNotifs", recentNotifications);
+                List<NotificationResponse> allNotifications = notificationService.getAllNotifications(userId);
+                model.addAttribute("globalRecentNotifs", allNotifications);
 
             } catch (Exception e) {
                 model.addAttribute("globalUnreadCount", 0);

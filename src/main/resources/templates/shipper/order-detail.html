@@ -126,6 +126,13 @@
                     </label>
                     <button class="button button--primary" type="submit">Giao thành công</button>
                 </form>
+                <form th:if="${detail.canStartDelivering}" class="status-change-form" method="post" th:action="@{/shipper/orders/{id}/handover(id=${order.orderId})}" data-confirm="Xác nhận bạn đã bàn giao kiện hàng tại trạm tiếp sức ảo?">
+                    <button class="button button--secondary" type="submit" style="background: #0284c7; color: white;">Bàn giao tại trạm ảo</button>
+                </form>
+                <form th:if="${detail.canStartDelivering or order.canMarkDelivered}" class="status-change-form" method="post" th:action="@{/shipper/orders/{id}/report-incident(id=${order.orderId})}" onsubmit="var r = prompt('Nhập lý do sự cố (Ví dụ: Hỏng xe, Thủng lốp, Ngập úng):', 'Hỏng xe trên đường'); if (!r) return false; this.reason.value = r; return true;">
+                    <input type="hidden" name="reason" value="Hỏng xe trên đường">
+                    <button class="button button--danger" type="submit" style="background: #dc2626; color: white;">⚠️ Báo sự cố</button>
+                </form>
             </div>
             <p class="holding-note" th:if="${order.orderStatus == 'DELIVERED'}">Đơn đã giao thành công. Tiền chưa được chuyển vào số dư shop. Theo quy trình, đơn sẽ hoàn tất sau 72 giờ nếu không có tranh chấp; deliverer không tự chuyển sang SUCCESS.</p>
             </div>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Thông báo hồ sơ gian hàng BetaFruit chưa được phê duyệt - Hướng dẫn cập nhật hồ sơ">
+    <title>Hồ sơ cần cập nhật | BetaFruit Partner</title>
+
+    <!-- Google Fonts (Đồng bộ font DM Sans với Shop Portal) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom Onboarding CSS -->
+    <link rel="stylesheet" th:href="@{/css/shop-onboarding.css}">
+</head>
+<body class="onboarding-body">
+
+    <!-- ═══════════ HEADER ═══════════ -->
+    <header class="onboarding-header">
+        <div class="onboarding-header__container">
+            <a th:href="@{/}" class="onboarding-header__brand" title="Về trang chủ BetaFruit">
+                <div class="onboarding-header__logo-badge">
+                    <i class="bi bi-basket2-fill"></i>
+                </div>
+                <div class="onboarding-header__brand-text">
+                    <h1>Beta<span>Fruit</span></h1>
+                    <span class="onboarding-header__badge">Kênh Người Bán</span>
+                </div>
+            </a>
+
+            <div class="onboarding-header__actions">
+                <div class="onboarding-header__user-info" th:if="${session.LOGGED_IN_FULLNAME}">
+                    <div class="onboarding-header__avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <span th:text="${session.LOGGED_IN_FULLNAME}">Chủ cửa hàng</span>
+                </div>
+                <a th:href="@{/}" class="onboarding-header__home-btn" title="Về trang chủ BetaFruit">
+                    <i class="bi bi-house-door"></i>
+                    <span>Trang chủ</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════ MAIN CONTENT ═══════════ -->
+    <main class="onboarding-main">
+        <div class="onboarding-container">
+
+            <!-- ═════ STEPPER NAV (COMPACT) ═════ -->
+            <nav class="stepper-nav" aria-label="Tiến trình phê duyệt gian hàng">
+                <div class="step-item completed">
+                    <div class="step-bubble">
+                        <i class="bi bi-check-lg"></i>
+                    </div>
+                    <div class="step-info">
+                        <span class="step-num">Bước 1</span>
+                        <span class="step-title">Tạo tài khoản</span>
+                    </div>
+                </div>
+
+                <div class="step-divider filled"></div>
+
+                <div class="step-item active" style="--shop-brand-600: var(--status-rejected); --shop-orange-glow: rgba(220, 38, 38, 0.2);">
+                    <div class="step-bubble" style="background: var(--status-rejected); color: #fff;">
+                        <i class="bi bi-pencil-fill" style="font-size: 0.75rem;"></i>
+                    </div>
+                    <div class="step-info">
+                        <span class="step-num" style="color: var(--status-rejected);">Bước 2</span>
+                        <span class="step-title" style="color: var(--status-rejected);">Cần bổ sung</span>
+                    </div>
+                </div>
+
+                <div class="step-divider"></div>
+
+                <div class="step-item pending">
+                    <div class="step-bubble">3</div>
+                    <div class="step-info">
+                        <span class="step-num">Bước 3</span>
+                        <span class="step-title">Xét duyệt lại</span>
+                    </div>
+                </div>
+
+                <div class="step-divider"></div>
+
+                <div class="step-item pending">
+                    <div class="step-bubble">4</div>
+                    <div class="step-info">
+                        <span class="step-num">Bước 4</span>
+                        <span class="step-title">Bắt đầu bán hàng</span>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- ═════ STATUS CARD ═════ -->
+            <div class="onboarding-card">
+
+                <div class="status-content">
+                    <div class="status-badge-icon rejected">
+                        <i class="bi bi-shield-x"></i>
+                    </div>
+
+                    <div class="status-tag rejected">
+                        <i class="bi bi-exclamation-octagon-fill"></i>
+                        <span>Chưa được phê duyệt</span>
+                    </div>
+
+                    <h2 class="status-title">Hồ Sơ Cần Được Cập Nhật</h2>
+                    <p class="status-description">
+                        Rất tiếc, hồ sơ đăng ký gian hàng của bạn chưa đáp ứng đủ điều kiện kiểm duyệt của BetaFruit. Vui lòng chỉnh sửa lại thông tin để chúng tôi xét duyệt lại.
+                    </p>
+
+                    <!-- REASON & AUDIT FEEDBACK BOX (COMPACT) -->
+                    <div class="reason-box">
+                        <div class="reason-box__header">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>Lý do hồ sơ chưa đạt chuẩn kiểm duyệt:</span>
+                        </div>
+                        <div class="reason-box__content">
+                            <!-- Show dynamic reject reason if provided by server -->
+                            <p th:if="${rejectReason}" th:text="${rejectReason}" style="font-weight: 600; color: #991b1b;"></p>
+                            <!-- General guidance default -->
+                            <p th:unless="${rejectReason}">
+                                Thông tin tài khoản thụ hưởng hoặc thông tin gian hàng chưa trùng khớp với hồ sơ đăng ký kinh doanh nông sản.
+                            </p>
+                        </div>
+
+                        <div class="reason-tips">
+                            <strong>Lưu ý quan trọng khi nộp lại:</strong>
+                            <ul>
+                                <li><strong>Tên chủ tài khoản:</strong> Viết hoa đầy đủ (Ví dụ: <em>NGUYEN VAN A</em>) trùng khớp với ngân hàng.</li>
+                                <li><strong>Số tài khoản:</strong> Chỉ chứa ký tự số, không chứa khoảng trắng.</li>
+                                <li><strong>Tên gian hàng:</strong> Không chứa từ ngữ quảng cáo gây hiểu lầm hoặc vi phạm quy chế sàn.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS -->
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 440px;">
+                        <a th:href="@{/shop/setup-profile}" class="btn-primary" style="flex: 1; min-width: 200px;">
+                            <i class="bi bi-pencil-square"></i>
+                            <span>Chỉnh sửa hồ sơ ngay</span>
+                        </a>
+                        <a th:href="@{/}" class="btn-outline" style="flex: 1; min-width: 170px;">
+                            <i class="bi bi-house-door"></i>
+                            <span>Về trang chủ sàn</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Support Help Box -->
+            <div class="support-box">
+                <i class="bi bi-headset"></i>
+                <span>Thắc mắc về kết quả xét duyệt? Tổng đài đối tác: <strong>1900 6868</strong> hoặc <a href="mailto:support@betafruit.vn">support@betafruit.vn</a></span>
+            </div>
+
+        </div>
+    </main>
+
+</body>
+</html>

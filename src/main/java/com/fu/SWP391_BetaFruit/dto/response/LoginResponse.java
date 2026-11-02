@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.dto.response;
 
 import com.fu.SWP391_BetaFruit.enums.RoleName;
+import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,4 +18,5 @@ public class LoginResponse {
     private String username;
     private String fullName;
     private List<RoleName> roles;
+    private ShopApprovalStatus shopStatus;
 }

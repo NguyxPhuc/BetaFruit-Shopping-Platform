@@ -118,10 +118,8 @@ public class AuthServiceImpl implements AuthService {
         newUser = userRepository.save(newUser);
         Shop shop = new Shop();
         shop.setOwner(newUser);
-        String shopName = "Shop của " + registerRequest.getUsername();
-        shop.setShopName(shopName);
-        shop.setApprovalStatus(ShopApprovalStatus.PENDING);
-
+        shop.setShopName("Shop của" + newUser.getFullName());
+        shop.setApprovalStatus(ShopApprovalStatus.DRAFT);
         shopRepository.save(shop);
         emailService.sendWelcomeEmail(registerRequest.getEmail(), registerRequest.getFullName());
         notificationService.createBaseNotification(
@@ -129,7 +127,7 @@ public class AuthServiceImpl implements AuthService {
                 "Chào mừng Đối tác BetaFruit",
                 "Tài khoản chủ cửa hàng đã được tạo. Hãy hoàn thiện hồ sơ để bắt đầu đăng bán nông sản nhé!",
                 NotificationType.SYSTEM_ALERT,
-                "/shop/profile"
+                "/shop/profile/create"
         );
     }
 
@@ -137,7 +135,6 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse login(LoginRequest loginRequest) throws Exception {
         User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new Exception("Tài khoản không tồn tại trên hệ thống. Vui lòng đăng ký tài khoản."));
-
         boolean isMatchPassword = BCrypt.checkpw(loginRequest.getPassword(), user.getPasswordHash());
         if(!isMatchPassword) {
             throw new Exception("Sai mật khẩu. Vui lòng đăng nhập lại.");
@@ -145,18 +142,21 @@ public class AuthServiceImpl implements AuthService {
         if(user.getStatus() != UserStatus.ACTIVE) {
             throw new Exception("Tài khoản của bạn đã bị khóa hoặc chưa kích hoạt. Vui lòng liên hệ Admin.");
         }
-
         List<RoleName> roles = new ArrayList<>();
         for(Role role : user.getRoles()) {
             roles.add(role.getRoleName());
         }
-
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setUserId(user.getUserId());
         loginResponse.setUsername(user.getUsername());
         loginResponse.setFullName(user.getFullName());
         loginResponse.setRoles(roles);
 
+        if(roles.contains(RoleName.SHOP_OWNER)) {
+            Shop shop = shopRepository.findByOwner_UserId(user.getUserId())
+                    .orElseThrow(() -> new Exception("Lỗi hệ thống: Cửa hàng của bạn không tồn tại trong hệ thống. Vui lòng liên hệ hỗ trợ."));
+            loginResponse.setShopStatus(shop.getApprovalStatus());
+        }
         return loginResponse;
     }
 }

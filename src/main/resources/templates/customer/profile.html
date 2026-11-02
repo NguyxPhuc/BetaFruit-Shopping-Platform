@@ -212,6 +212,12 @@
                             <div class="tier-text">
                                 <h4 th:text="'Hạng hội viên: ' + (${customerProfileResponse?.tierName != null && #strings.contains(customerProfileResponse.tierName, '?') ? #strings.replace(customerProfileResponse.tierName, '?', 'ồ') : (customerProfileResponse?.tierName ?: 'Thành viên mới')})">Hạng hội viên: Vàng</h4>
                                 <p>Được tích lũy tự động dựa trên tổng chi tiêu đơn hàng đã hoàn tất.</p>
+                                <a th:href="@{/membership}" href="/membership" class="btn-tier-perks" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; font-weight: 600; color: #1e5631; text-decoration: none;">
+                                    <span>Xem chi tiết đặc quyền &amp; thăng hạng</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </a>
                             </div>
                         </div>
                         <div class="tier-spend-stat">

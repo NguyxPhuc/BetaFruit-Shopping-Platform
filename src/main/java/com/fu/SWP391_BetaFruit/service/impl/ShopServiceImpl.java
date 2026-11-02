@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ShopSetupRequest;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
@@ -291,5 +292,24 @@ public class ShopServiceImpl implements ShopService {
         data.put("activeCount", activeCount);
         data.put("deactivatedCount", deactivatedCount);
         return data;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void setUpProfileShop(Integer userId, ShopSetupRequest request) throws Exception {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin người dùng."));
+        Shop shop = shopRepository.findByOwner(user)
+                .orElseThrow(() -> new Exception("Lỗi hệ thống: Không tìm thấy thông tin cửa hàng."));
+        if (shop.getApprovalStatus() == ShopApprovalStatus.APPROVED) {
+            throw new Exception("Cửa hàng của bạn đã được phê duyệt, không thể thiết lập lại hồ sơ ban đầu.");
+        }
+        shop.setShopName(request.getShopName().trim());
+        shop.setShopDescription(request.getShopDescription() != null ?  request.getShopDescription().trim() : null);
+        shop.setBankName(request.getBankName().trim());
+        shop.setBankAccountNumber(request.getBankAccountNumber().trim());
+        shop.setAccountName(request.getAccountName().toUpperCase().trim());
+        shop.setApprovalStatus(ShopApprovalStatus.PENDING);
+        shopRepository.save(shop);
     }
 }

@@ -24,7 +24,6 @@ public class CustomerInterceptor implements HandlerInterceptor {
         if (roles != null && roles.contains(RoleName.CUSTOMER)) {
             return true;
         }
-
         response.sendRedirect("/403");
         return false;
     }

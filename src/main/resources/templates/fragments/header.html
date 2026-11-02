@@ -60,57 +60,63 @@
                               th:text="${globalUnreadCount > 99 ? '99+' : globalUnreadCount}">0</span>
                     </button>
 
-                    <!-- Popover Dropdown Thông Báo -->
+                    <!-- Popover Dropdown Thông Báo (Khớp mockup) -->
                     <div class="notif-menu" id="notifMenu" role="dialog" aria-label="Hộp thông báo">
                         <div class="notif-header">
-                            <div class="notif-title-wrap">
-                                <h3>Thông báo</h3>
-                                <span class="notif-chip"
-                                      th:if="${globalUnreadCount != null && globalUnreadCount > 0}"
-                                      th:text="${globalUnreadCount} + ' mới'">3 mới</span>
-                            </div>
+                            <h3 class="notif-header-title">Thông báo</h3>
+                            <form th:action="@{/notifications/read-all}" method="post" class="notif-header-form">
+                                <button type="submit" class="btn-mark-all-read" title="Đánh dấu tất cả đã đọc">Đã đọc tất cả</button>
+                            </form>
                         </div>
 
-                        <!-- Danh sách thông báo (cuộn scroll mượt mà) -->
+                        <!-- Danh sách thông báo -->
                         <div class="notif-list" id="notifList">
-                            <!-- Trường hợp chưa có thông báo nào -->
+                            <!-- Chưa có thông báo -->
                             <div class="notif-empty" th:if="${globalRecentNotifs == null || globalRecentNotifs.empty}">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                                </svg>
                                 <p>Bạn chưa có thông báo nào mới</p>
                             </div>
 
-                            <!-- Lặp qua NotificationResponse từ BE (5 thông báo gần nhất) -->
-                            <a th:each="notif : ${globalRecentNotifs}"
-                               class="notif-item"
-                               th:classappend="${notif.isRead == false || notif.isRead == null ? 'is-unread' : ''}"
-                               th:href="${notif.actionUrl != null && !notif.actionUrl.isEmpty() ? notif.actionUrl : '#'}"
-                               href="#">
-                                <div class="notif-icon-box">
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                                    </svg>
+                            <!-- Lặp toàn bộ thông báo (Mặc định CSS chỉ hiện 5 cái đầu, bấm Xem tất cả sẽ mở hết) -->
+                            <div th:each="notif : ${globalRecentNotifs}"
+                                 class="notif-item"
+                                 th:classappend="${notif.isRead == false || notif.isRead == null} ? 'is-unread' : 'is-read'">
+
+                                <!-- Cột chấm xanh trạng thái chưa đọc -->
+                                <div class="notif-indicator-col">
+                                    <span class="notif-blue-dot" th:if="${notif.isRead == false || notif.isRead == null}"></span>
                                 </div>
-                                <div class="notif-content">
-                                    <div class="notif-top">
-                                        <div class="notif-item-title" th:text="${notif.title}">Cập nhật hệ thống</div>
-                                        <span class="notif-time"
-                                              th:text="${notif.createdAt != null ? #temporals.format(notif.createdAt, 'HH:mm dd/MM') : ''}">10:30</span>
+
+                                <!-- Cột nội dung thông báo -->
+                                <div class="notif-body-col">
+                                    <div class="notif-top-row">
+                                        <!-- Tiêu đề: chỉ hiển thị text/link, không dùng form -->
+                                        <a th:if="${notif.actionUrl != null && !notif.actionUrl.isEmpty() && notif.actionUrl != '#'}"
+                                           th:href="${notif.actionUrl}"
+                                           class="notif-title-text has-link"
+                                           th:text="${notif.title}">Thông báo</a>
+                                        <span th:unless="${notif.actionUrl != null && !notif.actionUrl.isEmpty() && notif.actionUrl != '#'}"
+                                              class="notif-title-text"
+                                              th:text="${notif.title}">Thông báo</span>
+                                        <span class="notif-time-text"
+                                              th:text="${notif.createdAt != null ? #temporals.format(notif.createdAt, 'dd/MM/yyyy HH:mm') : ''}">25/10/2026 01:10</span>
                                     </div>
-                                    <p class="notif-item-msg" th:text="${notif.message}">Nội dung thông báo...</p>
+                                    <p class="notif-desc-text" th:text="${notif.message}">Bạn vừa đăng nhập lúc...</p>
+
+                                    <!-- Nút "Đã đọc" nhỏ (Chuẩn POST Form) -->
+                                    <div class="notif-action-row" th:if="${notif.isRead == false || notif.isRead == null}">
+                                        <form th:action="@{/notifications/read/{id}(id=${notif.notificationId})}" method="post" class="notif-single-form">
+                                            <button type="submit" class="btn-mark-single-read">Đã đọc</button>
+                                        </form>
+                                    </div>
                                 </div>
-                                <span class="notif-unread-dot" th:if="${notif.isRead == false || notif.isRead == null}"></span>
-                            </a>
+                            </div>
                         </div>
 
-                        <!-- Footer: Nút mở rộng xem tất cả & cuộn xuống -->
-                        <div class="notif-footer" th:if="${globalRecentNotifs != null && !globalRecentNotifs.empty}">
-                            <button type="button" class="btn-view-all-notifs" onclick="expandAllNotifications(event)">
-                                <span>Xem tất cả thông báo</span>
-                                <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        <!-- Footer: Nút Xem tất cả (chỉ hiện khi có nhiều hơn 5 thông báo) -->
+                        <div class="notif-footer" th:if="${globalRecentNotifs != null && globalRecentNotifs.size() > 5}">
+                            <button type="button" class="btn-load-more-notifs"
+                                    onclick="this.closest('.notif-menu').classList.add('is-expanded'); this.parentElement.style.display='none';">
+                                Xem tất cả (<span th:text="${globalRecentNotifs.size()}">0</span>)
                             </button>
                         </div>
                     </div>
@@ -167,6 +173,10 @@
                             <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 8h10M7 12h10M7 16h6"></path></svg>
                             <span>Kho mã giảm giá</span>
                         </a>
+                        <a class="dropdown-item" th:href="@{/membership}" href="/membership" role="menuitem">
+                            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            <span>Hạng thành viên VIP</span>
+                        </a>
                         <a class="dropdown-item" th:href="@{/change-password}" href="/change-password" role="menuitem">
                             <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                             <span>Đổi mật khẩu</span>
@@ -217,21 +227,6 @@
         if (userDropdown) userDropdown.classList.toggle('is-open');
     }
 
-    function expandAllNotifications(e) {
-        e.stopPropagation();
-        const notifMenu = document.getElementById('notifMenu');
-        const notifList = document.getElementById('notifList');
-        if (notifMenu) {
-            notifMenu.classList.add('expanded');
-        }
-        if (notifList) {
-            // Cuộn xuống để xem toàn bộ danh sách
-            notifList.scrollTo({
-                top: notifList.scrollHeight,
-                behavior: 'smooth'
-            });
-        }
-    }
 
     // Đóng dropdown khi click ra bên ngoài
     document.addEventListener('click', function(e) {

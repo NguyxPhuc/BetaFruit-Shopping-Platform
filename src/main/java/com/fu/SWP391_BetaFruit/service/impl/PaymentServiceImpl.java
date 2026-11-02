@@ -144,33 +144,31 @@ public class PaymentServiceImpl implements PaymentService {
         String customerName = "Quý khách hàng";
         String customerPhone = "";
         String shippingAddress = "";
-        PaymentTransaction transaction = null;
+
         if (txnRef != null) {
-            transaction = paymentTransactionRepository.findByTransactionRef(txnRef).orElse(null);
-        }
-        if (transaction != null) {
-            Order order = transaction.getOrder();
-            if (order != null) {
-                orderId = order.getOrderId();
-                orderCode = String.format("DH%06d", orderId);
-                shippingAddress = order.getSnapshotShippingAddress() != null ? order.getSnapshotShippingAddress() : "";
-                if (order.getCustomer() != null) {
-                    customerName = order.getCustomer().getFullName() != null ? order.getCustomer().getFullName() : customerName;
-                    customerPhone = order.getCustomer().getPhone() != null ? order.getCustomer().getPhone() : "";
+            PaymentTransaction transaction = paymentTransactionRepository.findByTransactionRef(txnRef).orElse(null);
+            if (transaction != null) {
+                Order order = transaction.getOrder();
+                if (order != null) {
+                    orderId = order.getOrderId();
+                    orderCode = String.format("DH%06d", orderId);
+                    shippingAddress = order.getSnapshotShippingAddress() != null ? order.getSnapshotShippingAddress() : "";
+                    if (order.getCustomer() != null) {
+                        customerName = order.getCustomer().getFullName() != null ? order.getCustomer().getFullName() : customerName;
+                        customerPhone = order.getCustomer().getPhone() != null ? order.getCustomer().getPhone() : "";
+                    }
                 }
-            }
-            if (PaymentStatus.PENDING.equals(transaction.getStatus())) {
-                if (isSuccess) {
-                    transaction.setStatus(PaymentStatus.PAID);
-                } else {
-                    transaction.setStatus(PaymentStatus.FAILED);
+
+                // Đồng bộ trạng thái UI với trạng thái thực tế do IPN đã chốt trước đó
+                if (PaymentStatus.PAID.equals(transaction.getStatus())) {
+                    isSuccess = true;
+                    friendlyMessage = "Giao dịch thanh toán trực tuyến qua cổng VNPay đã hoàn tất thành công.";
+                } else if (PaymentStatus.FAILED.equals(transaction.getStatus())) {
+                    isSuccess = false;
                 }
-                paymentTransactionRepository.save(transaction);
-            } else if (PaymentStatus.PAID.equals(transaction.getStatus())) {
-                isSuccess = true;
-            }
-            if (amount.compareTo(BigDecimal.ZERO) == 0 && transaction.getAmount() != null) {
-                amount = transaction.getAmount();
+                if (amount.compareTo(BigDecimal.ZERO) == 0 && transaction.getAmount() != null) {
+                    amount = transaction.getAmount();
+                }
             }
         }
         PaymentResultResponse paymentResultResponse = new PaymentResultResponse();
