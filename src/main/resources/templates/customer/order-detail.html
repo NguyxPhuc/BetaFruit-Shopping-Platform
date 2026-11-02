@@ -349,6 +349,12 @@
                     <span>Phương thức: </span>
                     <strong th:text="${order.paymentMethod}">VNPAY / COD</strong>
                 </div>
+                <div th:if="${order.paymentMethod == 'VNPAY'}" style="margin-top:.75rem;display:flex;justify-content:flex-end;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                    <span style="font-size:.9rem;font-weight:700;color:#9a3412;" th:text="'Thanh toán: ' + ${paymentState.statusLabel}">Thanh toán: Chưa thanh toán</span>
+                    <form th:if="${paymentState.canPay}" method="post" th:action="@{/orders/{id}/pay(id=${order.orderId})}">
+                        <button type="submit" class="confirm-btn-hero"><i class="bi bi-credit-card"></i> Thanh toán lại qua VNPay</button>
+                    </form>
+                </div>
             </div>
         </div>
     </main>
