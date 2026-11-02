@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{shop/layout :: layout(~{::title}, 'products-create', ~{::content})}">
 <head>
@@ -1386,18 +1386,7 @@
                     <div class="sale-price-feedback text-danger" style="display: none; font-size: 0.75rem; margin-top: 2px;"></div>
                 </div>
 
-                <div class="col-12 col-md-6">
-                    <label class="form-label small fw-bold mb-1">
-                        <span>Tồn kho ban đầu <span class="required-badge">*</span></span>
-                    </label>
-                    <input type="number"
-                           name="variants[${index}].stockQuantity"
-                           value="${sQty}"
-                           class="form-control form-control-sm"
-                           placeholder="VD: 100"
-                           min="0"
-                           required>
-                </div>
+                <input type="hidden" name="variants[${index}].stockQuantity" value="0">
 
                 <div class="col-12 col-md-6">
                     <label class="form-label small fw-semibold text-muted mb-1">

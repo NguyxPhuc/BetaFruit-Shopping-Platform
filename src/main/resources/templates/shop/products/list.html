@@ -440,12 +440,12 @@
                         <span class="badge bg-danger text-white rounded-pill px-2 py-1" th:text="${lowStockCount}">0</span>
                         <span>thực thể sắp hết hoặc đã hết hàng!</span>
                     </h6>
-                    <a th:href="@{/shop/inventory/history}" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1 fw-semibold">
-                        <i class="bi bi-clock-history me-1"></i> Xem lịch sử kho
+                    <a th:href="@{/shop/inventory/import-note/new}" class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-semibold">
+                        <i class="bi bi-box-arrow-in-down me-1"></i> Lập phiếu nhập kho
                     </a>
                 </div>
                 <p class="mb-2 text-secondary small">
-                    Một số mặt hàng của bạn đã chạm mức cảnh báo hoặc hết hàng. Hãy kiểm tra và nhập thêm hàng để tiếp tục kinh doanh.
+                    Một số mặt hàng của bạn đã chạm mức cảnh báo hoặc hết hàng. Hãy kiểm tra và lập phiếu nhập thêm hàng để tiếp tục kinh doanh.
                 </p>
                 <!-- Danh sách nhanh các thực thể sắp hết -->
                 <div th:if="${lowStockVariants != null && !lowStockVariants.empty}" class="d-flex flex-wrap gap-2 pt-1">
@@ -453,10 +453,6 @@
                         <span class="fw-semibold text-truncate" style="max-width: 180px;" th:text="${lsv.product != null ? lsv.product.productName : ''} + ' - ' + ${lsv.variantName}">Cam Sành - Hộp 1kg</span>
                         <span th:if="${lsv.stockQuantity == 0}" class="badge bg-danger text-white rounded-pill px-2 py-1">Hết hàng (0)</span>
                         <span th:unless="${lsv.stockQuantity == 0}" class="badge bg-warning text-dark rounded-pill px-2 py-1" th:text="'Còn: ' + ${lsv.stockQuantity}">Còn: 2</span>
-                        <button type="button" class="btn btn-sm btn-outline-success py-0 px-2 rounded-pill fw-semibold"
-                                th:attr="onclick='openRestockModal(' + ${lsv.variantId} + ', \'' + ${#strings.escapeJavaScript(lsv.variantName)} + '\', ' + ${lsv.stockQuantity} + ', \'' + ${#strings.escapeJavaScript(lsv.product != null ? lsv.product.productName : '')} + '\')'">
-                            <i class="bi bi-plus-lg"></i> Nhập kho
-                        </button>
                     </div>
                 </div>
             </div>
@@ -616,15 +612,6 @@
                                             <span th:if="${v.stockQuantity > (v.lowStockThreshold != null ? v.lowStockThreshold : 5)}" class="text-muted text-nowrap" style="font-size: 0.75rem;">
                                                 Kho: <strong class="text-dark" th:text="${v.stockQuantity != null ? #numbers.formatInteger(v.stockQuantity, 1, 'POINT') : '0'}">100</strong>
                                             </span>
-
-                                            <!-- Nút Nhập Hàng -->
-                                            <button type="button" 
-                                                    class="btn btn-xs btn-outline-success rounded-pill py-0 px-2 fw-semibold d-inline-flex align-items-center gap-1 text-nowrap"
-                                                    style="font-size: 0.7rem; height: 22px; line-height: 20px;"
-                                                    title="Nhập thêm hàng vào kho"
-                                                    th:attr="onclick='openRestockModal(' + ${v.variantId} + ', \'' + ${#strings.escapeJavaScript(v.variantName)} + '\', ' + ${v.stockQuantity} + ', \'' + ${#strings.escapeJavaScript(prod.productName)} + '\')'">
-                                                <i class="bi bi-plus-lg"></i> Nhập hàng
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -726,96 +713,10 @@
     </div>
 </div>
 
-<!-- ═══════════════ MODAL NHẬP THÊM HÀNG (RESTOCK PRODUCTS) ═══════════════ -->
-<div class="modal fade" id="restockModal" tabindex="-1" aria-labelledby="restockModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header bg-light border-0 py-3 px-4">
-                <div>
-                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="restockModalLabel">
-                        <i class="bi bi-box-arrow-in-down text-success"></i> Nhập Thêm Hàng Vào Kho
-                    </h5>
-                    <p class="text-muted small mb-0 mt-1" id="restockModalSubtitle">Thực thể: ...</p>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            
-            <div class="modal-body p-4">
-                <!-- Info banner -->
-                <div class="p-3 rounded-3 bg-light border mb-4 d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="text-secondary small d-block">Tồn kho hiện tại:</span>
-                        <strong class="fs-4 text-dark" id="restockModalCurrentStock">0</strong> <span class="text-muted small">đơn vị</span>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
-                            <i class="bi bi-shield-check"></i> Cập nhật tức thì
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Form Nhập Thêm Hàng -->
-                <form id="formRestock" method="post">
-                    <div class="mb-3">
-                        <label for="additionalQuantityInput" class="form-label fw-semibold text-dark small">
-                            Số lượng nhập thêm vào kho <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light text-muted"><i class="bi bi-plus-lg"></i></span>
-                            <input type="number" class="form-control form-control-lg" id="additionalQuantityInput" name="additionalQuantity" min="1" step="1" placeholder="Nhập số lượng nhập thêm, VD: 50" required>
-                        </div>
-                        <div class="form-text">Hệ thống sẽ cộng thêm số lượng này vào tồn kho hiện tại và tự động ghi vào lịch sử kho.</div>
-                    </div>
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-success btn-lg rounded-pill fw-semibold">
-                            <i class="bi bi-check2-circle me-1"></i> Xác Nhận Nhập Hàng
-                        </button>
-                    </div>
-                </form>
-            </div>
-            
-            <div class="modal-footer bg-light border-0 py-2 px-4 justify-content-between">
-                <a th:href="@{/shop/inventory/history}" class="btn btn-link text-decoration-none text-muted small p-0">
-                    <i class="bi bi-clock-history me-1"></i> Xem lịch sử giao dịch kho
-                </a>
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    function openRestockModal(variantId, variantName, stockQuantity, productName) {
-        const subtitleEl = document.getElementById('restockModalSubtitle');
-        const currentStockEl = document.getElementById('restockModalCurrentStock');
-        const formRestock = document.getElementById('formRestock');
-        const addInput = document.getElementById('additionalQuantityInput');
-
-        if (subtitleEl) {
-            subtitleEl.textContent = (productName ? productName + ' • ' : '') + variantName;
-        }
-        if (currentStockEl) {
-            currentStockEl.textContent = stockQuantity;
-        }
-        if (formRestock) {
-            formRestock.action = '/shop/inventory/variants/' + variantId + '/restock';
-        }
-        if (addInput) {
-            addInput.value = '';
-            setTimeout(() => addInput.focus(), 250);
-        }
-
-        const modalEl = document.getElementById('restockModal');
-        if (modalEl) {
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
-        }
-    }
-    window.openInventoryModal = openRestockModal;
-
     function dismissToast() {
         const toast = document.getElementById('floatingSuccessToast');
         if (toast) {
