@@ -34,9 +34,8 @@ public class VariantItemRequest {
 
     private BigDecimal costPrice;
 
-    @NotNull(message = "Số lượng tồn kho không được để trống.")
     @Min(value = 0, message = "Số lượng tồn kho không được là số âm.")
-    private Integer stockQuantity;
+    private Integer stockQuantity = 0;
 
     private Integer lowStockThreshold = 5;
 

@@ -46,7 +46,7 @@ public class ProductController {
     @GetMapping("/shop/products")
     public String listShopProducts(@RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "8") int size,
+            @RequestParam(value = "size", defaultValue = "5") int size,
             HttpSession session,
             Model model) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
@@ -93,6 +93,7 @@ public class ProductController {
                 ProductCreateRequest defaultRequest = new ProductCreateRequest();
                 VariantItemRequest firstVariant = new VariantItemRequest();
                 firstVariant.setLowStockThreshold(5);
+                firstVariant.setStockQuantity(0);
                 defaultRequest.getVariants().add(firstVariant);
                 model.addAttribute("product", defaultRequest);
             }
@@ -155,7 +156,9 @@ public class ProductController {
                         break;
                     }
                 }
-                if (v.getStockQuantity() == null || v.getStockQuantity() < 0) {
+                if (v.getStockQuantity() == null) {
+                    v.setStockQuantity(0);
+                } else if (v.getStockQuantity() < 0) {
                     model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
                             + "') có số lượng tồn kho không được âm.");
                     break;
@@ -346,7 +349,9 @@ public class ProductController {
                         break;
                     }
                 }
-                if (v.getStockQuantity() == null || v.getStockQuantity() < 0) {
+                if (v.getStockQuantity() == null) {
+                    v.setStockQuantity(0);
+                } else if (v.getStockQuantity() < 0) {
                     model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
                             + "') có số lượng tồn kho không được âm.");
                     break;
