@@ -141,6 +141,9 @@
                     </div>
                     <span class="bf-review-date" th:text="${rev.formattedDate}">01/10/2026 14:30</span>
                 </div>
+                <div class="bf-review-variant" th:if="${rev.variantName != null and rev.variantName != ''}">
+                    Biến thể được đánh giá: <span th:text="${rev.variantName}">Loại / khối lượng</span>
+                </div>
                 <p class="bf-review-comment" th:text="${rev.comment}">Trái cây rất tươi và ngon, giao hàng đóng gói cẩn thận!</p>
 
                 <div class="bf-shop-reply" th:if="${rev.shopReply != null and !rev.shopReply.isEmpty()}">

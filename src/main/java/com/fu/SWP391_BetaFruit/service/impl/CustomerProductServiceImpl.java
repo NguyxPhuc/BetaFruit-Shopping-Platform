@@ -296,6 +296,7 @@ public class CustomerProductServiceImpl implements CustomerProductService {
             reviewResponses.add(CustomerReviewResponse.builder()
                     .reviewId(r.getReviewId())
                     .customerName(customerName)
+                    .variantName(r.getOrderItem() != null ? r.getOrderItem().getSnapshotVariantName() : null)
                     .rating(r.getRating() != null ? r.getRating() : 0)
                     .comment(r.getComment())
                     .shopReply(r.getShopReply())

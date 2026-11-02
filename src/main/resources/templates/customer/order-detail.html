@@ -146,8 +146,8 @@
     <div th:replace="~{fragments/header :: header}"></div>
 
     <main class="detail-container">
-        <div th:if="${reviewSuccess}" class="card-box" style="color:#166534;background:#f0fdf4;" th:text="${reviewSuccess}"></div>
-        <div th:if="${reviewError}" class="card-box" style="color:#991b1b;background:#fef2f2;" th:text="${reviewError}"></div>
+        <div th:if="${reviewSuccess != null}" class="card-box" style="color:#166534;background:#f0fdf4;" th:text="${reviewSuccess}"></div>
+        <div th:if="${reviewError != null}" class="card-box" style="color:#991b1b;background:#fef2f2;" th:text="${reviewError}"></div>
         <!-- Breadcrumb -->
         <nav class="breadcrumb-nav">
             <a th:href="@{/orders}"><i class="bi bi-arrow-left"></i> Danh sách đơn mua</a>
@@ -156,7 +156,7 @@
         </nav>
 
         <!-- Celebration Banner when Tier Upgrade triggered! -->
-        <div class="celebration-banner" th:if="${upgradeCelebration}">
+        <div class="celebration-banner" th:if="${upgradeCelebration == true}">
             <div class="celebration-icon">👑</div>
             <div class="celebration-text">
                 <h3 th:text="'Chúc mừng bạn đã thăng hạng ' + ${newTierName} + '!'">Chúc mừng bạn đã thăng hạng Vàng!</h3>
@@ -168,10 +168,10 @@
         </div>
 
         <!-- Success/Error Notices -->
-        <div th:if="${successMessage and !upgradeCelebration}" class="card-box" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46; font-weight: 600;">
+        <div th:if="${successMessage != null and upgradeCelebration != true}" class="card-box" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46; font-weight: 600;">
             <i class="bi bi-check-circle-fill"></i> <span th:text="${successMessage}"></span>
         </div>
-        <div th:if="${errorMessage}" class="card-box" style="background: #fef2f2; border-color: #fecaca; color: #991b1b; font-weight: 600;">
+        <div th:if="${errorMessage != null}" class="card-box" style="background: #fef2f2; border-color: #fecaca; color: #991b1b; font-weight: 600;">
             <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${errorMessage}"></span>
         </div>
 
@@ -242,8 +242,8 @@
                         <textarea name="comment" maxlength="5000" rows="3" placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"></textarea>
                         <button type="submit" class="confirm-btn-hero">Gửi đánh giá</button>
                     </form>
-                    <div th:if="${item.reviewId != null and item.reviewVisibility?.name() == 'HIDDEN_BY_ADMIN'}" class="text-muted">Đánh giá này đã bị quản trị viên ẩn.</div>
-                    <form th:if="${item.reviewId != null and item.reviewVisibility?.name() != 'HIDDEN_BY_ADMIN'}"
+                    <div th:if="${item.reviewId != null and item.reviewVisibility != null and item.reviewVisibility.name() == 'HIDDEN_BY_ADMIN'}" class="text-muted">Đánh giá này đã bị quản trị viên ẩn.</div>
+                    <form th:if="${item.reviewId != null and (item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_ADMIN')}"
                           th:action="@{/customer/reviews/{id}/edit(id=${item.reviewId})}" method="post" style="display:grid;gap:.5rem;max-width:520px;">
                         <input type="hidden" name="orderId" th:value="${order.orderId}">
                         <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
@@ -256,7 +256,7 @@
                         <textarea name="comment" maxlength="5000" rows="3" th:text="${item.comment}" placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"></textarea>
                         <div style="display:flex;gap:.5rem;">
                             <button type="submit" class="confirm-btn-hero">Cập nhật đánh giá</button>
-                            <button th:if="${item.reviewVisibility?.name() != 'HIDDEN_BY_USER'}" type="submit" class="btn-detail" th:formaction="@{/customer/reviews/{id}/hide(id=${item.reviewId})}" formmethod="post" onclick="return confirm('Ẩn đánh giá này khỏi trang sản phẩm?');">Ẩn đánh giá</button>
+                            <button th:if="${item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_USER'}" type="submit" class="btn-detail" th:formaction="@{/customer/reviews/{id}/hide(id=${item.reviewId})}" formmethod="post" onclick="return confirm('Ẩn đánh giá này khỏi trang sản phẩm?');">Ẩn đánh giá</button>
                         </div>
                     </form>
                 </div>
