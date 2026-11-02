@@ -3,6 +3,7 @@ package com.fu.SWP391_BetaFruit.service;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerOrderResponse;
 import com.fu.SWP391_BetaFruit.dto.response.TierUpgradeResult;
 import com.fu.SWP391_BetaFruit.entity.Order;
+import com.fu.SWP391_BetaFruit.entity.OrderStatusHistory;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
@@ -107,10 +108,14 @@ class CustomerOrderConfirmTest {
         assertNotNull(result);
         assertTrue(result.isUpgraded());
         assertEquals("Bạc", result.getNewTierName());
-        assertEquals(OrderStatus.SUCCESS, deliveredOrder.getOrderStatus());
+        assertEquals(OrderStatus.RECEIVED, deliveredOrder.getOrderStatus());
 
         verify(orderRepository).save(deliveredOrder);
-        verify(orderStatusHistoryRepository).save(any());
+        org.mockito.ArgumentCaptor<OrderStatusHistory> historyCaptor =
+                org.mockito.ArgumentCaptor.forClass(OrderStatusHistory.class);
+        verify(orderStatusHistoryRepository).save(historyCaptor.capture());
+        assertEquals(OrderStatus.DELIVERED, historyCaptor.getValue().getStatusFrom());
+        assertEquals(OrderStatus.RECEIVED, historyCaptor.getValue().getStatusTo());
         verify(membershipTierService).processOrderCompleted(10, 1001, new BigDecimal("220000"));
     }
 

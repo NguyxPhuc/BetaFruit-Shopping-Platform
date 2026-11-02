@@ -29,6 +29,8 @@ public class CustomerProductDetailResponse {
     private Double rating;
     private Integer fullStars;
     private Long reviewCount;
+    private Integer reviewPage;
+    private Integer reviewTotalPages;
     private Boolean inStock;
     private Integer totalStock;
     private String weightSpecification;

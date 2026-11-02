@@ -66,8 +66,10 @@ public class CustomerProductController {
     }
 
     @GetMapping("/products/{productId}")
-    public String viewProductDetails(@PathVariable Integer productId, Model model, jakarta.servlet.http.HttpSession session) {
-        CustomerProductDetailResponse product = customerProductService.getProductDetail(productId);
+    public String viewProductDetails(@PathVariable Integer productId,
+                                     @RequestParam(defaultValue = "1") int reviewPage,
+                                     Model model, jakarta.servlet.http.HttpSession session) {
+        CustomerProductDetailResponse product = customerProductService.getProductDetail(productId, reviewPage);
         if (product == null) {
             return "redirect:/products";
         }

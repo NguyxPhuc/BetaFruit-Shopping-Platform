@@ -134,7 +134,8 @@
                     <button class="button button--danger" type="submit" style="background: #dc2626; color: white;">⚠️ Báo sự cố</button>
                 </form>
             </div>
-            <p class="holding-note" th:if="${order.orderStatus == 'DELIVERED'}">Đơn đã giao thành công. Tiền chưa được chuyển vào số dư shop. Theo quy trình, đơn sẽ hoàn tất sau 72 giờ nếu không có tranh chấp; deliverer không tự chuyển sang SUCCESS.</p>
+            <p class="holding-note" th:if="${order.orderStatus == 'DELIVERED' or order.orderStatus == 'RECEIVED'}"
+               th:text="${order.orderStatus == 'RECEIVED' ? 'Khách đã xác nhận nhận hàng. Tiền vẫn đang được giữ và chưa chuyển vào số dư shop.' : 'Shipper đã xác nhận giao hàng. Chờ khách xác nhận nhận hàng; tiền chưa chuyển vào số dư shop.'}">Trạng thái giao hàng và đối soát</p>
             </div>
         </details>
 
@@ -158,7 +159,7 @@
                     <span>Số tiền cần thu từ khách</span><strong th:text="${#numbers.formatDecimal(order.amountToCollect, 0, 'COMMA', 0, 'POINT')} + 'đ'"></strong>
                 </div>
                 <p class="payment-note" th:if="${order.paymentMethod == 'VNPAY'}">Đơn thanh toán VNPay. Không thu thêm tiền mặt từ khách.</p>
-                <p class="payment-note" th:if="${order.paymentMethod == 'COD' and (order.orderStatus == 'DELIVERED' or order.orderStatus == 'SUCCESS')}">Đơn đã giao, không thu tiền từ khách lần nữa.</p>
+                <p class="payment-note" th:if="${order.paymentMethod == 'COD' and (order.orderStatus == 'DELIVERED' or order.orderStatus == 'RECEIVED' or order.orderStatus == 'SUCCESS')}">Đơn đã giao, không thu tiền từ khách lần nữa.</p>
                 <dl class="money-lines">
                     <div><dt>Giá sản phẩm</dt><dd th:text="${#numbers.formatDecimal(detail.totalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
                     <div><dt>Phí vận chuyển</dt><dd th:text="${#numbers.formatDecimal(detail.shippingFee ?: 0, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>

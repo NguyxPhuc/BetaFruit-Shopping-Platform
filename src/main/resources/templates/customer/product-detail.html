@@ -124,7 +124,7 @@
     </div>
 
     <section class="bf-reviews-section">
-        <h3 class="bf-reviews-title">Đánh giá sản phẩm</h3>
+        <h3 class="bf-reviews-title">Đánh giá sản phẩm <span th:text="${'(' + product.reviewCount + ')'}">(0)</span></h3>
 
         <div class="bf-reviews-list" th:if="${product.reviews != null and !product.reviews.isEmpty()}">
             <div class="bf-review-card" th:each="rev : ${product.reviews}">
@@ -153,6 +153,15 @@
         <div class="bf-reviews-empty" th:if="${product.reviews == null || product.reviews.isEmpty()}">
             Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên trải nghiệm và chia sẻ cảm nhận nhé!
         </div>
+
+        <nav th:if="${product.reviewTotalPages > 1}" aria-label="Phân trang đánh giá" class="bf-review-pagination"
+             style="display:flex;justify-content:center;align-items:center;gap:1rem;margin-top:1.25rem;">
+            <a th:if="${product.reviewPage > 1}"
+               th:href="@{/products/{id}(id=${product.productId},reviewPage=${product.reviewPage - 1})}">Đánh giá trước</a>
+            <span th:text="'Trang ' + ${product.reviewPage} + ' / ' + ${product.reviewTotalPages}">Trang 1 / 2</span>
+            <a th:if="${product.reviewPage < product.reviewTotalPages}"
+               th:href="@{/products/{id}(id=${product.productId},reviewPage=${product.reviewPage + 1})}">Đánh giá tiếp</a>
+        </nav>
     </section>
 </main>
 
