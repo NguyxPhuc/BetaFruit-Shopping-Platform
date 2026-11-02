@@ -23,6 +23,7 @@ public interface ShopService {
     void editShopProfile(Integer id, ShopProfileRequest shopProfileRequest) throws Exception;
 
     Map<String, Object> getAdminShopPageData(String keyword, String statusStr, int page, int size, String sortBy, String sortDir);
+    Map<String, Object> getStaffShopPageData(String keyword, String statusStr, int page, int size, String sortBy, String sortDir);
     Map<String, Object> getAdminCommissionPageData(String keyword, String ownerStatus, String commissionTier, int page, int size, String sortBy, String sortDir);
 
     void setUpProfileShop(Integer userId, ShopSetupRequest request) throws Exception;

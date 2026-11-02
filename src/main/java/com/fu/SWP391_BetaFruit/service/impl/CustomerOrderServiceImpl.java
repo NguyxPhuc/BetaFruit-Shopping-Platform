@@ -6,13 +6,16 @@ import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.entity.OrderItem;
 import com.fu.SWP391_BetaFruit.entity.OrderStatusHistory;
 import com.fu.SWP391_BetaFruit.entity.User;
+import com.fu.SWP391_BetaFruit.enums.NotificationType;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
+import com.fu.SWP391_BetaFruit.repository.DeliveryAssignmentRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderItemRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderStatusHistoryRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.CustomerOrderService;
 import com.fu.SWP391_BetaFruit.service.MembershipTierService;
+import com.fu.SWP391_BetaFruit.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,6 +41,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final UserRepository userRepository;
     private final MembershipTierService membershipTierService;
+    private final DeliveryAssignmentRepository deliveryAssignmentRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,7 +60,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     public CustomerOrderResponse getOrderDetail(Integer orderId, Integer customerId) {
         Order order = orderRepository.findByOrderIdAndCustomer_UserId(orderId, customerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng #" + orderId));
-        return toResponse(order);
+        return toDetailResponse(order);
     }
 
     @Override
@@ -88,6 +93,40 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
         log.info("Khách hàng #{} đã xác nhận nhận hàng cho đơn #{}. Kết quả thăng hạng: upgraded={}",
                 customerId, orderId, upgradeResult.isUpgraded());
+
+        // Bắn thông báo hoàn tất đơn hàng cho Khách hàng
+        try {
+            if (notificationService != null) {
+                notificationService.createBaseNotification(
+                        customer,
+                        "🎉 Đơn hàng #" + order.getOrderId() + " đã hoàn tất!",
+                        "Cảm ơn bạn đã lựa chọn mua sắm tại BetaFruit! Chúc bạn thưởng thức hoa quả thật ngon miệng.",
+                        NotificationType.ORDER_STATUS,
+                        "/orders/" + order.getOrderId()
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Không thể gửi thông báo hoàn tất cho khách hàng #{}: {}", customerId, e.getMessage());
+        }
+
+        // Bắn thông báo kết thúc cuốc giao an toàn cho Shipper
+        try {
+            if (notificationService != null && deliveryAssignmentRepository != null) {
+                deliveryAssignmentRepository.findByOrderOrderId(orderId).ifPresent(assignment -> {
+                    if (assignment.getShipper() != null && assignment.getShipper().getUser() != null) {
+                        notificationService.createBaseNotification(
+                                assignment.getShipper().getUser(),
+                                "✅ Đơn hàng #" + order.getOrderId() + " đã hoàn tất!",
+                                "Khách hàng đã nhận kiện hàng hoa quả và xác nhận hài lòng. Cuốc giao đã kết thúc trọn vẹn.",
+                                NotificationType.ORDER_STATUS,
+                                "/shipper/orders/" + order.getOrderId()
+                        );
+                    }
+                });
+            }
+        } catch (Exception e) {
+            log.warn("Không thể gửi thông báo hoàn tất cho Shipper của đơn #{}: {}", orderId, e.getMessage());
+        }
 
         return upgradeResult;
     }
@@ -125,6 +164,52 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .canConfirmReceived(canConfirm)
                 .isSuccess(isSuccess)
                 .items(itemResponses)
+                .timeline(List.of())
+                .build();
+    }
+
+    private CustomerOrderResponse toDetailResponse(Order order) {
+        CustomerOrderResponse base = toResponse(order);
+        List<OrderStatusHistory> historyList = orderStatusHistoryRepository.findByOrderOrderIdOrderByCreatedAtAscHistoryIdAsc(order.getOrderId());
+        List<CustomerOrderResponse.OrderTimelineStep> timeline;
+        if (historyList.isEmpty()) {
+            timeline = List.of(new CustomerOrderResponse.OrderTimelineStep(
+                order.getOrderStatus() != null ? order.getOrderStatus().name() : "PENDING",
+                formatStatusLabel(order.getOrderStatus()),
+                "Đơn hàng đã được tạo thành công trên hệ thống",
+                "Hệ thống BetaFruit",
+                order.getCreatedAt() != null ? order.getCreatedAt() : java.time.LocalDateTime.now()
+            ));
+        } else {
+            timeline = historyList.stream()
+                    .map(h -> new CustomerOrderResponse.OrderTimelineStep(
+                            h.getStatusTo() != null ? h.getStatusTo().name() : "",
+                            formatStatusLabel(h.getStatusTo()),
+                            h.getNote(),
+                            h.getUpdatedBy() != null ? h.getUpdatedBy().getFullName() : "Hệ thống BetaFruit",
+                            h.getCreatedAt()
+                    ))
+                    .toList();
+        }
+
+        return CustomerOrderResponse.builder()
+                .orderId(base.orderId())
+                .orderCode(base.orderCode())
+                .shopId(base.shopId())
+                .shopName(base.shopName())
+                .orderStatus(base.orderStatus())
+                .orderStatusLabel(base.orderStatusLabel())
+                .paymentMethod(base.paymentMethod())
+                .totalAmount(base.totalAmount())
+                .discountAmount(base.discountAmount())
+                .shippingFee(base.shippingFee())
+                .finalAmount(base.finalAmount())
+                .snapshotShippingAddress(base.snapshotShippingAddress())
+                .createdAt(base.createdAt())
+                .canConfirmReceived(base.canConfirmReceived())
+                .isSuccess(base.isSuccess())
+                .items(base.items())
+                .timeline(timeline)
                 .build();
     }
 
