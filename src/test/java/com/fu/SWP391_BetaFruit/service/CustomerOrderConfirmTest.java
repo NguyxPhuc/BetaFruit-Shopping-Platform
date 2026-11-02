@@ -8,6 +8,7 @@ import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.enums.PaymentMethod;
+import com.fu.SWP391_BetaFruit.repository.DeliveryAssignmentRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderItemRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderStatusHistoryRepository;
@@ -54,6 +55,12 @@ class CustomerOrderConfirmTest {
 
     @Mock
     private MembershipTierService membershipTierService;
+
+    @Mock
+    private DeliveryAssignmentRepository deliveryAssignmentRepository;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private CustomerOrderServiceImpl customerOrderService;
@@ -117,6 +124,7 @@ class CustomerOrderConfirmTest {
         assertEquals(OrderStatus.DELIVERED, historyCaptor.getValue().getStatusFrom());
         assertEquals(OrderStatus.RECEIVED, historyCaptor.getValue().getStatusTo());
         verify(membershipTierService).processOrderCompleted(10, 1001, new BigDecimal("220000"));
+        verify(notificationService).createBaseNotification(eq(customer), any(), any(), any(), eq("/orders/1001"));
     }
 
     @Test

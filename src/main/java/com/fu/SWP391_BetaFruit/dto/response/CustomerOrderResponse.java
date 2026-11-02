@@ -24,7 +24,8 @@ public record CustomerOrderResponse(
         LocalDateTime createdAt,
         boolean canConfirmReceived,
         boolean isSuccess,
-        List<OrderItemResponse> items
+        List<OrderItemResponse> items,
+        List<OrderTimelineStep> timeline
 ) {
     public record OrderItemResponse(
             Integer orderItemId,
@@ -39,5 +40,13 @@ public record CustomerOrderResponse(
             String comment,
             ReviewVisibility reviewVisibility,
             boolean reviewCanEdit
+    ) {}
+
+    public record OrderTimelineStep(
+            String status,
+            String statusLabel,
+            String note,
+            String actor,
+            LocalDateTime timestamp
     ) {}
 }

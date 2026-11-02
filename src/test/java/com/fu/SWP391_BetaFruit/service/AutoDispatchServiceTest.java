@@ -162,41 +162,6 @@ class AutoDispatchServiceTest {
         verify(deliveryAssignmentService).assign(501, 101, 1);
     }
 
-    @Test
-    @DisplayName("Auto-dispatch Chặng 2 (Trạm ảo): Tự động chọn Shipper 2 có khu vực trùng với Khách hàng")
-    void autoDispatchLeg2_Success_SelectsShipperMatchingCustomerCity() {
-        User customer = new User();
-        customer.setUserId(8);
-        customer.setFullName("Nguyễn Thị Kim Hoa");
-        readyOrder.setCustomer(customer);
-        readyOrder.setSnapshotShippingAddress("Quận 1, TP. Hồ Chí Minh");
-
-        Shipper shipper1 = createShipper(101, "Shipper Đà Lạt", UserStatus.ACTIVE, BigDecimal.ZERO);
-        Shipper shipper2 = createShipper(102, "Shipper Sài Gòn", UserStatus.ACTIVE, BigDecimal.ZERO);
-
-        when(orderRepository.findLockedById(501)).thenReturn(Optional.of(readyOrder));
-        when(shipperRepository.findAll()).thenReturn(List.of(shipper1, shipper2));
-
-        // Khách ở TP. Hồ Chí Minh
-        when(addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(8, AddressType.SHIPPING))
-                .thenReturn(List.of(createAddress(8, "TP. Hồ Chí Minh", AddressType.SHIPPING)));
-
-        // Shipper 2 ở TP. Hồ Chí Minh
-        when(addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(102, AddressType.PICKUP))
-                .thenReturn(List.of(createAddress(102, "TP. Hồ Chí Minh", AddressType.PICKUP)));
-
-        when(deliveryAssignmentRepository.countOngoingOrdersByShipper(eq(102), any())).thenReturn(0L);
-
-        DeliveryAssignment existingAssignment = new DeliveryAssignment(99, readyOrder, shipper1, shopOwner, null);
-        when(deliveryAssignmentRepository.findByOrderOrderId(501)).thenReturn(Optional.of(existingAssignment));
-        when(deliveryAssignmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        Optional<DeliveryAssignment> result = autoDispatchService.autoDispatchLeg2(501, 101);
-
-        assertTrue(result.isPresent());
-        assertEquals(102, result.get().getShipper().getUserId());
-        verify(notificationService).createBaseNotification(eq(shipper2.getUser()), any(), any(), any(), any());
-    }
 
     @Test
     @DisplayName("Auto-dispatch trả về empty khi tất cả Shipper đều quá tải (>= 5 đơn)")

@@ -546,7 +546,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             throw new IllegalArgumentException("Tên hạng thành viên không được để trống!");
         }
         if (request.getMinSpentRequired() == null || request.getMinSpentRequired().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Ngưỡng chi tiêu yêu cầu phải không âm (>= 0)!");
+            throw new IllegalArgumentException("⚠️ Mức chi tiêu tích lũy yêu cầu phải lớn hơn hoặc bằng 0 ₫.");
         }
         if (request.getDiscountPercent() == null) {
             request.setDiscountPercent(BigDecimal.ZERO);
@@ -567,7 +567,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 boolean hasOtherZeroTier = allTiers.stream()
                         .anyMatch(t -> !Objects.equals(t.getTierId(), currentId) && t.getMinSpentRequired().compareTo(BigDecimal.ZERO) == 0);
                 if (!hasOtherZeroTier) {
-                    throw new IllegalArgumentException("Hệ thống bắt buộc phải duy trì ít nhất 1 hạng thành viên cơ sở với ngưỡng chi tiêu 0 ₫ dành cho khách hàng mới!");
+                    throw new IllegalArgumentException("⚠️ Bắt buộc phải duy trì ít nhất 1 hạng cơ sở với mức chi tiêu 0 ₫ cho thành viên mới.");
                 }
             }
         }
@@ -607,6 +607,13 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             return;
         }
 
+        BigDecimal discount = (tier.getDiscountPercent() != null) ? tier.getDiscountPercent() : BigDecimal.ZERO;
+        // Neu ty le giam gia <= 0 (quyen loi hoi vien ap dung 100% qua Goi Voucher San), bo qua cap nhat Coupon VIP
+        if (discount.compareTo(BigDecimal.ZERO) <= 0) {
+            log.info("Hang [{}] ap dung chinh sach Goi Voucher San (discount <= 0%), khong tao/cap nhat Coupon VIP truc tiep.", tier.getTierName());
+            return;
+        }
+
         String tierName = (tier.getTierName() != null) ? tier.getTierName().toLowerCase().trim() : "";
         String couponCode;
         BigDecimal maxCap;
@@ -632,7 +639,6 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             return;
         }
 
-        BigDecimal discount = (tier.getDiscountPercent() != null) ? tier.getDiscountPercent() : BigDecimal.ZERO;
         boolean isActive = discount.compareTo(BigDecimal.ZERO) > 0;
 
         try {

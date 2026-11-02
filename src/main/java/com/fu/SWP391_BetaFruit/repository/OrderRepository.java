@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Integer> {
@@ -72,5 +73,47 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     @EntityGraph(attributePaths = {"shop", "coupon"})
     Optional<Order> findByOrderIdAndCustomer_UserId(Integer orderId, Integer customerId);
+
+    // =========================================================================
+    // VOUCHER ANALYTICS DASHBOARD QUERIES (PLATFORM & SHOP)
+    // =========================================================================
+
+    @Query("SELECT SUM(o.discountAmount) FROM Order o WHERE o.coupon IS NOT NULL AND o.coupon.shop IS NULL AND o.orderStatus != 'CANCELLED'")
+    BigDecimal sumPlatformSponsoredDiscount();
+
+    @Query("SELECT SUM(o.discountAmount) FROM Order o WHERE o.coupon IS NOT NULL AND o.coupon.shop IS NOT NULL AND o.orderStatus != 'CANCELLED'")
+    BigDecimal sumShopSponsoredDiscount();
+
+    @Query("SELECT SUM(o.discountAmount) FROM Order o WHERE o.coupon IS NOT NULL AND o.shop.shopId = :shopId AND o.coupon.shop.shopId = :shopId AND o.orderStatus != 'CANCELLED'")
+    BigDecimal sumShopSponsoredDiscountForShop(@Param("shopId") Integer shopId);
+
+    @Query("SELECT SUM(o.discountAmount) FROM Order o WHERE o.coupon IS NOT NULL AND o.shop.shopId = :shopId AND o.coupon.shop IS NULL AND o.orderStatus != 'CANCELLED'")
+    BigDecimal sumPlatformSponsoredDiscountForShop(@Param("shopId") Integer shopId);
+
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.coupon IS NOT NULL AND o.orderStatus != 'CANCELLED'")
+    BigDecimal sumTotalVoucherRevenue();
+
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.coupon IS NOT NULL AND o.shop.shopId = :shopId AND o.orderStatus != 'CANCELLED'")
+    BigDecimal sumTotalVoucherRevenueForShop(@Param("shopId") Integer shopId);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.coupon IS NOT NULL AND o.orderStatus != 'CANCELLED'")
+    long countVoucherOrders();
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.coupon IS NOT NULL AND o.shop.shopId = :shopId AND o.orderStatus != 'CANCELLED'")
+    long countVoucherOrdersForShop(@Param("shopId") Integer shopId);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.orderStatus != 'CANCELLED'")
+    long countTotalValidOrders();
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.shop.shopId = :shopId AND o.orderStatus != 'CANCELLED'")
+    long countTotalValidOrdersForShop(@Param("shopId") Integer shopId);
+
+    @EntityGraph(attributePaths = {"customer", "shop", "coupon"})
+    @Query("SELECT o FROM Order o WHERE o.coupon IS NOT NULL AND o.orderStatus != 'CANCELLED' ORDER BY o.orderId DESC")
+    List<Order> findAllVoucherOrders();
+
+    @EntityGraph(attributePaths = {"customer", "shop", "coupon"})
+    @Query("SELECT o FROM Order o WHERE o.coupon IS NOT NULL AND o.shop.shopId = :shopId AND o.orderStatus != 'CANCELLED' ORDER BY o.orderId DESC")
+    List<Order> findAllVoucherOrdersByShopId(@Param("shopId") Integer shopId);
 }
 
