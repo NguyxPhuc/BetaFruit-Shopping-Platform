@@ -10,8 +10,10 @@ import com.fu.SWP391_BetaFruit.enums.DiscountType;
 import com.fu.SWP391_BetaFruit.repository.CouponRepository;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
+import com.fu.SWP391_BetaFruit.service.CouponNotificationService;
 import com.fu.SWP391_BetaFruit.service.CouponService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CouponServiceImpl implements CouponService {
@@ -32,6 +35,7 @@ public class CouponServiceImpl implements CouponService {
     private final CouponRepository couponRepository;
     private final OrderRepository orderRepository;
     private final ShopRepository shopRepository;
+    private final CouponNotificationService couponNotificationService;
 
     // =========================================================================
     // SHOP OWNER METHODS
@@ -162,7 +166,13 @@ public class CouponServiceImpl implements CouponService {
         coupon.setStartDate(request.getStartDate());
         coupon.setEndDate(request.getEndDate());
 
-        return couponRepository.save(coupon);
+        Coupon saved = couponRepository.save(coupon);
+        try {
+            couponNotificationService.notifyCustomersNewCoupon(saved);
+        } catch (Exception ex) {
+            log.warn("Không thể gửi thông báo coupon sàn mới: {}", ex.getMessage());
+        }
+        return saved;
     }
 
     @Override
@@ -375,7 +385,13 @@ public class CouponServiceImpl implements CouponService {
         coupon.setStartDate(request.getStartDate());
         coupon.setEndDate(request.getEndDate());
 
-        return couponRepository.save(coupon);
+        Coupon saved = couponRepository.save(coupon);
+        try {
+            couponNotificationService.notifyCustomersNewCoupon(saved);
+        } catch (Exception ex) {
+            log.warn("Không thể gửi thông báo coupon sàn mới: {}", ex.getMessage());
+        }
+        return saved;
     }
 
     @Override
