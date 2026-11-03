@@ -11,6 +11,7 @@ import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.enums.PaymentMethod;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface DeliveryAssignmentRepository extends JpaRepository<DeliveryAssignment, Integer> {
@@ -40,4 +41,15 @@ public interface DeliveryAssignmentRepository extends JpaRepository<DeliveryAssi
             """)
     long countOngoingOrdersByShipper(@Param("shipperId") Integer shipperId,
             @Param("ongoingStatuses") Collection<OrderStatus> ongoingStatuses);
+
+    @EntityGraph(attributePaths = {"order.customer", "order.shop", "shipper.user"})
+    @Query("""
+            select a from DeliveryAssignment a
+            where a.shipper.userId = :shipperId
+              and a.order.paymentMethod = com.fu.SWP391_BetaFruit.enums.PaymentMethod.COD
+              and a.order.orderStatus in (com.fu.SWP391_BetaFruit.enums.OrderStatus.DELIVERED, com.fu.SWP391_BetaFruit.enums.OrderStatus.SUCCESS)
+              and (a.order.isCodRemitted = false or a.order.isCodRemitted is null)
+            order by a.assignedAt desc
+            """)
+    List<DeliveryAssignment> findUnremittedCodAssignmentsByShipper(@Param("shipperId") Integer shipperId);
 }

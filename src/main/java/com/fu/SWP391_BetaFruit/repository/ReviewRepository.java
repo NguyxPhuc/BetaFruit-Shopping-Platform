@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.LockModeType;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Integer> {
@@ -21,9 +22,19 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
     Optional<Review> findLockedById(@Param("reviewId") Integer reviewId);
 
     @Query("SELECT r FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
+
+    Optional<Review> findByOrderItem_OrderItemId(Integer orderItemId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Review r WHERE r.reviewId = :reviewId")
+    Optional<Review> findByIdForUpdate(@Param("reviewId") Integer reviewId);
+
+    @Query(value = "SELECT r FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
            "AND (r.visibilityStatus IS NULL OR r.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ReviewVisibility.VISIBLE) " +
-           "ORDER BY r.createdAt DESC")
-    List<Review> findByProductId(@Param("productId") Integer productId);
+           "ORDER BY r.createdAt DESC",
+           countQuery = "SELECT COUNT(r) FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
+                   "AND (r.visibilityStatus IS NULL OR r.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ReviewVisibility.VISIBLE)")
+    Page<Review> findByProductId(@Param("productId") Integer productId, Pageable pageable);
 
     @Query("SELECT AVG(CAST(r.rating AS double)) FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
            "AND (r.visibilityStatus IS NULL OR r.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ReviewVisibility.VISIBLE)")

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ví nợ COD & Lịch sử nộp tiền — BetaFruit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/deliverer-orders.css}">
+    <th:block th:replace="~{shipper/fragments/sidebar :: sidebar-styles}"></th:block>
+    <style th:replace="~{shipper/fragments/topbar :: topbar-styles}"></style>
+    <style>
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: #fff;
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+        .stat-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 0.35rem;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .section-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #edf2f7;
+            padding-bottom: 0.85rem;
+            margin-bottom: 1.25rem;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<div class="deliverer-layout">
+    <aside th:replace="~{shipper/fragments/sidebar :: sidebar('cod-history')}"></aside>
+    <main class="deliverer-content">
+        <header th:replace="~{shipper/fragments/topbar :: topbar('Ví nợ COD & Lịch sử nộp tiền', 'Theo dõi hạn mức nợ thu hộ COD và danh sách các đợt nộp tiền cho Điều phối viên.')}"></header>
+
+        <!-- Limit Alert Banner if limit reached -->
+        <div th:if="${isCodLimitReached}" style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; color: #991b1b; display: flex; align-items: center; gap: 1rem;">
+            <div style="font-size: 2rem;">⚠️</div>
+            <div>
+                <strong style="font-size: 1rem; display: block; margin-bottom: 0.25rem;">Cảnh báo: Bạn đã chạm trần nợ tiền mặt COD (3.000.000 ₫)!</strong>
+                <span style="font-size: 0.9rem;">Hệ thống sẽ tạm dừng phân công thêm đơn hàng mới cho đến khi bạn hoàn tất việc nộp tiền mặt cho Điều phối viên tại Hub.</span>
+            </div>
+        </div>
+
+        <!-- 3 Stats Cards -->
+        <div class="stat-grid">
+            <div class="stat-card" style="border-left: 4px solid #ef4444;">
+                <div class="stat-label">Tiền mặt COD đang giữ (Nợ hiện tại)</div>
+                <div class="stat-value" style="color: #dc2626;" th:text="${#numbers.formatDecimal(codDebt, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</div>
+                <small style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem; display: block;">Cần nộp về cho Điều phối viên Hub</small>
+            </div>
+            <div class="stat-card" style="border-left: 4px solid #3b82f6;">
+                <div class="stat-label">Hạn mức nợ tối đa (Trần nợ)</div>
+                <div class="stat-value" style="color: #2563eb;">3.000.000 ₫</div>
+                <small style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem; display: block;">Hạn mức quy định sàn BetaFruit</small>
+            </div>
+            <div class="stat-card" style="border-left: 4px solid #10b981;">
+                <div class="stat-label">Hạn mức khả dụng còn lại</div>
+                <div class="stat-value" style="color: #059669;" th:text="${#numbers.formatDecimal(availableQuota, 0, 'POINT', 0, 'COMMA')} + ' ₫'">3.000.000 ₫</div>
+                <small style="color: #64748b; font-size: 0.8rem; margin-top: 0.25rem; display: block;">Số tiền COD còn có thể nhận thêm</small>
+            </div>
+        </div>
+
+        <!-- Section 1: Unremitted Orders -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="bi bi-clock-history text-amber-500"></i>
+                    Đơn hàng COD đã giao — Chưa nộp tiền về Hub
+                </h2>
+                <span style="font-size: 0.85rem; color: #64748b;" th:text="${#lists.size(unremittedAssignments)} + ' đơn chờ nộp'">0 đơn</span>
+            </div>
+
+            <table class="order-table" aria-label="Đơn COD chưa nộp">
+                <thead>
+                    <tr>
+                        <th scope="col">MÃ ĐƠN</th>
+                        <th scope="col">KHÁCH HÀNG</th>
+                        <th scope="col">SỐ TIỀN THU HỘ</th>
+                        <th scope="col">THỜI GIAN GIAO</th>
+                        <th scope="col">TRẠNG THÁI NỘP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="assign : ${unremittedAssignments}">
+                        <td class="order-code">
+                            <a th:href="@{/shipper/orders/{id}(id=${assign.order.orderId})}" th:text="'#' + ${assign.order.orderId}" style="color: #2563eb; text-decoration: none; font-weight: 700;">#101</a>
+                        </td>
+                        <td th:text="${assign.order.customer != null ? assign.order.customer.fullName : 'Khách hàng'}">Nguyễn Văn A</td>
+                        <td class="order-money" style="font-weight: 700; color: #dc2626;"
+                            th:text="${#numbers.formatDecimal(assign.order.finalAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">250.000 ₫</td>
+                        <td th:text="${assign.order.updatedAt != null ? #temporals.format(assign.order.updatedAt, 'HH:mm dd/MM/yyyy') : 'Mới đây'}">10:15 28/10/2026</td>
+                        <td>
+                            <span class="badge" style="background: #fef3c7; color: #92400e;">Chưa nộp Hub</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(unremittedAssignments)}">
+                        <td class="empty-state" colspan="5">Bạn hiện không có đơn COD nào chưa nộp tiền. Toàn bộ tiền mặt đã được đối soát!</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 2: Past Collections History -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="bi bi-receipt-cutoff text-emerald-600"></i>
+                    Lịch sử các đợt đã nộp tiền COD
+                </h2>
+                <span style="font-size: 0.85rem; color: #64748b;" th:text="${#lists.size(pastCollections)} + ' đợt nộp'">0 đợt</span>
+            </div>
+
+            <table class="order-table" aria-label="Lịch sử nộp COD">
+                <thead>
+                    <tr>
+                        <th scope="col">MÃ PHIẾU</th>
+                        <th scope="col">THỜI GIAN NỘP</th>
+                        <th scope="col">NGƯỜI THU TIỀN</th>
+                        <th scope="col">SỐ TIỀN ĐÃ NỘP</th>
+                        <th scope="col">TRẠNG THÁI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="col : ${pastCollections}">
+                        <td class="order-code" style="font-weight: 700; color: #1e40af;" th:text="'#PT-' + ${col.collectionId}">#PT-1</td>
+                        <td th:text="${col.createdAt != null ? #temporals.format(col.createdAt, 'HH:mm dd/MM/yyyy') : 'Ghi nhận hệ thống'}">14:30 28/10/2026</td>
+                        <td th:text="${col.collectedBy != null ? col.collectedBy.fullName : 'Điều phối Hub'}">Staff Minh</td>
+                        <td class="order-money" style="font-weight: 700; color: #15803d;"
+                            th:text="${#numbers.formatDecimal(col.amountCollected, 0, 'POINT', 0, 'COMMA')} + ' ₫'">375.000 ₫</td>
+                        <td>
+                            <span class="badge" style="background: #d1fae5; color: #065f46;">Đã đối soát</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(pastCollections)}">
+                        <td class="empty-state" colspan="5">Chưa có dữ liệu phiếu nộp tiền COD nào.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+<script th:replace="~{shipper/fragments/topbar :: topbar-script}"></script>
+</body>
+</html>
