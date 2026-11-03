@@ -6,6 +6,7 @@ import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.*;
 import com.fu.SWP391_BetaFruit.repository.*;
 import com.fu.SWP391_BetaFruit.service.CartService;
+import com.fu.SWP391_BetaFruit.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class CheckoutService {
     private final OrderStatusHistoryRepository histories;
     private final PaymentTransactionRepository payments;
     private final CheckoutCouponRepository coupons;
+    private final NotificationService notifications;
 
     @Value("${checkout.shipping-fee:0}")
     private BigDecimal shippingFee = BigDecimal.ZERO;
@@ -169,6 +171,7 @@ public class CheckoutService {
                 payment.setAmount(OrderPricing.customerAmount(order));
                 payment.setStatus(PaymentStatus.PENDING);
                 payments.save(payment);
+                notifications.notifyNewOrder(order);
             }
             result.add(new CheckoutResponse.PlacedOrder(order.getOrderId(), shop.getShopName(),
                     OrderPricing.customerAmount(order)));

@@ -192,7 +192,7 @@ public class ShopController {
         }
         try {
             reviewReportService.createReviewReport(userId, reviewId, reportRequest);
-            redirectAttributes.addFlashAttribute("successMessage", "Gửi khiếu nại thành công! Yêu cầu đang được nhân viên vận hành (Staff) xem xét.");
+            redirectAttributes.addFlashAttribute("successMessage", "Gửi báo cáo thành công! Yêu cầu đang chờ quản trị viên xem xét.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }

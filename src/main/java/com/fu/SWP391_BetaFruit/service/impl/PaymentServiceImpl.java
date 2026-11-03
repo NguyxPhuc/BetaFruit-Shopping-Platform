@@ -12,6 +12,7 @@ import com.fu.SWP391_BetaFruit.enums.PaymentStatus;
 import com.fu.SWP391_BetaFruit.repository.OrderRepository;
 import com.fu.SWP391_BetaFruit.repository.PaymentTransactionRepository;
 import com.fu.SWP391_BetaFruit.service.PaymentService;
+import com.fu.SWP391_BetaFruit.service.NotificationService;
 import com.fu.SWP391_BetaFruit.strategy.PaymentStrategy;
 import com.fu.SWP391_BetaFruit.strategy.PaymentStrategyFactory;
 import com.fu.SWP391_BetaFruit.utils.VnPayUtils;
@@ -37,6 +38,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     private VnPayConfig vnPayConfig;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -76,6 +80,8 @@ public class PaymentServiceImpl implements PaymentService {
                 response.put("Message", "Order not found");
                 return response;
             }
+            Order order = orderRepository.findLockedById(transaction.getOrder().getOrderId())
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
             if (!PaymentStatus.PENDING.equals(transaction.getStatus())) {
                 response.put("RspCode", "02");
                 response.put("Message", "Order already confirmed");
@@ -94,6 +100,9 @@ public class PaymentServiceImpl implements PaymentService {
                 transaction.setStatus(PaymentStatus.FAILED);
             }
             paymentTransactionRepository.save(transaction);
+            if (transaction.getStatus() == PaymentStatus.PAID && order.getOrderStatus() == OrderStatus.PENDING) {
+                notificationService.notifyNewOrder(order);
+            }
             response.put("RspCode", "00");
             response.put("Message", "Confirm Success");
         } catch (Exception e) {

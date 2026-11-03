@@ -73,6 +73,17 @@
             <div class="admin-sidebar-divider"></div>
 
             <!-- Nhân sự & Phân quyền -->
+            <div class="admin-nav-category">Kiểm duyệt Nội dung</div>
+            <ul class="admin-nav mb-3">
+                <li class="admin-nav-item">
+                    <a th:href="@{/admin/reviews}" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'reviews'} ? 'active' : ''">
+                        <i class="bi bi-chat-square-quote-fill" aria-hidden="true"></i>
+                        <span>Đánh giá bị báo cáo</span>
+                    </a>
+                </li>
+            </ul>
+
             <div class="admin-nav-category">Nhân sự & Phân quyền</div>
             <ul class="admin-nav mb-3">
                 <li class="admin-nav-item">

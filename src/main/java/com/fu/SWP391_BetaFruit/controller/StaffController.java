@@ -168,6 +168,7 @@ public class StaffController {
                                       @RequestParam(value = "size", defaultValue = "10") int size,
                                       Model model) {
         model.addAllAttributes(reviewReportService.getStaffReportPageData(status, page, size));
+        model.addAttribute("reportBasePath", "/staff/reviews");
         return "operations-staff/reviews/list";
     }
 
