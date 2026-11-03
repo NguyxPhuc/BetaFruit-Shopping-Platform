@@ -1,0 +1,64 @@
+THÔNG BÁO ĐƠN MỚI VÀ KIỂM DUYỆT ĐÁNH GIÁ
+
+1. Chủ shop
+- Đăng nhập tài khoản SHOP_OWNER có gian hàng được duyệt.
+- Chuông trên thanh điều hướng kênh người bán hiển thị thông báo và số chưa đọc.
+- Khi trang đang mở, thông báo cập nhật mỗi 15 giây. Tab ẩn tạm dừng cập nhật.
+- Đơn COD: tạo thông báo trong cùng giao dịch đặt hàng.
+- Đơn VNPAY: chỉ tạo thông báo khi IPN xác nhận thanh toán thành công.
+- Nhấn thông báo để đánh dấu đã đọc và mở /shop/orders/{orderId}.
+- Vào /shop/reviews để lọc đánh giá, chọn "Báo cáo vi phạm", nhập lý do,
+  giải trình 10–1000 ký tự và đường dẫn bằng chứng HTTP/HTTPS (tùy chọn).
+- Không thể báo cáo đánh giá của shop khác, đánh giá đã ẩn hoặc đang chờ xử lý.
+- Gửi báo cáo chưa làm ẩn đánh giá. Quản trị viên phải xem xét trước.
+
+2. Admin
+- Vào menu "Đánh giá bị báo cáo" hoặc /admin/reviews.
+- Lọc: chờ kiểm duyệt, đang thụ lý, đã duyệt ẩn, đã từ chối hoặc tất cả.
+- Xem đánh giá gốc, người đánh giá, shop, lý do, giải trình và bằng chứng.
+- Chọn "Thụ lý", chọn phán quyết và nhập ghi chú (tối đa 500 ký tự).
+- APPROVE_HIDE: đánh giá chuyển HIDDEN_BY_ADMIN, không xuất hiện và không
+  được tính trong điểm trung bình/số đánh giá công khai của sản phẩm.
+- REJECT / REJECT_WITH_WARNING: giữ đánh giá và cho phép shop báo cáo lại.
+- Hệ thống lưu người xử lý, thời điểm và ghi chú. Báo cáo đã chốt không thể sửa.
+- Đường dẫn /staff/reviews hiện có tiếp tục hoạt động cho STAFF.
+
+3. Hợp đồng HTTP
+- GET /notifications/feed: JSON {unreadCount, notifications}; không cache.
+  Chỉ lấy người dùng từ session LOGGED_IN_USER_ID, bỏ qua userId từ client.
+  Chưa đăng nhập: HTTP 401. Có đăng nhập: HTTP 200, tối đa 20 thông báo
+  chưa ẩn, sắp xếp CreatedAt DESC rồi NotificationId DESC.
+  Mỗi thông báo có notificationId, title, message, createdAt, isRead, actionUrl.
+- POST /notifications/read/{id}: chỉ đánh dấu thông báo thuộc người đăng nhập.
+  redirect chỉ chấp nhận đường dẫn nội bộ. POST /notifications/read-all:
+  đánh dấu các thông báo chưa đọc, chưa ẩn của người đăng nhập.
+- GET /shop/reviews: page (từ 1), size (giới hạn 1–100), rating, isReported.
+- POST /shop/reviews/{reviewId}/report: application/x-www-form-urlencoded,
+  gồm reasonCategory, explanation, evidenceUrls (tùy chọn); chuyển về danh sách
+  kèm thông báo thành công/lỗi. Kiểm tra quyền SHOP_OWNER và quyền sở hữu shop.
+- GET /admin/reviews: status (mặc định PENDING), page (từ 1), size (1–100).
+- POST /admin/reviews/{reportId}/resolve: application/x-www-form-urlencoded,
+  gồm action (APPROVE_HIDE, REJECT, REJECT_WITH_WARNING), staffNote (tùy chọn).
+  Chuyển về hàng đợi kèm thông báo thành công/lỗi. Chỉ ADMIN được vào /admin/**.
+- Các trang /shop/** và /admin/** chuyển về /auth/login khi chưa đăng nhập,
+  hoặc /403 khi sai vai trò.
+
+4. Kiểm tra
+- Chạy Maven bằng JDK 21: .\mvnw.cmd test
+- Các test mới: CheckoutNotificationTest, NewOrderNotificationTest,
+  ReviewReportServiceTest, ReviewModerationWebTest.
+- Test dùng dữ liệu giả lập trong bộ nhớ, không ghi vào SQL Server hoặc gọi VNPAY.
+- Không thêm bảng/cột/giá trị enum mới. Sử dụng schema Review, ReviewReport,
+  Notification và NotificationType.ORDER_STATUS hiện có của dự án.
+- Ứng dụng dùng ddl-auto=none: cơ sở dữ liệu phải có schema tương ứng.
+  Không chạy seed_data.sql trên dữ liệu thật để cài tính năng vì script xóa dữ liệu.
+
+5. Kiểm tra thủ công khi có SQL Server và VNPAY sandbox
+- Dùng khách hàng đặt một đơn COD: chủ đúng shop thấy một thông báo và mở
+  được chi tiết đơn. Shop khác không thấy thông báo này.
+- Với VNPAY, trước khi thanh toán không có cảnh báo chuẩn bị hàng; sau IPN
+  thành công có một cảnh báo. Gửi lại IPN không tạo thêm cảnh báo.
+- Shop báo cáo đánh giá; Admin thấy báo cáo, duyệt ẩn; khách hàng không còn
+  thấy đánh giá đó và điểm/số lượng đánh giá sản phẩm được tính lại.
+- Từ chối báo cáo khác: đánh giá vẫn công khai; thử gửi lại phán quyết cũ
+  phải bị từ chối và giữ nguyên người xử lý/ghi chú đã lưu.
