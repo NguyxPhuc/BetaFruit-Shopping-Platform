@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'analytics', ~{::content})}">
+<head>
+    <title>Thống Kê Toàn Sàn (System Analytics) - BetaFruit Admin</title>
+</head>
+<body>
+<div th:fragment="content">
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a th:href="@{/admin/dashboard}" class="text-decoration-none text-muted">Trang Quản Trị</a></li>
+                    <li class="breadcrumb-item active text-success fw-semibold" aria-current="page">Thống Kê Toàn Sàn</li>
+                </ol>
+            </nav>
+            <h3 class="fw-bold mb-1 text-dark d-flex align-items-center gap-2">
+                <i class="bi bi-graph-up-arrow text-success"></i>
+                <span>Thống Kê Toàn Sàn (System Analytics)</span>
+            </h3>
+            <p class="text-muted small mb-0">Theo dõi doanh thu, quy mô giao dịch đơn hàng và sự tăng trưởng của đối tác & khách hàng trên sàn BetaFruit.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold">
+                <i class="bi bi-broadcast me-1"></i> Dữ liệu thời gian thực
+            </span>
+            <a th:href="@{/admin/dashboard}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold">
+                <i class="bi bi-arrow-left me-1"></i> Về Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <!-- 4 THẺ KPI CHÍNH (KEY PERFORMANCE INDICATORS)                               -->
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <div class="row g-3 mb-4">
+        <!-- 1. Total Revenue (Tổng doanh thu) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100 position-relative overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Tổng Doanh Thu Sàn</span>
+                    <div class="admin-stat-icon icon-box-emerald">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1 text-success text-truncate"
+                    th:title="${analytics != null and analytics.totalRevenue != null ? #numbers.formatDecimal(analytics.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}"
+                    th:text="${analytics != null and analytics.totalRevenue != null ? #numbers.formatDecimal(analytics.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                    0 ₫
+                </h3>
+                <div class="analytics-kpi-sub mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                    <span>Phí sàn thu được:</span>
+                    <strong class="text-dark" th:text="${analytics != null and analytics.totalPlatformFee != null ? #numbers.formatDecimal(analytics.totalPlatformFee, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">0 ₫</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Total Orders (Tổng số đơn hàng) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100 position-relative overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Tổng Số Đơn Hàng</span>
+                    <div class="admin-stat-icon icon-box-blue">
+                        <i class="bi bi-bag-check-fill"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1 text-primary" th:text="${analytics != null ? analytics.totalOrders : 0}">0</h3>
+                <div class="analytics-kpi-sub mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                    <span>Thành công / Đang giao:</span>
+                    <span class="text-dark fw-semibold">
+                        <span class="text-success" th:text="${analytics != null ? analytics.completedOrders : 0}">0</span>
+                        <span> / </span>
+                        <span class="text-primary" th:text="${analytics != null ? analytics.processingOrders : 0}">0</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Total Shop Owners (Tổng chủ gian hàng) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100 position-relative overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Chủ Gian Hàng</span>
+                    <div class="admin-stat-icon icon-box-orange">
+                        <i class="bi bi-shop"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1 text-dark" th:text="${analytics != null ? analytics.totalShopOwners : 0}">0</h3>
+                <div class="analytics-kpi-sub mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                    <span>Gian hàng hoạt động:</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"
+                          th:text="${analytics != null ? analytics.approvedShops + ' Shop' : '0 Shop'}">0 Shop</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Total Customers (Tổng khách hàng) -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="admin-stat-card h-100 position-relative overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-secondary small fw-bold text-uppercase">Tổng Khách Hàng</span>
+                    <div class="admin-stat-icon icon-box-purple">
+                        <i class="bi bi-person-heart"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1 text-dark" th:text="${analytics != null ? analytics.totalCustomers : 0}">0</h3>
+                <div class="analytics-kpi-sub mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                    <span>Tổng tài khoản hệ thống:</span>
+                    <span class="text-dark fw-semibold" th:text="${analytics != null ? analytics.totalUsers + ' Users' : '0'}">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <!-- TOP 5 BEST SELLING PRODUCTS (TOP 5 SẢN PHẨM BÁN CHẠY NHẤT)                  -->
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+        <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-trophy-fill text-warning"></i>
+                    <span>Top 5 Sản Phẩm Bán Chạy Nhất (Top 5 Best Selling Products)</span>
+                </h5>
+                <p class="text-muted small mb-0 mt-1">Xếp hạng dựa trên khối lượng tiêu thụ thực tế và doanh số mang lại cho toàn sàn</p>
+            </div>
+            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill fw-semibold">
+                <i class="bi bi-fire text-danger me-1"></i> Xu hướng tiêu dùng
+            </span>
+        </div>
+
+        <div class="card-body p-0">
+            <!-- Trường hợp có sản phẩm bán chạy -->
+            <div class="table-responsive" th:if="${analytics != null and analytics.topSellingProducts != null and !analytics.topSellingProducts.empty}">
+                <table class="table align-middle table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 80px;">Thứ Hạng</th>
+                            <th style="min-width: 240px;">Sản Phẩm Hoa Quả</th>
+                            <th style="min-width: 140px;">Danh Mục</th>
+                            <th style="min-width: 160px;">Cửa Hàng Bán</th>
+                            <th class="text-center" style="min-width: 120px;">Đã Bán</th>
+                            <th class="text-end" style="min-width: 140px;">Doanh Số Mang Lại</th>
+                            <th class="text-center" style="min-width: 110px;">Tồn Kho</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${analytics.topSellingProducts}">
+                            <!-- Thứ hạng -->
+                            <td class="text-center">
+                                <span th:if="${p.rank == 1}" class="rank-badge rank-badge-1" title="Quán quân Top 1">
+                                    <i class="bi bi-trophy-fill"></i>
+                                </span>
+                                <span th:if="${p.rank == 2}" class="rank-badge rank-badge-2" title="Á quân Top 2">
+                                    2
+                                </span>
+                                <span th:if="${p.rank == 3}" class="rank-badge rank-badge-3" title="Hạng ba Top 3">
+                                    3
+                                </span>
+                                <span th:if="${p.rank > 3}" class="rank-badge rank-badge-other" th:text="${p.rank}">
+                                    4
+                                </span>
+                            </td>
+
+                            <!-- Thông tin sản phẩm -->
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img th:src="${p.imageUrl}" src="/images/default-fruit.png"
+                                         class="rounded-3 border object-fit-cover shadow-xs"
+                                         style="width: 48px; height: 48px;" alt="Fruit">
+                                    <div>
+                                        <div class="fw-bold text-dark mb-0" th:text="${p.productName}">Cam Sành Tiền Giang</div>
+                                        <span class="text-muted small">Mã SP: #<span th:text="${p.productId}">1</span></span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Danh mục -->
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1 rounded-2 fw-medium"
+                                      th:text="${p.categoryName}">Trái Cây Nội Địa</span>
+                            </td>
+
+                            <!-- Cửa hàng -->
+                            <td>
+                                <span class="d-inline-flex align-items-center gap-1 text-secondary fw-semibold small">
+                                    <i class="bi bi-shop text-muted"></i>
+                                    <span th:text="${p.shopName}">Nông Sản Xanh Đà Lạt</span>
+                                </span>
+                            </td>
+
+                            <!-- Đã bán -->
+                            <td class="text-center">
+                                <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold fs-6">
+                                    <i class="bi bi-bag-check me-1"></i>
+                                    <span th:text="${p.totalQuantitySold}">120</span>
+                                </span>
+                            </td>
+
+                            <!-- Doanh số mang lại -->
+                            <td class="text-end fw-bold text-success fs-6"
+                                th:text="${p.totalRevenue != null ? #numbers.formatDecimal(p.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                                15.000.000 ₫
+                            </td>
+
+                            <!-- Tồn kho -->
+                            <td class="text-center">
+                                <span th:if="${p.totalStock > 0}" class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 rounded-pill"
+                                      th:text="'Còn: ' + ${p.totalStock}">Còn: 50</span>
+                                <span th:unless="${p.totalStock > 0}" class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">
+                                    Hết hàng
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Trường hợp chưa có dữ liệu bán hàng phát sinh -->
+            <div class="p-5 text-center" th:if="${analytics == null or analytics.topSellingProducts == null or analytics.topSellingProducts.empty}">
+                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                    <i class="bi bi-bar-chart-line text-muted fs-2"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">Chưa Có Dữ Liệu Bán Hàng</h6>
+                <p class="text-muted small mb-0" style="max-width: 460px; margin: 0 auto;">
+                    Khi khách hàng đặt mua các đơn hoa quả trên sàn BetaFruit, top 5 sản phẩm bán chạy nhất cùng doanh số tương ứng sẽ tự động hiển thị tại đây.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Integer> {
@@ -72,5 +73,13 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     @EntityGraph(attributePaths = {"shop", "coupon"})
     Optional<Order> findByOrderIdAndCustomer_UserId(Integer orderId, Integer customerId);
+
+    @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o WHERE o.orderStatus IN (:statuses)")
+    BigDecimal sumTotalRevenueByStatuses(@Param("statuses") List<OrderStatus> statuses);
+
+    @Query("SELECT COALESCE(SUM(o.platformFee), 0) FROM Order o WHERE o.orderStatus IN (:statuses)")
+    BigDecimal sumTotalPlatformFeeByStatuses(@Param("statuses") List<OrderStatus> statuses);
+
+    long countByOrderStatusIn(List<OrderStatus> statuses);
 }
 

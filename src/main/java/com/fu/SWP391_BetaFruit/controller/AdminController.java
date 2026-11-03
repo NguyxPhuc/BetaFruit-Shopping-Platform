@@ -8,6 +8,7 @@ import com.fu.SWP391_BetaFruit.dto.request.UserRequest;
 import com.fu.SWP391_BetaFruit.entity.Role;
 import com.fu.SWP391_BetaFruit.enums.RoleName;
 import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
+import com.fu.SWP391_BetaFruit.service.AdminAnalyticsService;
 import com.fu.SWP391_BetaFruit.service.MembershipTierService;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
 import com.fu.SWP391_BetaFruit.service.RoleService;
@@ -36,8 +37,9 @@ public class AdminController {
     private final RoleService roleService;
     private final ShopService shopService;
     private final MembershipTierService membershipTierService;
+    private final AdminAnalyticsService adminAnalyticsService;
 
-    // ================= 0. TỔNG QUAN (DASHBOARD) =================
+    // ================= 0. TỔNG QUAN & PHÂN TÍCH (DASHBOARD & ANALYTICS) =================
     /**
      * Displays the Admin Dashboard overview page.
      */
@@ -48,6 +50,15 @@ public class AdminController {
         model.addAttribute("membershipTierCount", membershipTierService.getAllTiers().size());
         model.addAttribute("userCount", userService.countUsers());
         return "admin/admin-dashboard";
+    }
+
+    /**
+     * Displays the Admin System Analytics page.
+     */
+    @GetMapping("/admin/analytics")
+    public String analytics(Model model) {
+        model.addAttribute("analytics", adminAnalyticsService.getSystemAnalytics());
+        return "admin/analytics";
     }
 
     // ================= 1. CẤU HÌNH PHÍ SÀN CỬA HÀNG (FE-12.1) =================

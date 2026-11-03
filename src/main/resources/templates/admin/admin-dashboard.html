@@ -19,11 +19,11 @@
                 </div>
                 <div class="col-lg-5 col-xl-4">
                     <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
-                        <a th:href="@{/admin/shops/commission}" href="/admin/shops/commission" class="btn btn-warning shadow-sm text-nowrap">
-                            <i class="bi bi-percent me-1"></i> Cấu hình Phí sàn
+                        <a th:href="@{/admin/analytics}" href="/admin/analytics" class="btn btn-warning shadow-sm text-nowrap fw-semibold">
+                            <i class="bi bi-graph-up-arrow me-1"></i> Thống kê Toàn sàn
                         </a>
-                        <a th:href="@{/admin/users}" href="/admin/users" class="btn btn-outline-light text-nowrap">
-                            <i class="bi bi-people-fill me-1"></i> Quản lý Người dùng
+                        <a th:href="@{/admin/shops/commission}" href="/admin/shops/commission" class="btn btn-outline-light text-nowrap">
+                            <i class="bi bi-percent me-1"></i> Phí sàn
                         </a>
                     </div>
                 </div>
@@ -34,7 +34,36 @@
         <div class="position-absolute rounded-circle" style="width: 180px; height: 180px; background: rgba(130, 184, 77, 0.2); bottom: -60px; right: 30%; filter: blur(50px);"></div>
     </div>
 
-    <!-- Quick Stats Cards Row -->
+    <!-- Banner Lối tắt sang Thống Kê Toàn Sàn (System Analytics Feature Teaser) -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 p-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border-left: 5px solid #10b981 !important;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 48px; height: 48px; font-size: 1.4rem;">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1 text-dark">Thống Kê Hệ Thống (System Analytics)</h5>
+                    <p class="text-secondary small mb-0">
+                        Theo dõi tổng doanh thu toàn sàn, khối lượng đơn hàng, tăng trưởng khách hàng & đối tác Shop và xếp hạng Top 5 hoa quả bán chạy nhất.
+                    </p>
+                </div>
+            </div>
+            <a th:href="@{/admin/analytics}" class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-xs text-nowrap">
+                <span>Xem Báo Cáo Phân Tích</span>
+                <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards Row: Quản trị hệ thống -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+            <i class="bi bi-sliders text-primary"></i>
+            <span>Cấu Hình & Quản Trị Hệ Thống</span>
+        </h5>
+        <span class="text-muted small">Thiết lập tài nguyên sàn</span>
+    </div>
+
     <div class="row g-3 mb-4">
         <!-- Card 1: Categories -->
         <div class="col-12 col-sm-6 col-xl-3">
@@ -45,7 +74,7 @@
                         <i class="bi bi-tags-fill"></i>
                     </div>
                 </div>
-                <h3 class="fw-bold mb-1" th:text="${categoryCount != null ? categoryCount : '10+'}">10+</h3>
+                <h3 class="fw-bold mb-1" th:text="${categoryCount != null ? categoryCount : '0'}">0</h3>
                 <div class="d-flex align-items-center justify-content-between small">
                     <span class="text-muted">Phân loại hoa quả toàn sàn</span>
                     <a th:href="@{/admin/categories}" href="/admin/categories" class="fw-bold text-success text-decoration-none text-nowrap">
@@ -64,7 +93,7 @@
                         <i class="bi bi-percent"></i>
                     </div>
                 </div>
-                <h3 class="fw-bold mb-1" th:text="${approvedShopCount != null ? approvedShopCount : '5+'}">5+</h3>
+                <h3 class="fw-bold mb-1" th:text="${approvedShopCount != null ? approvedShopCount : '0'}">0</h3>
                 <div class="d-flex align-items-center justify-content-between small">
                     <span class="text-muted">Chiết khấu Shop hoạt động</span>
                     <a th:href="@{/admin/shops/commission}" href="/admin/shops/commission" class="fw-bold text-success text-decoration-none text-nowrap">
@@ -83,7 +112,7 @@
                         <i class="bi bi-award-fill"></i>
                     </div>
                 </div>
-                <h3 class="fw-bold mb-1" th:text="${membershipTierCount != null ? membershipTierCount : '4'}">4</h3>
+                <h3 class="fw-bold mb-1" th:text="${membershipTierCount != null ? membershipTierCount : '0'}">0</h3>
                 <div class="d-flex align-items-center justify-content-between small">
                     <span class="text-muted">Chính sách ưu đãi & đặc quyền</span>
                     <a th:href="@{/admin/membership-tiers}" href="/admin/membership-tiers" class="fw-bold text-success text-decoration-none text-nowrap">
@@ -102,7 +131,7 @@
                         <i class="bi bi-people-fill"></i>
                     </div>
                 </div>
-                <h3 class="fw-bold mb-1" th:text="${userCount != null ? userCount : '50+'}">50+</h3>
+                <h3 class="fw-bold mb-1" th:text="${userCount != null ? userCount : '0'}">0</h3>
                 <div class="d-flex align-items-center justify-content-between small">
                     <span class="text-muted">Phân quyền & giám sát</span>
                     <a th:href="@{/admin/users}" href="/admin/users" class="fw-bold text-success text-decoration-none text-nowrap">
