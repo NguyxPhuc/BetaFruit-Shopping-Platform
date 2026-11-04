@@ -21,8 +21,7 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
     @Query("SELECT r FROM Review r WHERE r.reviewId = :reviewId")
     Optional<Review> findLockedById(@Param("reviewId") Integer reviewId);
 
-    @Query("SELECT r FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
-
+    @Query("SELECT r FROM Review r WHERE r.orderItem.variant.product.productId = :productId ")
     Optional<Review> findByOrderItem_OrderItemId(Integer orderItemId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
