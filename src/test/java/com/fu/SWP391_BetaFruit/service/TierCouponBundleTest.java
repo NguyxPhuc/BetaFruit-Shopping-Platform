@@ -60,8 +60,8 @@ class TierCouponBundleTest {
 
     @BeforeEach
     void setUp() {
-        silverTier = new MembershipTier(2, "Hạng Bạc", BigDecimal.valueOf(2_000_000), BigDecimal.valueOf(3.0));
-        goldTier = new MembershipTier(3, "Hạng Vàng", BigDecimal.valueOf(5_000_000), BigDecimal.valueOf(6.0));
+        silverTier = new MembershipTier(2, "Hạng Bạc", BigDecimal.valueOf(2_000_000), 3);
+        goldTier = new MembershipTier(3, "Hạng Vàng", BigDecimal.valueOf(5_000_000), 10);
 
         // Coupon 1: Toàn sàn (Platform, shop == null)
         platformCoupon1 = new Coupon();
@@ -162,7 +162,7 @@ class TierCouponBundleTest {
         when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(5L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(
-                        new MembershipTier(1, "Hạng Đồng", BigDecimal.ZERO, BigDecimal.ZERO),
+                        new MembershipTier(1, "Hạng Đồng", BigDecimal.ZERO, 0),
                         silverTier,
                         goldTier
                 ));
