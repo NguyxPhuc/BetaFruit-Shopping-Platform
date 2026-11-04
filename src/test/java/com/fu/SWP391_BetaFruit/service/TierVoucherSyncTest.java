@@ -145,7 +145,7 @@ class TierVoucherSyncTest {
         CustomerMembership membership = new CustomerMembership(20, user, new BigDecimal("6000000.00"), goldTier);
 
         when(userRepository.findById(20)).thenReturn(Optional.of(user));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(20, OrderStatus.SUCCESS)).thenReturn(10L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(20), any())).thenReturn(10L);
         when(customerMembershipRepository.findByUserId(20)).thenReturn(Optional.of(membership));
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 
 public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
@@ -14,6 +15,10 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     @Query("SELECT i.variant.product.productId, SUM(i.quantity) FROM OrderItem i " +
             "WHERE i.order.orderStatus = :status GROUP BY i.variant.product.productId")
     List<Object[]> sumSoldQuantityByProduct(@Param("status") OrderStatus status);
+
+    @Query("SELECT i.variant.product.productId, SUM(i.quantity) FROM OrderItem i " +
+            "WHERE i.order.orderStatus IN :statuses GROUP BY i.variant.product.productId")
+    List<Object[]> sumSoldQuantityByProductIn(@Param("statuses") Collection<OrderStatus> statuses);
 
     @Query("SELECT SUM(i.costSnapshot * i.quantity) FROM OrderItem i WHERE i.order.coupon IS NOT NULL AND i.order.orderStatus != 'CANCELLED'")
     BigDecimal sumTotalCostPriceForVoucherOrders();

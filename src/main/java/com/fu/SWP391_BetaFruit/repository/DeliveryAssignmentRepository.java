@@ -47,7 +47,7 @@ public interface DeliveryAssignmentRepository extends JpaRepository<DeliveryAssi
             select a from DeliveryAssignment a
             where a.shipper.userId = :shipperId
               and a.order.paymentMethod = com.fu.SWP391_BetaFruit.enums.PaymentMethod.COD
-              and a.order.orderStatus in (com.fu.SWP391_BetaFruit.enums.OrderStatus.DELIVERED, com.fu.SWP391_BetaFruit.enums.OrderStatus.SUCCESS)
+              and a.order.orderStatus in (com.fu.SWP391_BetaFruit.enums.OrderStatus.DELIVERED, com.fu.SWP391_BetaFruit.enums.OrderStatus.RECEIVED, com.fu.SWP391_BetaFruit.enums.OrderStatus.SUCCESS)
               and (a.order.isCodRemitted = false or a.order.isCodRemitted is null)
             order by a.assignedAt desc
             """)

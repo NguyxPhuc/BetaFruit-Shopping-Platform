@@ -90,7 +90,7 @@ class LoyaltyEngineTest {
     void testUpgradeBySpendThreshold() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(1L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(1L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
@@ -124,7 +124,7 @@ class LoyaltyEngineTest {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
         // Chi tiêu đơn chỉ 200.000đ nhưng đây là đơn thứ 3 hoàn tất
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(3L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(3L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
@@ -140,7 +140,7 @@ class LoyaltyEngineTest {
     void testMultiTierLeap_ToDiamond() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(1L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(1L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
@@ -165,7 +165,7 @@ class LoyaltyEngineTest {
     void testAccumulateWithoutUpgrade() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(1L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(1L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
@@ -181,7 +181,7 @@ class LoyaltyEngineTest {
     @DisplayName("Case 5: Lấy danh sách Voucher đặc quyền theo cấp bậc (Shopee Rewards Exclusive Vouchers)")
     void testGetCustomerMembershipData_WithExclusiveTierVouchers() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(5L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(5L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc()).thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
         // Khách có 2.500.000 ₫ -> Hạng Bạc
@@ -215,7 +215,7 @@ class LoyaltyEngineTest {
 
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(15L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(15L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, customTier));
 

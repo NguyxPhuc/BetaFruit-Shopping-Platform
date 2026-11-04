@@ -46,6 +46,8 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     private final CouponRepository couponRepository;
     private final TierCouponRepository tierCouponRepository;
 
+    private static final List<OrderStatus> COMPLETED_ORDER_STATUSES = List.of(OrderStatus.RECEIVED, OrderStatus.SUCCESS);
+
     // =========================================================================
     // 1. PHÍA CUSTOMER (BR-LY-01, BR-LY-02, BR-LY-03 & TIÊU CHÍ KÉP SHOPEE)
     // =========================================================================
@@ -62,7 +64,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 : BigDecimal.ZERO;
 
         // Đếm tổng số đơn hoàn tất của khách theo thời gian thực (Shopee Rewards)
-        long completedOrders = orderRepository.countByCustomer_UserIdAndOrderStatus(userId, OrderStatus.SUCCESS);
+        long completedOrders = orderRepository.countByCustomer_UserIdAndOrderStatusIn(userId, COMPLETED_ORDER_STATUSES);
 
         // Lấy tất cả các hạng thành viên được sắp xếp tăng dần theo MinSpentRequired (BR-LY-02)
         List<MembershipTier> sortedTiers = membershipTierRepository.findAllByOrderByMinSpentRequiredAsc();
@@ -350,7 +352,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         membership.setTotalCumulativeSpend(newSpend);
 
         // Đếm tổng số đơn hoàn tất của khách (OrderStatus.SUCCESS)
-        long completedOrders = orderRepository.countByCustomer_UserIdAndOrderStatus(customerId, OrderStatus.SUCCESS);
+        long completedOrders = orderRepository.countByCustomer_UserIdAndOrderStatusIn(customerId, COMPLETED_ORDER_STATUSES);
 
         // Lấy danh sách Tiers sắp xếp tăng dần theo MinSpent
         List<MembershipTier> sortedTiers = membershipTierRepository.findAllByOrderByMinSpentRequiredAsc();

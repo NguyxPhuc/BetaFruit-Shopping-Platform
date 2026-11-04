@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,6 +62,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     Optional<Order> findByOrderId(Integer orderId);
 
     long countByCustomer_UserIdAndOrderStatus(Integer customerId, OrderStatus orderStatus);
+
+    long countByCustomer_UserIdAndOrderStatusIn(Integer customerId, Collection<OrderStatus> orderStatuses);
 
     @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o WHERE o.customer.userId = :customerId AND o.orderStatus = :orderStatus")
     BigDecimal sumTotalSpentByCustomerIdAndStatus(@Param("customerId") Integer customerId, @Param("orderStatus") OrderStatus orderStatus);

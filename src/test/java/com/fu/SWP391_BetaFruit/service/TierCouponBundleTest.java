@@ -159,7 +159,7 @@ class TierCouponBundleTest {
 
         when(userRepository.findById(10)).thenReturn(Optional.of(user));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(membership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(5L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(5L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(
                         new MembershipTier(1, "Hạng Đồng", BigDecimal.ZERO, 0),
