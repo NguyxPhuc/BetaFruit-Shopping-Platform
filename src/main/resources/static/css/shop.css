@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    BetaFruit - Dedicated Shop Owner Portal Stylesheet (SaaS / ERP Style)
    Design System: BetaFruit Signature Vibrant Orange (#ea580c / #f97316)
    Warm Slate Dark Sidebar + Radiant Orange Accents & Badges
@@ -87,33 +87,33 @@ html, body.shop-portal-body {
 }
 
 .shop-sidebar-brand {
-    padding: 0.85rem 1rem 0.65rem;
+    padding: 0.45rem 0.85rem 0.35rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     flex-shrink: 0;
 }
 
 .shop-logo-box {
     background: #ffffff;
-    padding: 6px 12px;
-    border-radius: var(--shop-radius-md);
+    padding: 3px 10px;
+    border-radius: var(--shop-radius-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     width: 100%;
 }
 
 .shop-logo-img {
-    height: 34px;
+    height: 26px;
     max-width: 100%;
     object-fit: contain;
 }
 
 .shop-portal-tag {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    letter-spacing: 0.8px;
-    padding: 2px 8px;
+    letter-spacing: 0.7px;
+    padding: 1px 6px;
     border-radius: 20px;
     background: rgba(249, 115, 22, 0.22);
     color: #fed7aa;
@@ -123,29 +123,37 @@ html, body.shop-portal-body {
 .shop-sidebar-nav {
     flex: 1 1 auto;
     overflow-y: hidden;
-    padding: 0.35rem 0.65rem;
+    padding: 0.2rem 0.5rem;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    gap: 0.12rem;
+    gap: 0.08rem;
 }
 
+.shop-sidebar-nav .shop-nav-group-title,
 .shop-nav-group-title {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.6px;
     color: #a89f91;
-    padding: 0.35rem 0.65rem 0.12rem;
+    padding: 0.2rem 0.5rem 0.05rem;
+    margin-top: 0.22rem !important;
+    margin-bottom: 0.04rem !important;
+}
+
+.shop-sidebar-nav .shop-nav-group-title:first-child {
+    margin-top: 0.05rem !important;
 }
 
 .shop-nav-link {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.45rem 0.75rem;
+    gap: 0.5rem;
+    padding: 0.26rem 0.6rem;
     color: #e2dcd5;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
     font-weight: 500;
     border-radius: var(--shop-radius-sm);
     text-decoration: none;
@@ -154,17 +162,18 @@ html, body.shop-portal-body {
 }
 
 .shop-nav-link i {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     color: #fdba74;
     transition: color 0.15s ease;
-    width: 20px;
+    width: 18px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .shop-nav-link:hover {
     background-color: rgba(255, 255, 255, 0.08);
     color: #ffffff;
-    transform: translateX(3px);
+    transform: translateX(2px);
 }
 
 .shop-nav-link:hover i {
@@ -175,7 +184,7 @@ html, body.shop-portal-body {
     background: linear-gradient(90deg, rgba(234, 88, 12, 0.28) 0%, rgba(249, 115, 22, 0.12) 100%) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
-    border-left: 3.5px solid var(--shop-brand-500) !important;
+    border-left: 3px solid var(--shop-brand-500) !important;
 }
 
 .shop-nav-link.active i {
@@ -184,14 +193,14 @@ html, body.shop-portal-body {
 
 .shop-nav-badge {
     margin-left: auto;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
-    padding: 2px 7px;
+    padding: 1px 6px;
     border-radius: 10px;
 }
 
 .shop-sidebar-footer {
-    padding: 0.65rem 0.75rem;
+    padding: 0.35rem 0.6rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(0, 0, 0, 0.25);
     flex-shrink: 0;
@@ -201,17 +210,18 @@ html, body.shop-portal-body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     background: rgba(255, 255, 255, 0.1);
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: var(--shop-radius-md);
-    padding: 0.45rem;
-    font-size: 0.8rem;
+    border-radius: var(--shop-radius-sm);
+    padding: 0.28rem 0.45rem;
+    font-size: 0.74rem;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.2s ease;
     width: 100%;
+    margin-bottom: 0.25rem !important;
 }
 
 .btn-switch-store:hover {
@@ -223,13 +233,13 @@ html, body.shop-portal-body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.55rem;
+    gap: 0.45rem;
     background: rgba(239, 68, 68, 0.18);
     color: #fca5a5;
-    border: 1.5px solid rgba(248, 113, 113, 0.45);
-    border-radius: var(--shop-radius-md);
-    padding: 0.5rem;
-    font-size: 0.825rem;
+    border: 1.2px solid rgba(248, 113, 113, 0.45);
+    border-radius: var(--shop-radius-sm);
+    padding: 0.32rem 0.45rem;
+    font-size: 0.74rem;
     font-weight: 700;
     text-decoration: none;
     transition: all 0.2s ease;
@@ -240,8 +250,43 @@ html, body.shop-portal-body {
     background: #ef4444;
     color: #ffffff;
     border-color: #ef4444;
-    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.45);
+    box-shadow: 0 3px 12px rgba(239, 68, 68, 0.4);
     transform: translateY(-1px);
+}
+
+@media (max-height: 720px) {
+    .shop-sidebar-brand {
+        padding: 0.3rem 0.75rem 0.2rem;
+    }
+    .shop-logo-img {
+        height: 22px;
+    }
+    .shop-sidebar-nav {
+        padding: 0.15rem 0.4rem;
+        gap: 0.04rem;
+    }
+    .shop-sidebar-nav .shop-nav-group-title,
+    .shop-nav-group-title {
+        font-size: 0.56rem;
+        padding: 0.12rem 0.4rem 0.02rem;
+        margin-top: 0.15rem !important;
+    }
+    .shop-nav-link {
+        padding: 0.2rem 0.45rem;
+        font-size: 0.73rem;
+        gap: 0.35rem;
+    }
+    .shop-nav-link i {
+        font-size: 0.88rem;
+    }
+    .shop-sidebar-footer {
+        padding: 0.25rem 0.5rem;
+    }
+    .btn-switch-store,
+    .btn-sidebar-logout {
+        padding: 0.22rem 0.4rem;
+        font-size: 0.7rem;
+    }
 }
 
 /* ==========================================================================
