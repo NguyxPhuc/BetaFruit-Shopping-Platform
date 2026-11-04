@@ -23,6 +23,13 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
             "ORDER BY SUM(i.quantity) DESC")
     List<Object[]> findTopSellingProductStats(@Param("statuses") List<OrderStatus> statuses, Pageable pageable);
 
+    @Query("SELECT i.variant.product.productId, SUM(i.quantity), COALESCE(SUM(i.quantity * i.priceSnapshot), 0) " +
+            "FROM OrderItem i " +
+            "WHERE i.order.shop.shopId = :shopId AND i.order.orderStatus IN (:statuses) " +
+            "GROUP BY i.variant.product.productId " +
+            "ORDER BY SUM(i.quantity) DESC")
+    List<Object[]> findTopSellingProductStatsByShop(@Param("shopId") Integer shopId, @Param("statuses") List<OrderStatus> statuses, Pageable pageable);
+
     @Query("SELECT SUM(i.costSnapshot * i.quantity) FROM OrderItem i WHERE i.order.coupon IS NOT NULL AND i.order.orderStatus != 'CANCELLED'")
     BigDecimal sumTotalCostPriceForVoucherOrders();
 

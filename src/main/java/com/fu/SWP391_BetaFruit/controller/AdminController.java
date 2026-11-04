@@ -8,6 +8,7 @@ import com.fu.SWP391_BetaFruit.dto.request.UserRequest;
 import com.fu.SWP391_BetaFruit.entity.Role;
 import com.fu.SWP391_BetaFruit.enums.RoleName;
 import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
+import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.service.AdminAnalyticsService;
 import com.fu.SWP391_BetaFruit.service.MembershipTierService;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
@@ -38,6 +39,7 @@ public class AdminController {
     private final ShopService shopService;
     private final MembershipTierService membershipTierService;
     private final AdminAnalyticsService adminAnalyticsService;
+    private final ShopRepository shopRepository;
 
     // ================= 0. TỔNG QUAN & PHÂN TÍCH (DASHBOARD & ANALYTICS) =================
     /**
@@ -53,11 +55,12 @@ public class AdminController {
     }
 
     /**
-     * Displays the Admin System Analytics page.
+     * Displays the Admin System Analytics page (hỗ trợ lọc toàn sàn hoặc theo từng gian hàng).
      */
     @GetMapping("/admin/analytics")
-    public String analytics(Model model) {
-        model.addAttribute("analytics", adminAnalyticsService.getSystemAnalytics());
+    public String analytics(@RequestParam(value = "shopId", required = false) Integer shopId, Model model) {
+        model.addAttribute("analytics", adminAnalyticsService.getSystemAnalytics(shopId));
+        model.addAttribute("selectedShopId", shopId);
         return "admin/analytics";
     }
 
