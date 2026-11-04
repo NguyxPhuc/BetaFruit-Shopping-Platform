@@ -109,7 +109,6 @@ public class PayoutController {
     public String handleRequestPayout(@Valid @ModelAttribute("payoutCreateRequest") PayoutCreateRequest request, BindingResult bindingResult, HttpSession session,RedirectAttributes redirectAttributes, Model model) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (bindingResult.hasErrors()) {
-            // Trả về view, Thymeleaf tự bind message lỗi từ DTO qua th:errors
             return "shop/payout-request-form";
         }
         try {

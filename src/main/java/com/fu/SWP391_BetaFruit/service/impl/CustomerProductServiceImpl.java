@@ -22,6 +22,8 @@ import com.fu.SWP391_BetaFruit.service.CustomerProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -199,6 +201,12 @@ public class CustomerProductServiceImpl implements CustomerProductService {
     @Override
     @Transactional(readOnly = true)
     public CustomerProductDetailResponse getProductDetail(Integer productId) {
+        return getProductDetail(productId, 1);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomerProductDetailResponse getProductDetail(Integer productId, int reviewPage) {
         if (productId == null) {
             return null;
         }
@@ -275,32 +283,30 @@ public class CustomerProductServiceImpl implements CustomerProductService {
         }
 
         // Reviews mapping
-        List<Review> reviewEntities = reviewRepository.findByProductId(productId);
+        final int reviewPageSize = 5;
+        long visibleReviewCount = reviewRepository.countReviewsByProductId(productId);
+        int totalReviewPages = Math.max(1, (int) Math.ceil((double) visibleReviewCount / reviewPageSize));
+        int currentReviewPage = Math.min(Math.max(reviewPage, 1), totalReviewPages);
+        Page<Review> reviewEntities = reviewRepository.findByProductId(
+                productId, PageRequest.of(currentReviewPage - 1, reviewPageSize));
         List<CustomerReviewResponse> reviewResponses = new ArrayList<>();
-        double avgRating = 0.0;
-        long reviewCount = 0;
-
-        if (reviewEntities != null && !reviewEntities.isEmpty()) {
-            reviewCount = reviewEntities.size();
-            double sum = 0;
-            for (Review r : reviewEntities) {
-                sum += (r.getRating() != null ? r.getRating() : 0);
-                String customerName = (r.getCustomer() != null && r.getCustomer().getFullName() != null)
-                        ? r.getCustomer().getFullName() : "Khách hàng BetaFruit";
-
-                reviewResponses.add(CustomerReviewResponse.builder()
-                        .reviewId(r.getReviewId())
-                        .customerName(customerName)
-                        .rating(r.getRating() != null ? r.getRating() : 0)
-                        .comment(r.getComment())
-                        .shopReply(r.getShopReply())
-                        .createdAt(r.getCreatedAt())
-                        .repliedAt(r.getRepliedAt())
-                        .formattedDate(r.getCreatedAt() != null ? r.getCreatedAt().format(DATE_FORMATTER) : "")
-                        .build());
-            }
-            avgRating = Math.round((sum / reviewCount) * 10.0) / 10.0;
+        for (Review r : reviewEntities.getContent()) {
+            String customerName = (r.getCustomer() != null && r.getCustomer().getFullName() != null)
+                    ? r.getCustomer().getFullName() : "Khách hàng BetaFruit";
+            reviewResponses.add(CustomerReviewResponse.builder()
+                    .reviewId(r.getReviewId())
+                    .customerName(customerName)
+                    .variantName(r.getOrderItem() != null ? r.getOrderItem().getSnapshotVariantName() : null)
+                    .rating(r.getRating() != null ? r.getRating() : 0)
+                    .comment(r.getComment())
+                    .shopReply(r.getShopReply())
+                    .createdAt(r.getCreatedAt())
+                    .repliedAt(r.getRepliedAt())
+                    .formattedDate(r.getCreatedAt() != null ? r.getCreatedAt().format(DATE_FORMATTER) : "")
+                    .build());
         }
+        Double averageRating = reviewRepository.getAverageRatingByProductId(productId);
+        double avgRating = averageRating == null ? 0.0 : Math.round(averageRating * 10.0) / 10.0;
 
         return CustomerProductDetailResponse.builder()
                 .productId(product.getProductId())
@@ -318,7 +324,9 @@ public class CustomerProductServiceImpl implements CustomerProductService {
                 .formattedOriginalPrice(originalPrice != null && originalPrice.compareTo(lowestPrice) > 0 ? formatCurrency(originalPrice) : null)
                 .rating(avgRating)
                 .fullStars((int) Math.round(avgRating))
-                .reviewCount(reviewCount)
+                .reviewCount(visibleReviewCount)
+                .reviewPage(currentReviewPage)
+                .reviewTotalPages(totalReviewPages)
                 .inStock(inStock)
                 .totalStock(totalStock)
                 .weightSpecification(weightSpecification)

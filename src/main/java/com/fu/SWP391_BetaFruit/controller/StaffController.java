@@ -42,7 +42,7 @@ public class StaffController {
                             @RequestParam(value = "sortBy", defaultValue = "shopId") String sortBy,
                             @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir,
                             Model model) {
-        model.addAllAttributes(shopService.getAdminShopPageData(keyword, status, page, size, sortBy, sortDir));
+        model.addAllAttributes(shopService.getStaffShopPageData(keyword, status, page, size, sortBy, sortDir));
         return "admin/shops/list";
     }
 
@@ -168,6 +168,7 @@ public class StaffController {
                                       @RequestParam(value = "size", defaultValue = "10") int size,
                                       Model model) {
         model.addAllAttributes(reviewReportService.getStaffReportPageData(status, page, size));
+        model.addAttribute("reportBasePath", "/staff/reviews");
         return "operations-staff/reviews/list";
     }
 
