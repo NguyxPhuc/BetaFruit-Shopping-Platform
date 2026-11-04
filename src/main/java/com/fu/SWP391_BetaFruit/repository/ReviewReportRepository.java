@@ -18,6 +18,11 @@ public interface ReviewReportRepository extends JpaRepository<ReviewReport, Inte
 
     Page<ReviewReport> findByStatus(DisputeStatus status, Pageable pageable);
 
+    Page<ReviewReport> findByStatusIn(Collection<DisputeStatus> statuses, Pageable pageable);
+
+    @Query("SELECT rr.review.reviewId FROM ReviewReport rr WHERE rr.reportId = :reportId")
+    Optional<Integer> findReviewIdByReportId(@Param("reportId") Integer reportId);
+
     long countByStatus(DisputeStatus status);
 
     boolean existsByReview_ReviewIdAndStatusIn(Integer reviewId, Collection<DisputeStatus> statuses);

@@ -94,7 +94,7 @@
             border-radius: 20px;
         }
         .status-DELIVERED { background: #c6f6d5; color: #22543d; border: 1px solid #48bb78; }
-        .status-SUCCESS { background: #d1fae5; color: #065f46; }
+        .status-RECEIVED, .status-SUCCESS { background: #d1fae5; color: #065f46; }
         .confirm-alert-box {
             background: #f0fdf4;
             border: 1.5px solid #86efac;
@@ -124,6 +124,57 @@
         .confirm-btn-hero:hover {
             background: #15803d;
             transform: translateY(-2px);
+        }
+        .review-rating {
+            border: 0;
+            padding: 0;
+            margin: 0;
+        }
+        .review-rating legend {
+            margin-bottom: .25rem;
+            font-weight: 600;
+        }
+        .review-rating-stars {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: .15rem;
+        }
+        .review-rating-choice {
+            cursor: pointer;
+            color: #cbd5e1;
+            font-size: 2rem;
+            line-height: 1;
+            transition: color .15s ease, transform .15s ease;
+        }
+        .review-rating-choice input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+        .review-rating-choice:has(input:checked),
+        .review-rating-choice:has(input:checked) ~ .review-rating-choice,
+        .review-rating-choice:hover,
+        .review-rating-choice:hover ~ .review-rating-choice {
+            color: #f59e0b;
+        }
+        .review-rating-choice:has(input:focus-visible) {
+            outline: 2px solid #1e5631;
+            outline-offset: 3px;
+            border-radius: 3px;
+        }
+        .review-rating-choice:has(input:checked)::before,
+        .review-rating-choice:has(input:checked) ~ .review-rating-choice::before,
+        .review-rating-choice:hover::before,
+        .review-rating-choice:hover ~ .review-rating-choice::before {
+            content: '★';
+        }
+        .review-rating-choice:has(input:checked) span,
+        .review-rating-choice:has(input:checked) ~ .review-rating-choice span,
+        .review-rating-choice:hover span,
+        .review-rating-choice:hover ~ .review-rating-choice span {
+            display: none;
         }
         .summary-row {
             display: flex;
@@ -221,6 +272,8 @@
     <div th:replace="~{fragments/header :: header}"></div>
 
     <main class="detail-container">
+        <div th:if="${reviewSuccess != null}" class="card-box" style="color:#166534;background:#f0fdf4;" th:text="${reviewSuccess}"></div>
+        <div th:if="${reviewError != null}" class="card-box" style="color:#991b1b;background:#fef2f2;" th:text="${reviewError}"></div>
         <!-- Breadcrumb -->
         <nav class="breadcrumb-nav">
             <a th:href="@{/orders}"><i class="bi bi-arrow-left"></i> Danh sách đơn mua</a>
@@ -229,7 +282,7 @@
         </nav>
 
         <!-- Celebration Banner when Tier Upgrade triggered! -->
-        <div class="celebration-banner" th:if="${upgradeCelebration}">
+        <div class="celebration-banner" th:if="${upgradeCelebration == true}">
             <div class="celebration-icon">👑</div>
             <div class="celebration-text">
                 <h3 th:text="'Chúc mừng bạn đã thăng hạng ' + ${newTierName} + '!'">Chúc mừng bạn đã thăng hạng Vàng!</h3>
@@ -318,14 +371,61 @@
             <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem 0; border-bottom: 1px solid #edf2f7; padding-bottom: 0.75rem;">
                 <i class="bi bi-basket2"></i> Danh sách hoa quả đã đặt
             </h3>
-            <div th:each="item : ${order.items}" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9;">
-                <div>
-                    <div style="font-weight: 700; color: #1e293b;" th:text="${item.productName}">Cam sành bóc vỏ</div>
-                    <div style="font-size: 0.85rem; color: #64748b;" th:if="${item.variantName != null and item.variantName != ''}" th:text="'Phân loại: ' + ${item.variantName}"></div>
-                    <div style="font-size: 0.85rem; color: #94a3b8;" th:text="'Số lượng: ' + ${item.quantity}">Số lượng: 1</div>
+            <div th:each="item : ${order.items}" style="padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 700; color: #1e293b;" th:text="${item.productName}">Cam sành bóc vỏ</div>
+                        <div style="font-size: 0.85rem; color: #64748b;" th:if="${item.variantName != null and item.variantName != ''}" th:text="'Phân loại: ' + ${item.variantName}"></div>
+                        <div style="font-size: 0.85rem; color: #94a3b8;" th:text="'Số lượng: ' + ${item.quantity}">Số lượng: 1</div>
+                    </div>
+                    <div style="font-weight: 700; color: #0f172a;" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
+                        120.000 ₫
+                    </div>
                 </div>
-                <div style="font-weight: 700; color: #0f172a;" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'POINT', 0, 'COMMA')} + ' ₫'">
-                    120.000 ₫
+                <div th:if="${order.orderStatus == 'RECEIVED' or order.orderStatus == 'SUCCESS'}" style="margin-top:.75rem;">
+                    <form th:if="${item.reviewId == null}" th:action="@{/customer/reviews}" method="post" style="display:grid;gap:.5rem;max-width:520px;">
+                        <input type="hidden" name="orderId" th:value="${order.orderId}">
+                        <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
+                        <input type="hidden" name="productId" th:value="${item.productId}">
+                        <fieldset class="review-rating">
+                            <legend>Đánh giá sản phẩm</legend>
+                            <div class="review-rating-stars" role="radiogroup" aria-label="Chọn số sao">
+                                <label class="review-rating-choice" aria-label="5 sao"><input type="radio" name="rating" value="5" required><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="4 sao"><input type="radio" name="rating" value="4"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="3 sao"><input type="radio" name="rating" value="3"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="2 sao"><input type="radio" name="rating" value="2"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="1 sao"><input type="radio" name="rating" value="1"><span aria-hidden="true">☆</span></label>
+                            </div>
+                        </fieldset>
+                        <textarea name="comment" maxlength="5000" rows="3" placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"></textarea>
+                        <button type="submit" class="confirm-btn-hero">Gửi đánh giá</button>
+                    </form>
+                    <div th:if="${item.reviewId != null and item.reviewVisibility != null and item.reviewVisibility.name() == 'HIDDEN_BY_ADMIN'}" class="text-muted">Đánh giá này đã bị quản trị viên ẩn.</div>
+                    <form th:if="${item.reviewId != null and (item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_ADMIN') and item.reviewCanEdit}"
+                          th:action="@{/customer/reviews/{id}/edit(id=${item.reviewId})}" method="post" style="display:grid;gap:.5rem;max-width:520px;">
+                        <input type="hidden" name="orderId" th:value="${order.orderId}">
+                        <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
+                        <input type="hidden" name="productId" th:value="${item.productId}">
+                        <fieldset class="review-rating">
+                            <legend>Đánh giá của bạn</legend>
+                            <div class="review-rating-stars" role="radiogroup" aria-label="Chọn số sao">
+                                <label class="review-rating-choice" aria-label="5 sao"><input type="radio" name="rating" value="5" th:checked="${item.rating == 5}" required><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="4 sao"><input type="radio" name="rating" value="4" th:checked="${item.rating == 4}"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="3 sao"><input type="radio" name="rating" value="3" th:checked="${item.rating == 3}"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="2 sao"><input type="radio" name="rating" value="2" th:checked="${item.rating == 2}"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="1 sao"><input type="radio" name="rating" value="1" th:checked="${item.rating == 1}"><span aria-hidden="true">☆</span></label>
+                            </div>
+                        </fieldset>
+                        <textarea name="comment" maxlength="5000" rows="3" th:text="${item.comment}" placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"></textarea>
+                        <div style="display:flex;gap:.5rem;">
+                            <button type="submit" class="confirm-btn-hero" onclick="return confirm('Bạn chỉ được sửa đánh giá này một lần duy nhất. Sau khi xác nhận, bạn sẽ không thể sửa lại. Bạn có muốn tiếp tục?');">Cập nhật đánh giá</button>
+                        </div>
+                    </form>
+                    <div th:if="${item.reviewId != null and (item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_ADMIN') and !item.reviewCanEdit}" class="text-muted" style="margin-top:.5rem;">Bạn đã sử dụng lượt sửa duy nhất cho đánh giá này.</div>
+                    <form th:if="${item.reviewId != null and (item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_ADMIN') and (item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_USER')}" th:action="@{/customer/reviews/{id}/hide(id=${item.reviewId})}" method="post" style="margin-top:.5rem;">
+                        <input type="hidden" name="orderId" th:value="${order.orderId}">
+                        <button type="submit" class="btn-detail" onclick="return confirm('Ẩn đánh giá này khỏi trang sản phẩm?');">Ẩn đánh giá</button>
+                    </form>
                 </div>
             </div>
 
@@ -350,6 +450,12 @@
                 <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #64748b; text-align: right;">
                     <span>Phương thức: </span>
                     <strong th:text="${order.paymentMethod}">VNPAY / COD</strong>
+                </div>
+                <div th:if="${order.paymentMethod == 'VNPAY'}" style="margin-top:.75rem;display:flex;justify-content:flex-end;align-items:center;gap:.75rem;flex-wrap:wrap;">
+                    <span style="font-size:.9rem;font-weight:700;color:#9a3412;" th:text="'Thanh toán: ' + ${paymentState.statusLabel}">Thanh toán: Chưa thanh toán</span>
+                    <form th:if="${paymentState.canPay}" method="post" th:action="@{/orders/{id}/pay(id=${order.orderId})}">
+                        <button type="submit" class="confirm-btn-hero"><i class="bi bi-credit-card"></i> Thanh toán lại qua VNPay</button>
+                    </form>
                 </div>
             </div>
         </div>

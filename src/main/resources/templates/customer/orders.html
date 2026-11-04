@@ -98,7 +98,7 @@
         .status-CONFIRMED, .status-PREPARING, .status-READY { background: #e2e8f0; color: #4a5568; }
         .status-PICKED_UP, .status-DELIVERING { background: #eebfef; color: #6b21a8; }
         .status-DELIVERED { background: #c6f6d5; color: #22543d; border: 1px solid #48bb78; }
-        .status-SUCCESS { background: #d1fae5; color: #065f46; }
+        .status-RECEIVED, .status-SUCCESS { background: #d1fae5; color: #065f46; }
         .status-FAILED, .status-CANCELLED, .status-REJECTED { background: #fed7d7; color: #9b2c2c; }
 
         .order-item-row {
@@ -180,6 +180,7 @@
             <a th:href="@{/orders(status='PENDING')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'PENDING' ? 'active' : ''}">Chờ xác nhận</a>
             <a th:href="@{/orders(status='DELIVERING')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERING' ? 'active' : ''}">Đang giao</a>
             <a th:href="@{/orders(status='DELIVERED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERED' ? 'active' : ''}">Đã giao</a>
+            <a th:href="@{/orders(status='RECEIVED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'RECEIVED' ? 'active' : ''}">Đã nhận hàng</a>
             <a th:href="@{/orders(status='SUCCESS')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'SUCCESS' ? 'active' : ''}">Hoàn tất</a>
             <a th:href="@{/orders(status='CANCELLED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'CANCELLED' ? 'active' : ''}">Đã hủy</a>
         </nav>
@@ -196,6 +197,9 @@
                     </div>
                     <div>
                         <span class="status-badge" th:classappend="'status-' + ${order.orderStatus}" th:text="${order.orderStatusLabel}">Trạng thái</span>
+                        <span th:if="${order.paymentMethod == 'VNPAY'}" th:with="paymentState=${paymentStates[order.orderId]}"
+                              class="status-badge" style="margin-left:.35rem;background:#fff7ed;color:#9a3412;"
+                              th:text="${paymentState.statusLabel}">Chưa thanh toán</span>
                     </div>
                 </div>
 
@@ -221,6 +225,9 @@
                     </div>
                     <div class="action-btns">
                         <a th:href="@{/orders/{id}(id=${order.orderId})}" class="btn-detail">Xem chi tiết</a>
+                        <form th:if="${order.paymentMethod == 'VNPAY' and paymentStates[order.orderId].canPay}" method="post" th:action="@{/orders/{id}/pay(id=${order.orderId})}" style="display:inline;">
+                            <button type="submit" class="btn-confirm"><i class="bi bi-credit-card"></i> Thanh toán VNPay</button>
+                        </form>
                         <!-- Prominent Button if DELIVERED -->
                         <form th:if="${order.canConfirmReceived}" method="post" th:action="@{/orders/{id}/confirm-received(id=${order.orderId})}" style="display: inline;">
                             <button type="submit" class="btn-confirm" onclick="return confirm('Bạn xác nhận đã nhận đầy đủ hoa quả và hài lòng với chất lượng?');">

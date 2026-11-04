@@ -123,6 +123,7 @@
                     <option value="PICKED_UP" th:selected="${selectedStatus != null and selectedStatus.name() == 'PICKED_UP'}">Đã lấy hàng</option>
                     <option value="DELIVERING" th:selected="${selectedStatus != null and selectedStatus.name() == 'DELIVERING'}">Đang giao hàng</option>
                     <option value="DELIVERED" th:selected="${selectedStatus != null and selectedStatus.name() == 'DELIVERED'}">Đã giao - chờ hoàn tất</option>
+                    <option value="RECEIVED" th:selected="${selectedStatus != null and selectedStatus.name() == 'RECEIVED'}">Khách đã nhận hàng</option>
                     <option value="SUCCESS" th:selected="${selectedStatus != null and selectedStatus.name() == 'SUCCESS'}">Đơn hoàn tất</option>
                     <option value="FAILED" th:selected="${selectedStatus != null and selectedStatus.name() == 'FAILED'}">Giao thất bại</option>
                     <option value="CANCELLED" th:selected="${selectedStatus != null and selectedStatus.name() == 'CANCELLED'}">Đã hủy</option>

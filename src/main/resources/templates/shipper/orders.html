@@ -115,6 +115,7 @@
                     <option value="PICKED_UP" th:selected="${selectedStatus != null and selectedStatus.name() == 'PICKED_UP'}">Đã lấy hàng</option>
                     <option value="DELIVERING" th:selected="${selectedStatus != null and selectedStatus.name() == 'DELIVERING'}">Đang giao hàng</option>
                     <option value="DELIVERED" th:selected="${selectedStatus != null and selectedStatus.name() == 'DELIVERED'}">Đã giao - chờ hoàn tất</option>
+                    <option value="RECEIVED" th:selected="${selectedStatus != null and selectedStatus.name() == 'RECEIVED'}">Khách đã xác nhận nhận hàng</option>
                     <option value="SUCCESS" th:selected="${selectedStatus != null and selectedStatus.name() == 'SUCCESS'}">Đơn hoàn tất</option>
                     <option value="FAILED" th:selected="${selectedStatus != null and selectedStatus.name() == 'FAILED'}">Giao thất bại</option>
                     <option value="CANCELLED" th:selected="${selectedStatus != null and selectedStatus.name() == 'CANCELLED'}">Đã hủy</option>
@@ -146,7 +147,7 @@
                         <small class="payment-note" th:if="${order.paymentMethod == 'COD' and order.amountToCollect > 0}" th:text="'Cần thu ' + ${#numbers.formatDecimal(order.amountToCollect, 0, 'COMMA', (order.amountToCollect.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></small>
                     </td>
                     <td><span class="badge order-status"
-                              th:classappend="${order.orderStatus == 'DELIVERED' or order.orderStatus == 'SUCCESS'} ? ' order-status--done' : (${order.orderStatus == 'FAILED' or order.orderStatus == 'CANCELLED' or order.orderStatus == 'REJECTED'} ? ' order-status--closed' : (${order.orderStatus == 'PENDING' or order.orderStatus == 'PREPARING'} ? ' order-status--waiting' : ''))"
+                              th:classappend="${order.orderStatus == 'DELIVERED' or order.orderStatus == 'RECEIVED' or order.orderStatus == 'SUCCESS'} ? ' order-status--done' : (${order.orderStatus == 'FAILED' or order.orderStatus == 'CANCELLED' or order.orderStatus == 'REJECTED'} ? ' order-status--closed' : (${order.orderStatus == 'PENDING' or order.orderStatus == 'PREPARING'} ? ' order-status--waiting' : ''))"
                               th:text="${order.orderStatusLabel()}"></span></td>
                     <td><a class="detail-link" th:href="@{/shipper/orders/{id}(id=${order.orderId})}">Xem chi tiết</a></td>
                 </tr>

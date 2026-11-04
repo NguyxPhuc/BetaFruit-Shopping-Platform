@@ -7,6 +7,15 @@
 <body>
 <div th:fragment="content">
 
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
     <!-- Page Header -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div>
@@ -24,7 +33,7 @@
         <div class="card-body p-3">
             <form th:action="@{/shop/reviews}" method="get" class="row g-2 align-items-center">
                 <div class="col-12 col-md-4">
-                    <select name="rating" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <select name="rating" aria-label="Lọc theo số sao" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="" th:selected="${currentRating == null}">Tất cả số sao</option>
                         <option value="5" th:selected="${currentRating == 5}">⭐⭐⭐⭐⭐ 5 sao</option>
                         <option value="4" th:selected="${currentRating == 4}">⭐⭐⭐⭐ 4 sao</option>
@@ -34,7 +43,7 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-4">
-                    <select name="isReported" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <select aria-label="Lọc trạng thái báo cáo" name="isReported" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="" th:selected="${currentIsReported == null}">Tất cả trạng thái khiếu nại</option>
                         <option value="true" th:selected="${currentIsReported == true}">Đang/Đã khiếu nại</option>
                         <option value="false" th:selected="${currentIsReported == false}">Chưa khiếu nại</option>
@@ -76,7 +85,7 @@
                             <div class="fw-bold text-dark text-truncate" style="max-width: 200px;"
                                  th:text="${r.orderItem.snapshotProductName}">Tên hoa quả</div>
                             <div class="small text-muted" th:if="${r.orderItem.snapshotVariantName != null}">
-                                Phân loại: <span th:text="${r.orderItem.snapshotVariantName}">Loại 1</span>
+                                Biến thể được đánh giá: <span th:text="${r.orderItem.snapshotVariantName}">Loại 1</span>
                             </div>
                         </td>
                         <td>
@@ -92,6 +101,20 @@
                             <div class="small text-muted mt-1">
                                 <i class="bi bi-person me-1"></i>Người mua: <span th:text="${r.customer.fullName}">Khách hàng</span>
                             </div>
+                            <form class="mt-3" th:action="@{/shop/reviews/{id}/reply(id=${r.reviewId})}" method="post">
+                                <input type="hidden" name="rating" th:value="${currentRating}" th:if="${currentRating != null}">
+                                <input type="hidden" name="isReported" th:value="${currentIsReported}" th:if="${currentIsReported != null}">
+                                <input type="hidden" name="page" th:value="${currentPage}">
+                                <label class="form-label small fw-semibold" th:text="${r.shopReply == null or r.shopReply.isBlank()} ? 'Phản hồi của cửa hàng' : 'Cập nhật phản hồi của cửa hàng'">Phản hồi của cửa hàng</label>
+                                <textarea class="form-control form-control-sm" name="reply" rows="2" maxlength="5000" required
+                                          th:text="${r.shopReply}" placeholder="Nhập phản hồi cho khách hàng"></textarea>
+                                <button type="submit" class="btn btn-sm btn-outline-success mt-2">
+                                    <i class="bi bi-reply me-1"></i>
+                                    <span th:text="${r.shopReply == null or r.shopReply.isBlank()} ? 'Gửi phản hồi' : 'Lưu phản hồi'">Gửi phản hồi</span>
+                                </button>
+                                <small th:if="${r.repliedAt != null}" class="text-muted ms-2"
+                                       th:text="${'Cập nhật lúc ' + #temporals.format(r.repliedAt, 'dd/MM/yyyy HH:mm')}">Thời gian phản hồi</small>
+                            </form>
                         </td>
                         <td class="text-center">
                             <!-- Visibility Badge -->
@@ -131,11 +154,12 @@
                             </button>
 
                             <!-- Report Inappropriate Review Modal (FE-10.2) -->
-                            <div class="modal fade text-start" th:id="'reportModal' + ${r.reviewId}" tabindex="-1" aria-hidden="true">
+                            <div class="modal fade text-start" th:id="'reportModal' + ${r.reviewId}" tabindex="-1" aria-hidden="true"
+                                 th:attr="aria-labelledby=|reportTitle${r.reviewId}|">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content border-0 shadow">
                                         <div class="modal-header bg-danger text-white">
-                                            <h5 class="modal-title fw-bold">
+                                            <h5 class="modal-title fw-bold" th:id="|reportTitle${r.reviewId}|">
                                                 <i class="bi bi-flag-fill me-2"></i>Khiếu Nại Đánh Giá Vi Phạm
                                             </h5>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -151,8 +175,8 @@
 
                                                 <!-- Violation Category Select -->
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold text-dark">Lý do vi phạm: <span class="text-danger">*</span></label>
-                                                    <select name="reasonCategory" class="form-select" required>
+                                                    <label class="form-label fw-bold text-dark" th:for="|reason${r.reviewId}|">Lý do vi phạm: <span class="text-danger">*</span></label>
+                                                    <select name="reasonCategory" th:id="|reason${r.reviewId}|" class="form-select" required>
                                                         <option value="" disabled selected>-- Chọn nhóm vi phạm --</option>
                                                         <option th:each="reason : ${reasons}"
                                                                 th:value="${reason.name()}"
@@ -162,17 +186,17 @@
 
                                                 <!-- Explanation textarea -->
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold text-dark">Lời giải trình đối soát chi tiết: <span class="text-danger">*</span></label>
-                                                    <textarea class="form-control" name="explanation" rows="3" required minlength="10" maxlength="1000"
+                                                    <label class="form-label fw-bold text-dark" th:for="|explanation${r.reviewId}|">Lời giải trình đối soát chi tiết: <span class="text-danger">*</span></label>
+                                                    <textarea class="form-control" name="explanation" th:id="|explanation${r.reviewId}|" rows="3" required minlength="10" maxlength="1000"
                                                               placeholder="Mô tả rõ sự việc: Khách đánh giá sai ở điểm nào, shop đã đối soát cân nặng/đóng hàng thế nào... (tối thiểu 10 ký tự)"></textarea>
                                                 </div>
 
                                                 <!-- Evidence Link -->
                                                 <div class="mb-2">
-                                                    <label class="form-label fw-bold text-dark">Link ảnh/tài liệu bằng chứng (nếu có):</label>
-                                                    <input type="text" class="form-control" name="evidenceUrls"
+                                                    <label class="form-label fw-bold text-dark" th:for="|evidence${r.reviewId}|">Link ảnh/tài liệu bằng chứng (nếu có):</label>
+                                                    <input type="url" class="form-control" name="evidenceUrls" th:id="|evidence${r.reviewId}|" maxlength="2000" pattern="[Hh][Tt][Tt][Pp][Ss]?://.+"
                                                            placeholder="Nhập đường dẫn Google Drive / Imgur ảnh cân hàng, tin nhắn...">
-                                                    <div class="form-text small">Cung cấp bằng chứng rõ ràng giúp Nhân viên Vận hành duyệt ẩn nhanh hơn.</div>
+                                                    <div class="form-text small">Dùng đường dẫn HTTP hoặc HTTPS để quản trị viên kiểm tra bằng chứng.</div>
                                                 </div>
                                             </div>
                                             <div class="modal-footer bg-light">
@@ -197,13 +221,13 @@
             </span>
             <ul class="pagination pagination-sm mb-0">
                 <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled' : ''">
-                    <a class="page-link" th:href="@{/shop/reviews(rating=${currentRating}, isReported=${currentIsReported}, page=${currentPage - 1})}">Trước</a>
+                    <a class="page-link" th:href="@{/shop/reviews(rating=${currentRating}, isReported=${currentIsReported}, page=${currentPage - 1},size=${pageSize})}">Trước</a>
                 </li>
                 <li th:each="p : ${#numbers.sequence(1, totalPages)}" class="page-item" th:classappend="${p == currentPage} ? 'active' : ''">
-                    <a class="page-link" th:href="@{/shop/reviews(rating=${currentRating}, isReported=${currentIsReported}, page=${p})}" th:text="${p}">1</a>
+                    <a class="page-link" th:href="@{/shop/reviews(rating=${currentRating}, isReported=${currentIsReported}, page=${p},size=${pageSize})}" th:text="${p}">1</a>
                 </li>
                 <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled' : ''">
-                    <a class="page-link" th:href="@{/shop/reviews(rating=${currentRating}, isReported=${currentIsReported}, page=${currentPage + 1})}">Sau</a>
+                    <a class="page-link" th:href="@{/shop/reviews(rating=${currentRating}, isReported=${currentIsReported}, page=${currentPage + 1},size=${pageSize})}">Sau</a>
                 </li>
             </ul>
         </div>

@@ -134,7 +134,7 @@
                     <summary style="color: #c53030; font-weight: 600; font-size: 13px; cursor: pointer;">
                         ⚠️ Báo cáo sự cố trên đường (Hỏng xe / Không thể tiếp tục giao)
                     </summary>
-                    <form method="post" th:action="@{/shipper/orders/{id}/incident(id=${order.orderId})}" style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <form method="post" th:action="@{/shipper/orders/{id}/report-incident(id=${order.orderId})}" style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
                         <div>
                             <label style="font-size: 12px; color: #4a5568; font-weight: 600; display: block; margin-bottom: 4px;">Nguyên nhân chính:</label>
                             <select name="reason" style="width: 100%; height: 38px; padding: 0 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 13px;">
@@ -168,7 +168,7 @@
                         <td th:text="${item.variantName}"></td>
                         <td th:text="${item.quantity}"></td>
                         <td class="money" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', (item.unitPrice.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
-                        <td class="money" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', (item.subtotal.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
+                        <td class="money" th:text="${#numbers.formatDecimal(item.lineTotal, 0, 'COMMA', (item.lineTotal.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></td>
                     </tr>
                     </tbody>
                 </table>
@@ -179,17 +179,26 @@
             <section class="detail-card" aria-labelledby="payment-heading">
                 <h2 id="payment-heading">Thanh toán &amp; Thu hộ</h2>
                 <dl class="money-lines">
-                    <div><dt>Tiền hàng</dt><dd class="money" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', (order.totalAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
-                    <div><dt>Giảm giá voucher</dt><dd class="money" th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', (order.discountAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
-                    <div><dt>Phí vận chuyển</dt><dd class="money" th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'COMMA', (order.shippingFee.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                    <div><dt>Tiền hàng</dt><dd class="money" th:text="${#numbers.formatDecimal(detail.totalAmount, 0, 'COMMA', (detail.totalAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                    <div><dt>Giảm giá voucher</dt><dd class="money" th:text="'-' + ${#numbers.formatDecimal(detail.discountAmount ?: 0, 0, 'COMMA', (detail.discountAmount != null and detail.discountAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                    <div><dt>Phí vận chuyển</dt><dd class="money" th:text="${#numbers.formatDecimal(detail.shippingFee ?: 0, 0, 'COMMA', (detail.shippingFee != null and detail.shippingFee.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>
+                    <div><dt>Tổng khách thanh toán</dt><dd th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
+                    <div th:if="${order.paymentMethod == 'COD'}"><dt>COD đang giữ, chưa nộp</dt><dd th:text="${#numbers.formatDecimal(order.codHeldAmount, 0, 'COMMA', 0, 'POINT')} + 'đ'"></dd></div>
                 </dl>
                 <div class="cash-total" th:classappend="${order.paymentMethod == 'VNPAY'} ? ' cash-total--online' : ''">
                     <span th:text="${order.paymentMethod == 'COD'} ? 'Số tiền cần thu khách' : 'Thanh toán trực tuyến'"></span>
                     <strong th:text="${#numbers.formatDecimal(order.amountToCollect, 0, 'COMMA', (order.amountToCollect.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></strong>
                 </div>
                 <p class="payment-note" th:if="${order.paymentMethod == 'VNPAY'}">Khách đã thanh toán qua VNPay. Shipper tuyệt đối không thu thêm tiền khi giao.</p>
-                <p class="payment-note" th:if="${order.paymentMethod == 'COD'}">Shipper thu đúng số tiền hiển thị và xác nhận trong ứng dụng ngay khi nhận tiền mặt.</p>
-                <p class="holding-note" th:if="${order.orderStatus == 'DELIVERED'}">Giao hàng hoàn tất. Tiền hàng giữ trong thời gian khiếu nại (3 ngày) trước khi quyết toán về số dư khả dụng của cửa hàng.</p>
+                <p class="payment-note" th:if="${order.paymentMethod == 'COD' and order.orderStatus != 'DELIVERED' and order.orderStatus != 'RECEIVED' and order.orderStatus != 'SUCCESS'}">Shipper thu đúng số tiền hiển thị và xác nhận trong ứng dụng ngay khi nhận tiền mặt.</p>
+                <p class="payment-note" th:if="${order.paymentMethod == 'COD' and (order.orderStatus == 'DELIVERED' or order.orderStatus == 'RECEIVED' or order.orderStatus == 'SUCCESS')}">Đơn đã giao, không thu tiền từ khách lần nữa.</p>
+                <p class="payment-note" th:if="${order.paymentMethod == 'COD'}" th:switch="${order.codRemittanceStatus}">
+                    <span th:case="'NOT_COLLECTED'">Thu đủ COD khi giao thành công. Tiền được nộp lại cho hệ thống vào cuối ngày.</span>
+                    <span th:case="'PENDING_REMITTANCE'">Đã thu COD từ khách, chưa nộp lại cho hệ thống. Việc này độc lập với chuyển tiền cho shop.</span>
+                    <span th:case="'REMITTED'">Hệ thống đã nhận lại tiền COD từ shipper.</span>
+                </p>
+                <p class="holding-note" th:if="${order.orderStatus == 'DELIVERED' or order.orderStatus == 'RECEIVED'}"
+                   th:text="${order.orderStatus == 'RECEIVED' ? 'Khách đã xác nhận nhận hàng. Tiền vẫn đang được giữ và chưa chuyển vào số dư shop.' : 'Shipper đã xác nhận giao hàng. Chờ khách xác nhận nhận hàng; tiền chưa chuyển vào số dư shop.'}">Trạng thái giao hàng và đối soát</p>
             </section>
 
             <section class="detail-card" aria-labelledby="history-heading">
@@ -198,7 +207,7 @@
                     <li th:each="entry : ${detail.history}">
                         <strong th:text="${entry.statusLabel}"></strong>
                         <p th:if="${not #strings.isEmpty(entry.note)}" th:text="${entry.note}"></p>
-                        <small th:text="${entry.createdAt != null ? #temporals.format(entry.createdAt, 'HH:mm dd/MM/yyyy') : ''}"></small>
+                        <small><span th:text="${entry.actor}"></span><span th:if="${entry.createdAt != null}" th:text="' · ' + ${#temporals.format(entry.createdAt, 'HH:mm dd/MM/yyyy')}"></span></small>
                     </li>
                     <li th:if="${#lists.isEmpty(detail.history)}"><p class="empty-note">Chưa có lịch sử trạng thái.</p></li>
                 </ol>
