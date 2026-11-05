@@ -121,4 +121,7 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
 
     @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.owner")
     List<Shop> findAllWithOwners();
+
+    @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.owner WHERE s.approvalStatus = com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.APPROVED")
+    List<Shop> findApprovedShopsWithOwners();
 }

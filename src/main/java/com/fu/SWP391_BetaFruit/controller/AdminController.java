@@ -59,8 +59,9 @@ public class AdminController {
      */
     @GetMapping("/admin/analytics")
     public String analytics(@RequestParam(value = "shopId", required = false) Integer shopId, Model model) {
-        model.addAttribute("analytics", adminAnalyticsService.getSystemAnalytics(shopId));
-        model.addAttribute("selectedShopId", shopId);
+        com.fu.SWP391_BetaFruit.dto.response.SystemAnalyticsResponse analytics = adminAnalyticsService.getSystemAnalytics(shopId);
+        model.addAttribute("analytics", analytics);
+        model.addAttribute("selectedShopId", analytics != null ? analytics.getSelectedShopId() : null);
         return "admin/analytics";
     }
 

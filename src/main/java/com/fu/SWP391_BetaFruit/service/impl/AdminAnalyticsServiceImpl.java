@@ -64,9 +64,10 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
         Shop targetShop = null;
         if (shopId != null) {
             targetShop = shopRepository.findById(shopId).orElse(null);
-            if (targetShop == null) {
-                log.warn("Không tìm thấy Shop với ID: {}, tự động chuyển về thống kê toàn sàn.", shopId);
+            if (targetShop == null || targetShop.getApprovalStatus() != ShopApprovalStatus.APPROVED) {
+                log.warn("Không tìm thấy Shop hoặc Shop chưa được duyệt (APPROVED) với ID: {}, tự động chuyển về thống kê toàn sàn.", shopId);
                 shopId = null;
+                targetShop = null;
             }
         }
 
@@ -203,9 +204,9 @@ public class AdminAnalyticsServiceImpl implements AdminAnalyticsService {
         // ══════════════════════════════════════════════════════════════════════════
         List<ShopAnalyticsSummaryResponse> shopSummaries = new ArrayList<>();
         try {
-            List<Shop> allShops = shopRepository.findAllWithOwners();
+            List<Shop> allShops = shopRepository.findApprovedShopsWithOwners();
             for (Shop s : allShops) {
-                if (s == null) continue;
+                if (s == null || s.getApprovalStatus() != ShopApprovalStatus.APPROVED) continue;
 
                 BigDecimal sRev = BigDecimal.ZERO;
                 BigDecimal sFee = BigDecimal.ZERO;
