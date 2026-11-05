@@ -77,6 +77,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     Page<Product> findByShop_ShopId(Integer shopId, Pageable pageable);
 
+    List<Product> findByShop_ShopIdOrderByProductIdDesc(Integer shopId);
+
     Page<Product> findByShop_ShopIdAndProductNameContainingIgnoreCase(Integer shopId, String keyword, Pageable pageable);
 
     long countByShop_ShopId(Integer shopId);

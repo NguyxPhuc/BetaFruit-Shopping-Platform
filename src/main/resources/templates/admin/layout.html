@@ -36,6 +36,11 @@
                     <span th:text="${successMessage}">Thao tác thành công!</span>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+                <div th:if="${infoMessage}" class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-info-circle-fill me-2 fs-5 align-middle"></i>
+                    <span th:text="${infoMessage}">Thông báo thông tin.</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
                 <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
                     <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>

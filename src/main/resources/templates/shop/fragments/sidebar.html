@@ -21,6 +21,11 @@
             <i class="bi bi-grid-1x2-fill"></i>
             <span>Bảng Điều Khiển</span>
         </a>
+        <a th:href="@{/shop/analytics}" href="/shop/analytics" class="shop-nav-link"
+           th:classappend="${activeMenu == 'analytics'} ? 'active' : ''">
+            <i class="bi bi-graph-up-arrow"></i>
+            <span>Thống Kê Bán Hàng</span>
+        </a>
 
         <!-- NHÓM 2: SẢN PHẨM & HOA QUẢ -->
         <div class="shop-nav-group-title mt-2">Sản phẩm & Hoa quả</div>
