@@ -28,6 +28,9 @@ public class ShopController {
     @Autowired
     private ShopService shopService;
 
+    @Autowired
+    private com.fu.SWP391_BetaFruit.service.ShopAnalyticsService shopAnalyticsService;
+
     @GetMapping({"", "/", "/dashboard"})
     public String getShopDashboard(Model model, HttpSession session) {
         Integer id = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
@@ -37,9 +40,28 @@ public class ShopController {
         try {
             ShopProfileResponse shopProfileResponse = shopService.getShopProfile(id);
             model.addAttribute("shopProfileResponse", shopProfileResponse);
+
+            com.fu.SWP391_BetaFruit.dto.response.ShopAnalyticsResponse analytics = shopAnalyticsService.getShopAnalyticsForOwner(id);
+            model.addAttribute("analytics", analytics);
             return "shop/dashboard";
         } catch (Exception e) {
             return "shop/dashboard";
+        }
+    }
+
+    @GetMapping("/analytics")
+    public String getShopAnalytics(Model model, HttpSession session) {
+        Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (userId == null) {
+            return "redirect:/auth/login";
+        }
+        try {
+            com.fu.SWP391_BetaFruit.dto.response.ShopAnalyticsResponse analytics = shopAnalyticsService.getShopAnalyticsForOwner(userId);
+            model.addAttribute("analytics", analytics);
+            return "shop/analytics";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Không thể tải dữ liệu thống kê gian hàng: " + e.getMessage());
+            return "redirect:/shop/dashboard";
         }
     }
 
