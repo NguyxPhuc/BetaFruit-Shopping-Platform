@@ -69,7 +69,7 @@ class AdminLoyaltyDetailsModalTest {
     @DisplayName("AdminController trả về 200 OK khi nạp thông tin hội viên thành công")
     void adminController_GetUserLoyaltyDetails_Success() {
         AdminController adminController = new AdminController(
-                null, null, null, null, membershipTierService
+                null, null, null, null, membershipTierService, null, null
         );
 
         CustomerMembershipResponse mockResponse = CustomerMembershipResponse.builder()
@@ -97,7 +97,7 @@ class AdminLoyaltyDetailsModalTest {
     @DisplayName("AdminController trả về 400 Bad Request kèm thông báo khi không tìm thấy user")
     void adminController_GetUserLoyaltyDetails_UserNotFound() {
         AdminController adminController = new AdminController(
-                null, null, null, null, membershipTierService
+                null, null, null, null, membershipTierService, null, null
         );
 
         when(membershipTierService.getCustomerMembershipData(999))
