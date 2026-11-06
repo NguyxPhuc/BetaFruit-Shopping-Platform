@@ -234,6 +234,33 @@
         .btn-copy-code:hover {
             background: #1b4332;
         }
+        .tier-voucher-card.voucher-card-used {
+            opacity: 0.65;
+            background: #f8f9fa;
+            border-color: #dee2e6;
+        }
+        .tier-voucher-card.voucher-card-used:hover {
+            transform: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-color: #dee2e6;
+        }
+        .voucher-badge-col.used {
+            background: linear-gradient(135deg, #6c757d, #adb5bd);
+        }
+        .voucher-code-pill.pill-used {
+            color: #6c757d;
+            background: #e9ecef;
+            text-decoration: line-through;
+        }
+        .btn-copy-code.btn-used {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            border: 1px solid #ced4da;
+        }
+        .btn-copy-code.btn-used:hover {
+            background: #e9ecef;
+        }
     </style>
 </head>
 <body>
@@ -364,23 +391,35 @@
 
                 <!-- Có voucher: hiển thị lưới vé -->
                 <div th:if="${membership.tierVouchers != null and !membership.tierVouchers.isEmpty()}" class="voucher-grid">
-                    <div th:each="v : ${membership.tierVouchers}" class="tier-voucher-card">
-                        <div class="voucher-badge-col" th:classappend="${v.badgeType == 'FREESHIP' ? 'freeship' : 'discount'}">
-                            <span th:text="${v.badgeType}">FREESHIP</span>
-                            <span style="font-size: 0.6rem; opacity: 0.85; margin-top: 4px;">VIP</span>
+                    <div th:each="v : ${membership.tierVouchers}" class="tier-voucher-card" th:classappend="${v.isUsed ? 'voucher-card-used' : ''}">
+                        <div class="voucher-badge-col" th:classappend="${v.isUsed ? 'used' : (v.badgeType == 'FREESHIP' ? 'freeship' : 'discount')}">
+                            <span th:text="${v.isUsed ? 'ĐÃ DÙNG' : v.badgeType}">FREESHIP</span>
+                            <span style="font-size: 0.6rem; opacity: 0.85; margin-top: 4px;" th:text="${v.isUsed ? 'HẾT LƯỢT' : (v.quotaBadgeText != null ? v.quotaBadgeText : 'VIP')}">x3 LƯỢT</span>
                         </div>
                         <div class="voucher-body">
                             <div>
-                                <div class="voucher-title" th:text="${v.title}">Freeship 40.000 ₫</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                    <div class="voucher-title" th:text="${v.title}">Freeship 40.000 ₫</div>
+                                    <span th:if="${v.quotaBadgeText != null}" 
+                                          style="background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 12px; font-size: 0.72rem; font-weight: 700; padding: 2px 8px;"
+                                          th:text="${v.quotaBadgeText}">x3 lượt dùng</span>
+                                </div>
                                 <div class="voucher-condition" th:text="${v.minOrderValueText}">Đơn tối thiểu 200.000 ₫</div>
                                 <div th:if="${v.maxDiscountText != null}" class="voucher-condition" th:text="${v.maxDiscountText}"></div>
+                                <div style="font-size: 0.78rem; font-weight: 600; margin-top: 4px;" th:classappend="${v.isUsed ? 'text-muted' : 'text-success'}">
+                                    <i class="bi" th:classappend="${v.isUsed ? 'bi-check2-circle' : 'bi-lightning-charge-fill text-warning'}"></i>
+                                    <span th:text="${v.usageProgressText != null ? v.usageProgressText : (v.isUsed ? 'Đã hết lượt dùng' : 'Sẵn sàng dùng')}">Còn lại 2/3 lượt</span>
+                                </div>
                             </div>
-                            <div class="voucher-action-row">
-                                <span class="voucher-code-pill" th:text="${v.couponCode}">GOLD_FREESHIP</span>
-                                <button type="button" class="btn-copy-code"
+                            <div class="voucher-action-row" style="margin-top: 8px;">
+                                <span class="voucher-code-pill" th:classappend="${v.isUsed ? 'pill-used' : ''}" th:text="${v.couponCode}">GOLD_FREESHIP</span>
+                                <button th:if="${!v.isUsed}" type="button" class="btn-copy-code"
                                         th:data-code="${v.couponCode}"
                                         onclick="copyVoucherCode(this.getAttribute('data-code'), this)">
                                     Sao chép
+                                </button>
+                                <button th:if="${v.isUsed}" type="button" class="btn-copy-code btn-used" disabled title="Bạn đã sử dụng hết lượt cho mã ưu đãi này">
+                                    Đã hết lượt
                                 </button>
                             </div>
                         </div>

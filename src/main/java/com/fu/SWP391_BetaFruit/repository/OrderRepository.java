@@ -59,6 +59,9 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query("SELECT COALESCE(SUM(o.discountAmount), 0) FROM Order o WHERE o.coupon.couponId = :couponId AND o.shop.shopId = :shopId")
     BigDecimal sumTotalDiscountByCouponIdAndShopId(@Param("couponId") Integer couponId, @Param("shopId") Integer shopId);
 
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.customer.userId = :customerId AND o.coupon.couponId = :couponId AND o.orderStatus NOT IN (com.fu.SWP391_BetaFruit.enums.OrderStatus.CANCELLED, com.fu.SWP391_BetaFruit.enums.OrderStatus.REJECTED)")
+    long countValidUsedCouponByCustomer(@Param("customerId") Integer customerId, @Param("couponId") Integer couponId);
+
     Optional<Order> findByOrderId(Integer orderId);
 
     long countByCustomer_UserIdAndOrderStatus(Integer customerId, OrderStatus orderStatus);

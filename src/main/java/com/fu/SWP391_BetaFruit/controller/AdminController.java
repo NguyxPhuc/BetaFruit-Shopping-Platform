@@ -25,7 +25,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import com.fu.SWP391_BetaFruit.dto.response.CustomerMembershipResponse;
+import org.springframework.http.ResponseEntity;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Controller
 @RequiredArgsConstructor
@@ -114,6 +118,7 @@ public class AdminController {
     public String listUsers(@RequestParam(value = "keyword", required = false) String keyword,
                             @RequestParam(value = "roleId", required = false) Long roleId,
                             @RequestParam(value = "status", required = false) String status,
+                            @RequestParam(value = "tierId", required = false) Integer tierId,
                             @RequestParam(value = "page", defaultValue = "1") int page,
                             @RequestParam(value = "size", defaultValue = "5") int size,
                             @RequestParam(value = "sortBy", defaultValue = "userId") String sortBy,
@@ -121,7 +126,7 @@ public class AdminController {
                             Model model) {
         int safePage = Math.max(1, page);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        model.addAllAttributes(userService.getAdminUserPageData(StringUtils.sanitizeKeyword(keyword), roleId, status, safePage, safeSize, sortBy, sortDir));
+        model.addAllAttributes(userService.getAdminUserPageData(StringUtils.sanitizeKeyword(keyword), roleId, status, tierId, safePage, safeSize, sortBy, sortDir));
         return "admin/users/list";
     }
 
@@ -134,12 +139,13 @@ public class AdminController {
                                @RequestParam(value = "keyword", required = false) String keyword,
                                @RequestParam(value = "roleId", required = false) Long roleId,
                                @RequestParam(value = "status", required = false) String status,
+                            @RequestParam(value = "tierId", required = false) Integer tierId,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
         Integer loggedInUserId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (loggedInUserId != null && loggedInUserId.equals(id)) {
             redirectAttributes.addFlashAttribute("errorMessage", "Bạn không thể tự khóa tài khoản quản trị đang đăng nhập của chính mình!");
-            return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status);
+            return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status, tierId);
         }
 
         try {
@@ -148,7 +154,7 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status);
+        return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status, tierId);
     }
 
     /**
@@ -161,6 +167,7 @@ public class AdminController {
                               @RequestParam(value = "keyword", required = false) String keyword,
                               @RequestParam(value = "roleId", required = false) Long roleId,
                               @RequestParam(value = "status", required = false) String status,
+                            @RequestParam(value = "tierId", required = false) Integer tierId,
                               HttpSession session,
                               RedirectAttributes redirectAttributes) {
         Integer loggedInUserId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
@@ -173,7 +180,7 @@ public class AdminController {
             }
             if (!willKeepAdmin) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Bạn không thể tự gỡ vai trò Quản trị viên (ADMIN) của chính mình!");
-                return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status);
+                return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status, tierId);
             }
         }
 
@@ -183,7 +190,7 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status);
+        return RedirectUtils.buildUserRedirectUrl(page, keyword, roleId, status, tierId);
     }
 
     /**
@@ -204,6 +211,20 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/admin/users";
+    }
+
+    /**
+     * API trả về chi tiết tiến trình thăng hạng và gói voucher đặc quyền của hội viên (Customer Loyalty Modal).
+     */
+    @GetMapping("/admin/users/{id}/loyalty-details")
+    @ResponseBody
+    public ResponseEntity<?> getUserLoyaltyDetails(@PathVariable("id") Integer id) {
+        try {
+            CustomerMembershipResponse data = membershipTierService.getCustomerMembershipData(id);
+            return ResponseEntity.ok(data);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Lỗi hệ thống khi nạp thông tin hội viên."));
+        }
     }
 
     // ================= 2. QUẢN LÝ DANH MỤC GỐC (MASTER CATEGORIES) =================
@@ -271,6 +292,7 @@ public class AdminController {
                                        @RequestParam(value = "page", defaultValue = "1") int page,
                                        @RequestParam(value = "keyword", required = false) String keyword,
                                        @RequestParam(value = "status", required = false) String status,
+                            @RequestParam(value = "tierId", required = false) Integer tierId,
                                        RedirectAttributes redirectAttributes) {
         try {
             categoryService.toggleCategoryStatus(id);
@@ -426,10 +448,25 @@ public class AdminController {
     @PostMapping("/admin/membership-tiers/{id}/coupons")
     public String updateTierCoupons(@PathVariable("id") Integer tierId,
                                     @RequestParam(value = "couponIds", required = false) List<Integer> couponIds,
+                                    @RequestParam Map<String, String> allParams,
                                     RedirectAttributes redirectAttributes) {
         try {
-            membershipTierService.updateTierCoupons(tierId, couponIds);
-            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật gói voucher đặc quyền cho hạng thành công!");
+            Map<Integer, Integer> quotaMap = new HashMap<>();
+            if (allParams != null) {
+                for (Map.Entry<String, String> entry : allParams.entrySet()) {
+                    if (entry.getKey().startsWith("quota_")) {
+                        try {
+                            Integer couponId = Integer.parseInt(entry.getKey().substring("quota_".length()));
+                            Integer quota = Integer.parseInt(entry.getValue().trim());
+                            if (quota > 0) {
+                                quotaMap.put(couponId, quota);
+                            }
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+            }
+            membershipTierService.updateTierCoupons(tierId, couponIds, quotaMap);
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật gói voucher đặc quyền và định mức lượt dùng thành công!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể cập nhật gói voucher: " + e.getMessage());
         }

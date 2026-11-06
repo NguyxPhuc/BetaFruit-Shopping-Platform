@@ -224,6 +224,9 @@
                                               th:classappend="${#strings.containsIgnoreCase(tier.tierName, 'kim cương') ? 'coupon-ticket-diamond' : ''}">
                                             <i class="bi bi-ticket-perforated-fill me-1"></i>
                                             <span th:text="${c.couponCode}">CODE</span>
+                                            <span th:if="${tierCouponQuotaMap != null and tierCouponQuotaMap.get(tier.tierId) != null and tierCouponQuotaMap.get(tier.tierId).get(c.couponId) != null}"
+                                                  class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill ms-1 px-1.5 py-0" style="font-size: 0.68rem;"
+                                                  th:text="'x' + ${tierCouponQuotaMap.get(tier.tierId).get(c.couponId)} + ' lượt'">x1 lượt</span>
                                         </span>
                                     </div>
                                     <div class="d-flex align-items-center gap-1 small text-muted">
@@ -357,6 +360,7 @@
                                             <th style="min-width: 110px;">Phân Loại</th>
                                             <th style="min-width: 130px;">Mức Giảm</th>
                                             <th style="min-width: 130px;">Đơn Tối Thiểu</th>
+                                            <th style="min-width: 140px;" class="text-center">Số Lượt / Hội Viên</th>
                                             <th style="min-width: 120px;">Hạn Dùng</th>
                                         </tr>
                                         </thead>
@@ -381,6 +385,17 @@
                                             <td class="small text-muted">
                                                 <span th:if="${c.minOrderValue != null and c.minOrderValue > 0}" th:text="${#numbers.formatDecimal(c.minOrderValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'">100.000 ₫</span>
                                                 <span th:unless="${c.minOrderValue != null and c.minOrderValue > 0}">0 ₫</span>
+                                            </td>
+                                            <td class="text-center" style="width: 140px;">
+                                                <div class="input-group input-group-sm justify-content-center" style="max-width: 110px; margin: 0 auto;">
+                                                    <input type="number" min="1" max="99" 
+                                                           th:name="'quota_' + ${c.couponId}"
+                                                           th:value="${tierCouponQuotaMap != null and tierCouponQuotaMap.get(tier.tierId) != null and tierCouponQuotaMap.get(tier.tierId).get(c.couponId) != null ? tierCouponQuotaMap.get(tier.tierId).get(c.couponId) : (#strings.containsIgnoreCase(tier.tierName, 'kim cương') or #strings.containsIgnoreCase(tier.tierName, 'vip') ? 3 : (#strings.containsIgnoreCase(tier.tierName, 'vàng') ? 2 : 1))}"
+                                                           class="form-control form-control-sm text-center fw-bold text-primary"
+                                                           placeholder="1"
+                                                           title="Số lượt khách hàng thuộc hạng này được phép sử dụng mã">
+                                                    <span class="input-group-text bg-light text-muted small px-1.5" style="font-size: 0.72rem;">lượt</span>
+                                                </div>
                                             </td>
                                             <td class="small text-muted">
                                                 <span th:if="${c.endDate != null}" th:text="${#temporals.format(c.endDate, 'dd/MM/yyyy')}">31/12/2026</span>

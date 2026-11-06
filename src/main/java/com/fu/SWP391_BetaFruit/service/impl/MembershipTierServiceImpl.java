@@ -52,13 +52,79 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     // 1. PHÍA CUSTOMER (BR-LY-01, BR-LY-02, BR-LY-03 & TIÊU CHÍ KÉP SHOPEE)
     // =========================================================================
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
+    public CustomerMembership syncCustomerMembershipTier(Integer userId) {
+        if (userId == null) {
+            return null;
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return null;
+        }
+
+        CustomerMembership membership = customerMembershipRepository.findByUserId(userId).orElse(null);
+        BigDecimal totalSpent = (membership != null && membership.getTotalCumulativeSpend() != null)
+                ? membership.getTotalCumulativeSpend()
+                : BigDecimal.ZERO;
+
+        long completedOrders = (orderRepository != null)
+                ? orderRepository.countByCustomer_UserIdAndOrderStatusIn(userId, COMPLETED_ORDER_STATUSES)
+                : 0L;
+
+        List<MembershipTier> sortedTiers = membershipTierRepository.findAllByOrderByMinSpentRequiredAsc();
+        if (sortedTiers.isEmpty()) {
+            return membership;
+        }
+
+        MembershipTier qualifiedTier = sortedTiers.get(0);
+        for (MembershipTier tier : sortedTiers) {
+            int minOrders = (tier.getMinOrdersRequired() != null) ? tier.getMinOrdersRequired() : 0;
+            BigDecimal tierMinSpent = (tier.getMinSpentRequired() != null) ? tier.getMinSpentRequired() : BigDecimal.ZERO;
+            boolean spendPassed = totalSpent.compareTo(tierMinSpent) >= 0;
+            boolean ordersPassed = (minOrders > 0) && (completedOrders >= minOrders);
+
+            if (spendPassed || ordersPassed) {
+                qualifiedTier = tier;
+            } else {
+                break;
+            }
+        }
+
+        if (membership == null) {
+            CustomerMembership newMembership = new CustomerMembership();
+            newMembership.setUser(user);
+            newMembership.setTier(qualifiedTier);
+            newMembership.setTotalCumulativeSpend(totalSpent);
+            return customerMembershipRepository.save(newMembership);
+        } else if (membership.getTier() == null || !Objects.equals(membership.getTier().getTierId(), qualifiedTier.getTierId())) {
+            membership.setTier(qualifiedTier);
+            return customerMembershipRepository.save(membership);
+        }
+        return membership;
+    }
+
+    @Override
+    @Transactional
+    public void syncAllCustomersMembershipTier() {
+        List<CustomerMembership> allMemberships = customerMembershipRepository.findAll();
+        for (CustomerMembership cm : allMemberships) {
+            if (cm.getUser() != null && cm.getUser().getUserId() != null) {
+                syncCustomerMembershipTier(cm.getUser().getUserId());
+            }
+        }
+    }
+
+    @Override
+    @Transactional
     public CustomerMembershipResponse getCustomerMembershipData(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin người dùng với ID: " + userId));
 
-        // Lấy thông tin tích lũy chi tiêu của customer (BR-LY-01: được tích lũy từ các đơn SUCCESS)
-        CustomerMembership membership = customerMembershipRepository.findByUserId(userId).orElse(null);
+        // Tự động đối soát và đồng bộ hạng chuẩn xác vào Database
+        CustomerMembership membership = syncCustomerMembershipTier(userId);
+        if (membership == null) {
+            membership = customerMembershipRepository.findByUserId(userId).orElse(null);
+        }
         BigDecimal totalSpent = (membership != null && membership.getTotalCumulativeSpend() != null)
                 ? membership.getTotalCumulativeSpend()
                 : BigDecimal.ZERO;
@@ -78,8 +144,9 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         for (int i = 0; i < sortedTiers.size(); i++) {
             MembershipTier tier = sortedTiers.get(i);
             int minOrders = (tier.getMinOrdersRequired() != null) ? tier.getMinOrdersRequired() : 0;
-            boolean spendPassed = totalSpent.compareTo(tier.getMinSpentRequired()) >= 0;
-            boolean ordersPassed = completedOrders >= minOrders;
+            BigDecimal tierMinSpent = (tier.getMinSpentRequired() != null) ? tier.getMinSpentRequired() : BigDecimal.ZERO;
+            boolean spendPassed = totalSpent.compareTo(tierMinSpent) >= 0;
+            boolean ordersPassed = (minOrders > 0) && (completedOrders >= minOrders);
 
             if (spendPassed || ordersPassed) {
                 currentTier = tier; // Cập nhật hạng cao nhất thỏa mãn
@@ -88,6 +155,14 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 // Hạng đầu tiên chưa đạt chính là nextTier
                 nextTier = tier;
                 break;
+            }
+        }
+
+        // Tự động đồng bộ lại vào DB nếu có sự thay đổi
+        if (membership != null && currentTier != null) {
+            if (membership.getTier() == null || !Objects.equals(membership.getTier().getTierId(), currentTier.getTierId())) {
+                membership.setTier(currentTier);
+                customerMembershipRepository.save(membership);
             }
         }
 
@@ -118,7 +193,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 progressOrdersPercentage = 100.0;
             }
 
-            BigDecimal nextMinSpent = nextTier.getMinSpentRequired();
+            BigDecimal nextMinSpent = (nextTier.getMinSpentRequired() != null) ? nextTier.getMinSpentRequired() : BigDecimal.ZERO;
             amountNeeded = nextMinSpent.subtract(totalSpent);
             if (amountNeeded.compareTo(BigDecimal.ZERO) < 0) {
                 amountNeeded = BigDecimal.ZERO;
@@ -169,7 +244,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 .ordersNeeded(ordersNeeded)
                 .progressOrdersPercentage(progressOrdersPercentage)
                 .cycleExpiryDate(calculateCycleExpiryDate())
-                .tierVouchers(getExclusiveVouchersForTier(currentTierIndex, currentTier))
+                .tierVouchers(getExclusiveVouchersForTier(user.getUserId(), currentTierIndex, currentTier))
                 .build();
     }
 
@@ -200,6 +275,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         tier.setMinOrdersRequired(request.getMinOrdersRequired() != null ? request.getMinOrdersRequired() : 0);
 
         MembershipTier saved = membershipTierRepository.save(tier);
+        syncAllCustomersMembershipTier();
 
     }
 
@@ -214,6 +290,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         tier.setMinOrdersRequired(request.getMinOrdersRequired() != null ? request.getMinOrdersRequired() : 0);
 
         MembershipTier saved = membershipTierRepository.save(tier);
+        syncAllCustomersMembershipTier();
 
     }
 
@@ -242,21 +319,28 @@ public class MembershipTierServiceImpl implements MembershipTierService {
 
         Map<Integer, List<Coupon>> tierCouponsMap = new HashMap<>();
         Map<Integer, Set<Integer>> tierCouponIdsMap = new HashMap<>();
+        Map<Integer, Map<Integer, Integer>> tierCouponQuotaMap = new HashMap<>();
 
         for (MembershipTier tier : tiers) {
-            List<Coupon> assigned = (tierCouponRepository != null)
-                    ? tierCouponRepository.findByTier_TierId(tier.getTierId()).stream()
+            List<TierCoupon> links = (tierCouponRepository != null)
+                    ? tierCouponRepository.findByTier_TierId(tier.getTierId())
+                    : Collections.emptyList();
+            List<Coupon> assigned = links.stream()
                     .map(TierCoupon::getCoupon)
                     .filter(Objects::nonNull)
-                    .toList()
-                    : Collections.emptyList();
+                    .toList();
             tierCouponsMap.put(tier.getTierId(), assigned);
 
             Set<Integer> ids = new HashSet<>();
-            for (Coupon c : assigned) {
-                ids.add(c.getCouponId());
+            Map<Integer, Integer> quotaMap = new HashMap<>();
+            for (TierCoupon tc : links) {
+                if (tc.getCoupon() != null && tc.getCoupon().getCouponId() != null) {
+                    ids.add(tc.getCoupon().getCouponId());
+                    quotaMap.put(tc.getCoupon().getCouponId(), tc.getEffectiveUsageQuota());
+                }
             }
             tierCouponIdsMap.put(tier.getTierId(), ids);
+            tierCouponQuotaMap.put(tier.getTierId(), quotaMap);
         }
 
         Map<String, Object> data = new HashMap<>();
@@ -266,6 +350,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         data.put("platformCoupons", platformCoupons);
         data.put("tierCouponsMap", tierCouponsMap);
         data.put("tierCouponIdsMap", tierCouponIdsMap);
+        data.put("tierCouponQuotaMap", tierCouponQuotaMap);
         return data;
     }
 
@@ -292,6 +377,12 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     @Override
     @Transactional
     public void updateTierCoupons(Integer tierId, List<Integer> couponIds) {
+        updateTierCoupons(tierId, couponIds, Collections.emptyMap());
+    }
+
+    @Override
+    @Transactional
+    public void updateTierCoupons(Integer tierId, List<Integer> couponIds, Map<Integer, Integer> quotaMap) {
         MembershipTier tier = membershipTierRepository.findById(tierId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Hạng thành viên với ID: " + tierId));
 
@@ -310,7 +401,18 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             if (coupon.getShop() != null) {
                 throw new IllegalArgumentException("Mã [" + coupon.getCouponCode() + "] là mã riêng của Shop, không thể đưa vào gói quyền lợi Hạng của Sàn!");
             }
-            newLinks.add(new TierCoupon(tier, coupon));
+            Integer quota = (quotaMap != null) ? quotaMap.get(coupon.getCouponId()) : null;
+            if (quota == null || quota <= 0) {
+                String name = (tier.getTierName() != null) ? tier.getTierName().toLowerCase() : "";
+                if (name.contains("kim cương") || name.contains("diamond") || name.contains("vip")) {
+                    quota = 3;
+                } else if (name.contains("vàng") || name.contains("gold")) {
+                    quota = 2;
+                } else {
+                    quota = 1;
+                }
+            }
+            newLinks.add(new TierCoupon(tier, coupon, quota));
         }
 
         if (tierCouponRepository != null) {
@@ -366,7 +468,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             MembershipTier t = sortedTiers.get(i);
             int minOrders = (t.getMinOrdersRequired() != null) ? t.getMinOrdersRequired() : 0;
             boolean spendPassed = newSpend.compareTo(t.getMinSpentRequired()) >= 0;
-            boolean ordersPassed = completedOrders >= minOrders;
+            boolean ordersPassed = (minOrders > 0) && (completedOrders >= minOrders);
 
             if (spendPassed || ordersPassed) {
                 qualifiedTier = t; // Cập nhật hạng cao nhất thỏa mãn
@@ -393,7 +495,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             membership.setTier(qualifiedTier);
             customerMembershipRepository.save(membership);
 
-            // Lấy danh sách Voucher đặc quyền thực tế từ cấu hình gói (Shopee Rewards) của hạng này
+            // Lấy danh sách Voucher đặc quyền thực tế từ cấu hình gói của hạng này
             List<TierCoupon> tierCouponMappings = (tierCouponRepository != null && qualifiedTier.getTierId() != null)
                     ? tierCouponRepository.findByTier_TierId(qualifiedTier.getTierId())
                     : Collections.emptyList();
@@ -547,7 +649,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     /**
      * Lấy danh sách Voucher đặc quyền theo cấp bậc hiện tại (Shopee Rewards Style)
      */
-    private List<TierVoucherResponse> getExclusiveVouchersForTier(int tierIndex, MembershipTier currentTier) {
+    private List<TierVoucherResponse> getExclusiveVouchersForTier(Integer userId, int tierIndex, MembershipTier currentTier) {
         if (tierIndex <= 0 || currentTier == null || currentTier.getTierId() == null || tierCouponRepository == null) {
             return Collections.emptyList();
         }
@@ -562,20 +664,29 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         for (TierCoupon tc : configuredList) {
             Coupon c = tc.getCoupon();
             if (c != null && Boolean.TRUE.equals(c.getIsActive())) {
-                vouchers.add(mapCouponToTierVoucherResponse(c, currentTier, dtf));
+                long usedCount = 0;
+                if (userId != null && orderRepository != null && c.getCouponId() != null) {
+                    usedCount = orderRepository.countValidUsedCouponByCustomer(userId, c.getCouponId());
+                }
+                int totalQuota = tc.getEffectiveUsageQuota();
+                long remainingQuota = Math.max(0, totalQuota - usedCount);
+                boolean isUsed = (remainingQuota <= 0);
+
+                vouchers.add(mapCouponToTierVoucherResponse(c, currentTier, dtf, isUsed, totalQuota, usedCount, remainingQuota));
             }
         }
         return vouchers;
     }
 
-    private TierVoucherResponse mapCouponToTierVoucherResponse(Coupon c, MembershipTier currentTier, DateTimeFormatter dtf) {
+    private TierVoucherResponse mapCouponToTierVoucherResponse(Coupon c, MembershipTier currentTier, DateTimeFormatter dtf, boolean isUsed, int totalQuota, long usedCount, long remainingQuota) {
+        BigDecimal discountVal = (c.getDiscountValue() != null) ? c.getDiscountValue() : BigDecimal.ZERO;
         String title;
         if (c.getDiscountType() == DiscountType.PERCENT) {
-            title = "Giảm " + c.getDiscountValue().stripTrailingZeros().toPlainString() + "%";
+            title = "Giảm " + discountVal.stripTrailingZeros().toPlainString() + "%";
         } else if (c.getCouponCategory() == CouponCategory.SHIPPING) {
-            title = "Freeship " + formatVoucherMoney(c.getDiscountValue());
+            title = "Freeship " + formatVoucherMoney(discountVal);
         } else {
-            title = "Giảm " + formatVoucherMoney(c.getDiscountValue());
+            title = "Giảm " + formatVoucherMoney(discountVal);
         }
 
         String minSpend = (c.getMinOrderValue() != null)
@@ -591,6 +702,10 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 : "HSD: Đến hết chu kỳ";
 
         String badge = (c.getCouponCategory() == CouponCategory.SHIPPING) ? "FREESHIP" : "GIẢM GIÁ";
+        String quotaBadge = "x" + totalQuota + " lượt";
+        String usageProgress = isUsed
+                ? "Đã dùng hết (" + totalQuota + "/" + totalQuota + " lượt)"
+                : "Còn lại " + remainingQuota + "/" + totalQuota + " lượt";
 
         return TierVoucherResponse.builder()
                 .couponCode(c.getCouponCode())
@@ -602,6 +717,12 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 .badgeType(badge)
                 .targetTierName(currentTier != null ? currentTier.getTierName() : "")
                 .isAvailable(Boolean.TRUE.equals(c.getIsActive()))
+                .isUsed(isUsed)
+                .totalQuota(totalQuota)
+                .usedCount(usedCount)
+                .remainingQuota(remainingQuota)
+                .quotaBadgeText(quotaBadge)
+                .usageProgressText(usageProgress)
                 .build();
     }
 

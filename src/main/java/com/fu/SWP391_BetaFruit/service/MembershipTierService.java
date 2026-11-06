@@ -14,6 +14,8 @@ public interface MembershipTierService {
 
     // Phía Customer: BR-LY-01, BR-LY-02, BR-LY-03
     CustomerMembershipResponse getCustomerMembershipData(Integer userId);
+    com.fu.SWP391_BetaFruit.entity.CustomerMembership syncCustomerMembershipTier(Integer userId);
+    void syncAllCustomersMembershipTier();
 
     // Phía Admin: Quản lý tiers (BR-LY-02: không âm, không trùng, tăng dần)
     List<MembershipTier> getAllTiers();
@@ -27,6 +29,7 @@ public interface MembershipTierService {
     List<Coupon> getAvailablePlatformCoupons();
     List<Coupon> getCouponsForTier(Integer tierId);
     void updateTierCoupons(Integer tierId, List<Integer> couponIds);
+    void updateTierCoupons(Integer tierId, List<Integer> couponIds, Map<Integer, Integer> quotaMap);
 
     // Phía Nghiệp vụ Lõi (Shopee Loyalty Engine): FE-09.1, FE-11.2
     TierUpgradeResult processOrderCompleted(Integer customerId, Integer orderId, BigDecimal orderFinalAmount);

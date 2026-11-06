@@ -4,6 +4,7 @@ import com.fu.SWP391_BetaFruit.dto.request.ChangePasswordRequest;
 import com.fu.SWP391_BetaFruit.dto.request.CustomerProfileRequest;
 import com.fu.SWP391_BetaFruit.dto.request.UserRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerProfileResponse;
+import com.fu.SWP391_BetaFruit.dto.response.UserTierStatResponse;
 import com.fu.SWP391_BetaFruit.entity.Cart;
 import com.fu.SWP391_BetaFruit.entity.CustomerMembership;
 import com.fu.SWP391_BetaFruit.entity.MembershipTier;
@@ -17,6 +18,7 @@ import com.fu.SWP391_BetaFruit.repository.MembershipTierRepository;
 import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
+import com.fu.SWP391_BetaFruit.service.MembershipTierService;
 import com.fu.SWP391_BetaFruit.service.UserService;
 import com.fu.SWP391_BetaFruit.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +56,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private MembershipTierRepository tierRepository;
+
+    @Autowired(required = false)
+    private MembershipTierService membershipTierService;
 
     @Override
     public CustomerProfileResponse getCustomerProfile(Integer id) throws Exception {
@@ -263,7 +269,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
+    public Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, Integer tierId, int page, int size, String sortBy, String sortDir) {
         int pageIndex = Math.max(0, page - 1);
         int pageSize = size > 0 ? Math.min(size, 100) : 5;
 
@@ -277,14 +283,84 @@ public class UserServiceImpl implements UserService {
         Long validRoleId = (roleId != null && roleId > 0) ? roleId : null;
         UserStatus filterStatus = parseUserStatus(status);
 
-        Page<User> userPage = userRepository.filterUsers(cleanKeyword, validRoleId, filterStatus, pageable);
+        Integer validTierId = (tierId != null && (tierId > 0 || tierId == -1)) ? tierId : null;
+
+        // Tự động đối soát và đồng bộ hạng hội viên vào Database
+        if (membershipTierService != null) {
+            try {
+                membershipTierService.syncAllCustomersMembershipTier();
+            } catch (Exception ignored) {
+            }
+        }
+
+        Page<User> userPage = userRepository.filterUsers(cleanKeyword, validRoleId, filterStatus, validTierId, pageable);
         List<Role> allRoles = roleRepository.findAll();
+        List<MembershipTier> allTiers = tierRepository.findAllByOrderByMinSpentRequiredAsc();
+
+        long totalCount = userRepository.count();
+
+        // Xây dựng danh sách thống kê số lượng theo từng hạng (Tier Distribution Stats)
+        List<UserTierStatResponse> tierStats = new ArrayList<>();
+        long totalAssignedMembers = 0;
+
+        for (MembershipTier tier : allTiers) {
+            long count = customerMembershipRepository.countByTier_TierId(tier.getTierId());
+            totalAssignedMembers += count;
+
+            String nameLower = tier.getTierName() != null ? tier.getTierName().toLowerCase() : "";
+            String iconClass = "bi-award";
+            String badgeClass = "badge-tier-bronze";
+            String cardClass = "tier-bronze";
+
+            if (nameLower.contains("kim cương") || nameLower.contains("diamond")) {
+                iconClass = "bi-gem-fill";
+                badgeClass = "badge-tier-diamond";
+                cardClass = "tier-diamond";
+            } else if (nameLower.contains("vàng") || nameLower.contains("gold")) {
+                iconClass = "bi-award-fill";
+                badgeClass = "badge-tier-gold";
+                cardClass = "tier-gold";
+            } else if (nameLower.contains("bạc") || nameLower.contains("silver")) {
+                iconClass = "bi-shield-shaded";
+                badgeClass = "badge-tier-silver";
+                cardClass = "tier-silver";
+            } else if (nameLower.contains("đồng") || nameLower.contains("bronze")) {
+                iconClass = "bi-circle-fill";
+                badgeClass = "badge-tier-bronze";
+                cardClass = "tier-bronze";
+            }
+
+            tierStats.add(UserTierStatResponse.builder()
+                    .tierId(tier.getTierId())
+                    .tierName(tier.getTierName())
+                    .count(count)
+                    .iconClass(iconClass)
+                    .badgeClass(badgeClass)
+                    .cardClass(cardClass)
+                    .minSpent(tier.getMinSpentRequired())
+                    .build());
+        }
+
+        // Tài khoản nội bộ hoặc chưa phân hạng hội viên
+        long unrankedCount = Math.max(0, totalCount - totalAssignedMembers);
+        tierStats.add(UserTierStatResponse.builder()
+                .tierId(-1)
+                .tierName("Nội bộ / Chưa có")
+                .count(unrankedCount)
+                .iconClass("bi-person-gear")
+                .badgeClass("badge-tier-unranked")
+                .cardClass("tier-unranked")
+                .minSpent(BigDecimal.ZERO)
+                .build());
 
         Map<String, Object> data = new HashMap<>();
         data.put("users", userPage.getContent());
         data.put("userPage", userPage);
         data.put("pageData", userPage);
         data.put("allRoles", allRoles);
+        data.put("allTiers", allTiers);
+        data.put("tierStats", tierStats);
+        data.put("currentTierId", validTierId);
         data.put("keyword", cleanKeyword != null ? cleanKeyword : "");
         data.put("currentRoleId", validRoleId);
         data.put("currentStatus", filterStatus != null ? filterStatus.name() : "ALL");
@@ -296,6 +372,11 @@ public class UserServiceImpl implements UserService {
         data.put("newUser", new UserRequest());
 
         return data;
+    }
+
+    @Override
+    public Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
+        return getAdminUserPageData(keyword, roleId, status, null, page, size, sortBy, sortDir);
     }
 
     @Override
