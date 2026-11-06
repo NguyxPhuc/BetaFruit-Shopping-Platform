@@ -80,6 +80,27 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @EntityGraph(attributePaths = {"shop", "coupon"})
     Optional<Order> findByOrderIdAndCustomer_UserId(Integer orderId, Integer customerId);
 
+    @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o WHERE o.orderStatus IN (:statuses)")
+    BigDecimal sumTotalRevenueByStatuses(@Param("statuses") List<OrderStatus> statuses);
+
+    @Query("SELECT COALESCE(SUM(o.platformFee), 0) FROM Order o WHERE o.orderStatus IN (:statuses)")
+    BigDecimal sumTotalPlatformFeeByStatuses(@Param("statuses") List<OrderStatus> statuses);
+
+    long countByOrderStatusIn(List<OrderStatus> statuses);
+
+    @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o WHERE o.shop.shopId = :shopId AND o.orderStatus IN (:statuses)")
+    BigDecimal sumTotalRevenueByShopAndStatuses(@Param("shopId") Integer shopId, @Param("statuses") List<OrderStatus> statuses);
+
+    @Query("SELECT COALESCE(SUM(o.platformFee), 0) FROM Order o WHERE o.shop.shopId = :shopId AND o.orderStatus IN (:statuses)")
+    BigDecimal sumTotalPlatformFeeByShopAndStatuses(@Param("shopId") Integer shopId, @Param("statuses") List<OrderStatus> statuses);
+
+    long countByShop_ShopId(Integer shopId);
+
+    long countByShop_ShopIdAndOrderStatusIn(Integer shopId, List<OrderStatus> statuses);
+
+    @Query("SELECT COUNT(DISTINCT o.customer.userId) FROM Order o WHERE o.shop.shopId = :shopId")
+    long countDistinctCustomerByShopId(@Param("shopId") Integer shopId);
+
     // =========================================================================
     // VOUCHER ANALYTICS DASHBOARD QUERIES (PLATFORM & SHOP)
     // =========================================================================

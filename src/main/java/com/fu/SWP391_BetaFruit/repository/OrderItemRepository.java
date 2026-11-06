@@ -2,6 +2,7 @@ package com.fu.SWP391_BetaFruit.repository;
 
 import com.fu.SWP391_BetaFruit.entity.OrderItem;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +20,20 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     @Query("SELECT i.variant.product.productId, SUM(i.quantity) FROM OrderItem i " +
             "WHERE i.order.orderStatus IN :statuses GROUP BY i.variant.product.productId")
     List<Object[]> sumSoldQuantityByProductIn(@Param("statuses") Collection<OrderStatus> statuses);
+
+    @Query("SELECT i.variant.product.productId, SUM(i.quantity), COALESCE(SUM(i.quantity * i.priceSnapshot), 0) " +
+            "FROM OrderItem i " +
+            "WHERE i.order.orderStatus IN (:statuses) " +
+            "GROUP BY i.variant.product.productId " +
+            "ORDER BY SUM(i.quantity) DESC")
+    List<Object[]> findTopSellingProductStats(@Param("statuses") List<OrderStatus> statuses, Pageable pageable);
+
+    @Query("SELECT i.variant.product.productId, SUM(i.quantity), COALESCE(SUM(i.quantity * i.priceSnapshot), 0) " +
+            "FROM OrderItem i " +
+            "WHERE i.order.shop.shopId = :shopId AND i.order.orderStatus IN (:statuses) " +
+            "GROUP BY i.variant.product.productId " +
+            "ORDER BY SUM(i.quantity) DESC")
+    List<Object[]> findTopSellingProductStatsByShop(@Param("shopId") Integer shopId, @Param("statuses") List<OrderStatus> statuses, Pageable pageable);
 
     @Query("SELECT SUM(i.costSnapshot * i.quantity) FROM OrderItem i WHERE i.order.coupon IS NOT NULL AND i.order.orderStatus != 'CANCELLED'")
     BigDecimal sumTotalCostPriceForVoucherOrders();

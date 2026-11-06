@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.repository;
 
 import com.fu.SWP391_BetaFruit.entity.User;
+import com.fu.SWP391_BetaFruit.enums.RoleName;
 import com.fu.SWP391_BetaFruit.enums.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -54,4 +55,10 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     }
 
     long countByStatus(UserStatus status);
+
+    @Query("SELECT COUNT(DISTINCT u) FROM User u JOIN u.roles r WHERE r.roleName = :roleName")
+    long countByRoleName(@Param("roleName") RoleName roleName);
+
+    @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r.roleName = :roleName AND u.status = :status")
+    List<User> findUsersByRoleNameAndStatus(@Param("roleName") RoleName roleName, @Param("status") UserStatus status);
 }

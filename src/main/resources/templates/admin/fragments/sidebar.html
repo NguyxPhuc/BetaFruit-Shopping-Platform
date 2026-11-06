@@ -33,6 +33,13 @@
                         <span>Tổng quan Hệ thống</span>
                     </a>
                 </li>
+                <li class="admin-nav-item">
+                    <a th:href="@{/admin/analytics}" href="/admin/analytics" class="admin-nav-link"
+                       th:classappend="${activeMenu == 'analytics'} ? 'active' : ''">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span>Thống kê Toàn sàn</span>
+                    </a>
+                </li>
             </ul>
 
             <div class="admin-sidebar-divider"></div>
