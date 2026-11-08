@@ -233,8 +233,8 @@ class CheckoutCouponAuthorizationTest {
                 checkoutService.preview(10, List.of(5), "BETAPUBLIC")
         );
 
-        assertTrue(ex.getMessage().contains("Bạn đã sử dụng mã giảm giá này rồi"));
-        assertTrue(ex.getMessage().contains("tối đa 1 lần"));
+        assertTrue(ex.getMessage().contains("Bạn đã sử dụng hết"));
+        assertTrue(ex.getMessage().contains("1 lượt"));
     }
 
     @Test
