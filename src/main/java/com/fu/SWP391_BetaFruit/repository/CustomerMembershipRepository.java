@@ -13,4 +13,6 @@ public interface CustomerMembershipRepository extends JpaRepository<CustomerMemb
     boolean existsByTier_TierId(Integer tierId);
 
     long countByTier_TierId(Integer tierId);
+
+    long countByTierNotNull();
 }

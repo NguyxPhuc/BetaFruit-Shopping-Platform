@@ -29,8 +29,40 @@ public class TierCoupon {
     @JoinColumn(name = "CouponId", nullable = false)
     private Coupon coupon;
 
+    @Column(name = "UsageQuota")
+    private Integer usageQuota;
+
     public TierCoupon(MembershipTier tier, Coupon coupon) {
         this.tier = tier;
         this.coupon = coupon;
+        this.usageQuota = 1;
+    }
+
+    public TierCoupon(Integer id, MembershipTier tier, Coupon coupon) {
+        this.id = id;
+        this.tier = tier;
+        this.coupon = coupon;
+        this.usageQuota = 1;
+    }
+
+    public TierCoupon(MembershipTier tier, Coupon coupon, Integer usageQuota) {
+        this.tier = tier;
+        this.coupon = coupon;
+        this.usageQuota = (usageQuota != null && usageQuota > 0) ? usageQuota : 1;
+    }
+
+    public int getEffectiveUsageQuota() {
+        if (usageQuota != null && usageQuota > 0) {
+            return usageQuota;
+        }
+        if (tier != null && tier.getTierName() != null) {
+            String name = tier.getTierName().toLowerCase();
+            if (name.contains("kim cương") || name.contains("diamond") || name.contains("vip")) {
+                return 3;
+            } else if (name.contains("vàng") || name.contains("gold")) {
+                return 2;
+            }
+        }
+        return 1;
     }
 }

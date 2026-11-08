@@ -49,6 +49,9 @@ public class User {
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    private CustomerMembership customerMembership;
+
     // Ánh xạ bảng trung gian UserRole
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

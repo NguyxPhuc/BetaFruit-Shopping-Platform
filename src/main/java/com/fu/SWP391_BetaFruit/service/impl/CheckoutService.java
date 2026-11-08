@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.service.impl;
 
+import com.fu.SWP391_BetaFruit.dto.response.AvailableCheckoutCouponResponse;
 import com.fu.SWP391_BetaFruit.dto.response.CartItemResponse;
 import com.fu.SWP391_BetaFruit.dto.response.CheckoutResponse;
 import com.fu.SWP391_BetaFruit.entity.*;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -32,11 +34,16 @@ public class CheckoutService {
     private final PaymentTransactionRepository payments;
     private final CheckoutCouponRepository coupons;
     private final NotificationService notifications;
+    private final TierCouponRepository tierCoupons;
+    private final CustomerMembershipRepository customerMemberships;
+    private final MembershipTierRepository membershipTiers;
 
     @Value("${checkout.shipping-fee:0}")
     private BigDecimal shippingFee = BigDecimal.ZERO;
     @Value("${checkout.default-commission-rate:0}")
     private BigDecimal defaultCommissionRate = BigDecimal.ZERO;
+    @Value("${checkout.coupon.default-limit-per-user:1}")
+    private int defaultCouponLimitPerUser = 1;
 
     public CheckoutResponse preview(Integer customerId, List<Integer> selectedIds) {
         return preview(customerId, selectedIds, null);
@@ -85,11 +92,35 @@ public class CheckoutService {
             throw new IllegalArgumentException("Mã giảm giá chỉ áp dụng cho sản phẩm của cửa hàng phát hành.");
         if (coupon.getCouponCategory() == null)
             throw new IllegalArgumentException("Mã giảm giá chưa có loại áp dụng.");
+
+        Shop shop = entities.getFirst().getVariant().getProduct().getShop();
+        CheckoutCouponRules.validateShopOwnerFraud(coupon, shop, customerId);
         CheckoutCouponRules.validate(coupon, subtotal, java.time.LocalDateTime.now());
+        int allowedLimit = defaultCouponLimitPerUser;
+        if (tierCoupons != null) {
+            List<TierCoupon> couponTiers = tierCoupons.findByCoupon_CouponId(coupon.getCouponId());
+            if (!couponTiers.isEmpty()) {
+                MembershipTier customerTier = null;
+                if (customerMemberships != null) {
+                    var memberOpt = customerMemberships.findByUserId(customerId);
+                    if (memberOpt.isPresent()) {
+                        customerTier = memberOpt.get().getTier();
+                    }
+                }
+                if (customerTier == null && membershipTiers != null) {
+                    customerTier = membershipTiers.findTopByOrderByMinSpentRequiredAsc();
+                }
+                CheckoutCouponRules.validateTierEligibility(coupon, customerTier, couponTiers);
+                allowedLimit = CheckoutCouponRules.resolveTierQuota(couponTiers, customerTier, defaultCouponLimitPerUser);
+            }
+        }
+        if (orders != null && customerId != null) {
+            long usedCount = orders.countValidUsedCouponByCustomer(customerId, coupon.getCouponId());
+            CheckoutCouponRules.validateUserUsageLimit(usedCount, allowedLimit);
+        }
         BigDecimal discount = OrderPricing.couponDiscount(coupon, subtotal, shipping);
         if (discount.signum() == 0)
             throw new IllegalArgumentException("Mã giảm giá không làm giảm số tiền đơn hàng này.");
-        Shop shop = entities.getFirst().getVariant().getProduct().getShop();
         var pricing = OrderPricing.quote(shop, coupon, subtotal, shipping, discount, defaultCommissionRate);
         BigDecimal finalAmount = pricing.finalAmount();
         var discountedGroup = new CheckoutResponse.ShopGroup(group.shopId(), group.shopName(), group.items(),
@@ -187,6 +218,202 @@ public class CheckoutService {
         }
         cartItems.deleteAll(selected);
         return List.copyOf(result);
+    }
+
+    public List<AvailableCheckoutCouponResponse> getAvailableCouponsForCustomer(
+            Integer customerId, Integer shopId, BigDecimal subtotal, BigDecimal shippingFee) {
+        if (customerId == null || subtotal == null) {
+            return Collections.emptyList();
+        }
+        LocalDateTime now = LocalDateTime.now();
+        BigDecimal currentShipping = shippingFee != null ? shippingFee : BigDecimal.ZERO;
+
+        // 1. Get Customer Membership Tier
+        MembershipTier customerTier = null;
+        if (customerMemberships != null) {
+            var memberOpt = customerMemberships.findByUserId(customerId);
+            if (memberOpt.isPresent()) {
+                customerTier = memberOpt.get().getTier();
+            }
+        }
+        if (customerTier == null && membershipTiers != null) {
+            customerTier = membershipTiers.findTopByOrderByMinSpentRequiredAsc();
+        }
+
+        // 2. Collect candidate coupons (Map by couponId to avoid duplicates)
+        Map<Integer, Coupon> candidateMap = new LinkedHashMap<>();
+
+        // 2a. Platform coupons
+        if (coupons != null) {
+            List<Coupon> platformCoupons = coupons.findByShopIsNullAndIsActiveTrue();
+            if (platformCoupons != null) {
+                for (Coupon c : platformCoupons) {
+                    if (c != null && c.getCouponId() != null) candidateMap.put(c.getCouponId(), c);
+                }
+            }
+            // 2b. Shop coupons
+            if (shopId != null) {
+                List<Coupon> shopCoupons = coupons.findByShop_ShopIdAndIsActiveTrue(shopId);
+                if (shopCoupons != null) {
+                    for (Coupon c : shopCoupons) {
+                        if (c != null && c.getCouponId() != null) candidateMap.put(c.getCouponId(), c);
+                    }
+                }
+            }
+        }
+
+        // 2c. Tier coupons for customer's tier
+        if (tierCoupons != null && customerTier != null && customerTier.getTierId() != null) {
+            List<TierCoupon> configuredList = tierCoupons.findByTier_TierId(customerTier.getTierId());
+            if (configuredList != null) {
+                for (TierCoupon tc : configuredList) {
+                    Coupon c = tc.getCoupon();
+                    if (c != null && Boolean.TRUE.equals(c.getIsActive()) && c.getCouponId() != null) {
+                        candidateMap.put(c.getCouponId(), c);
+                    }
+                }
+            }
+        }
+
+        // 3. Evaluate each candidate coupon
+        List<AvailableCheckoutCouponResponse> result = new ArrayList<>();
+
+        for (Coupon c : candidateMap.values()) {
+            if (c == null || !Boolean.TRUE.equals(c.getIsActive())) continue;
+
+            boolean eligible = true;
+            String ineligibleReason = null;
+
+            // Check validity period
+            if (c.getStartDate() != null && now.isBefore(c.getStartDate())) {
+                eligible = false;
+                ineligibleReason = "Chưa đến thời gian sử dụng";
+            } else if (c.getEndDate() != null && now.isAfter(c.getEndDate())) {
+                eligible = false;
+                ineligibleReason = "Mã giảm giá đã hết hạn";
+            }
+
+            // Check overall usage limit
+            int usedCountAll = c.getUsedCount() == null ? 0 : c.getUsedCount();
+            if (eligible && c.getUsageLimit() != null && usedCountAll >= c.getUsageLimit()) {
+                eligible = false;
+                ineligibleReason = "Mã đã hết lượt sử dụng toàn hệ thống";
+            }
+
+            // Check per-user usage / Tier quota
+            int allowedLimit = defaultCouponLimitPerUser;
+            List<TierCoupon> cTierCoupons = (tierCoupons != null) ? tierCoupons.findByCoupon_CouponId(c.getCouponId()) : List.of();
+            if (!cTierCoupons.isEmpty()) {
+                // Validate tier eligibility
+                try {
+                    CheckoutCouponRules.validateTierEligibility(c, customerTier, cTierCoupons);
+                    allowedLimit = CheckoutCouponRules.resolveTierQuota(cTierCoupons, customerTier, defaultCouponLimitPerUser);
+                } catch (IllegalArgumentException ex) {
+                    eligible = false;
+                    ineligibleReason = ex.getMessage();
+                }
+            }
+
+            long userUsedCount = 0;
+            if (orders != null && c.getCouponId() != null) {
+                userUsedCount = orders.countValidUsedCouponByCustomer(customerId, c.getCouponId());
+            }
+
+            long remainingQuota = Math.max(0, allowedLimit - userUsedCount);
+            String usageProgressText = "Còn lại " + remainingQuota + "/" + allowedLimit + " lượt";
+
+            if (eligible && userUsedCount >= allowedLimit) {
+                eligible = false;
+                ineligibleReason = "Đã dùng hết (" + userUsedCount + "/" + allowedLimit + " lượt)";
+                usageProgressText = "Đã dùng hết (" + userUsedCount + "/" + allowedLimit + " lượt)";
+            }
+
+            // Check minimum order value
+            if (eligible && c.getMinOrderValue() != null && subtotal.compareTo(c.getMinOrderValue()) < 0) {
+                eligible = false;
+                BigDecimal diff = c.getMinOrderValue().subtract(subtotal);
+                ineligibleReason = "Mua thêm " + formatCurrency(diff) + " ₫ để sử dụng";
+            }
+
+            // Calculate estimated discount
+            BigDecimal estimatedDiscount = BigDecimal.ZERO;
+            if (eligible) {
+                try {
+                    estimatedDiscount = OrderPricing.couponDiscount(c, subtotal, currentShipping);
+                    if (estimatedDiscount.signum() <= 0) {
+                        eligible = false;
+                        ineligibleReason = (c.getCouponCategory() == CouponCategory.SHIPPING && currentShipping.signum() == 0)
+                                ? "Đơn hàng này đang được miễn phí vận chuyển"
+                                : "Mã không làm giảm số tiền đơn hàng này";
+                    }
+                } catch (Exception ex) {
+                    eligible = false;
+                    ineligibleReason = ex.getMessage();
+                }
+            }
+
+            // Determine Scope Label
+            String scopeLabel = "Toàn sàn";
+            if (c.getShop() != null && c.getShop().getShopName() != null) {
+                scopeLabel = "Shop: " + c.getShop().getShopName();
+            } else if (!cTierCoupons.isEmpty()) {
+                String tiers = cTierCoupons.stream()
+                        .map(tc -> tc.getTier() != null ? tc.getTier().getTierName() : "")
+                        .filter(s -> !s.isBlank())
+                        .distinct()
+                        .collect(Collectors.joining(", "));
+                scopeLabel = tiers.isEmpty() ? "Đặc quyền Hội viên" : "Đặc quyền " + tiers;
+            }
+
+            // Determine Title
+            String title;
+            if (c.getCouponCategory() == CouponCategory.SHIPPING) {
+                title = "Freeship " + (c.getDiscountType() == DiscountType.PERCENT
+                        ? (c.getDiscountValue() != null ? c.getDiscountValue().stripTrailingZeros().toPlainString() : "0") + "%"
+                        : formatCurrency(c.getDiscountValue()) + " ₫");
+            } else {
+                title = "Giảm " + (c.getDiscountType() == DiscountType.PERCENT
+                        ? (c.getDiscountValue() != null ? c.getDiscountValue().stripTrailingZeros().toPlainString() : "0") + "%"
+                        : formatCurrency(c.getDiscountValue()) + " ₫");
+            }
+
+            String badgeType = (c.getCouponCategory() == CouponCategory.SHIPPING) ? "FREESHIP" : "DISCOUNT";
+
+            result.add(AvailableCheckoutCouponResponse.builder()
+                    .couponId(c.getCouponId())
+                    .code(c.getCouponCode())
+                    .title(title)
+                    .category(c.getCouponCategory())
+                    .discountType(c.getDiscountType())
+                    .discountValue(c.getDiscountValue())
+                    .maxDiscountAmount(c.getMaxDiscountAmount())
+                    .minOrderValue(c.getMinOrderValue())
+                    .scopeLabel(scopeLabel)
+                    .eligible(eligible)
+                    .ineligibleReason(ineligibleReason)
+                    .estimatedDiscount(estimatedDiscount)
+                    .badgeType(badgeType)
+                    .endDate(c.getEndDate())
+                    .usageProgressText(usageProgressText)
+                    .build());
+        }
+
+        // Sort: Eligible first, then higher estimated discount first, then by code
+        result.sort((a, b) -> {
+            if (a.isEligible() != b.isEligible()) {
+                return a.isEligible() ? -1 : 1;
+            }
+            int cmp = b.getEstimatedDiscount().compareTo(a.getEstimatedDiscount());
+            if (cmp != 0) return cmp;
+            return a.getCode().compareToIgnoreCase(b.getCode());
+        });
+
+        return result;
+    }
+
+    private String formatCurrency(BigDecimal amount) {
+        if (amount == null) return "0";
+        return String.format(Locale.GERMANY, "%,d", amount.longValue());
     }
 
     private List<CartItem> selectedItems(Integer customerId, Set<Integer> ids) {

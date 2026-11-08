@@ -106,10 +106,6 @@ public class CustomerOrderController {
                 redirectAttributes.addFlashAttribute("upgradeCelebration", true);
                 redirectAttributes.addFlashAttribute("newTierName", upgradeResult.getNewTierName());
                 redirectAttributes.addFlashAttribute("welcomeCoupon", upgradeResult.getWelcomeCouponCode());
-                redirectAttributes.addFlashAttribute("upgradeMessage",
-                        "🎉 CHÚC MỪNG BẠN ĐÃ THĂNG HẠNG " + upgradeResult.getNewTierName().toUpperCase()
-                                + "! Đặc quyền chiết khấu đã được kích hoạt. Nhận ngay Voucher: "
-                                + upgradeResult.getWelcomeCouponCode());
             }
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -286,8 +286,9 @@
             <div class="celebration-icon">👑</div>
             <div class="celebration-text">
                 <h3 th:text="'Chúc mừng bạn đã thăng hạng ' + ${newTierName} + '!'">Chúc mừng bạn đã thăng hạng Vàng!</h3>
-                <p>Đặc quyền chiết khấu hội viên đã được kích hoạt. Hãy dùng mã Voucher độc quyền bên dưới cho lần mua sắm tới!</p>
-                <div class="voucher-pill">
+                <p th:if="${welcomeCoupon != null and !welcomeCoupon.isEmpty()}">Đặc quyền hội viên đã được kích hoạt. Hãy dùng mã Voucher độc quyền bên dưới cho lần mua sắm tới!</p>
+                <p th:if="${welcomeCoupon == null or welcomeCoupon.isEmpty()}">Đặc quyền hội viên đã được kích hoạt. Khám phá ngay các quyền lợi ưu đãi tại trang Hội viên!</p>
+                <div class="voucher-pill" th:if="${welcomeCoupon != null and !welcomeCoupon.isEmpty()}">
                     <i class="bi bi-ticket-perforated"></i> <span th:text="${welcomeCoupon}">GOLD_DISCOUNT50K</span>
                 </div>
             </div>

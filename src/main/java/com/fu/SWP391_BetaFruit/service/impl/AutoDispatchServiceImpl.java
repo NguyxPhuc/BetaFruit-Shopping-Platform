@@ -23,8 +23,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AutoDispatchServiceImpl implements AutoDispatchService {
 
-    public static final BigDecimal COD_CEILING_LIMIT = new BigDecimal("3000000"); // 3.000.000 ₫
-    public static final int MAX_ONGOING_ORDERS = 5;
+    public static final BigDecimal COD_CEILING_LIMIT = new BigDecimal("10000000"); // 3.000.000 ₫
+    public static final int MAX_ONGOING_ORDERS = 15;
 
     private static final List<OrderStatus> ONGOING_STATUSES = List.of(
             OrderStatus.READY,
@@ -88,14 +88,14 @@ public class AutoDispatchServiceImpl implements AutoDispatchService {
                 continue;
             }
 
-            // Rule 2: Cân bằng tải - số đơn dở dang < 5
+            // Rule 2: Cân bằng tải - số đơn dở dang < 15
             long ongoingOrders = deliveryAssignmentRepository.countOngoingOrdersByShipper(
                     shipper.getUserId(), ONGOING_STATUSES);
             if (ongoingOrders >= MAX_ONGOING_ORDERS) {
                 continue;
             }
 
-            // Rule 3: Kiểm soát rủi ro công nợ COD <= 3.000.000 ₫
+            // Rule 3: Kiểm soát rủi ro công nợ COD <= 10.000.000 ₫
             BigDecimal currentDebt = (shipper.getCodDebt() != null) ? shipper.getCodDebt() : BigDecimal.ZERO;
             if (isCod) {
                 BigDecimal projectedDebt = currentDebt.add(orderAmount);
