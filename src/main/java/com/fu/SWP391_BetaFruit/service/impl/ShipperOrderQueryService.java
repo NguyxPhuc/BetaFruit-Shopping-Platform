@@ -5,6 +5,7 @@ import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.enums.*;
 import com.fu.SWP391_BetaFruit.repository.DeliveryAssignmentRepository;
 import org.springframework.data.domain.*;
+import com.fu.SWP391_BetaFruit.utils.ListPagination;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +28,9 @@ public class ShipperOrderQueryService {
             default -> "assignedAt";
         };
         String normalizedKeyword = org.springframework.util.StringUtils.hasText(keyword) ? keyword.trim() : null;
-        return assignments.searchAssignedOrders(shipperId, normalizedKeyword, status, paymentMethod,
-                PageRequest.of(Math.max(0, page), Math.min(100, Math.max(1, size)),
-                        Sort.by(direction, property).and(Sort.by(Sort.Direction.DESC, "assignmentId"))))
+        return ListPagination.load(page, size, index -> assignments.searchAssignedOrders(shipperId, normalizedKeyword, status, paymentMethod,
+                PageRequest.of(index, Math.min(100, Math.max(1, size)),
+                        Sort.by(direction, property).and(Sort.by(Sort.Direction.DESC, "assignmentId")))))
                 .map(a -> response(a.getOrder()));
     }
 
