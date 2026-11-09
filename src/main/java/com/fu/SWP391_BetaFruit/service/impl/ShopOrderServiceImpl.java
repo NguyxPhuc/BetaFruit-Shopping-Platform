@@ -16,6 +16,7 @@ import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.ShopOrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import com.fu.SWP391_BetaFruit.utils.ListPagination;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.stereotype.Service;
@@ -119,7 +120,8 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         int safeSize = Math.min(Math.max(size, 1), 100);
         PageRequest pageable = PageRequest.of(safePage, safeSize, buildSort(sortBy, sortDirection));
 
-        return orderRepository.searchOrdersForShopOwner(ownerId, normalizedKeyword, status, pageable)
+        return ListPagination.load(safePage, safeSize, index ->
+                orderRepository.searchOrdersForShopOwner(ownerId, normalizedKeyword, status, pageable.withPage(index)))
                 .map(this::toListItem);
     }
 

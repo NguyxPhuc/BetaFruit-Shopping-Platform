@@ -3,6 +3,8 @@ package com.fu.SWP391_BetaFruit.controller;
 import com.fu.SWP391_BetaFruit.dto.request.ShopReviewReplyRequest;
 import com.fu.SWP391_BetaFruit.service.ShopReviewService;
 import jakarta.servlet.http.HttpSession;
+import com.fu.SWP391_BetaFruit.utils.ListPagination;
+import org.springframework.util.MultiValueMap;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -26,12 +28,13 @@ public class ShopReviewController {
                         BindingResult bindingResult,
                         @RequestParam(required = false) Integer rating,
                         @RequestParam(required = false) Boolean isReported,
-                        @RequestParam(defaultValue = "1") int page,
+                        @RequestParam MultiValueMap<String, String> paginationParams,
                         HttpSession session,
                         RedirectAttributes redirect) {
+        String target = ListPagination.redirect("/shop/reviews", paginationParams, 1, "rating", "isReported");
         if (bindingResult.hasErrors()) {
             redirect.addFlashAttribute("errorMessage", bindingResult.getAllErrors().getFirst().getDefaultMessage());
-            return reviewListRedirect(rating, isReported, page);
+            return target;
         }
 
         Integer ownerId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
@@ -41,21 +44,7 @@ public class ShopReviewController {
         } catch (RuntimeException exception) {
             redirect.addFlashAttribute("errorMessage", exception.getMessage());
         }
-        return reviewListRedirect(rating, isReported, page);
+        return target;
     }
 
-    private String reviewListRedirect(Integer rating, Boolean isReported, int page) {
-        StringBuilder target = new StringBuilder("redirect:/shop/reviews");
-        boolean hasQuery = false;
-        if (rating != null) {
-            target.append("?rating=").append(rating);
-            hasQuery = true;
-        }
-        if (isReported != null) {
-            target.append(hasQuery ? '&' : '?').append("isReported=").append(isReported);
-            hasQuery = true;
-        }
-        if (page > 1) target.append(hasQuery ? '&' : '?').append("page=").append(page);
-        return target.toString();
-    }
 }
