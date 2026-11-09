@@ -128,7 +128,7 @@
             <label class="filter-field"><span>Thứ tự</span>
                 <select name="sortDirection"><option value="desc" th:selected="${sortDirection == 'desc'}">Giảm dần</option><option value="asc" th:selected="${sortDirection == 'asc'}">Tăng dần</option></select>
             </label>
-            <input type="hidden" name="size" th:value="${orders.size > 0 ? orders.size : 10}">
+            <div th:replace="~{fragments/page-size :: control}"></div>
             <button class="filter-submit" type="submit">Tìm kiếm</button>
         </form>
 
