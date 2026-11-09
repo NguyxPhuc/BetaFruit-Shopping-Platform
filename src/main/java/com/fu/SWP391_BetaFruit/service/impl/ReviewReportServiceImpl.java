@@ -16,6 +16,7 @@ import com.fu.SWP391_BetaFruit.service.ReviewReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import com.fu.SWP391_BetaFruit.utils.ListPagination;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -110,14 +111,15 @@ public class ReviewReportServiceImpl implements ReviewReportService {
         Shop shop = shopRepository.findByOwner_UserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin gian hàng!"));
 
-        int safePage = Math.max(page - 1, 0);
-        Pageable pageable = PageRequest.of(safePage, size);
-        Page<Review> reviewsPage = reviewRepository.findShopReviews(shop.getShopId(), rating, isReported, pageable);
+        int safePage = Math.max(1, page) - 1;
+        Pageable pageable = PageRequest.of(safePage, ListPagination.boundedSize(size), Sort.by("reviewId").descending());
+        Page<Review> reviewsPage = ListPagination.load(safePage, size, index ->
+                reviewRepository.findShopReviews(shop.getShopId(), rating, isReported, pageable.withPage(index)));
 
         Map<String, Object> data = new HashMap<>();
         data.put("reviewsPage", reviewsPage);
         data.put("reviews", reviewsPage.getContent());
-        data.put("currentPage", page);
+        data.put("currentPage", reviewsPage.getNumber() + 1);
         data.put("totalPages", reviewsPage.getTotalPages());
         data.put("totalItems", reviewsPage.getTotalElements());
         data.put("currentRating", rating);
