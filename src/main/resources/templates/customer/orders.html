@@ -176,15 +176,19 @@
 
         <!-- Navigation Status Tabs -->
         <nav class="status-tabs" aria-label="Bộ lọc trạng thái">
-            <a th:href="@{/orders}" class="tab-link" th:classappend="${selectedStatus == null ? 'active' : ''}">Tất cả</a>
-            <a th:href="@{/orders(status='PENDING')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'PENDING' ? 'active' : ''}">Chờ xác nhận</a>
-            <a th:href="@{/orders(status='DELIVERING')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERING' ? 'active' : ''}">Đang giao</a>
-            <a th:href="@{/orders(status='DELIVERED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERED' ? 'active' : ''}">Đã giao</a>
-            <a th:href="@{/orders(status='RECEIVED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'RECEIVED' ? 'active' : ''}">Đã nhận hàng</a>
-            <a th:href="@{/orders(status='SUCCESS')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'SUCCESS' ? 'active' : ''}">Hoàn tất</a>
-            <a th:href="@{/orders(status='CANCELLED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'CANCELLED' ? 'active' : ''}">Đã hủy</a>
+            <a th:href="@{/orders(size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus == null ? 'active' : ''}">Tất cả</a>
+            <a th:href="@{/orders(status='PENDING',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'PENDING' ? 'active' : ''}">Chờ xác nhận</a>
+            <a th:href="@{/orders(status='DELIVERING',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERING' ? 'active' : ''}">Đang giao</a>
+            <a th:href="@{/orders(status='DELIVERED',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERED' ? 'active' : ''}">Đã giao</a>
+            <a th:href="@{/orders(status='RECEIVED',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'RECEIVED' ? 'active' : ''}">Đã nhận hàng</a>
+            <a th:href="@{/orders(status='SUCCESS',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'SUCCESS' ? 'active' : ''}">Hoàn tất</a>
+            <a th:href="@{/orders(status='CANCELLED',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'CANCELLED' ? 'active' : ''}">Đã hủy</a>
         </nav>
 
+        <form method="get" th:action="@{/orders}" style="margin:16px 0;">
+            <input type="hidden" name="status" th:value="${selectedStatus}" th:if="${selectedStatus != null}">
+            <div th:replace="~{fragments/page-size :: control}"></div>
+        </form>
         <!-- Orders List -->
         <div th:if="${ordersPage != null && !ordersPage.isEmpty()}">
             <article class="order-card" th:each="order : ${ordersPage.content}">
@@ -246,6 +250,11 @@
             <p>Khám phá hoa quả tươi ngon tại BetaFruit ngay hôm nay!</p>
             <a th:href="@{/products}" class="btn-confirm" style="display: inline-block; margin-top: 1rem; text-decoration: none;">Mua sắm ngay</a>
         </div>
+        <nav th:if="${totalPages > 1}" aria-label="Phân trang đơn mua" style="display:flex;gap:12px;align-items:center;margin:20px 0;">
+            <a th:if="${currentPage > 0}" class="btn-detail" th:href="@{/orders(status=${selectedStatus},page=${currentPage - 1},size=${pageSize})}">Trước</a>
+            <span th:text="${'Trang ' + (currentPage + 1) + ' / ' + totalPages}"></span>
+            <a th:if="${currentPage + 1 < totalPages}" class="btn-detail" th:href="@{/orders(status=${selectedStatus},page=${currentPage + 1},size=${pageSize})}">Sau</a>
+        </nav>
     </main>
 
     <div th:replace="~{fragments/footer :: footer}"></div>
