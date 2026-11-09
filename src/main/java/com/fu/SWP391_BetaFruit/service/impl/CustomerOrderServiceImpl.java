@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import com.fu.SWP391_BetaFruit.utils.ListPagination;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -50,10 +51,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<CustomerOrderResponse> getCustomerOrders(Integer customerId, OrderStatus status, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Order> orderPage = (status == null)
-                ? orderRepository.findByCustomer_UserId(customerId, pageable)
-                : orderRepository.findByCustomer_UserIdAndOrderStatus(customerId, status, pageable);
+        Pageable pageable = PageRequest.of(Math.max(0, page), ListPagination.boundedSize(size), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> orderPage = ListPagination.load(page, size, index -> (status == null)
+                ? orderRepository.findByCustomer_UserId(customerId, pageable.withPage(index))
+                : orderRepository.findByCustomer_UserIdAndOrderStatus(customerId, status, pageable.withPage(index)));
 
         return orderPage.map(this::toResponse);
     }
@@ -102,8 +103,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             if (notificationService != null) {
                 notificationService.createBaseNotification(
                         customer,
-                        "🎉 Đơn hàng #" + order.getOrderId() + " đã hoàn tất!",
-                        "Cảm ơn bạn đã lựa chọn mua sắm tại BetaFruit! Chúc bạn thưởng thức hoa quả thật ngon miệng.",
+                        "Đã xác nhận nhận hàng cho đơn #" + order.getOrderId(),
+                        "Đơn hàng sẽ tự động hoàn tất sau thời gian chờ được hệ thống cấu hình.",
                         NotificationType.ORDER_STATUS,
                         "/orders/" + order.getOrderId()
                 );
@@ -119,7 +120,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                     if (assignment.getShipper() != null && assignment.getShipper().getUser() != null) {
                         notificationService.createBaseNotification(
                                 assignment.getShipper().getUser(),
-                                "✅ Đơn hàng #" + order.getOrderId() + " đã hoàn tất!",
+                                "✅ Khách đã nhận đơn hàng #" + order.getOrderId(),
                                 "Khách hàng đã nhận kiện hàng hoa quả và xác nhận hài lòng. Cuốc giao đã kết thúc trọn vẹn.",
                                 NotificationType.ORDER_STATUS,
                                 "/shipper/orders/" + order.getOrderId()

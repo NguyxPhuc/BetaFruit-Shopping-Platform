@@ -6,6 +6,8 @@ import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.service.CustomerOrderService;
 import com.fu.SWP391_BetaFruit.service.impl.CheckoutPaymentService;
 import jakarta.servlet.http.HttpSession;
+import com.fu.SWP391_BetaFruit.utils.ListPagination;
+import org.springframework.util.MultiValueMap;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +29,7 @@ public class CustomerOrderController {
     @GetMapping
     public String listOrders(
             @RequestParam(required = false) OrderStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam MultiValueMap<String, String> paginationParams,
             HttpSession session,
             Model model
     ) {
@@ -37,12 +38,16 @@ public class CustomerOrderController {
             return "redirect:/auth/login";
         }
 
+        var pagination = ListPagination.parse(paginationParams, 0);
+        int page = pagination.page();
+        int size = pagination.size();
+        model.addAttribute("pageSize", size);
         Page<CustomerOrderResponse> ordersPage = customerOrderService.getCustomerOrders(customerId, status, page, size);
         model.addAttribute("ordersPage", ordersPage);
         model.addAttribute("paymentStates", checkoutPayments.states(customerId,
                 ordersPage.getContent().stream().map(CustomerOrderResponse::orderId).toList()));
         model.addAttribute("selectedStatus", status);
-        model.addAttribute("currentPage", page);
+        model.addAttribute("currentPage", ordersPage.getNumber());
         model.addAttribute("totalPages", ordersPage.getTotalPages());
 
         return "customer/orders";
