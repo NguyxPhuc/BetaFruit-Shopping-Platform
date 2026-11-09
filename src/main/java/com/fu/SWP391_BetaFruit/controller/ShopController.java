@@ -8,6 +8,8 @@ import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
 import com.fu.SWP391_BetaFruit.service.ReviewReportService;
 import com.fu.SWP391_BetaFruit.service.ShopService;
 import jakarta.servlet.http.HttpSession;
+import com.fu.SWP391_BetaFruit.utils.ListPagination;
+import org.springframework.util.MultiValueMap;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -152,8 +154,7 @@ public class ShopController {
      * Cho phép lọc theo số sao, trạng thái đã báo cáo và phân trang.
      */
     @GetMapping("/reviews")
-    public String getShopReviews(@RequestParam(value = "page", defaultValue = "1") int page,
-                                 @RequestParam(value = "size", defaultValue = "10") int size,
+    public String getShopReviews(@RequestParam MultiValueMap<String, String> paginationParams,
                                  @RequestParam(value = "rating", required = false) Integer rating,
                                  @RequestParam(value = "isReported", required = false) Boolean isReported,
                                  HttpSession session,
@@ -162,6 +163,10 @@ public class ShopController {
         if (userId == null) {
             return "redirect:/auth/login";
         }
+        var pagination = ListPagination.parse(paginationParams, 1);
+        int page = pagination.page();
+        int size = pagination.size();
+        model.addAttribute("pageSize", size);
         try {
             ShopProfileResponse shopProfileResponse = shopService.getShopProfile(userId);
             model.addAttribute("shopProfileResponse", shopProfileResponse);
@@ -180,15 +185,17 @@ public class ShopController {
     public String reportInappropriateReview(@PathVariable("reviewId") Integer reviewId,
                                             @Valid @ModelAttribute("reportRequest") ReviewReportRequest reportRequest,
                                             BindingResult bindingResult,
+                                            @RequestParam MultiValueMap<String, String> paginationParams,
                                             HttpSession session,
                                             RedirectAttributes redirectAttributes) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (userId == null) {
             return "redirect:/auth/login";
         }
+        String target = ListPagination.redirect("/shop/reviews", paginationParams, 1, "rating", "isReported");
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
-            return "redirect:/shop/reviews";
+            return target;
         }
         try {
             reviewReportService.createReviewReport(userId, reviewId, reportRequest);
@@ -196,6 +203,6 @@ public class ShopController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        return "redirect:/shop/reviews";
+        return target;
     }
 }

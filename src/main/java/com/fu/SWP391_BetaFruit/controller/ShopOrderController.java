@@ -3,6 +3,8 @@ package com.fu.SWP391_BetaFruit.controller;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.service.ShopOrderService;
 import jakarta.servlet.http.HttpSession;
+import com.fu.SWP391_BetaFruit.utils.ListPagination;
+import org.springframework.util.MultiValueMap;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.data.domain.Page;
@@ -39,10 +41,13 @@ public class ShopOrderController {
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam MultiValueMap<String, String> paginationParams) {
         Integer shopOwnerId = currentUserId(session);
         if (shopOwnerId == null) return "redirect:/auth/login";
+        var pagination = ListPagination.parse(paginationParams, 0);
+        int page = pagination.page();
+        int size = pagination.size();
+        model.addAttribute("pageSize", size);
         try {
             model.addAttribute("orders", shopOrderService.getOrdersForShopOwner(shopOwnerId, keyword, status, sortBy, sortDirection, page, size));
         } catch (ResponseStatusException exception) {
@@ -84,46 +89,58 @@ public class ShopOrderController {
     public String confirmOrder(@PathVariable Integer orderId,
                                HttpSession session,
                                @RequestParam(defaultValue = "false") boolean returnToDetail,
+                               @RequestParam MultiValueMap<String, String> paginationParams,
                                RedirectAttributes redirectAttributes) {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
+        String target = returnToDetail ? "redirect:/shop/orders/" + orderId
+                : ListPagination.redirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
         try {
             shopOrderService.confirmOrder(orderId, ownerId);
         } catch (ResponseStatusException exception) {
             if (exception.getStatusCode().value() != HttpStatus.CONFLICT.value()) throw exception;
             redirectAttributes.addFlashAttribute("orderActionError", exception.getReason());
         }
-        return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "");
+        return target;
     }
 
     @PostMapping("/{orderId}/preparing")
     public String startPreparingOrder(@PathVariable Integer orderId,
                                       HttpSession session,
-                               @RequestParam(defaultValue = "false") boolean returnToDetail) {
+                               @RequestParam(defaultValue = "false") boolean returnToDetail,
+                               @RequestParam MultiValueMap<String, String> paginationParams) {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
+        String target = returnToDetail ? "redirect:/shop/orders/" + orderId
+                : ListPagination.redirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
         shopOrderService.startPreparingOrder(orderId, ownerId);
-        return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "");
+        return target;
     }
 
     @PostMapping("/{orderId}/ready")
     public String markOrderReady(@PathVariable Integer orderId,
                                  HttpSession session,
-                               @RequestParam(defaultValue = "false") boolean returnToDetail) {
+                               @RequestParam(defaultValue = "false") boolean returnToDetail,
+                               @RequestParam MultiValueMap<String, String> paginationParams) {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
+        String target = returnToDetail ? "redirect:/shop/orders/" + orderId
+                : ListPagination.redirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
         shopOrderService.markOrderReady(orderId, ownerId);
-        return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "");
+        return target;
     }
 
     @PostMapping("/{orderId}/cancel")
     public String cancelOrder(@PathVariable Integer orderId,
                               HttpSession session,
-                               @RequestParam(defaultValue = "false") boolean returnToDetail) {
+                               @RequestParam(defaultValue = "false") boolean returnToDetail,
+                               @RequestParam MultiValueMap<String, String> paginationParams) {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
+        String target = returnToDetail ? "redirect:/shop/orders/" + orderId
+                : ListPagination.redirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
         shopOrderService.cancelOrder(orderId, ownerId);
-        return "redirect:/shop/orders" + (returnToDetail ? "/" + orderId : "");
+        return target;
     }
 
     private Integer currentUserId(HttpSession session) {
