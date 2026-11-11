@@ -6,6 +6,14 @@
 </head>
 <body>
 <div th:fragment="content">
+    <style>
+        .page-size-field { display:flex; flex-wrap:wrap; align-items:center; gap:8px; color:inherit; font-size:13px; }
+        .page-size-field input, .page-size-field button { width:auto; max-width:140px; min-height:40px; padding:8px 10px; border:1px solid #d6e8f5; border-radius:9px; background:#fff; color:inherit; font:inherit; }
+        .page-size-field button { cursor:pointer; }
+        .page-size-field button:hover { background:#f6faff; border-color:#8eb4ee; }
+        .page-size-field :focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+        .order-filters { flex-wrap:wrap; }
+    </style>
 
     <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
         <span th:text="${successMessage}"></span>
@@ -33,7 +41,7 @@
         <div class="card-body p-3">
             <form th:action="@{/shop/reviews}" method="get" class="row g-2 align-items-center">
                 <div class="col-12 col-md-4">
-                    <select name="rating" class="form-select form-select-sm" onchange="this.form.requestSubmit()">
+                    <select name="rating" class="form-select form-select-sm">
                         <option value="" th:selected="${currentRating == null}">Tất cả số sao</option>
                         <option value="5" th:selected="${currentRating == 5}">⭐⭐⭐⭐⭐ 5 sao</option>
                         <option value="4" th:selected="${currentRating == 4}">⭐⭐⭐⭐ 4 sao</option>
@@ -43,7 +51,7 @@
                     </select>
                 </div>
                 <div class="col-12 col-md-4">
-                    <select name="isReported" class="form-select form-select-sm" onchange="this.form.requestSubmit()">
+                    <select name="isReported" class="form-select form-select-sm">
                         <option value="" th:selected="${currentIsReported == null}">Tất cả trạng thái khiếu nại</option>
                         <option value="true" th:selected="${currentIsReported == true}">Đang/Đã khiếu nại</option>
                         <option value="false" th:selected="${currentIsReported == false}">Chưa khiếu nại</option>
@@ -54,7 +62,12 @@
                         <i class="bi bi-arrow-counterclockwise me-1"></i>Đặt lại bộ lọc
                     </a>
                 </div>
-                <div th:replace="~{fragments/page-size :: control}"></div>
+                <div class="page-size-field">
+                    <label for="page-size">Số bản ghi/trang</label>
+                    <input id="page-size" name="size" type="number" min="1" max="100" step="1"
+                           th:value="${pageSize}" required aria-label="Số bản ghi mỗi trang từ 1 đến 100">
+                    <button type="submit" class="page-size-apply">Áp dụng</button>
+                </div>
         </form>
         </div>
     </div>

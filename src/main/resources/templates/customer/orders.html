@@ -166,6 +166,12 @@
             color: #cbd5e0;
             margin-bottom: 1rem;
         }
+        .page-size-field { display:flex; flex-wrap:wrap; align-items:center; gap:8px; color:inherit; font-size:13px; }
+        .page-size-field input, .page-size-field button { width:auto; max-width:140px; min-height:40px; padding:8px 10px; border:1px solid #d6e8f5; border-radius:9px; background:#fff; color:inherit; font:inherit; }
+        .page-size-field button { cursor:pointer; }
+        .page-size-field button:hover { background:#f6faff; border-color:#8eb4ee; }
+        .page-size-field :focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+        .order-filters { flex-wrap:wrap; }
     </style>
 </head>
 <body class="orders-page">
@@ -187,7 +193,12 @@
 
         <form method="get" th:action="@{/orders}" style="margin:16px 0;">
             <input type="hidden" name="status" th:value="${selectedStatus}" th:if="${selectedStatus != null}">
-            <div th:replace="~{fragments/page-size :: control}"></div>
+            <div class="page-size-field">
+                <label for="page-size">Số bản ghi/trang</label>
+                <input id="page-size" name="size" type="number" min="1" max="100" step="1"
+                       th:value="${pageSize}" required aria-label="Số bản ghi mỗi trang từ 1 đến 100">
+                <button type="submit" class="page-size-apply">Áp dụng</button>
+            </div>
         </form>
         <!-- Orders List -->
         <div th:if="${ordersPage != null && !ordersPage.isEmpty()}">
