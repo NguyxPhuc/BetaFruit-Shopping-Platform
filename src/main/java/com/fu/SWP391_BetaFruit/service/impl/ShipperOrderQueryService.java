@@ -5,7 +5,6 @@ import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.enums.*;
 import com.fu.SWP391_BetaFruit.repository.DeliveryAssignmentRepository;
 import org.springframework.data.domain.*;
-import com.fu.SWP391_BetaFruit.utils.ListPagination;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +27,7 @@ public class ShipperOrderQueryService {
             default -> "assignedAt";
         };
         String normalizedKeyword = org.springframework.util.StringUtils.hasText(keyword) ? keyword.trim() : null;
-        return ListPagination.load(page, size, index -> assignments.searchAssignedOrders(shipperId, normalizedKeyword, status, paymentMethod,
+        return loadPage(page, size, index -> assignments.searchAssignedOrders(shipperId, normalizedKeyword, status, paymentMethod,
                 PageRequest.of(index, Math.min(100, Math.max(1, size)),
                         Sort.by(direction, property).and(Sort.by(Sort.Direction.DESC, "assignmentId")))))
                 .map(a -> response(a.getOrder()));
@@ -50,5 +49,17 @@ public class ShipperOrderQueryService {
                 order.getPaymentMethod() == PaymentMethod.COD ? order.getIsCodRemitted() : null,
                 order.getIsSettled(), order.getSettledAt(), order.getOrderStatus() == OrderStatus.DELIVERING
                         && !Boolean.TRUE.equals(order.getIsSettled()));
+    }
+
+    /** Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result. */
+    private <T> Page<T> loadPage(int page, int size, java.util.function.IntFunction<Page<T>> query) {
+        int index = Math.max(0, page);
+        // Keep the SQL offset within the range accepted by JPA providers.
+        Page<T> result = query.apply(index > Integer.MAX_VALUE / Math.min(100, Math.max(1, size)) ? 0 : index);
+        int last = Math.max(0, result.getTotalPages() - 1);
+        int target = Math.min(index, last);
+        if (result.getNumber() != target) result = query.apply(target);
+        if (result.isEmpty() && result.getNumber() > 0) result = query.apply(0);
+        return result;
     }
 }

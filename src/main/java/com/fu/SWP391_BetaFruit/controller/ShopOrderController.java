@@ -3,7 +3,7 @@ package com.fu.SWP391_BetaFruit.controller;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.service.ShopOrderService;
 import jakarta.servlet.http.HttpSession;
-import com.fu.SWP391_BetaFruit.utils.ListPagination;
+import com.fu.SWP391_BetaFruit.exception.GlobalExceptionHandler.InvalidPagination;
 import org.springframework.util.MultiValueMap;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -44,9 +44,8 @@ public class ShopOrderController {
             @RequestParam MultiValueMap<String, String> paginationParams) {
         Integer shopOwnerId = currentUserId(session);
         if (shopOwnerId == null) return "redirect:/auth/login";
-        var pagination = ListPagination.parse(paginationParams, 0);
-        int page = pagination.page();
-        int size = pagination.size();
+        int page = paginationNumber(paginationParams, "page", 0, 0, Integer.MAX_VALUE);
+        int size = paginationNumber(paginationParams, "size", 10, 1, 100);
         model.addAttribute("pageSize", size);
         try {
             model.addAttribute("orders", shopOrderService.getOrdersForShopOwner(shopOwnerId, keyword, status, sortBy, sortDirection, page, size));
@@ -94,7 +93,7 @@ public class ShopOrderController {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
         String target = returnToDetail ? "redirect:/shop/orders/" + orderId
-                : ListPagination.redirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
+                : paginationRedirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
         try {
             shopOrderService.confirmOrder(orderId, ownerId);
         } catch (ResponseStatusException exception) {
@@ -112,7 +111,7 @@ public class ShopOrderController {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
         String target = returnToDetail ? "redirect:/shop/orders/" + orderId
-                : ListPagination.redirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
+                : paginationRedirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
         shopOrderService.startPreparingOrder(orderId, ownerId);
         return target;
     }
@@ -125,7 +124,7 @@ public class ShopOrderController {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
         String target = returnToDetail ? "redirect:/shop/orders/" + orderId
-                : ListPagination.redirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
+                : paginationRedirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
         shopOrderService.markOrderReady(orderId, ownerId);
         return target;
     }
@@ -138,7 +137,7 @@ public class ShopOrderController {
         Integer ownerId = currentUserId(session);
         if (ownerId == null) return "redirect:/auth/login";
         String target = returnToDetail ? "redirect:/shop/orders/" + orderId
-                : ListPagination.redirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
+                : paginationRedirect("/shop/orders", paginationParams, 0, "keyword", "status", "sortBy", "sortDirection");
         shopOrderService.cancelOrder(orderId, ownerId);
         return target;
     }
@@ -150,5 +149,36 @@ public class ShopOrderController {
     private void addOwnerName(HttpSession session, Model model) {
         String name = (String) session.getAttribute("LOGGED_IN_FULLNAME");
         model.addAttribute("shopOwnerName", name != null ? name : "Chủ cửa hàng");
+    }
+
+    private static int paginationNumber(MultiValueMap<String, String> params, String key, int fallback, int min, int max) {
+        var values = params.get(key);
+        if (values == null) return fallback;
+        if (values.size() != 1) throw new InvalidPagination("Tham số " + key + " chỉ được xuất hiện một lần.");
+        String raw = values.getFirst();
+        if (raw == null || !raw.matches("[0-9]+")) throw invalid(key, min, max);
+        try {
+            int value = Integer.parseInt(raw);
+            if (value < min || value > max) throw invalid(key, min, max);
+            return value;
+        } catch (NumberFormatException ex) {
+            throw invalid(key, min, max);
+        }
+    }
+
+    private static InvalidPagination invalid(String key, int min, int max) {
+        return new InvalidPagination("Tham số " + key + " phải là số nguyên từ " + min + " đến " + max + ". Hãy sửa giá trị đã nhập.");
+    }
+
+    private String paginationRedirect(String path, MultiValueMap<String, String> params, int firstPage, String... filters) {
+        int page = paginationNumber(params, "page", firstPage, firstPage, Integer.MAX_VALUE);
+        int size = paginationNumber(params, "size", 10, 1, 100);
+        var uri = org.springframework.web.util.UriComponentsBuilder.fromPath(path)
+                .queryParam("page", page).queryParam("size", size);
+        for (String filter : filters) {
+            String value = params.getFirst(filter);
+            if (value != null && !value.isEmpty()) uri.queryParam(filter, value);
+        }
+        return "redirect:" + uri.build().encode().toUriString();
     }
 }
