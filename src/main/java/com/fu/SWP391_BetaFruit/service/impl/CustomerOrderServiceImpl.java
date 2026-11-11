@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import com.fu.SWP391_BetaFruit.utils.ListPagination;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -51,8 +50,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<CustomerOrderResponse> getCustomerOrders(Integer customerId, OrderStatus status, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), ListPagination.boundedSize(size), Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Order> orderPage = ListPagination.load(page, size, index -> (status == null)
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(100, Math.max(1, size)), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> orderPage = loadPage(page, size, index -> (status == null)
                 ? orderRepository.findByCustomer_UserId(customerId, pageable.withPage(index))
                 : orderRepository.findByCustomer_UserIdAndOrderStatus(customerId, status, pageable.withPage(index)));
 
@@ -247,5 +246,17 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             case CANCELLED -> "Đã hủy";
             case REJECTED -> "Từ chối nhận đơn";
         };
+    }
+
+    /** Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result. */
+    private <T> Page<T> loadPage(int page, int size, java.util.function.IntFunction<Page<T>> query) {
+        int index = Math.max(0, page);
+        // Keep the SQL offset within the range accepted by JPA providers.
+        Page<T> result = query.apply(index > Integer.MAX_VALUE / Math.min(100, Math.max(1, size)) ? 0 : index);
+        int last = Math.max(0, result.getTotalPages() - 1);
+        int target = Math.min(index, last);
+        if (result.getNumber() != target) result = query.apply(target);
+        if (result.isEmpty() && result.getNumber() > 0) result = query.apply(0);
+        return result;
     }
 }

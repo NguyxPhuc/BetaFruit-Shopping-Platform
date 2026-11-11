@@ -16,7 +16,7 @@ import com.fu.SWP391_BetaFruit.service.CustomerOrderService;
 import com.fu.SWP391_BetaFruit.service.NotificationService;
 import com.fu.SWP391_BetaFruit.service.impl.CheckoutPaymentService;
 import com.fu.SWP391_BetaFruit.service.impl.OrderPaymentRules;
-import com.fu.SWP391_BetaFruit.utils.ListPagination;
+import com.fu.SWP391_BetaFruit.exception.GlobalExceptionHandler.InvalidPagination;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -60,9 +60,8 @@ public class CustomerOrderController {
             return "redirect:/auth/login";
         }
 
-        var pagination = ListPagination.parse(paginationParams, 0);
-        int page = pagination.page();
-        int size = pagination.size();
+        int page = paginationNumber(paginationParams, "page", 0, 0, Integer.MAX_VALUE);
+        int size = paginationNumber(paginationParams, "size", 10, 1, 100);
         model.addAttribute("pageSize", size);
         Page<CustomerOrderResponse> ordersPage = customerOrderService.getCustomerOrders(customerId, status, page, size);
         model.addAttribute("ordersPage", ordersPage);
@@ -247,5 +246,24 @@ public class CustomerOrderController {
                         .anyMatch(p -> p.getStatus() == PaymentStatus.PAID && "VNPAY".equalsIgnoreCase(p.getGateway()));
             return false;
         }
+    }
+
+    private static int paginationNumber(MultiValueMap<String, String> params, String key, int fallback, int min, int max) {
+        var values = params.get(key);
+        if (values == null) return fallback;
+        if (values.size() != 1) throw new InvalidPagination("Tham số " + key + " chỉ được xuất hiện một lần.");
+        String raw = values.getFirst();
+        if (raw == null || !raw.matches("[0-9]+")) throw invalid(key, min, max);
+        try {
+            int value = Integer.parseInt(raw);
+            if (value < min || value > max) throw invalid(key, min, max);
+            return value;
+        } catch (NumberFormatException ex) {
+            throw invalid(key, min, max);
+        }
+    }
+
+    private static InvalidPagination invalid(String key, int min, int max) {
+        return new InvalidPagination("Tham số " + key + " phải là số nguyên từ " + min + " đến " + max + ". Hãy sửa giá trị đã nhập.");
     }
 }
