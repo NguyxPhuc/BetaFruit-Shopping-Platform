@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách cửa hàng đối tác | BetaFruit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/site.css}" href="/css/site.css">
+    <link rel="stylesheet" th:href="@{/css/customer-products.css}" href="/css/customer-products.css">
+    <style>
+        .bf-shops-hero {
+            background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+            border: 1px solid #fed7aa;
+            border-radius: 20px;
+            padding: 40px 32px;
+            margin-bottom: 36px;
+        }
+        .bf-shops-hero-text h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #431407;
+            margin: 0 0 8px 0;
+            line-height: 1.3;
+        }
+        .bf-shops-hero-text p {
+            font-size: 15px;
+            color: #78350f;
+            margin: 0 0 16px 0;
+            max-width: 650px;
+        }
+        .bf-shops-stat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ea580c;
+            border: 1px solid #fed7aa;
+            box-shadow: 0 2px 6px rgba(234, 88, 12, 0.08);
+            margin-bottom: 12px;
+        }
+        .bf-shops-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        .bf-shop-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .bf-shop-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e1;
+        }
+        .bf-shop-card-banner {
+            height: 120px;
+            background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bf-shop-card-banner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .bf-shop-banner-empty {
+            color: #d97706;
+            font-size: 32px;
+            opacity: 0.5;
+        }
+        .bf-shop-card-body {
+            padding: 16px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .bf-shop-header-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+        .bf-shop-avatar {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            border: 2px solid #f1f5f9;
+            background: linear-gradient(135deg, #f97316 0%, #c2410c 100%);
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .bf-shop-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .bf-shop-title-wrap {
+            flex: 1;
+            min-width: 0;
+        }
+        .bf-shop-title-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .bf-shop-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .bf-shop-rating {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #d97706;
+            flex-shrink: 0;
+            background: #fffbeb;
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid #fef3c7;
+        }
+        .bf-shop-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #ecfdf5;
+            color: #047857;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            border: 1px solid #a7f3d0;
+            margin-top: 4px;
+        }
+        .bf-shop-desc {
+            font-size: 13.5px;
+            color: #64748b;
+            line-height: 1.5;
+            margin: 0 0 16px 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 40px;
+        }
+        .bf-shop-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 14px 0 0;
+            border-top: 1px solid #f1f5f9;
+            margin-top: auto;
+            font-size: 13px;
+        }
+        .bf-shop-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #475569;
+        }
+        .bf-shop-meta-item i {
+            color: #ea580c;
+            font-size: 15px;
+        }
+        .bf-shop-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #d97706;
+        }
+        .bf-empty-shops {
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 18px;
+            padding: 60px 24px;
+            text-align: center;
+            color: #64748b;
+            margin: 30px 0;
+        }
+        .bf-empty-shops i {
+            font-size: 48px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+        .bf-pagination-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin: 30px 0 60px;
+        }
+        .bf-page-btn {
+            min-width: 38px;
+            height: 38px;
+            padding: 0 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .bf-page-btn:hover {
+            border-color: #ea580c;
+            color: #ea580c;
+        }
+        .bf-page-btn.active {
+            background: #ea580c;
+            color: #ffffff;
+            border-color: #ea580c;
+            font-weight: 700;
+        }
+        .bf-page-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body style="background-color: #f8f9fa;">
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="bf-customer-container">
+
+    <!-- ════════ HERO BANNER ════════ -->
+    <section class="bf-shops-hero">
+        <div class="bf-shops-hero-text">
+            <span class="bf-shops-stat-pill">
+                <i class="bi bi-shield-check text-success"></i>
+                <span th:text="${totalShops ?: 0} + ' gian hàng đạt chuẩn đối tác'">10 gian hàng đạt chuẩn đối tác</span>
+            </span>
+            <h1>Cửa Hàng Nông Sản Đối Tác</h1>
+            <p>Khám phá các gian hàng uy tín liên kết trực tiếp với nhà vườn và hợp tác xã nông sản sạch trên toàn quốc.</p>
+        </div>
+    </section>
+
+    <!-- ════════ EMPTY STATE ════════ -->
+    <div th:if="${#lists.isEmpty(shops)}" class="bf-empty-shops">
+        <i class="bi bi-shop-window"></i>
+        <h4 class="fw-bold text-dark mb-2">Hiện chưa có gian hàng nào</h4>
+        <p class="text-muted mb-4">Các gian hàng đối tác đang trong quá trình chuẩn bị sản phẩm.</p>
+    </div>
+
+    <!-- ════════ SHOPS GRID ════════ -->
+    <div th:if="${!#lists.isEmpty(shops)}" class="bf-shops-grid">
+        <article class="bf-shop-card" th:each="shop : ${shops}">
+            <!-- Top Banner (Landscape, completely separated) -->
+            <div class="bf-shop-card-banner">
+                <img th:if="${shop.bannerUrl != null and !#strings.isEmpty(shop.bannerUrl)}"
+                     th:src="@{${shop.bannerUrl}}"
+                     th:alt="${shop.shopName}"
+                     loading="lazy">
+                <div th:unless="${shop.bannerUrl != null and !#strings.isEmpty(shop.bannerUrl)}" class="bf-shop-banner-empty">
+                    <i class="bi bi-shop"></i>
+                </div>
+            </div>
+
+            <!-- Body Info -->
+            <div class="bf-shop-card-body">
+                <!-- Header row: Avatar + Shop Info side-by-side (No overlap) -->
+                <div class="bf-shop-header-row">
+                    <div class="bf-shop-avatar">
+                        <img th:if="${shop.logoUrl != null and !#strings.isEmpty(shop.logoUrl)}"
+                             th:src="@{${shop.logoUrl}}"
+                             th:alt="${shop.shopName}">
+                        <span th:unless="${shop.logoUrl != null and !#strings.isEmpty(shop.logoUrl)}"
+                              th:text="${shop.initialLetter}">
+                            S
+                        </span>
+                    </div>
+
+                    <div class="bf-shop-title-wrap">
+                        <div class="bf-shop-title-top">
+                            <h3 class="bf-shop-name" th:text="${shop.shopName}">
+                                Nông Sản Sạch Đà Lạt
+                            </h3>
+                            <div class="bf-shop-rating" th:if="${shop.rating != null and shop.rating > 0}">
+                                <i class="bi bi-star-fill"></i>
+                                <span th:text="${shop.rating}">5.0</span>
+                                <span class="text-muted fw-normal" style="font-size: 11.5px;" th:text="'(' + ${shop.reviewCount} + ')'">(1)</span>
+                            </div>
+                        </div>
+
+                        <span class="bf-shop-badge">
+                            <i class="bi bi-patch-check-fill"></i>
+                            <span>Đối tác chính thức</span>
+                        </span>
+                    </div>
+                </div>
+
+                <p class="bf-shop-desc" th:text="${shop.shopDescription ?: 'Cửa hàng chuyên cung cấp các loại trái cây tươi ngon, chuẩn VietGAP từ nhà vườn uy tín.'}">
+                    Mô tả cửa hàng
+                </p>
+
+                <div class="bf-shop-meta-row">
+                    <div class="bf-shop-meta-item">
+                        <i class="bi bi-box-seam"></i>
+                        <span><strong th:text="${shop.activeProductCount}">12</strong> sản phẩm</span>
+                    </div>
+                    <div class="bf-shop-meta-item" th:if="${shop.phone != null and !#strings.isEmpty(shop.phone)}">
+                        <i class="bi bi-telephone"></i>
+                        <span th:text="${shop.phone}">0901234567</span>
+                    </div>
+                    <div class="bf-shop-meta-item" th:if="${shop.email != null and !#strings.isEmpty(shop.email)}">
+                        <i class="bi bi-envelope"></i>
+                        <span th:text="${shop.email}">email@...</span>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <!-- ════════ PAGINATION ════════ -->
+    <nav th:if="${shopPage != null and shopPage.totalPages > 1}" class="bf-pagination-nav" aria-label="Phân trang cửa hàng">
+        <a class="bf-page-btn"
+           th:classappend="${shopPage.first} ? 'disabled' : ''"
+           th:href="@{/public/shop(page=${shopPage.number})}">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+
+        <a th:each="i : ${#numbers.sequence(1, shopPage.totalPages)}"
+           class="bf-page-btn"
+           th:classappend="${i == shopPage.number + 1} ? 'active' : ''"
+           th:href="@{/public/shop(page=${i})}"
+           th:text="${i}">1</a>
+
+        <a class="bf-page-btn"
+           th:classappend="${shopPage.last} ? 'disabled' : ''"
+           th:href="@{/public/shop(page=${shopPage.number + 2})}">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </nav>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

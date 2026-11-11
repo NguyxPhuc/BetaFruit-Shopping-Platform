@@ -2,12 +2,13 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
 import com.fu.SWP391_BetaFruit.dto.request.ShopSetupRequest;
+import com.fu.SWP391_BetaFruit.dto.response.PublicShopResponse;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
-import com.fu.SWP391_BetaFruit.enums.RoleName;
-import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
-import com.fu.SWP391_BetaFruit.enums.UserStatus;
+import com.fu.SWP391_BetaFruit.enums.*;
+import com.fu.SWP391_BetaFruit.repository.ProductRepository;
+import com.fu.SWP391_BetaFruit.repository.ReviewRepository;
 import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
@@ -22,10 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +36,8 @@ public class ShopServiceImpl implements ShopService {
     private final ShopRepository shopRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final ProductRepository productRepository;
+    private final ReviewRepository reviewRepository;
 
     /**
      * Retrieves the details of a shop by its ID.
@@ -355,5 +355,95 @@ public class ShopServiceImpl implements ShopService {
         shop.setAccountName(request.getAccountName().toUpperCase().trim());
         shop.setApprovalStatus(ShopApprovalStatus.PENDING);
         shopRepository.save(shop);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PublicShopResponse> getAllPublicShops(Pageable pageable) {
+        Page<Shop> shopPage = shopRepository.findPublicActiveShops(pageable, ShopApprovalStatus.APPROVED, UserStatus.ACTIVE);
+        if (shopPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        Map<Integer, Long> productCountMap = getProductCountMap();
+        Map<Integer, Double> ratingMap = new HashMap<>();
+        Map<Integer, Long> reviewCountMap = new HashMap<>();
+        populateRatingStats(ratingMap, reviewCountMap);
+
+        List<PublicShopResponse> responseList = shopPage.getContent().stream()
+                .map(shop -> mapToPublicShopResponse(shop, productCountMap, ratingMap, reviewCountMap))
+                .toList();
+
+        return new org.springframework.data.domain.PageImpl<>(responseList, pageable, shopPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PublicShopResponse> getAllPublicShops() {
+        List<Shop> shops = shopRepository.findPublicActiveShops(ShopApprovalStatus.APPROVED, UserStatus.ACTIVE);
+        if (shops.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Integer, Long> productCountMap = getProductCountMap();
+        Map<Integer, Double> ratingMap = new HashMap<>();
+        Map<Integer, Long> reviewCountMap = new HashMap<>();
+        populateRatingStats(ratingMap, reviewCountMap);
+
+        return shops.stream()
+                .map(shop -> mapToPublicShopResponse(shop, productCountMap, ratingMap, reviewCountMap))
+                .toList();
+    }
+
+    private Map<Integer, Long> getProductCountMap() {
+        Map<Integer, Long> map = new HashMap<>();
+        List<Object[]> rows = productRepository.countActiveProductsGroupedByShop(ProductApprovalStatus.APPROVED, ProductVisibility.ACTIVE);
+        if (rows != null) {
+            for (Object[] row : rows) {
+                if (row[0] != null && row[1] != null) {
+                    map.put(((Number) row[0]).intValue(), ((Number) row[1]).longValue());
+                }
+            }
+        }
+        return map;
+    }
+
+    private void populateRatingStats(Map<Integer, Double> ratingMap, Map<Integer, Long> reviewCountMap) {
+        List<Object[]> rows = reviewRepository.getRatingStatsGroupedByShop(ReviewVisibility.VISIBLE);
+        if (rows != null) {
+            for (Object[] row : rows) {
+                if (row[0] != null) {
+                    Integer shopId = ((Number) row[0]).intValue();
+                    Double avg = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
+                    Long count = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+                    ratingMap.put(shopId, Math.round(avg * 10.0) / 10.0);
+                    reviewCountMap.put(shopId, count);
+                }
+            }
+        }
+    }
+
+    private PublicShopResponse mapToPublicShopResponse(Shop shop,
+                                                       Map<Integer, Long> productCountMap,
+                                                       Map<Integer, Double> ratingMap,
+                                                       Map<Integer, Long> reviewCountMap) {
+        String initial = "S";
+        if (shop.getShopName() != null && !shop.getShopName().trim().isEmpty()) {
+            initial = shop.getShopName().trim().substring(0, 1).toUpperCase();
+        }
+
+        PublicShopResponse response = new PublicShopResponse();
+        response.setShopId(shop.getShopId());
+        response.setShopName(shop.getShopName());
+        response.setShopDescription(shop.getShopDescription());
+        response.setLogoUrl(shop.getLogoUrl());
+        response.setBannerUrl(shop.getBannerUrl());
+        response.setOwnerName(shop.getOwner() != null ? shop.getOwner().getFullName() : null);
+        response.setPhone(shop.getOwner() != null ? shop.getOwner().getPhone() : null);
+        response.setEmail(shop.getOwner() != null ? shop.getOwner().getEmail() : null);
+        response.setActiveProductCount(productCountMap.getOrDefault(shop.getShopId(), 0L));
+        response.setRating(ratingMap.getOrDefault(shop.getShopId(), 0.0));
+        response.setReviewCount(reviewCountMap.getOrDefault(shop.getShopId(), 0L));
+        response.setInitialLetter(initial);
+        return response;
     }
 }

@@ -2,10 +2,12 @@ package com.fu.SWP391_BetaFruit.service;
 
 import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
 import com.fu.SWP391_BetaFruit.dto.request.ShopSetupRequest;
+import com.fu.SWP391_BetaFruit.dto.response.PublicShopResponse;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,4 +29,7 @@ public interface ShopService {
     Map<String, Object> getAdminCommissionPageData(String keyword, String ownerStatus, String commissionTier, int page, int size, String sortBy, String sortDir);
 
     void setUpProfileShop(Integer userId, ShopSetupRequest request) throws Exception;
+
+    Page<PublicShopResponse> getAllPublicShops(Pageable pageable);
+    List<PublicShopResponse> getAllPublicShops();
 }

@@ -82,4 +82,10 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     Page<Product> findByShop_ShopIdAndProductNameContainingIgnoreCase(Integer shopId, String keyword, Pageable pageable);
 
     long countByShop_ShopId(Integer shopId);
+
+    @Query("SELECT p.shop.shopId, COUNT(p) FROM Product p " +
+           "WHERE p.approvalStatus = :shopStatus " +
+           "AND p.visibilityStatus = :productStatus " +
+           "GROUP BY p.shop.shopId")
+    List<Object[]> countActiveProductsGroupedByShop(@Param("shopStatus")  ProductApprovalStatus status, @Param("productStatus") ProductVisibility visibility);
 }
