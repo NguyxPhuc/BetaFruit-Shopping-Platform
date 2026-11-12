@@ -2,7 +2,6 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.MembershipTierRequest;
 import com.fu.SWP391_BetaFruit.dto.response.CustomerMembershipResponse;
-import com.fu.SWP391_BetaFruit.dto.response.MembershipDiscountResult;
 import com.fu.SWP391_BetaFruit.dto.response.TierUpgradeResult;
 import com.fu.SWP391_BetaFruit.dto.response.TierVoucherResponse;
 import com.fu.SWP391_BetaFruit.entity.Coupon;
@@ -47,23 +46,91 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     private final CouponRepository couponRepository;
     private final TierCouponRepository tierCouponRepository;
 
+    private static final List<OrderStatus> COMPLETED_ORDER_STATUSES = List.of(OrderStatus.RECEIVED, OrderStatus.SUCCESS);
+
     // =========================================================================
     // 1. PHÍA CUSTOMER (BR-LY-01, BR-LY-02, BR-LY-03 & TIÊU CHÍ KÉP SHOPEE)
     // =========================================================================
     @Override
-    @Transactional(readOnly = true)
-    public CustomerMembershipResponse getCustomerMembershipData(Integer userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin người dùng với ID: " + userId));
+    @Transactional
+    public CustomerMembership syncCustomerMembershipTier(Integer userId) {
+        if (userId == null) {
+            return null;
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return null;
+        }
 
-        // Lấy thông tin tích lũy chi tiêu của customer (BR-LY-01: được tích lũy từ các đơn SUCCESS)
         CustomerMembership membership = customerMembershipRepository.findByUserId(userId).orElse(null);
         BigDecimal totalSpent = (membership != null && membership.getTotalCumulativeSpend() != null)
                 ? membership.getTotalCumulativeSpend()
                 : BigDecimal.ZERO;
 
+        long completedOrders = (orderRepository != null)
+                ? orderRepository.countByCustomer_UserIdAndOrderStatusIn(userId, COMPLETED_ORDER_STATUSES)
+                : 0L;
+
+        List<MembershipTier> sortedTiers = membershipTierRepository.findAllByOrderByMinSpentRequiredAsc();
+        if (sortedTiers.isEmpty()) {
+            return membership;
+        }
+
+        MembershipTier qualifiedTier = sortedTiers.get(0);
+        for (MembershipTier tier : sortedTiers) {
+            int minOrders = (tier.getMinOrdersRequired() != null) ? tier.getMinOrdersRequired() : 0;
+            BigDecimal tierMinSpent = (tier.getMinSpentRequired() != null) ? tier.getMinSpentRequired() : BigDecimal.ZERO;
+            boolean spendPassed = totalSpent.compareTo(tierMinSpent) >= 0;
+            boolean ordersPassed = (minOrders > 0) && (completedOrders >= minOrders);
+
+            if (spendPassed || ordersPassed) {
+                qualifiedTier = tier;
+            } else {
+                break;
+            }
+        }
+
+        if (membership == null) {
+            CustomerMembership newMembership = new CustomerMembership();
+            newMembership.setUser(user);
+            newMembership.setTier(qualifiedTier);
+            newMembership.setTotalCumulativeSpend(totalSpent);
+            return customerMembershipRepository.save(newMembership);
+        } else if (membership.getTier() == null || !Objects.equals(membership.getTier().getTierId(), qualifiedTier.getTierId())) {
+            membership.setTier(qualifiedTier);
+            return customerMembershipRepository.save(membership);
+        }
+        return membership;
+    }
+
+    @Override
+    @Transactional
+    public void syncAllCustomersMembershipTier() {
+        List<CustomerMembership> allMemberships = customerMembershipRepository.findAll();
+        for (CustomerMembership cm : allMemberships) {
+            if (cm.getUser() != null && cm.getUser().getUserId() != null) {
+                syncCustomerMembershipTier(cm.getUser().getUserId());
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public CustomerMembershipResponse getCustomerMembershipData(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin người dùng với ID: " + userId));
+
+        // Tự động đối soát và đồng bộ hạng chuẩn xác vào Database
+        CustomerMembership membership = syncCustomerMembershipTier(userId);
+        if (membership == null) {
+            membership = customerMembershipRepository.findByUserId(userId).orElse(null);
+        }
+        BigDecimal totalSpent = (membership != null && membership.getTotalCumulativeSpend() != null)
+                ? membership.getTotalCumulativeSpend()
+                : BigDecimal.ZERO;
+
         // Đếm tổng số đơn hoàn tất của khách theo thời gian thực (Shopee Rewards)
-        long completedOrders = orderRepository.countByCustomer_UserIdAndOrderStatus(userId, OrderStatus.SUCCESS);
+        long completedOrders = orderRepository.countByCustomer_UserIdAndOrderStatusIn(userId, COMPLETED_ORDER_STATUSES);
 
         // Lấy tất cả các hạng thành viên được sắp xếp tăng dần theo MinSpentRequired (BR-LY-02)
         List<MembershipTier> sortedTiers = membershipTierRepository.findAllByOrderByMinSpentRequiredAsc();
@@ -76,9 +143,10 @@ public class MembershipTierServiceImpl implements MembershipTierService {
 
         for (int i = 0; i < sortedTiers.size(); i++) {
             MembershipTier tier = sortedTiers.get(i);
-            int minOrders = getRequiredOrdersForTierIndex(i);
-            boolean spendPassed = totalSpent.compareTo(tier.getMinSpentRequired()) >= 0;
-            boolean ordersPassed = completedOrders >= minOrders;
+            int minOrders = (tier.getMinOrdersRequired() != null) ? tier.getMinOrdersRequired() : 0;
+            BigDecimal tierMinSpent = (tier.getMinSpentRequired() != null) ? tier.getMinSpentRequired() : BigDecimal.ZERO;
+            boolean spendPassed = totalSpent.compareTo(tierMinSpent) >= 0;
+            boolean ordersPassed = (minOrders > 0) && (completedOrders >= minOrders);
 
             if (spendPassed || ordersPassed) {
                 currentTier = tier; // Cập nhật hạng cao nhất thỏa mãn
@@ -87,6 +155,14 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 // Hạng đầu tiên chưa đạt chính là nextTier
                 nextTier = tier;
                 break;
+            }
+        }
+
+        // Tự động đồng bộ lại vào DB nếu có sự thay đổi
+        if (membership != null && currentTier != null) {
+            if (membership.getTier() == null || !Objects.equals(membership.getTier().getTierId(), currentTier.getTierId())) {
+                membership.setTier(currentTier);
+                customerMembershipRepository.save(membership);
             }
         }
 
@@ -109,7 +185,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
 
         if (hasNextTier) {
             int nextTierIndex = currentTierIndex + 1;
-            nextTierRequiredOrders = getRequiredOrdersForTierIndex(nextTierIndex);
+            nextTierRequiredOrders = (nextTier.getMinOrdersRequired() != null) ? nextTier.getMinOrdersRequired() : 0;
             ordersNeeded = Math.max(0, nextTierRequiredOrders - (int) completedOrders);
             if (nextTierRequiredOrders > 0) {
                 progressOrdersPercentage = Math.min(100.0, ((double) completedOrders / nextTierRequiredOrders) * 100.0);
@@ -117,7 +193,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 progressOrdersPercentage = 100.0;
             }
 
-            BigDecimal nextMinSpent = nextTier.getMinSpentRequired();
+            BigDecimal nextMinSpent = (nextTier.getMinSpentRequired() != null) ? nextTier.getMinSpentRequired() : BigDecimal.ZERO;
             amountNeeded = nextMinSpent.subtract(totalSpent);
             if (amountNeeded.compareTo(BigDecimal.ZERO) < 0) {
                 amountNeeded = BigDecimal.ZERO;
@@ -141,9 +217,9 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                     t.getTierId(),
                     t.getTierName(),
                     t.getMinSpentRequired(),
-                    t.getDiscountPercent(),
+                    BigDecimal.ZERO,
                     isCur,
-                    getRequiredOrdersForTierIndex(i)
+                    (t.getMinOrdersRequired() != null) ? t.getMinOrdersRequired() : 0
             ));
         }
 
@@ -154,7 +230,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 .totalCumulativeSpend(totalSpent)
                 .currentTierId(currentTier != null ? currentTier.getTierId() : null)
                 .currentTierName(currentTier != null ? currentTier.getTierName() : "Thành viên")
-                .currentDiscountPercent(currentTier != null ? currentTier.getDiscountPercent() : BigDecimal.ZERO)
+                .currentDiscountPercent(BigDecimal.ZERO)
                 .currentMinSpent(currentTier != null ? currentTier.getMinSpentRequired() : BigDecimal.ZERO)
                 .hasNextTier(hasNextTier)
                 .nextTierId(nextTier != null ? nextTier.getTierId() : null)
@@ -168,7 +244,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 .ordersNeeded(ordersNeeded)
                 .progressOrdersPercentage(progressOrdersPercentage)
                 .cycleExpiryDate(calculateCycleExpiryDate())
-                .tierVouchers(getExclusiveVouchersForTier(currentTierIndex, currentTier))
+                .tierVouchers(getExclusiveVouchersForTier(user.getUserId(), currentTierIndex, currentTier))
                 .build();
     }
 
@@ -196,10 +272,11 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         MembershipTier tier = new MembershipTier();
         tier.setTierName(request.getTierName().trim());
         tier.setMinSpentRequired(request.getMinSpentRequired());
-        tier.setDiscountPercent(request.getDiscountPercent());
+        tier.setMinOrdersRequired(request.getMinOrdersRequired() != null ? request.getMinOrdersRequired() : 0);
 
         MembershipTier saved = membershipTierRepository.save(tier);
-        syncTierVoucher(saved);
+        syncAllCustomersMembershipTier();
+
     }
 
     @Override
@@ -210,10 +287,11 @@ public class MembershipTierServiceImpl implements MembershipTierService {
 
         tier.setTierName(request.getTierName().trim());
         tier.setMinSpentRequired(request.getMinSpentRequired());
-        tier.setDiscountPercent(request.getDiscountPercent());
+        tier.setMinOrdersRequired(request.getMinOrdersRequired() != null ? request.getMinOrdersRequired() : 0);
 
         MembershipTier saved = membershipTierRepository.save(tier);
-        syncTierVoucher(saved);
+        syncAllCustomersMembershipTier();
+
     }
 
     @Override
@@ -230,7 +308,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             tierCouponRepository.deleteByTier_TierId(id);
         }
         membershipTierRepository.delete(tier);
-        deactivateTierVoucher(tier);
+
     }
 
     @Override
@@ -241,21 +319,28 @@ public class MembershipTierServiceImpl implements MembershipTierService {
 
         Map<Integer, List<Coupon>> tierCouponsMap = new HashMap<>();
         Map<Integer, Set<Integer>> tierCouponIdsMap = new HashMap<>();
+        Map<Integer, Map<Integer, Integer>> tierCouponQuotaMap = new HashMap<>();
 
         for (MembershipTier tier : tiers) {
-            List<Coupon> assigned = (tierCouponRepository != null)
-                    ? tierCouponRepository.findByTier_TierId(tier.getTierId()).stream()
+            List<TierCoupon> links = (tierCouponRepository != null)
+                    ? tierCouponRepository.findByTier_TierId(tier.getTierId())
+                    : Collections.emptyList();
+            List<Coupon> assigned = links.stream()
                     .map(TierCoupon::getCoupon)
                     .filter(Objects::nonNull)
-                    .toList()
-                    : Collections.emptyList();
+                    .toList();
             tierCouponsMap.put(tier.getTierId(), assigned);
 
             Set<Integer> ids = new HashSet<>();
-            for (Coupon c : assigned) {
-                ids.add(c.getCouponId());
+            Map<Integer, Integer> quotaMap = new HashMap<>();
+            for (TierCoupon tc : links) {
+                if (tc.getCoupon() != null && tc.getCoupon().getCouponId() != null) {
+                    ids.add(tc.getCoupon().getCouponId());
+                    quotaMap.put(tc.getCoupon().getCouponId(), tc.getEffectiveUsageQuota());
+                }
             }
             tierCouponIdsMap.put(tier.getTierId(), ids);
+            tierCouponQuotaMap.put(tier.getTierId(), quotaMap);
         }
 
         Map<String, Object> data = new HashMap<>();
@@ -265,6 +350,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         data.put("platformCoupons", platformCoupons);
         data.put("tierCouponsMap", tierCouponsMap);
         data.put("tierCouponIdsMap", tierCouponIdsMap);
+        data.put("tierCouponQuotaMap", tierCouponQuotaMap);
         return data;
     }
 
@@ -291,6 +377,12 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     @Override
     @Transactional
     public void updateTierCoupons(Integer tierId, List<Integer> couponIds) {
+        updateTierCoupons(tierId, couponIds, Collections.emptyMap());
+    }
+
+    @Override
+    @Transactional
+    public void updateTierCoupons(Integer tierId, List<Integer> couponIds, Map<Integer, Integer> quotaMap) {
         MembershipTier tier = membershipTierRepository.findById(tierId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy Hạng thành viên với ID: " + tierId));
 
@@ -309,7 +401,18 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             if (coupon.getShop() != null) {
                 throw new IllegalArgumentException("Mã [" + coupon.getCouponCode() + "] là mã riêng của Shop, không thể đưa vào gói quyền lợi Hạng của Sàn!");
             }
-            newLinks.add(new TierCoupon(tier, coupon));
+            Integer quota = (quotaMap != null) ? quotaMap.get(coupon.getCouponId()) : null;
+            if (quota == null || quota <= 0) {
+                String name = (tier.getTierName() != null) ? tier.getTierName().toLowerCase() : "";
+                if (name.contains("kim cương") || name.contains("diamond") || name.contains("vip")) {
+                    quota = 3;
+                } else if (name.contains("vàng") || name.contains("gold")) {
+                    quota = 2;
+                } else {
+                    quota = 1;
+                }
+            }
+            newLinks.add(new TierCoupon(tier, coupon, quota));
         }
 
         if (tierCouponRepository != null) {
@@ -351,7 +454,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         membership.setTotalCumulativeSpend(newSpend);
 
         // Đếm tổng số đơn hoàn tất của khách (OrderStatus.SUCCESS)
-        long completedOrders = orderRepository.countByCustomer_UserIdAndOrderStatus(customerId, OrderStatus.SUCCESS);
+        long completedOrders = orderRepository.countByCustomer_UserIdAndOrderStatusIn(customerId, COMPLETED_ORDER_STATUSES);
 
         // Lấy danh sách Tiers sắp xếp tăng dần theo MinSpent
         List<MembershipTier> sortedTiers = membershipTierRepository.findAllByOrderByMinSpentRequiredAsc();
@@ -359,13 +462,13 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         MembershipTier currentTierInDb = membership.getTier();
         MembershipTier qualifiedTier = null;
 
-        // Quét tìm hạng cao nhất theo tiêu chí kép chuẩn Shopee Rewards:
+        // Quét tìm hạng cao nhất theo tiêu chí kép:
         // Đạt chi tiêu tối thiểu HOẶC đạt số đơn hoàn tất tối thiểu
         for (int i = 0; i < sortedTiers.size(); i++) {
             MembershipTier t = sortedTiers.get(i);
-            int minOrders = getRequiredOrdersForTierIndex(i);
+            int minOrders = (t.getMinOrdersRequired() != null) ? t.getMinOrdersRequired() : 0;
             boolean spendPassed = newSpend.compareTo(t.getMinSpentRequired()) >= 0;
-            boolean ordersPassed = completedOrders >= minOrders;
+            boolean ordersPassed = (minOrders > 0) && (completedOrders >= minOrders);
 
             if (spendPassed || ordersPassed) {
                 qualifiedTier = t; // Cập nhật hạng cao nhất thỏa mãn
@@ -392,26 +495,39 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             membership.setTier(qualifiedTier);
             customerMembershipRepository.save(membership);
 
-            // Bắn thông báo thăng hạng theo chuẩn Shopee Rewards
-            String welcomeCoupon;
-            if (qualifiedTier.getTierName() != null && qualifiedTier.getTierName().contains("Kim Cương")) {
-                welcomeCoupon = "DIAMOND_VIP100K";
-            } else if (qualifiedTier.getTierName() != null && qualifiedTier.getTierName().contains("Vàng")) {
-                welcomeCoupon = "GOLD_DISCOUNT50K";
-            } else if (qualifiedTier.getTierName() != null && qualifiedTier.getTierName().contains("Bạc")) {
-                welcomeCoupon = "SILVER_FREESHIP";
+            // Lấy danh sách Voucher đặc quyền thực tế từ cấu hình gói của hạng này
+            List<TierCoupon> tierCouponMappings = (tierCouponRepository != null && qualifiedTier.getTierId() != null)
+                    ? tierCouponRepository.findByTier_TierId(qualifiedTier.getTierId())
+                    : Collections.emptyList();
+
+            List<String> activeCouponCodes = (tierCouponMappings != null)
+                    ? tierCouponMappings.stream()
+                            .map(TierCoupon::getCoupon)
+                            .filter(c -> c != null && Boolean.TRUE.equals(c.getIsActive()))
+                            .map(Coupon::getCouponCode)
+                            .filter(code -> code != null && !code.trim().isEmpty())
+                            .toList()
+                    : Collections.emptyList();
+
+            String welcomeCoupon = null;
+            String voucherNotice;
+            if (!activeCouponCodes.isEmpty()) {
+                welcomeCoupon = String.join(", ", activeCouponCodes);
+                voucherNotice = String.format(" Nhận ngay Voucher độc quyền (%s) tại trang Hội viên!", welcomeCoupon);
             } else {
-                welcomeCoupon = "LOYALTY" + qualifiedTier.getDiscountPercent().intValue();
+                voucherNotice = " Khám phá ngay các quyền lợi ưu đãi tại trang Hội viên!";
             }
+
+            String customerName = (user.getFullName() != null && !user.getFullName().trim().isEmpty())
+                    ? user.getFullName()
+                    : user.getUsername();
 
             String title = "🎉 Chúc mừng bạn đã thăng hạng " + qualifiedTier.getTierName() + "!";
             String message = String.format(
-                    "Chúc mừng %s đã đạt mốc hội viên %s của BetaFruit! "
-                    + "Đặc quyền chiết khấu %s%% đã kích hoạt thành công. Nhận ngay Voucher độc quyền '%s' tại trang Hội viên!",
-                    user.getFullName() != null ? user.getFullName() : user.getUsername(),
+                    "Chúc mừng %s đã đạt mốc hội viên %s của BetaFruit!%s",
+                    customerName,
                     qualifiedTier.getTierName(),
-                    qualifiedTier.getDiscountPercent(),
-                    welcomeCoupon
+                    voucherNotice
             );
 
             try {
@@ -437,7 +553,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                     .previousTierName(previousTier != null ? previousTier.getTierName() : null)
                     .newTierId(qualifiedTier.getTierId())
                     .newTierName(qualifiedTier.getTierName())
-                    .newDiscountPercent(qualifiedTier.getDiscountPercent())
+                    .newDiscountPercent(BigDecimal.ZERO)
                     .cumulativeSpend(newSpend)
                     .completedOrdersCount(completedOrders)
                     .welcomeMessage(message)
@@ -455,71 +571,6 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         }
     }
 
-    // =========================================================================
-    // 4. TIÊU THỤ ĐẶC QUYỀN TẠI CHECKOUT (FE-09.2)
-    // =========================================================================
-    @Override
-    @Transactional(readOnly = true)
-    public MembershipDiscountResult calculateMembershipDiscount(Integer customerId, BigDecimal subtotal) {
-        if (customerId == null) {
-            throw new IllegalArgumentException("CustomerId không được để trống!");
-        }
-        if (subtotal == null || subtotal.compareTo(BigDecimal.ZERO) <= 0) {
-            return MembershipDiscountResult.builder()
-                    .customerId(customerId)
-                    .discountPercent(BigDecimal.ZERO)
-                    .subtotal(BigDecimal.ZERO)
-                    .discountAmount(BigDecimal.ZERO)
-                    .finalAmount(BigDecimal.ZERO)
-                    .build();
-        }
-
-        CustomerMembership membership = customerMembershipRepository.findByUserId(customerId).orElse(null);
-        MembershipTier tier = (membership != null) ? membership.getTier() : null;
-
-        if (tier == null) {
-            tier = membershipTierRepository.findTopByOrderByMinSpentRequiredAsc();
-        }
-
-        BigDecimal discountPercent = (tier != null && tier.getDiscountPercent() != null)
-                ? tier.getDiscountPercent()
-                : BigDecimal.ZERO;
-
-        BigDecimal discountAmount = subtotal.multiply(discountPercent)
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
-        BigDecimal finalAmount = subtotal.subtract(discountAmount);
-        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
-            finalAmount = BigDecimal.ZERO;
-        }
-
-        return MembershipDiscountResult.builder()
-                .customerId(customerId)
-                .tierId(tier != null ? tier.getTierId() : null)
-                .tierName(tier != null ? tier.getTierName() : "Thành viên")
-                .discountPercent(discountPercent)
-                .subtotal(subtotal)
-                .discountAmount(discountAmount)
-                .finalAmount(finalAmount)
-                .build();
-    }
-
-    /**
-     * Mốc số đơn hàng hoàn thành tối thiểu tương ứng theo vị trí bậc hạng (chuẩn Shopee Rewards):
-     * - Bậc 1 (Đồng): 0 đơn
-     * - Bậc 2 (Bạc): 3 đơn
-     * - Bậc 3 (Vàng): 10 đơn
-     * - Bậc 4 (Kim Cương): 25 đơn
-     */
-    private int getRequiredOrdersForTierIndex(int index) {
-        return switch (index) {
-            case 0 -> 0;   // Đồng
-            case 1 -> 3;   // Bạc
-            case 2 -> 10;  // Vàng
-            default -> 25; // Kim Cương trở lên
-        };
-    }
-
     /**
      * Tính ngày hết hạn chu kỳ 6 tháng theo chuẩn Shopee Rewards:
      * - Nếu hiện tại ở nửa đầu năm (Tháng 1 - 6) -> Hết hạn vào 30/06
@@ -535,11 +586,11 @@ public class MembershipTierServiceImpl implements MembershipTierService {
 
     /**
      * Validate theo quy tắc nghiệp vụ BR-LY-02:
-     * - Không âm (minSpentRequired >= 0, discountPercent >= 0 và <= 100)
+     * - Không âm (minSpentRequired >= 0, minOrdersRequired >= 0)
      * - Tên hạng không được trùng
      * - Ngưỡng chi tiêu không được trùng với hạng khác
-     * - Quy tắc lũy tiến: Hạng chi tiêu cao hơn phải có tỷ lệ giảm giá >= hạng thấp hơn
-     * - Bảo vệ hạng cơ sở (0 ₫) dành cho khách hàng mới
+     * - Quy tắc lũy tiến: Hạng chi tiêu cao hơn phải có số đơn yêu cầu >= hạng thấp hơn
+     * - Bảo vệ hạng cơ sở (0 ₫, 0 đơn) dành cho khách hàng mới
      */
     private void validateTierRequest(MembershipTierRequest request, Integer currentId) {
         if (request.getTierName() == null || request.getTierName().trim().isEmpty()) {
@@ -548,26 +599,25 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         if (request.getMinSpentRequired() == null || request.getMinSpentRequired().compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("⚠️ Mức chi tiêu tích lũy yêu cầu phải lớn hơn hoặc bằng 0 ₫.");
         }
-        if (request.getDiscountPercent() == null) {
-            request.setDiscountPercent(BigDecimal.ZERO);
-        }
-        if (request.getDiscountPercent().compareTo(BigDecimal.ZERO) < 0
-                || request.getDiscountPercent().compareTo(BigDecimal.valueOf(100)) > 0) {
-            throw new IllegalArgumentException("Tỷ lệ chiết khấu giảm giá phải từ 0% đến 100%!");
+        if (request.getMinOrdersRequired() == null || request.getMinOrdersRequired() < 0) {
+            throw new IllegalArgumentException("⚠️ Số đơn hàng hoàn tất yêu cầu phải lớn hơn hoặc bằng 0 đơn.");
         }
 
         String trimmedName = request.getTierName().trim();
         List<MembershipTier> allTiers = membershipTierRepository.findAll();
 
-        // 1. Kiểm tra bảo vệ Hạng cơ sở (0 ₫) khi cập nhật
+        // 1. Kiểm tra bảo vệ Hạng cơ sở (0 ₫ và 0 đơn) khi cập nhật
         if (currentId != null) {
             MembershipTier existingTier = getTierById(currentId);
             if (existingTier.getMinSpentRequired().compareTo(BigDecimal.ZERO) == 0
-                    && request.getMinSpentRequired().compareTo(BigDecimal.ZERO) > 0) {
+                    && (existingTier.getMinOrdersRequired() == null || existingTier.getMinOrdersRequired() == 0)
+                    && (request.getMinSpentRequired().compareTo(BigDecimal.ZERO) > 0 || request.getMinOrdersRequired() > 0)) {
                 boolean hasOtherZeroTier = allTiers.stream()
-                        .anyMatch(t -> !Objects.equals(t.getTierId(), currentId) && t.getMinSpentRequired().compareTo(BigDecimal.ZERO) == 0);
+                        .anyMatch(t -> !Objects.equals(t.getTierId(), currentId)
+                                && t.getMinSpentRequired().compareTo(BigDecimal.ZERO) == 0
+                                && (t.getMinOrdersRequired() == null || t.getMinOrdersRequired() == 0));
                 if (!hasOtherZeroTier) {
-                    throw new IllegalArgumentException("⚠️ Bắt buộc phải duy trì ít nhất 1 hạng cơ sở với mức chi tiêu 0 ₫ cho thành viên mới.");
+                    throw new IllegalArgumentException("⚠️ Bắt buộc phải duy trì ít nhất 1 hạng cơ sở với mức chi tiêu 0 ₫ và 0 đơn cho thành viên mới.");
                 }
             }
         }
@@ -583,181 +633,60 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) == 0) {
                 throw new IllegalArgumentException("Ngưỡng chi tiêu " + request.getMinSpentRequired() + " ₫ đã trùng với hạng '" + t.getTierName() + "'!");
             }
-            // Quy tắc lũy tiến (chỉ áp dụng khi cả 2 hạng đều cấu hình discountPercent > 0):
-            if (t.getDiscountPercent() != null && request.getDiscountPercent() != null
-                    && t.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0
-                    && request.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
+            // Quy tắc lũy tiến số đơn: Hạng có chi tiêu yêu cầu cao hơn phải có số đơn yêu cầu >= hạng thấp hơn
+            if (t.getMinOrdersRequired() != null && request.getMinOrdersRequired() != null) {
                 if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) > 0
-                        && t.getDiscountPercent().compareTo(request.getDiscountPercent()) < 0) {
-                    throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu thấp hơn hạng '" + t.getTierName() + "' nhưng tỷ lệ giảm giá lại cao hơn (" + request.getDiscountPercent() + "% > " + t.getDiscountPercent() + "%)!");
+                        && t.getMinOrdersRequired() < request.getMinOrdersRequired()) {
+                    throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu thấp hơn nhưng số đơn yêu cầu lại cao hơn hạng '" + t.getTierName() + "' (" + request.getMinOrdersRequired() + " > " + t.getMinOrdersRequired() + " đơn)!");
                 }
                 if (t.getMinSpentRequired().compareTo(request.getMinSpentRequired()) < 0
-                        && t.getDiscountPercent().compareTo(request.getDiscountPercent()) > 0) {
-                    throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu cao hơn hạng '" + t.getTierName() + "' nhưng tỷ lệ giảm giá lại thấp hơn (" + request.getDiscountPercent() + "% < " + t.getDiscountPercent() + "%)!");
+                        && t.getMinOrdersRequired() > request.getMinOrdersRequired()) {
+                    throw new IllegalArgumentException("Hạng '" + trimmedName + "' có chi tiêu yêu cầu cao hơn nhưng số đơn yêu cầu lại thấp hơn hạng '" + t.getTierName() + "' (" + request.getMinOrdersRequired() + " < " + t.getMinOrdersRequired() + " đơn)!");
                 }
             }
         }
     }
-
-    /**
-     * Tự động tạo hoặc cập nhật Voucher đặc quyền hội viên (Sàn tài trợ) khi Admin cấu hình hạng
-     */
-    private void syncTierVoucher(MembershipTier tier) {
-        if (tier == null || couponRepository == null) {
-            return;
-        }
-
-        BigDecimal discount = (tier.getDiscountPercent() != null) ? tier.getDiscountPercent() : BigDecimal.ZERO;
-        // Neu ty le giam gia <= 0 (quyen loi hoi vien ap dung 100% qua Goi Voucher San), bo qua cap nhat Coupon VIP
-        if (discount.compareTo(BigDecimal.ZERO) <= 0) {
-            log.info("Hang [{}] ap dung chinh sach Goi Voucher San (discount <= 0%), khong tao/cap nhat Coupon VIP truc tiep.", tier.getTierName());
-            return;
-        }
-
-        String tierName = (tier.getTierName() != null) ? tier.getTierName().toLowerCase().trim() : "";
-        String couponCode;
-        BigDecimal maxCap;
-        int usageLimit;
-
-        if (tierName.contains("kim cương") || tierName.contains("diamond")) {
-            couponCode = "DIAMOND_VIP";
-            maxCap = new BigDecimal("100000");
-            usageLimit = 8;
-        } else if (tierName.contains("vàng") || tierName.contains("gold")) {
-            couponCode = "GOLD_VIP";
-            maxCap = new BigDecimal("50000");
-            usageLimit = 4;
-        } else if (tierName.contains("bạc") || tierName.contains("silver")) {
-            couponCode = "SILVER_VIP";
-            maxCap = new BigDecimal("20000");
-            usageLimit = 2;
-        } else if (tier.getDiscountPercent() != null && tier.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
-            couponCode = "TIER_" + (tier.getTierId() != null ? tier.getTierId() : System.currentTimeMillis() % 1000) + "_VIP";
-            maxCap = new BigDecimal("30000");
-            usageLimit = 2;
-        } else {
-            return;
-        }
-
-        boolean isActive = discount.compareTo(BigDecimal.ZERO) > 0;
-
-        try {
-            Optional<Coupon> opt = couponRepository.findByCouponCodeIgnoreCase(couponCode);
-            Coupon coupon = opt.orElseGet(Coupon::new);
-
-            coupon.setCouponCode(couponCode);
-            coupon.setShop(null); // Quy ước Sàn tài trợ (Platform coupon, không trừ tiền Shop)
-            coupon.setCouponCategory(CouponCategory.PRODUCT);
-            coupon.setDiscountType(DiscountType.PERCENT);
-            coupon.setDiscountValue(discount);
-            coupon.setMinOrderValue(new BigDecimal("100000"));
-            coupon.setMaxDiscountAmount(maxCap);
-            coupon.setUsageLimit(usageLimit);
-            if (coupon.getUsedCount() == null) {
-                coupon.setUsedCount(0);
-            }
-            coupon.setIsActive(isActive);
-            if (coupon.getStartDate() == null) {
-                coupon.setStartDate(LocalDateTime.now().minusDays(1));
-            }
-            if (coupon.getEndDate() == null) {
-                coupon.setEndDate(LocalDateTime.now().plusYears(1));
-            }
-
-            couponRepository.save(coupon);
-            log.info("Đã đồng bộ Coupon VIP sàn tài trợ cho hạng [{}]: Code={}, Discount={}% (isActive={})",
-                    tier.getTierName(), couponCode, discount, isActive);
-        } catch (Exception e) {
-            log.warn("Lỗi khi đồng bộ Coupon VIP cho hạng {}: {}", tier.getTierName(), e.getMessage());
-        }
-    }
-
-    private void deactivateTierVoucher(MembershipTier tier) {
-        if (tier == null || couponRepository == null) return;
-        try {
-            String tierName = (tier.getTierName() != null) ? tier.getTierName().toLowerCase().trim() : "";
-            String code = null;
-            if (tierName.contains("kim cương") || tierName.contains("diamond")) code = "DIAMOND_VIP";
-            else if (tierName.contains("vàng") || tierName.contains("gold")) code = "GOLD_VIP";
-            else if (tierName.contains("bạc") || tierName.contains("silver")) code = "SILVER_VIP";
-            else if (tier.getTierId() != null) code = "TIER_" + tier.getTierId() + "_VIP";
-
-            if (code != null) {
-                couponRepository.findByCouponCodeIgnoreCase(code).ifPresent(c -> {
-                    c.setIsActive(false);
-                    couponRepository.save(c);
-                });
-            }
-        } catch (Exception e) {
-            log.warn("Không thể vô hiệu hóa voucher khi xóa hạng {}: {}", tier.getTierName(), e.getMessage());
-        }
-    }
-
     /**
      * Lấy danh sách Voucher đặc quyền theo cấp bậc hiện tại (Shopee Rewards Style)
      */
-    private List<TierVoucherResponse> getExclusiveVouchersForTier(int tierIndex, MembershipTier currentTier) {
-        if (tierIndex <= 0 || currentTier == null) {
+    private List<TierVoucherResponse> getExclusiveVouchersForTier(Integer userId, int tierIndex, MembershipTier currentTier) {
+        if (tierIndex <= 0 || currentTier == null || currentTier.getTierId() == null || tierCouponRepository == null) {
             return Collections.emptyList();
         }
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        List<TierCoupon> configuredList = tierCouponRepository.findByTier_TierId(currentTier.getTierId());
+        if (configuredList == null || configuredList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         List<TierVoucherResponse> vouchers = new ArrayList<>();
-
-        // 1. Ưu tiên lấy từ Gói Voucher Động do Admin cấu hình (N-N Dynamic TierCoupon)
-        if (tierCouponRepository != null && currentTier.getTierId() != null) {
-            List<TierCoupon> configuredList = tierCouponRepository.findByTier_TierId(currentTier.getTierId());
-            if (configuredList != null && !configuredList.isEmpty()) {
-                for (TierCoupon tc : configuredList) {
-                    Coupon c = tc.getCoupon();
-                    if (c != null && Boolean.TRUE.equals(c.getIsActive())) {
-                        vouchers.add(mapCouponToTierVoucherResponse(c, currentTier, dtf));
-                    }
+        for (TierCoupon tc : configuredList) {
+            Coupon c = tc.getCoupon();
+            if (c != null && Boolean.TRUE.equals(c.getIsActive())) {
+                long usedCount = 0;
+                if (userId != null && orderRepository != null && c.getCouponId() != null) {
+                    usedCount = orderRepository.countValidUsedCouponByCustomer(userId, c.getCouponId());
                 }
-                return vouchers;
-            }
-        }
+                int totalQuota = tc.getEffectiveUsageQuota();
+                long remainingQuota = Math.max(0, totalQuota - usedCount);
+                boolean isUsed = (remainingQuota <= 0);
 
-        // 2. Dự phòng: Nếu Admin chưa cấu hình gói N-N thì dùng danh sách mặc định theo cấp bậc
-        List<String> targetCodes = new ArrayList<>();
-        if (tierIndex >= 3) { // Hạng Kim Cương
-            targetCodes.add("DIAMOND_FREESHIP");
-            targetCodes.add("DIAMOND_VIP");
-            targetCodes.add("DIAMOND_VIP100K");
-            targetCodes.add("DIAMOND_PERCENT15");
-            targetCodes.add("GOLD_FREESHIP");
-            targetCodes.add("GOLD_VIP");
-            targetCodes.add("GOLD_DISCOUNT50K");
-        } else if (tierIndex == 2) { // Hạng Vàng
-            targetCodes.add("GOLD_FREESHIP");
-            targetCodes.add("GOLD_VIP");
-            targetCodes.add("GOLD_DISCOUNT50K");
-            targetCodes.add("SILVER_FREESHIP");
-            targetCodes.add("SILVER_VIP");
-        } else if (tierIndex == 1) { // Hạng Bạc
-            targetCodes.add("SILVER_FREESHIP");
-            targetCodes.add("SILVER_VIP");
-        }
-
-        for (String code : targetCodes) {
-            Optional<Coupon> opt = (couponRepository != null) ? couponRepository.findByCouponCodeIgnoreCase(code) : Optional.empty();
-            if (opt.isPresent()) {
-                vouchers.add(mapCouponToTierVoucherResponse(opt.get(), currentTier, dtf));
-            } else {
-                vouchers.add(createFallbackVoucher(code, currentTier));
+                vouchers.add(mapCouponToTierVoucherResponse(c, currentTier, dtf, isUsed, totalQuota, usedCount, remainingQuota));
             }
         }
         return vouchers;
     }
 
-    private TierVoucherResponse mapCouponToTierVoucherResponse(Coupon c, MembershipTier currentTier, DateTimeFormatter dtf) {
+    private TierVoucherResponse mapCouponToTierVoucherResponse(Coupon c, MembershipTier currentTier, DateTimeFormatter dtf, boolean isUsed, int totalQuota, long usedCount, long remainingQuota) {
+        BigDecimal discountVal = (c.getDiscountValue() != null) ? c.getDiscountValue() : BigDecimal.ZERO;
         String title;
         if (c.getDiscountType() == DiscountType.PERCENT) {
-            title = "Giảm " + c.getDiscountValue().stripTrailingZeros().toPlainString() + "%";
+            title = "Giảm " + discountVal.stripTrailingZeros().toPlainString() + "%";
         } else if (c.getCouponCategory() == CouponCategory.SHIPPING) {
-            title = "Freeship " + formatVoucherMoney(c.getDiscountValue());
+            title = "Freeship " + formatVoucherMoney(discountVal);
         } else {
-            title = "Giảm " + formatVoucherMoney(c.getDiscountValue());
+            title = "Giảm " + formatVoucherMoney(discountVal);
         }
 
         String minSpend = (c.getMinOrderValue() != null)
@@ -773,6 +702,10 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 : "HSD: Đến hết chu kỳ";
 
         String badge = (c.getCouponCategory() == CouponCategory.SHIPPING) ? "FREESHIP" : "GIẢM GIÁ";
+        String quotaBadge = "x" + totalQuota + " lượt";
+        String usageProgress = isUsed
+                ? "Đã dùng hết (" + totalQuota + "/" + totalQuota + " lượt)"
+                : "Còn lại " + remainingQuota + "/" + totalQuota + " lượt";
 
         return TierVoucherResponse.builder()
                 .couponCode(c.getCouponCode())
@@ -784,121 +717,17 @@ public class MembershipTierServiceImpl implements MembershipTierService {
                 .badgeType(badge)
                 .targetTierName(currentTier != null ? currentTier.getTierName() : "")
                 .isAvailable(Boolean.TRUE.equals(c.getIsActive()))
+                .isUsed(isUsed)
+                .totalQuota(totalQuota)
+                .usedCount(usedCount)
+                .remainingQuota(remainingQuota)
+                .quotaBadgeText(quotaBadge)
+                .usageProgressText(usageProgress)
                 .build();
     }
 
     private String formatVoucherMoney(BigDecimal amount) {
         if (amount == null) return "0 ₫";
         return String.format(Locale.GERMANY, "%,.0f ₫", amount);
-    }
-
-    private TierVoucherResponse createFallbackVoucher(String code, MembershipTier currentTier) {
-        String tierName = (currentTier != null) ? currentTier.getTierName() : "";
-        return switch (code) {
-            case "SILVER_FREESHIP" -> TierVoucherResponse.builder()
-                    .couponCode("SILVER_FREESHIP")
-                    .title("Freeship 30.000 ₫")
-                    .description("Miễn phí vận chuyển toàn sàn cho Hạng Bạc")
-                    .minOrderValueText("Đơn tối thiểu 150.000 ₫")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("FREESHIP")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-            case "SILVER_VIP" -> TierVoucherResponse.builder()
-                    .couponCode("SILVER_VIP")
-                    .title("Giảm " + (currentTier != null && currentTier.getDiscountPercent() != null ? currentTier.getDiscountPercent().stripTrailingZeros().toPlainString() : "3") + "%")
-                    .description("Voucher VIP toàn sàn cho Hạng Bạc (Sàn tài trợ)")
-                    .minOrderValueText("Đơn tối thiểu 100.000 ₫")
-                    .maxDiscountText("Tối đa 20.000 ₫")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("GIẢM GIÁ")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-            case "GOLD_FREESHIP" -> TierVoucherResponse.builder()
-                    .couponCode("GOLD_FREESHIP")
-                    .title("Freeship 40.000 ₫")
-                    .description("Miễn phí vận chuyển toàn sàn cho Hạng Vàng")
-                    .minOrderValueText("Đơn tối thiểu 200.000 ₫")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("FREESHIP")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-            case "GOLD_VIP" -> TierVoucherResponse.builder()
-                    .couponCode("GOLD_VIP")
-                    .title("Giảm " + (currentTier != null && currentTier.getDiscountPercent() != null ? currentTier.getDiscountPercent().stripTrailingZeros().toPlainString() : "6") + "%")
-                    .description("Voucher VIP toàn sàn cho Hạng Vàng (Sàn tài trợ)")
-                    .minOrderValueText("Đơn tối thiểu 100.000 ₫")
-                    .maxDiscountText("Tối đa 50.000 ₫")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("GIẢM GIÁ")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-            case "GOLD_DISCOUNT50K" -> TierVoucherResponse.builder()
-                    .couponCode("GOLD_DISCOUNT50K")
-                    .title("Giảm 50.000 ₫")
-                    .description("Voucher giảm giá hoa quả toàn sàn cho Hạng Vàng")
-                    .minOrderValueText("Đơn tối thiểu 300.000 ₫")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("GIẢM GIÁ")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-            case "DIAMOND_VIP" -> TierVoucherResponse.builder()
-                    .couponCode("DIAMOND_VIP")
-                    .title("Giảm " + (currentTier != null && currentTier.getDiscountPercent() != null ? currentTier.getDiscountPercent().stripTrailingZeros().toPlainString() : "10") + "%")
-                    .description("Voucher VIP toàn sàn cho Hạng Kim Cương (Sàn tài trợ)")
-                    .minOrderValueText("Đơn tối thiểu 100.000 ₫")
-                    .maxDiscountText("Tối đa 100.000 ₫")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("GIẢM GIÁ")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-            case "DIAMOND_FREESHIP" -> TierVoucherResponse.builder()
-                    .couponCode("DIAMOND_FREESHIP")
-                    .title("Freeship 50.000 ₫")
-                    .description("Miễn phí vận chuyển toàn sàn VIP Kim Cương")
-                    .minOrderValueText("Đơn tối thiểu 150.000 ₫")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("FREESHIP")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-            case "DIAMOND_VIP100K" -> TierVoucherResponse.builder()
-                    .couponCode("DIAMOND_VIP100K")
-                    .title("Giảm 100.000 ₫")
-                    .description("Voucher VIP giảm trực tiếp vào đơn hàng")
-                    .minOrderValueText("Đơn tối thiểu 500.000 ₫")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("GIẢM GIÁ")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-            case "DIAMOND_PERCENT15" -> TierVoucherResponse.builder()
-                    .couponCode("DIAMOND_PERCENT15")
-                    .title("Giảm 15%")
-                    .description("Đặc quyền thượng đỉnh Shopee Rewards")
-                    .minOrderValueText("Đơn tối thiểu 600.000 ₫")
-                    .maxDiscountText("Tối đa 150.000 ₫")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("GIẢM GIÁ")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-            default -> TierVoucherResponse.builder()
-                    .couponCode(code)
-                    .title("Ưu đãi đặc quyền")
-                    .description("Voucher toàn sàn")
-                    .minOrderValueText("Áp dụng theo điều kiện")
-                    .expiryDateText("HSD: Đến hết chu kỳ")
-                    .badgeType("GIẢM GIÁ")
-                    .targetTierName(tierName)
-                    .isAvailable(true)
-                    .build();
-        };
     }
 }

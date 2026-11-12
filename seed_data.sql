@@ -1,4 +1,4 @@
--- ====================================================================================================
+﻿-- ====================================================================================================
 -- DỰ ÁN: BETAFRUIT SHOPPING PLATFORM (SWP391)
 -- SCRIPT: TẠO DỮ LIỆU MẪU (SEED DATA) CHO MICROSOFT SQL SERVER
 -- TÀI KHOẢN MẶC ĐỊNH:
@@ -17,7 +17,13 @@
 --      - Email: shipper.nam@gmail.com   | Username: shipper_nam  | Mật khẩu: 1234567890
 -- ====================================================================================================
 
+USE [betafruit2];
+GO
+
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+GO
 
 -- ----------------------------------------------------------------------------------------------------
 -- 0. ĐẢM BẢO CÁC BẢNG MỚI ĐÃ ĐƯỢC TẠO NẾU CHƯA TỒN TẠI (SCHEMA CHECK)
@@ -539,7 +545,7 @@ INSERT INTO Review (ReviewId, OrderItemId, CustomerId, Rating, Comment, ShopRepl
 (2, 2, 7, 1, N'Shop làm ăn lừa đảo gian manh, cân thiếu nửa ký sầu riêng, trái cây thối rữa như rác rưởi!', NULL, 'VISIBLE', 1),
 
 -- Review 3: Cherry đỏ Mỹ (Đơn 6, Shop 3) - 1 sao dìm hàng đối thủ -> Đã được duyệt ẩn (APPROVED_HIDDEN)
-(3, 6, 8, 1, N'Sản phẩm của shop đối thủ cạnh tranh tốt hơn nhiều, shop này bán đồ dỏm đừng mua!', NULL, 'HIDDEN', 1),
+(3, 6, 8, 1, N'Sản phẩm của shop đối thủ cạnh tranh tốt hơn nhiều, shop này bán đồ dỏm đừng mua!', NULL, 'HIDDEN_BY_ADMIN', 1),
 
 -- Review 4: Bơ sáp 034 (Đơn 7, Shop 1) - 2 sao phản ánh thực tế -> Shop báo cáo nhưng bị từ chối (REJECTED)
 (4, 7, 9, 2, N'Bơ nhận được hơi chín quá, ăn liền thì được chứ để 2 hôm là nhũn.', NULL, 'VISIBLE', 1);
@@ -592,3 +598,5 @@ SET IDENTITY_INSERT Notification OFF;
 PRINT N'====================================================================================================';
 PRINT N'==> TẠO DỮ LIỆU MẪU (SEED DATA) HOÀN TẤT THÀNH CÔNG VỚI 30 BẢNG TRONG HỆ THỐNG BETAFRUIT!';
 PRINT N'====================================================================================================';
+
+

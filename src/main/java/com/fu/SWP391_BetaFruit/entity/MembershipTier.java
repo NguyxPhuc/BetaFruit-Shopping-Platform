@@ -26,6 +26,6 @@ public class MembershipTier {
     @Column(name = "MinSpentRequired", precision = 18, scale = 2)
     private BigDecimal minSpentRequired;
 
-    @Column(name = "DiscountPercent", precision = 5, scale = 2)
-    private BigDecimal discountPercent;
+    @Column(name = "MinOrdersRequired", nullable = false)
+    private Integer minOrdersRequired = 0;
 }

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'analytics', ~{::content})}">
+<head>
+    <title th:text="'Thống Kê Bán Hàng: ' + (${analytics?.shopName ?: 'Gian Hàng'}) + ' | BetaFruit Shop'">
+        Thống Kê Bán Hàng | BetaFruit Shop
+    </title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- ════════ 1. TIÊU ĐỀ TRANG & LỐI TẮT HÀNH ĐỘNG ════════ -->
+    <div class="mb-4 pb-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <div class="text-muted small mb-1">
+                <a th:href="@{/shop/dashboard}" class="text-decoration-none text-muted">Bảng Điều Khiển</a>
+                <span class="mx-1">/</span>
+                <span class="text-primary fw-semibold">Thống Kê Bán Hàng</span>
+            </div>
+            <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-graph-up-arrow text-success"></i>
+                <span>Thống Kê Bán Hàng & Doanh Thu</span>
+            </h3>
+            <p class="text-muted small mb-0">Theo dõi chi tiết dòng tiền doanh thu thực nhận, số lượng đơn hàng và các mặt hàng hoa quả bán chạy nhất của gian hàng.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a th:href="@{/shop/balance}" class="btn btn-sm btn-outline-warning rounded-pill px-3 py-2 fw-semibold text-dark shadow-xs">
+                <i class="bi bi-wallet2 me-1 text-warning"></i> Ví Doanh Thu
+            </a>
+            <a th:href="@{/shop/orders}" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 fw-semibold shadow-xs">
+                <i class="bi bi-bag-check me-1"></i> Xem Đơn Hàng
+            </a>
+            <a th:href="@{/shop/products/create}" class="btn btn-sm btn-success rounded-pill px-3 py-2 fw-semibold shadow-xs">
+                <i class="bi bi-plus-circle me-1"></i> Đăng Hoa Quả Mới
+            </a>
+        </div>
+    </div>
+
+    <!-- ════════ 2. BANNER THÔNG TIN GIAN HÀNG & SỐ DƯ KHẢ DỤNG ════════ -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white border border-light-subtle">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-xs flex-shrink-0"
+                     style="width: 52px; height: 52px; background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa;">
+                    <i class="bi bi-shop fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">
+                        <span th:text="${analytics != null ? analytics.shopName : 'Gian Hàng BetaFruit'}">Nông Sản Đà Lạt Xanh</span>
+                    </h5>
+                    <div class="small text-muted d-flex flex-wrap align-items-center gap-2">
+                        <span>Chủ gian hàng: <strong class="text-dark" th:text="${analytics != null ? analytics.ownerName : 'Chủ Shop'}">Nguyễn Văn A</strong></span>
+                        <span class="text-secondary">&bull;</span>
+                        <span>Mã gian hàng: <strong class="text-dark">#<span th:text="${analytics != null ? analytics.shopId : '---'}">1</span></strong></span>
+                        <span class="text-secondary">&bull;</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-0 rounded-pill">Đang hoạt động</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-md-end bg-light p-2 px-3 rounded-3 border">
+                <span class="small text-muted d-block">Số dư khả dụng hiện tại:</span>
+                <strong class="fs-5 font-monospace text-success"
+                        th:text="${analytics != null and analytics.availableBalance != null ? #numbers.formatDecimal(analytics.availableBalance, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                    0 ₫
+                </strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════ 3. 4 THẺ CHỈ SỐ KPI VẬN HÀNH BÁN HÀNG ════════ -->
+    <div class="row g-3 mb-4">
+        <!-- KPI 1: Doanh thu thực nhận -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="shop-kpi-card h-100 position-relative">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="shop-kpi-label">Thực Nhận Sau Phí</span>
+                    <div class="shop-kpi-icon kpi-icon-green">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+                </div>
+                <div class="shop-kpi-val text-success text-truncate mb-2"
+                     th:title="${analytics != null and analytics.netRevenue != null ? #numbers.formatDecimal(analytics.netRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}"
+                     th:text="${analytics != null and analytics.netRevenue != null ? #numbers.formatDecimal(analytics.netRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                    0 ₫
+                </div>
+                <div class="pt-2 border-top small d-flex flex-column gap-1">
+                    <div class="d-flex justify-content-between align-items-center text-muted">
+                        <span>Tổng doanh số (GMV):</span>
+                        <strong class="text-dark" th:text="${analytics != null and analytics.totalRevenue != null ? #numbers.formatDecimal(analytics.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">0 ₫</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center text-muted">
+                        <span>Phí sàn trích nộp:</span>
+                        <span class="text-danger fw-semibold" th:text="${analytics != null and analytics.totalPlatformFee != null ? #numbers.formatDecimal(analytics.totalPlatformFee, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">0 ₫</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 2: Đơn hàng của shop -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="shop-kpi-card h-100 position-relative">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="shop-kpi-label">Đơn Hàng Của Shop</span>
+                    <div class="shop-kpi-icon kpi-icon-blue">
+                        <i class="bi bi-bag-check-fill"></i>
+                    </div>
+                </div>
+                <div class="shop-kpi-val text-primary mb-2"
+                     th:text="${analytics != null ? analytics.totalOrders : 0}">
+                    0
+                </div>
+                <div class="pt-2 border-top small d-flex flex-column gap-1">
+                    <div class="d-flex justify-content-between align-items-center text-muted">
+                        <span>Thành công / Đang giao:</span>
+                        <span class="text-dark fw-semibold">
+                            <span class="text-success" th:text="${analytics != null ? analytics.completedOrders : 0}">0</span>
+                            <span> / </span>
+                            <span class="text-primary" th:text="${analytics != null ? analytics.processingOrders : 0}">0</span>
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center text-muted">
+                        <span>Tỷ lệ hoàn tất đơn:</span>
+                        <strong class="text-success" th:text="${analytics != null and analytics.successRate != null ? analytics.successRate + '%' : '0%'}">0%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 3: Mặt hàng & Tồn kho -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="shop-kpi-card h-100 position-relative">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="shop-kpi-label">Mặt Hàng & Tồn Kho</span>
+                    <div class="shop-kpi-icon kpi-icon-amber">
+                        <i class="bi bi-basket3-fill"></i>
+                    </div>
+                </div>
+                <div class="shop-kpi-val text-dark mb-2">
+                    <span th:text="${analytics != null ? analytics.productCount : 0}">0</span>
+                    <span class="fs-6 fw-normal text-muted">Loại SP</span>
+                </div>
+                <div class="pt-2 border-top small d-flex flex-column gap-1">
+                    <div class="d-flex justify-content-between align-items-center text-muted">
+                        <span>Tổng tồn kho sẵn có:</span>
+                        <strong class="text-dark" th:text="${analytics != null ? analytics.totalStockQuantity : 0} + ' SP'">0 SP</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center text-muted">
+                        <span>Cảnh báo sắp hết hàng:</span>
+                        <span class="badge rounded-pill"
+                              th:classappend="${analytics != null and analytics.lowStockCount > 0 ? 'bg-danger text-white' : 'bg-success-subtle text-success'}"
+                              th:text="${analytics != null ? analytics.lowStockCount + ' SP' : '0 SP'}">0 SP</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 4: Khách hàng mua sắm -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="shop-kpi-card h-100 position-relative">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="shop-kpi-label">Khách Hàng Đã Mua</span>
+                    <div class="shop-kpi-icon kpi-icon-purple">
+                        <i class="bi bi-person-heart"></i>
+                    </div>
+                </div>
+                <div class="shop-kpi-val text-purple mb-2" style="color: #7c3aed;"
+                     th:text="${analytics != null ? analytics.totalCustomers : 0}">
+                    0
+                </div>
+                <div class="pt-2 border-top small d-flex flex-column gap-1">
+                    <div class="d-flex justify-content-between align-items-center text-muted">
+                        <span>Khách đặt mua thành công:</span>
+                        <span class="text-success fw-semibold">Đã phát sinh mua</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center text-muted">
+                        <span>Giá trị đơn TB (AOV):</span>
+                        <strong class="text-dark" th:text="${analytics != null and analytics.averageOrderValue != null ? #numbers.formatDecimal(analytics.averageOrderValue, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">0 ₫</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════ 4. TOP 5 HOA QUẢ BÁN CHẠY NHẤT CỦA SHOP ════════ -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
+        <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-trophy-fill text-warning"></i>
+                    <span>Top 5 Hoa Quả Bán Chạy Nhất Của Gian Hàng</span>
+                </h5>
+                <p class="text-muted small mb-0 mt-1">Xếp hạng dựa trên khối lượng tiêu thụ thực tế và doanh số mang lại cho gian hàng</p>
+            </div>
+            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill fw-semibold">
+                <i class="bi bi-fire me-1 text-danger"></i> Xu hướng tiêu dùng
+            </span>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive" th:if="${analytics != null and analytics.topSellingProducts != null and !analytics.topSellingProducts.empty}">
+                <table class="table align-middle table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 70px;">Thứ Hạng</th>
+                            <th style="min-width: 250px;">Sản Phẩm Hoa Quả</th>
+                            <th style="min-width: 140px;">Danh Mục</th>
+                            <th class="text-center" style="min-width: 110px;">Đã Bán</th>
+                            <th class="text-end" style="min-width: 150px;">Doanh Số Mang Lại</th>
+                            <th class="text-center" style="min-width: 110px;">Tồn Kho</th>
+                            <th class="text-center" style="min-width: 100px;">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${analytics.topSellingProducts}">
+                            <!-- Thứ hạng -->
+                            <td class="text-center">
+                                <span th:if="${p.rank == 1}" class="badge bg-warning text-dark p-2 rounded-circle shadow-xs" title="Hạng 1 - Bán chạy nhất">
+                                    <i class="bi bi-trophy-fill fs-6"></i>
+                                </span>
+                                <span th:if="${p.rank == 2}" class="badge bg-secondary-subtle text-secondary border p-2 rounded-circle" title="Hạng 2">
+                                    <span class="fw-bold px-1">2</span>
+                                </span>
+                                <span th:if="${p.rank == 3}" class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle p-2 rounded-circle" title="Hạng 3">
+                                    <span class="fw-bold px-1">3</span>
+                                </span>
+                                <span th:if="${p.rank > 3}" class="fw-bold text-muted" th:text="${p.rank}">4</span>
+                            </td>
+
+                            <!-- Sản phẩm -->
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img th:if="${p.imageUrl != null and !p.imageUrl.empty}"
+                                         th:src="${p.imageUrl}"
+                                         alt="Hoa quả"
+                                         class="rounded-3 border object-fit-cover shadow-xs"
+                                         style="width: 44px; height: 44px;"
+                                         onerror="this.src='/images/default-fruit.png';">
+                                    <div th:unless="${p.imageUrl != null and !p.imageUrl.empty}"
+                                         class="rounded-3 border bg-light d-flex align-items-center justify-content-center text-muted shadow-xs"
+                                         style="width: 44px; height: 44px;">
+                                        <i class="bi bi-basket3 fs-5"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark" th:text="${p.productName}">Bơ Sáp 034</div>
+                                        <span class="text-muted small">Mã SP: #<span th:text="${p.productId}">1</span></span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Danh mục -->
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1 rounded-pill"
+                                      th:text="${p.categoryName != null ? p.categoryName : 'Trái Cây'}">Trái Cây</span>
+                            </td>
+
+                            <!-- Đã bán -->
+                            <td class="text-center">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-bold">
+                                    <i class="bi bi-bag-check me-1"></i>
+                                    <span th:text="${p.totalQuantitySold}">0</span>
+                                </span>
+                            </td>
+
+                            <!-- Doanh số mang lại -->
+                            <td class="text-end fw-bold text-dark font-monospace"
+                                th:text="${p.totalRevenue != null ? #numbers.formatDecimal(p.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                                0 ₫
+                            </td>
+
+                            <!-- Tồn kho -->
+                            <td class="text-center">
+                                <span class="badge px-2 py-1 rounded-pill"
+                                      th:classappend="${p.totalStock != null and p.totalStock <= 5 ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-info-subtle text-info-emphasis border border-info-subtle'}"
+                                      th:text="${p.totalStock != null ? 'Còn: ' + p.totalStock : 'Còn: 0'}">Còn: 10</span>
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td class="text-center">
+                                <a th:href="@{/shop/products/edit/{id}(id=${p.productId})}"
+                                   class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1"
+                                   title="Chỉnh sửa sản phẩm hoa quả">
+                                    <i class="bi bi-pencil-square"></i> Sửa
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Trường hợp chưa có dữ liệu bán hàng -->
+            <div class="p-4 text-center text-muted" th:if="${analytics == null or analytics.topSellingProducts == null or analytics.topSellingProducts.empty}">
+                <i class="bi bi-info-circle fs-3 d-block mb-2 text-secondary"></i>
+                Chưa có dữ liệu hoa quả bán chạy nào được ghi nhận cho gian hàng này.
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════ 5. BẢNG HIỆU SUẤT TOÀN BỘ HOA QUẢ CỦA GIAN HÀNG ════════ -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
+        <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-boxes text-primary"></i>
+                    <span>Hiệu Suất Kinh Doanh Từng Loại Hoa Quả</span>
+                </h5>
+                <p class="text-muted small mb-0 mt-1">Bảng tổng hợp chi tiết số lượng tiêu thụ, doanh số và tồn kho thực tế của tất cả mặt hàng trong shop</p>
+            </div>
+            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">
+                <i class="bi bi-basket2 me-1 text-primary"></i>
+                <span th:text="${analytics != null and analytics.allProducts != null ? analytics.allProducts.size() : 0}">0</span> Mặt hàng hoa quả
+            </span>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive" th:if="${analytics != null and analytics.allProducts != null and !analytics.allProducts.empty}">
+                <table class="table align-middle table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 60px;">#</th>
+                            <th style="min-width: 240px;">Tên Hoa Quả</th>
+                            <th style="min-width: 140px;">Danh Mục</th>
+                            <th class="text-center" style="min-width: 110px;">Đã Tiêu Thụ</th>
+                            <th class="text-end" style="min-width: 150px;">Doanh Số Đem Lại</th>
+                            <th class="text-center" style="min-width: 110px;">Tồn Kho</th>
+                            <th class="text-center" style="min-width: 120px;">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p, stat : ${analytics.allProducts}">
+                            <td class="text-center fw-semibold text-muted" th:text="${stat.count}">1</td>
+
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img th:if="${p.imageUrl != null and !p.imageUrl.empty}"
+                                         th:src="${p.imageUrl}"
+                                         alt="Hoa quả"
+                                         class="rounded-3 border object-fit-cover shadow-xs"
+                                         style="width: 40px; height: 40px;"
+                                         onerror="this.src='/images/default-fruit.png';">
+                                    <div th:unless="${p.imageUrl != null and !p.imageUrl.empty}"
+                                         class="rounded-3 border bg-light d-flex align-items-center justify-content-center text-muted"
+                                         style="width: 40px; height: 40px;">
+                                        <i class="bi bi-basket3"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark" th:text="${p.productName}">Tên Hoa Quả</div>
+                                        <span class="text-muted small">Mã SP: #<span th:text="${p.productId}">1</span></span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1 rounded-pill"
+                                      th:text="${p.categoryName != null ? p.categoryName : 'Trái Cây'}">Danh Mục</span>
+                            </td>
+
+                            <td class="text-center">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill fw-semibold"
+                                      th:text="${p.totalQuantitySold + ' Đã bán'}">0 Đã bán</span>
+                            </td>
+
+                            <td class="text-end fw-bold text-success font-monospace"
+                                th:text="${p.totalRevenue != null ? #numbers.formatDecimal(p.totalRevenue, 0, 'COMMA', 0, 'POINT') + ' ₫' : '0 ₫'}">
+                                0 ₫
+                            </td>
+
+                            <td class="text-center">
+                                <span class="badge px-2 py-1 rounded-pill"
+                                      th:classappend="${p.totalStock != null and p.totalStock <= 5 ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border'}"
+                                      th:text="${p.totalStock != null ? p.totalStock + ' SP' : '0 SP'}">0 SP</span>
+                            </td>
+
+                            <td class="text-center">
+                                <a th:href="@{/shop/products/edit/{id}(id=${p.productId})}"
+                                   class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold">
+                                    <i class="bi bi-pencil me-1"></i> Quản lý
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 text-center text-muted" th:if="${analytics == null or analytics.allProducts == null or analytics.allProducts.empty}">
+                Chưa có mặt hàng hoa quả nào trong kho. Hãy bấm "Đăng Hoa Quả Mới" để bắt đầu mở bán!
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
