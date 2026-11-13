@@ -167,7 +167,6 @@ public class PaymentServiceImpl implements PaymentService {
                         customerPhone = order.getCustomer().getPhone() != null ? order.getCustomer().getPhone() : "";
                     }
                 }
-
                 // Đồng bộ trạng thái UI với trạng thái thực tế do IPN đã chốt trước đó
                 if (PaymentStatus.PAID.equals(transaction.getStatus())) {
                     isSuccess = true;

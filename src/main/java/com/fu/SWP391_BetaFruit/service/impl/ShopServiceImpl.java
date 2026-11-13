@@ -2,16 +2,18 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.ShopProfileRequest;
 import com.fu.SWP391_BetaFruit.dto.request.ShopSetupRequest;
+import com.fu.SWP391_BetaFruit.dto.response.PublicShopResponse;
 import com.fu.SWP391_BetaFruit.dto.response.ShopProfileResponse;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import com.fu.SWP391_BetaFruit.entity.User;
-import com.fu.SWP391_BetaFruit.enums.RoleName;
-import com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus;
-import com.fu.SWP391_BetaFruit.enums.UserStatus;
+import com.fu.SWP391_BetaFruit.enums.*;
+import com.fu.SWP391_BetaFruit.repository.ProductRepository;
+import com.fu.SWP391_BetaFruit.repository.ReviewRepository;
 import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.ShopService;
+import com.fu.SWP391_BetaFruit.service.StorageService;
 import com.fu.SWP391_BetaFruit.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,12 +22,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +38,9 @@ public class ShopServiceImpl implements ShopService {
     private final ShopRepository shopRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final ProductRepository productRepository;
+    private final ReviewRepository reviewRepository;
+    private final StorageService storageService;
 
     /**
      * Retrieves the details of a shop by its ID.
@@ -247,6 +250,7 @@ public class ShopServiceImpl implements ShopService {
         return data;
     }
 
+    // Lấy Profile shop
     @Override
     public ShopProfileResponse getShopProfile(Integer id) throws Exception {
         ShopProfileResponse shopProfileResponse = new ShopProfileResponse();
@@ -267,6 +271,7 @@ public class ShopServiceImpl implements ShopService {
         return shopProfileResponse;
     }
 
+    // Chinh sua profile shop
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void editShopProfile(Integer userId, ShopProfileRequest shopProfileRequest) throws Exception {
@@ -338,6 +343,7 @@ public class ShopServiceImpl implements ShopService {
         return data;
     }
 
+    // Tao profile shop
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void setUpProfileShop(Integer userId, ShopSetupRequest request) throws Exception {
@@ -348,12 +354,123 @@ public class ShopServiceImpl implements ShopService {
         if (shop.getApprovalStatus() == ShopApprovalStatus.APPROVED) {
             throw new Exception("Cửa hàng của bạn đã được phê duyệt, không thể thiết lập lại hồ sơ ban đầu.");
         }
-        shop.setShopName(request.getShopName().trim());
-        shop.setShopDescription(request.getShopDescription() != null ?  request.getShopDescription().trim() : null);
-        shop.setBankName(request.getBankName().trim());
-        shop.setBankAccountNumber(request.getBankAccountNumber().trim());
-        shop.setAccountName(request.getAccountName().toUpperCase().trim());
-        shop.setApprovalStatus(ShopApprovalStatus.PENDING);
-        shopRepository.save(shop);
+        List<String> uploadedKeys = new ArrayList<>();
+        try {
+
+            if (request.getLogoFile() != null && !request.getLogoFile().isEmpty()) {
+               storageService.validateImage(request.getLogoFile());
+                String logoUrl = storageService.storeImage(request.getLogoFile(), "shop/logos");
+                uploadedKeys.add(logoUrl);
+                shop.setLogoUrl(logoUrl);
+            }
+            if (request.getBannerFile() != null && !request.getBannerFile().isEmpty()) {
+                storageService.validateImage(request.getBannerFile());
+                String bannerUrl = storageService.storeImage(request.getBannerFile(), "shop/banners");
+                uploadedKeys.add(bannerUrl);
+                shop.setBannerUrl(bannerUrl);
+            }
+
+            shop.setShopName(request.getShopName().trim());
+            shop.setShopDescription(request.getShopDescription());
+            shop.setBankName(request.getBankName().trim());
+            shop.setBankAccountNumber(request.getBankAccountNumber().trim());
+            shop.setAccountName(request.getAccountName().toUpperCase().trim());
+            shop.setApprovalStatus(ShopApprovalStatus.PENDING);
+            shopRepository.save(shop);
+        } catch (Exception e) {
+            //TRANSACTION DB THẤT BẠI: Dọn dẹp ngay các ảnh mồ côi trên MinIO!
+            storageService.clearUp(uploadedKeys);
+            throw e;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PublicShopResponse> getAllPublicShops(Pageable pageable) {
+        Page<Shop> shopPage = shopRepository.findPublicActiveShops(pageable, ShopApprovalStatus.APPROVED, UserStatus.ACTIVE);
+        if (shopPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        Map<Integer, Long> productCountMap = getProductCountMap();
+        Map<Integer, Double> ratingMap = new HashMap<>();
+        Map<Integer, Long> reviewCountMap = new HashMap<>();
+        populateRatingStats(ratingMap, reviewCountMap);
+
+        List<PublicShopResponse> responseList = shopPage.getContent().stream()
+                .map(shop -> mapToPublicShopResponse(shop, productCountMap, ratingMap, reviewCountMap))
+                .toList();
+
+        return new org.springframework.data.domain.PageImpl<>(responseList, pageable, shopPage.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PublicShopResponse> getAllPublicShops() {
+        List<Shop> shops = shopRepository.findPublicActiveShops(ShopApprovalStatus.APPROVED, UserStatus.ACTIVE);
+        if (shops.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Integer, Long> productCountMap = getProductCountMap();
+        Map<Integer, Double> ratingMap = new HashMap<>();
+        Map<Integer, Long> reviewCountMap = new HashMap<>();
+        populateRatingStats(ratingMap, reviewCountMap);
+
+        return shops.stream()
+                .map(shop -> mapToPublicShopResponse(shop, productCountMap, ratingMap, reviewCountMap))
+                .toList();
+    }
+
+    private Map<Integer, Long> getProductCountMap() {
+        Map<Integer, Long> map = new HashMap<>();
+        List<Object[]> rows = productRepository.countActiveProductsGroupedByShop(ProductApprovalStatus.APPROVED, ProductVisibility.ACTIVE);
+        if (rows != null) {
+            for (Object[] row : rows) {
+                if (row[0] != null && row[1] != null) {
+                    map.put(((Number) row[0]).intValue(), ((Number) row[1]).longValue());
+                }
+            }
+        }
+        return map;
+    }
+
+    private void populateRatingStats(Map<Integer, Double> ratingMap, Map<Integer, Long> reviewCountMap) {
+        List<Object[]> rows = reviewRepository.getRatingStatsGroupedByShop(ReviewVisibility.VISIBLE);
+        if (rows != null) {
+            for (Object[] row : rows) {
+                if (row[0] != null) {
+                    Integer shopId = ((Number) row[0]).intValue();
+                    Double avg = row[1] != null ? ((Number) row[1]).doubleValue() : 0.0;
+                    Long count = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+                    ratingMap.put(shopId, Math.round(avg * 10.0) / 10.0);
+                    reviewCountMap.put(shopId, count);
+                }
+            }
+        }
+    }
+
+    private PublicShopResponse mapToPublicShopResponse(Shop shop,
+                                                       Map<Integer, Long> productCountMap,
+                                                       Map<Integer, Double> ratingMap,
+                                                       Map<Integer, Long> reviewCountMap) {
+        String initial = "S";
+        if (shop.getShopName() != null && !shop.getShopName().trim().isEmpty()) {
+            initial = shop.getShopName().trim().substring(0, 1).toUpperCase();
+        }
+
+        PublicShopResponse response = new PublicShopResponse();
+        response.setShopId(shop.getShopId());
+        response.setShopName(shop.getShopName());
+        response.setShopDescription(shop.getShopDescription());
+        response.setLogoUrl(shop.getLogoUrl());
+        response.setBannerUrl(shop.getBannerUrl());
+        response.setOwnerName(shop.getOwner() != null ? shop.getOwner().getFullName() : null);
+        response.setPhone(shop.getOwner() != null ? shop.getOwner().getPhone() : null);
+        response.setEmail(shop.getOwner() != null ? shop.getOwner().getEmail() : null);
+        response.setActiveProductCount(productCountMap.getOrDefault(shop.getShopId(), 0L));
+        response.setRating(ratingMap.getOrDefault(shop.getShopId(), 0.0));
+        response.setReviewCount(reviewCountMap.getOrDefault(shop.getShopId(), 0L));
+        response.setInitialLetter(initial);
+        return response;
     }
 }
