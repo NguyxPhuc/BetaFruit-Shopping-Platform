@@ -1,0 +1,208 @@
+<mxfile host="app.diagrams.net" modified="2026-11-09T06:40:00.000Z" agent="Antigravity" version="24.0.0" type="device">
+  <diagram id="diagram_fe12_admin" name="FE-12 Admin Management & RBAC">
+    <mxGraphModel dx="1400" dy="1800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1450" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- 1. AdminController (Thin Controller) -->
+        <mxCell id="node_ctrl_admin" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;AdminController&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ listUsers(keyword, role, status, page, size): String&lt;br&gt;+ createUser(request, bindingResult): String&lt;br&gt;+ toggleStatus(userId): String&lt;br&gt;+ listRoles(model): String&lt;br&gt;+ createRole(request, bindingResult): String&lt;br&gt;+ listCategories(keyword, status, page, size): String&lt;br&gt;+ createCategory(request, bindingResult): String&lt;br&gt;+ toggleCategoryStatus(id): String&lt;br&gt;+ shopCommissions(keyword, page, size): String&lt;br&gt;+ updateCommission(id, request, bindingResult): String&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="380" y="30" width="440" height="185" as="geometry" />
+        </mxCell>
+
+        <!-- 2. GlobalExceptionHandler -->
+        <mxCell id="node_global_exception" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;GlobalExceptionHandler&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ handleIllegalArgumentException(ex, req, flash): String&lt;br&gt;+ handleGenericException(ex, req, flash): String&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="870" y="30" width="310" height="68" as="geometry" />
+        </mxCell>
+
+        <!-- 3. UserService (Interface) -->
+        <mxCell id="node_srv_user_iface" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;UserService&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ getUsersPage(keyword, role, status, pageable): Page&lt;br&gt;+ createUser(request): User&lt;br&gt;+ toggleUserStatus(id): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="40" y="270" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- 4. RoleService (Interface) -->
+        <mxCell id="node_srv_role_iface" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;RoleService&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ getAllRoles(): List&amp;lt;Role&amp;gt;&lt;br&gt;+ createRole(request): Role&lt;br&gt;+ toggleRoleStatus(id): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="330" y="270" width="240" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- 5. CategoryService (Interface) -->
+        <mxCell id="node_srv_cat_iface" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;CategoryService&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ getAdminCategoryPageData(kw, status, p, s): Map&lt;br&gt;+ createCategory(request): Category&lt;br&gt;+ toggleCategoryStatus(id): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="600" y="270" width="280" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- 6. ShopService (Interface) -->
+        <mxCell id="node_srv_shop_iface" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;ShopService&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ getShopCommissionsPage(keyword, pageable): Page&lt;br&gt;+ updateCommissionRate(shopId, rate): void&lt;br&gt;+ approveShop(shopId): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="910" y="270" width="270" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- 7. UserServiceImpl -->
+        <mxCell id="node_srv_user_impl" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;UserServiceImpl&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ getUsersPage(keyword, role, status, pageable): Page&lt;br&gt;+ createUser(request): User&lt;br&gt;+ toggleUserStatus(id): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="40" y="390" width="260" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- 8. RoleServiceImpl -->
+        <mxCell id="node_srv_role_impl" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;RoleServiceImpl&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ getAllRoles(): List&amp;lt;Role&amp;gt;&lt;br&gt;+ createRole(request): Role&lt;br&gt;+ toggleRoleStatus(id): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="330" y="390" width="240" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- 9. CategoryServiceImpl -->
+        <mxCell id="node_srv_cat_impl" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;CategoryServiceImpl&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ getAdminCategoryPageData(kw, status, p, s): Map&lt;br&gt;+ createCategory(request): Category&lt;br&gt;+ toggleCategoryStatus(id): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="600" y="390" width="280" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- 10. ShopServiceImpl -->
+        <mxCell id="node_srv_shop_impl" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;ShopServiceImpl&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ getShopCommissionsPage(keyword, pageable): Page&lt;br&gt;+ updateCommissionRate(shopId, rate): void&lt;br&gt;+ approveShop(shopId): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="910" y="390" width="270" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- 11. UserRepository (Interface) -->
+        <mxCell id="node_repo_user" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;UserRepository&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ findByUsername(username): Optional&lt;br&gt;+ filterUsers(keyword, role, status, pageable): Page&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="40" y="525" width="260" height="68" as="geometry" />
+        </mxCell>
+
+        <!-- 12. RoleRepository (Interface) -->
+        <mxCell id="node_repo_role" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;RoleRepository&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ findByRoleName(roleName): Optional&lt;br&gt;+ existsByRoleNameIgnoreCase(roleName): boolean&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="330" y="525" width="240" height="68" as="geometry" />
+        </mxCell>
+
+        <!-- 13. CategoryRepository (Interface) -->
+        <mxCell id="node_repo_cat" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;CategoryRepository&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ findByCategoryNameIgnoreCase(name): Optional&lt;br&gt;+ filterCategories(kw, isActive, pageable): Page&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="600" y="525" width="280" height="68" as="geometry" />
+        </mxCell>
+
+        <!-- 14. ShopRepository (Interface) -->
+        <mxCell id="node_repo_shop" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;ShopRepository&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ findByShopNameIgnoreCase(name): Optional&lt;br&gt;+ filterApprovedShops(kw, pageable): Page&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="910" y="525" width="270" height="68" as="geometry" />
+        </mxCell>
+
+        <!-- 15. User (Entity) -->
+        <mxCell id="node_entity_user" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;User&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ userId: Integer&lt;br&gt;+ username: String&lt;br&gt;+ email: String&lt;br&gt;+ status: UserStatus&lt;br&gt;+ roles: Set&amp;lt;Role&amp;gt;&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="60" y="660" width="220" height="98" as="geometry" />
+        </mxCell>
+
+        <!-- 16. Role (Entity) -->
+        <mxCell id="node_entity_role" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;Role&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ roleId: Integer&lt;br&gt;+ roleName: String&lt;br&gt;+ description: String&lt;br&gt;+ isActive: Boolean&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="345" y="660" width="210" height="85" as="geometry" />
+        </mxCell>
+
+        <!-- 17. Category (Entity) -->
+        <mxCell id="node_entity_cat" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;Category&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ categoryId: Integer&lt;br&gt;+ categoryName: String&lt;br&gt;+ isActive: Boolean&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="640" y="660" width="200" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- 18. Shop (Entity) -->
+        <mxCell id="node_entity_shop" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;Shop&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ shopId: Integer&lt;br&gt;+ shopName: String&lt;br&gt;+ owner: User&lt;br&gt;+ commissionRate: BigDecimal&lt;br&gt;+ approvalStatus: ShopApprovalStatus&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="930" y="660" width="230" height="98" as="geometry" />
+        </mxCell>
+
+        <!-- ======================= EDGES ======================= -->
+
+        <!-- GlobalExceptionHandler intercepts AdminController -->
+        <mxCell id="edge_ex_admin" value="intercepts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.0;exitY=0.5;entryX=1.0;entryY=0.25;" edge="1" source="node_global_exception" target="node_ctrl_admin" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- AdminController -> UserService -->
+        <mxCell id="edge_admin_user" value="delegates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.1;exitY=1.0;entryX=0.5;entryY=0.0;" edge="1" source="node_ctrl_admin" target="node_srv_user_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- AdminController -> RoleService -->
+        <mxCell id="edge_admin_role" value="delegates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.35;exitY=1.0;entryX=0.5;entryY=0.0;" edge="1" source="node_ctrl_admin" target="node_srv_role_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- AdminController -> CategoryService -->
+        <mxCell id="edge_admin_cat" value="delegates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.65;exitY=1.0;entryX=0.5;entryY=0.0;" edge="1" source="node_ctrl_admin" target="node_srv_cat_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- AdminController -> ShopService -->
+        <mxCell id="edge_admin_shop" value="delegates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.9;exitY=1.0;entryX=0.5;entryY=0.0;" edge="1" source="node_ctrl_admin" target="node_srv_shop_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Implements: UserService -->
+        <mxCell id="edge_impl_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=block;endFill=0;endSize=8;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_user_impl" target="node_srv_user_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Implements: RoleService -->
+        <mxCell id="edge_impl_role" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=block;endFill=0;endSize=8;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_role_impl" target="node_srv_role_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Implements: CategoryService -->
+        <mxCell id="edge_impl_cat" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=block;endFill=0;endSize=8;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_cat_impl" target="node_srv_cat_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Implements: ShopService -->
+        <mxCell id="edge_impl_shop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=block;endFill=0;endSize=8;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_shop_impl" target="node_srv_shop_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Services to Repositories -->
+        <mxCell id="edge_srv_user_repo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_user_impl" target="node_repo_user" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_srv_role_repo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_role_impl" target="node_repo_role" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_srv_cat_repo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_cat_impl" target="node_repo_cat" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_srv_shop_repo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_shop_impl" target="node_repo_shop" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Business Rule: ShopServiceImpl auto-assigns ShopOwner role -->
+        <mxCell id="edge_shop_auto_role" value="auto-assigns ShopOwner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#2563EB;strokeWidth=1.5;fontColor=#1D4ED8;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.25;exitY=1.0;entryX=0.8;entryY=0.0;" edge="1" source="node_srv_shop_impl" target="node_repo_role" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="978" y="490" />
+              <mxPoint x="522" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Repositories to Entities -->
+        <mxCell id="edge_repo_user_entity" value="manages" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" source="node_repo_user" target="node_entity_user" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_repo_role_entity" value="manages" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" source="node_repo_role" target="node_entity_role" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_repo_cat_entity" value="manages" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" source="node_repo_cat" target="node_entity_cat" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_repo_shop_entity" value="manages" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" source="node_repo_shop" target="node_entity_shop" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Entity Relationships -->
+        <!-- User N - N Role -->
+        <mxCell id="edge_user_role" value="has roles (N:N)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=none;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;" edge="1" source="node_entity_user" target="node_entity_role" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- User 1 - N Shop -->
+        <mxCell id="edge_user_shop" value="owns (1:N)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1.0;entryX=0.5;entryY=1.0;" edge="1" source="node_entity_user" target="node_entity_shop" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="170" y="795" />
+              <mxPoint x="1045" y="795" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

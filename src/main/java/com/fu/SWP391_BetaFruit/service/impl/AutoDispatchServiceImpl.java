@@ -40,6 +40,17 @@ public class AutoDispatchServiceImpl implements AutoDispatchService {
     private final AddressRepository addressRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.fu.SWP391_BetaFruit.service.DispatchConfigService dispatchConfigService;
+
+    public int getMaxOngoingOrders() {
+        return dispatchConfigService != null ? dispatchConfigService.getMaxOngoingOrders() : MAX_ONGOING_ORDERS;
+    }
+
+    public BigDecimal getCodCeilingLimit() {
+        return dispatchConfigService != null ? dispatchConfigService.getCodCeilingLimit() : COD_CEILING_LIMIT;
+    }
+
     @Override
     @Transactional
     public Optional<DeliveryAssignment> autoDispatchOrder(Integer orderId) {
@@ -88,18 +99,18 @@ public class AutoDispatchServiceImpl implements AutoDispatchService {
                 continue;
             }
 
-            // Rule 2: Cân bằng tải - số đơn dở dang < 5
+            // Rule 2: Cân bằng tải - số đơn dở dang < maxOngoingOrders
             long ongoingOrders = deliveryAssignmentRepository.countOngoingOrdersByShipper(
                     shipper.getUserId(), ONGOING_STATUSES);
-            if (ongoingOrders >= MAX_ONGOING_ORDERS) {
+            if (ongoingOrders >= getMaxOngoingOrders()) {
                 continue;
             }
 
-            // Rule 3: Kiểm soát rủi ro công nợ COD <= 3.000.000 ₫
+            // Rule 3: Kiểm soát rủi ro công nợ COD <= codCeilingLimit
             BigDecimal currentDebt = (shipper.getCodDebt() != null) ? shipper.getCodDebt() : BigDecimal.ZERO;
             if (isCod) {
                 BigDecimal projectedDebt = currentDebt.add(orderAmount);
-                if (projectedDebt.compareTo(COD_CEILING_LIMIT) > 0) {
+                if (projectedDebt.compareTo(getCodCeilingLimit()) > 0) {
                     continue; // Bỏ qua nếu vượt trần nợ COD
                 }
             }

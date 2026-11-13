@@ -1,0 +1,161 @@
+<mxfile host="app.diagrams.net" modified="2026-11-09T05:50:00.000Z" agent="Antigravity" version="24.0.0" type="device">
+  <diagram id="diagram_fe09_fe15" name="FE-09 & FE-15 Class Diagram">
+    <mxGraphModel dx="1200" dy="1600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="1300" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- 1. CustomerOrderController -->
+        <mxCell id="node_ctrl_order" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;CustomerOrderController&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ confirmReceived(orderId: Integer): String&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="270" y="30" width="280" height="52" as="geometry" />
+        </mxCell>
+
+        <!-- 2. CustomerOrderService (Interface) -->
+        <mxCell id="node_srv_order_iface" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;CustomerOrderService&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ confirmReceived(orderId, customerId): TierUpgradeResult&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="225" y="125" width="370" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- 3. CustomerOrderServiceImpl -->
+        <mxCell id="node_srv_order_impl" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;CustomerOrderServiceImpl&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ confirmReceived(orderId, customerId): TierUpgradeResult&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="225" y="235" width="370" height="52" as="geometry" />
+        </mxCell>
+
+        <!-- 4. OrderRepository (Interface) -->
+        <mxCell id="node_repo_order" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;OrderRepository&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ findLockedById(orderId): Optional&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="110" y="335" width="230" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- 5. AdminController -->
+        <mxCell id="node_ctrl_admin" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;AdminController&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ createMembershipTier(request): String&lt;br&gt;+ updateTierCoupons(tierId, couponIds): String&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="460" y="335" width="300" height="68" as="geometry" />
+        </mxCell>
+
+        <!-- 6. MembershipTierService (Interface) -->
+        <mxCell id="node_srv_tier_iface" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;MembershipTierService&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ processOrderCompleted(customerId, orderId, amount): TierUpgradeResult&lt;br&gt;+ createTier(request): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="320" y="445" width="440" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- 7. Order (Entity) -->
+        <mxCell id="node_entity_order" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;Order&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ orderId: Integer&lt;br&gt;+ orderStatus: OrderStatus&lt;br&gt;+ finalAmount: BigDecimal&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="135" y="565" width="180" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- 8. MembershipTierServiceImpl -->
+        <mxCell id="node_srv_tier_impl" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;MembershipTierServiceImpl&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ processOrderCompleted(customerId, orderId, amount): TierUpgradeResult&lt;br&gt;+ createTier(request): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="320" y="565" width="440" height="68" as="geometry" />
+        </mxCell>
+
+        <!-- 9. TierCouponRepository (Interface) -->
+        <mxCell id="node_repo_tier_coupon" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;TierCouponRepository&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ deleteByTier_TierId(tierId): void&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="250" y="680" width="235" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- 10. CustomerMembershipRepository (Interface) -->
+        <mxCell id="node_repo_cust_membership" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;&lt;i style=&quot;font-size:11px;color:#64748B;&quot;&gt;&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b style=&quot;font-size:13px;&quot;&gt;CustomerMembershipRepository&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ findByUserId(userId): Optional&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="520" y="680" width="240" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- 11. TierCoupon (Entity) -->
+        <mxCell id="node_entity_tier_coupon" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;TierCoupon&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ id: Integer&lt;br&gt;+ usageQuota: Integer&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="290" y="805" width="165" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- 12. CustomerMembership (Entity) -->
+        <mxCell id="node_entity_cust_membership" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;CustomerMembership&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ userId: Integer&lt;br&gt;+ totalCumulativeSpend: BigDecimal&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="515" y="805" width="250" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- 13. MembershipTier (Entity) -->
+        <mxCell id="node_entity_tier" value="&lt;div style=&quot;background-color:#F1F5F9;padding:6px 10px;font-weight:bold;font-size:13px;border-bottom:1px solid #CBD5E1;text-align:center;&quot;&gt;MembershipTier&lt;/div&gt;&lt;div style=&quot;padding:6px 10px;text-align:left;font-family:Consolas, monospace;font-size:11px;&quot;&gt;+ tierId: Integer&lt;br&gt;+ tierName: String&lt;br&gt;+ minSpentRequired: BigDecimal&lt;/div&gt;" style="html=1;whiteSpace=wrap;rounded=0;fillColor=#FFFFFF;strokeColor=#94A3B8;strokeWidth=1.5;align=center;verticalAlign=top;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="420" y="945" width="220" height="78" as="geometry" />
+        </mxCell>
+
+        <!-- ======================= EDGES ======================= -->
+
+        <!-- CustomerOrderController -> CustomerOrderService -->
+        <mxCell id="edge_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_ctrl_order" target="node_srv_order_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- CustomerOrderServiceImpl -> CustomerOrderService (Implements) -->
+        <mxCell id="edge_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=block;endFill=0;endSize=8;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_order_impl" target="node_srv_order_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- CustomerOrderServiceImpl -> OrderRepository -->
+        <mxCell id="edge_3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;exitX=0.0;exitY=0.5;entryX=0.5;entryY=0.0;" edge="1" source="node_srv_order_impl" target="node_repo_order" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="261" />
+              <mxPoint x="180" y="310" />
+              <mxPoint x="225" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- CustomerOrderServiceImpl -> MembershipTierService (Loyalty Engine) -->
+        <mxCell id="edge_4" value="Loyalty Engine" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.6;exitY=1.0;entryX=0.25;entryY=0.0;" edge="1" source="node_srv_order_impl" target="node_srv_tier_iface" parent="1">
+          <mxGeometry x="0.2" y="-5" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- AdminController -> MembershipTierService -->
+        <mxCell id="edge_5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;exitX=0.5;exitY=1.0;entryX=0.75;entryY=0.0;" edge="1" source="node_ctrl_admin" target="node_srv_tier_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- OrderRepository -> Order (manages) -->
+        <mxCell id="edge_6" value="manages" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" source="node_repo_order" target="node_entity_order" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- MembershipTierServiceImpl -> MembershipTierService (Implements) -->
+        <mxCell id="edge_7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=block;endFill=0;endSize=8;strokeColor=#64748B;strokeWidth=1.5;" edge="1" source="node_srv_tier_impl" target="node_srv_tier_iface" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- MembershipTierServiceImpl -> TierCouponRepository -->
+        <mxCell id="edge_8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;exitX=0.25;exitY=1.0;entryX=0.6;entryY=0.0;" edge="1" source="node_srv_tier_impl" target="node_repo_tier_coupon" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- MembershipTierServiceImpl -> CustomerMembershipRepository -->
+        <mxCell id="edge_9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;exitX=0.75;exitY=1.0;entryX=0.5;entryY=0.0;" edge="1" source="node_srv_tier_impl" target="node_repo_cust_membership" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- TierCouponRepository -> TierCoupon (manages) -->
+        <mxCell id="edge_10" value="manages" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" source="node_repo_tier_coupon" target="node_entity_tier_coupon" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- CustomerMembershipRepository -> CustomerMembership (manages) -->
+        <mxCell id="edge_11" value="manages" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;" edge="1" source="node_repo_cust_membership" target="node_entity_cust_membership" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- TierCoupon -> MembershipTier (tier) -->
+        <mxCell id="edge_12" value="tier" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1.0;entryX=0.3;entryY=0.0;" edge="1" source="node_entity_tier_coupon" target="node_entity_tier" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="373" y="905" />
+              <mxPoint x="486" y="905" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- CustomerMembership -> MembershipTier (tier) -->
+        <mxCell id="edge_13" value="tier" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=0;endArrow=open;endFill=0;strokeColor=#64748B;strokeWidth=1.5;fontColor=#475569;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1.0;entryX=0.7;entryY=0.0;" edge="1" source="node_entity_cust_membership" target="node_entity_tier" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="905" />
+              <mxPoint x="574" y="905" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

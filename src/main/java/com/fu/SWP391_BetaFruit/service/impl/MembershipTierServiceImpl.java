@@ -422,7 +422,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     }
 
     // =========================================================================
-    // 3. SHOPEE LOYALTY ENGINE: TỰ ĐỘNG TÍCH LŨY, NÂNG HẠNG & ĐẶC QUYỀN
+    // 3.LOYALTY ENGINE: TỰ ĐỘNG TÍCH LŨY, NÂNG HẠNG & ĐẶC QUYỀN
     // =========================================================================
     @Override
     @Transactional
