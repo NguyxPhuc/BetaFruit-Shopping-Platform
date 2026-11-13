@@ -13,6 +13,7 @@ import com.fu.SWP391_BetaFruit.repository.RoleRepository;
 import com.fu.SWP391_BetaFruit.repository.ShopRepository;
 import com.fu.SWP391_BetaFruit.repository.UserRepository;
 import com.fu.SWP391_BetaFruit.service.ShopService;
+import com.fu.SWP391_BetaFruit.service.StorageService;
 import com.fu.SWP391_BetaFruit.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -38,6 +40,7 @@ public class ShopServiceImpl implements ShopService {
     private final RoleRepository roleRepository;
     private final ProductRepository productRepository;
     private final ReviewRepository reviewRepository;
+    private final StorageService storageService;
 
     /**
      * Retrieves the details of a shop by its ID.
@@ -247,6 +250,7 @@ public class ShopServiceImpl implements ShopService {
         return data;
     }
 
+    // Lấy Profile shop
     @Override
     public ShopProfileResponse getShopProfile(Integer id) throws Exception {
         ShopProfileResponse shopProfileResponse = new ShopProfileResponse();
@@ -267,6 +271,7 @@ public class ShopServiceImpl implements ShopService {
         return shopProfileResponse;
     }
 
+    // Chinh sua profile shop
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void editShopProfile(Integer userId, ShopProfileRequest shopProfileRequest) throws Exception {
@@ -338,6 +343,7 @@ public class ShopServiceImpl implements ShopService {
         return data;
     }
 
+    // Tao profile shop
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void setUpProfileShop(Integer userId, ShopSetupRequest request) throws Exception {
@@ -348,13 +354,34 @@ public class ShopServiceImpl implements ShopService {
         if (shop.getApprovalStatus() == ShopApprovalStatus.APPROVED) {
             throw new Exception("Cửa hàng của bạn đã được phê duyệt, không thể thiết lập lại hồ sơ ban đầu.");
         }
-        shop.setShopName(request.getShopName().trim());
-        shop.setShopDescription(request.getShopDescription() != null ?  request.getShopDescription().trim() : null);
-        shop.setBankName(request.getBankName().trim());
-        shop.setBankAccountNumber(request.getBankAccountNumber().trim());
-        shop.setAccountName(request.getAccountName().toUpperCase().trim());
-        shop.setApprovalStatus(ShopApprovalStatus.PENDING);
-        shopRepository.save(shop);
+        List<String> uploadedKeys = new ArrayList<>();
+        try {
+
+            if (request.getLogoFile() != null && !request.getLogoFile().isEmpty()) {
+               storageService.validateImage(request.getLogoFile());
+                String logoUrl = storageService.storeImage(request.getLogoFile(), "shop/logos");
+                uploadedKeys.add(logoUrl);
+                shop.setLogoUrl(logoUrl);
+            }
+            if (request.getBannerFile() != null && !request.getBannerFile().isEmpty()) {
+                storageService.validateImage(request.getBannerFile());
+                String bannerUrl = storageService.storeImage(request.getBannerFile(), "shop/banners");
+                uploadedKeys.add(bannerUrl);
+                shop.setBannerUrl(bannerUrl);
+            }
+
+            shop.setShopName(request.getShopName().trim());
+            shop.setShopDescription(request.getShopDescription());
+            shop.setBankName(request.getBankName().trim());
+            shop.setBankAccountNumber(request.getBankAccountNumber().trim());
+            shop.setAccountName(request.getAccountName().toUpperCase().trim());
+            shop.setApprovalStatus(ShopApprovalStatus.PENDING);
+            shopRepository.save(shop);
+        } catch (Exception e) {
+            //TRANSACTION DB THẤT BẠI: Dọn dẹp ngay các ảnh mồ côi trên MinIO!
+            storageService.clearUp(uploadedKeys);
+            throw e;
+        }
     }
 
     @Override
