@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
@@ -32,4 +33,8 @@ public class ShopSetupRequest {
     @NotBlank(message = "Vui lòng nhập tên chủ tài khoản")
     @Size(max = 100, message = "Tên chủ tài khoản không được vượt quá 100 ký tự")
     private String accountName;
+
+    private MultipartFile logoFile;
+
+    private MultipartFile bannerFile;
 }

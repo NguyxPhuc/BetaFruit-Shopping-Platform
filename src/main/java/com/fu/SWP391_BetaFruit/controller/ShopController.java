@@ -139,6 +139,9 @@ public class ShopController {
     @PostMapping("/setup-profile")
     public String setUpShopProfile(@Valid @ModelAttribute("shopSetupRequest") ShopSetupRequest request, BindingResult bindingResult, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (userId == null) {
+            return "redirect:/auth/login";
+        }
         if (bindingResult.hasErrors()) {
             model.addAttribute("errorMessage", "Vui lòng kiểm tra lại các thông tin nhập chưa hợp lệ.");
             return "shop/setup-profile";
@@ -148,7 +151,7 @@ public class ShopController {
             session.setAttribute("SHOP_APPROVAL_STATUS", ShopApprovalStatus.PENDING);
             redirectAttributes.addFlashAttribute("successMessage", "Nộp hồ sơ thành công! Đang chờ sàn phê duyệt.");
             return "redirect:/shop/pending-approval";
-        }catch (Exception e){
+        } catch (Exception e) {
             model.addAttribute("errorMessage", e.getMessage());
             return "shop/setup-profile";
         }
