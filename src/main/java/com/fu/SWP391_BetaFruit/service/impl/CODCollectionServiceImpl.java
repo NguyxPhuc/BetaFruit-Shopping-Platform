@@ -93,7 +93,7 @@ public class CODCollectionServiceImpl implements CODCollectionService {
         List<Order> validOrders = new ArrayList<>();
 
         for (Integer orderId : orderIds) {
-            Order order = orderRepository.findById(orderId)
+            Order order = orderRepository.findLockedById(orderId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng #" + orderId));
 
             if (order.getPaymentMethod() != PaymentMethod.COD) {

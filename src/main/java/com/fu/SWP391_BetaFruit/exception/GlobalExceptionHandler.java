@@ -18,6 +18,19 @@ import java.util.Map;
 public class GlobalExceptionHandler {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(InvalidPagination.class)
+    public ResponseEntity<String> handleInvalidPagination(InvalidPagination exception) {
+        return ResponseEntity.badRequest()
+                .contentType(new org.springframework.http.MediaType("text", "plain", java.nio.charset.StandardCharsets.UTF_8))
+                .body(exception.getReason());
+    }
+
+    public static class InvalidPagination extends ResponseStatusException {
+        public InvalidPagination(String message) {
+            super(org.springframework.http.HttpStatus.BAD_REQUEST, message);
+        }
+    }
+
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ProblemDetail> handleResponseStatus(ResponseStatusException ex) {
         return new ResponseEntity<>(ex.getBody(), ex.getHeaders(), ex.getStatusCode());

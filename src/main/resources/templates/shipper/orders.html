@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đơn giao hàng | BetaFruit</title>
-    <style th:replace="~{shipper/fragments/sidebar :: sidebar-styles}"></style>
+    <style th:replace="~{shipper/fragments/sidebar :: sidebar-styles}">        .page-size-field { display:flex; flex-wrap:wrap; align-items:center; gap:8px; color:inherit; font-size:13px; }
+        .page-size-field input, .page-size-field button { width:auto; max-width:140px; min-height:40px; padding:8px 10px; border:1px solid #d6e8f5; border-radius:9px; background:#fff; color:inherit; font:inherit; }
+        .page-size-field button { cursor:pointer; }
+        .page-size-field button:hover { background:#f6faff; border-color:#8eb4ee; }
+        .page-size-field :focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+        .order-filters { flex-wrap:wrap; }
+    </style>
     <style th:replace="~{shipper/fragments/topbar :: topbar-styles}"></style>
     <style>
         :root { color-scheme: light; }
@@ -128,7 +134,12 @@
             <label class="filter-field"><span>Thứ tự</span>
                 <select name="sortDirection"><option value="desc" th:selected="${sortDirection == 'desc'}">Giảm dần</option><option value="asc" th:selected="${sortDirection == 'asc'}">Tăng dần</option></select>
             </label>
-            <input type="hidden" name="size" th:value="${orders.size > 0 ? orders.size : 10}">
+            <div class="page-size-field">
+                <label for="page-size">Số bản ghi/trang</label>
+                <input id="page-size" name="size" type="number" min="1" max="100" step="1"
+                       th:value="${pageSize}" required aria-label="Số bản ghi mỗi trang từ 1 đến 100">
+                <button type="submit" class="page-size-apply">Áp dụng</button>
+            </div>
             <button class="filter-submit" type="submit">Tìm kiếm</button>
         </form>
 

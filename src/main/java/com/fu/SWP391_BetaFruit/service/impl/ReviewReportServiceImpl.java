@@ -144,15 +144,16 @@ public class ReviewReportServiceImpl implements ReviewReportService {
         Shop shop = shopRepository.findByOwner_UserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin gian hàng!"));
 
-        int safePage = Math.max(page - 1, 0);
-        Pageable pageable = PageRequest.of(safePage, Math.min(Math.max(size, 1), 100));
-        Page<Review> reviewsPage = reviewRepository.findShopReviews(shop.getShopId(), rating, isReported, pageable);
+        int safePage = Math.max(1, page) - 1;
+        Pageable pageable = PageRequest.of(safePage, Math.min(100, Math.max(1, size)), Sort.by("reviewId").descending());
+        Page<Review> reviewsPage = loadPage(safePage, size, index ->
+                reviewRepository.findShopReviews(shop.getShopId(), rating, isReported, pageable.withPage(index)));
 
         Map<String, Object> data = new HashMap<>();
         data.put("reviewsPage", reviewsPage);
         data.put("reviews", reviewsPage.getContent());
-        data.put("currentPage", safePage + 1);
-        data.put("pageSize", pageable.getPageSize());
+        data.put("currentPage", reviewsPage.getNumber() + 1);
+        data.put("pageSize", reviewsPage.getSize());
         data.put("totalPages", reviewsPage.getTotalPages());
         data.put("totalItems", reviewsPage.getTotalElements());
         data.put("currentRating", rating);
@@ -208,5 +209,17 @@ public class ReviewReportServiceImpl implements ReviewReportService {
     @Transactional(readOnly = true)
     public long countPendingReports() {
         return reviewReportRepository.countByStatus(DisputeStatus.PENDING);
+    }
+
+    /** Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result. */
+    private <T> Page<T> loadPage(int page, int size, java.util.function.IntFunction<Page<T>> query) {
+        int index = Math.max(0, page);
+        // Keep the SQL offset within the range accepted by JPA providers.
+        Page<T> result = query.apply(index > Integer.MAX_VALUE / Math.min(100, Math.max(1, size)) ? 0 : index);
+        int last = Math.max(0, result.getTotalPages() - 1);
+        int target = Math.min(index, last);
+        if (result.getNumber() != target) result = query.apply(target);
+        if (result.isEmpty() && result.getNumber() > 0) result = query.apply(0);
+        return result;
     }
 }
