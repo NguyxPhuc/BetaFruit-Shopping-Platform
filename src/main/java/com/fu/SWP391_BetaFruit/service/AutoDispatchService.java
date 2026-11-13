@@ -12,4 +12,10 @@ public interface AutoDispatchService {
      */
     Optional<DeliveryAssignment> autoDispatchOrder(Integer orderId);
 
+    /**
+     * Tự động tìm tài xế thay thế khả dụng (loại trừ tài xế hiện tại) cho đơn hàng quá hạn (Smart Handover).
+     * Nếu tìm được tài xế mới: thực hiện chuyển giao và trả về Optional chứa DeliveryAssignment mới.
+     * Nếu không tìm được ai khác: trả về Optional.empty() để giữ nguyên tài xế hiện tại.
+     */
+    Optional<DeliveryAssignment> autoReassignOrder(Integer orderId, Integer currentShipperId, String reason);
 }

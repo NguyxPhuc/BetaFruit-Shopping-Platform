@@ -278,9 +278,12 @@ public class StaffDispatchServiceImpl implements StaffDispatchService {
             BigDecimal currentDebt = (newShipper.getCodDebt() != null) ? newShipper.getCodDebt() : BigDecimal.ZERO;
             BigDecimal orderAmount = (order.getFinalAmount() != null) ? order.getFinalAmount() : BigDecimal.ZERO;
             BigDecimal ceiling = getCodCeilingLimit();
-            if (currentDebt.add(orderAmount).compareTo(ceiling) > 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Đơn hàng COD này sẽ làm công nợ của tài xế vượt mức tối đa " + ceiling + " ₫!");
+            BigDecimal projectedDebt = currentDebt.add(orderAmount);
+            if (projectedDebt.compareTo(ceiling) > 0) {
+                String shipperName = (newShipper.getUser() != null) ? newShipper.getUser().getFullName() : ("Shipper #" + newShipperId);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format(
+                        "Đơn hàng COD này (%,d ₫) khi cộng với công nợ hiện tại của tài xế %s (%,d ₫) sẽ thành %,d ₫, vượt mức tối đa %,d ₫!",
+                        orderAmount.longValue(), shipperName, currentDebt.longValue(), projectedDebt.longValue(), ceiling.longValue()));
             }
         }
 

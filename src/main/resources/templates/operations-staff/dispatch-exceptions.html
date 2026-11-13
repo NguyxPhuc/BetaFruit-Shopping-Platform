@@ -6,16 +6,6 @@
 </head>
 <body>
 <div th:fragment="content">
-    <!-- Feedback Messages -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}">Thao tác thành công!</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-
     <!-- Header Banner -->
     <div class="card border-0 text-white mb-4 overflow-hidden position-relative"
          style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);">
@@ -132,8 +122,9 @@
                                         <select name="shipperId" class="form-select form-select-sm" required>
                                             <option value="" disabled selected th:text="${ex.exceptionType == 'INCIDENT_REPORTED' ? '-- Chọn tài xế cứu viện --' : '-- Chọn tài xế phân công --'}">-- Chọn tài xế --</option>
                                             <option th:each="s : ${shippers}" th:value="${s.shipperId}"
-                                                    th:text="${s.fullName + (s.operatingCity != null ? ' [' + s.operatingCity + ']' : '') + ' (' + s.ongoingOrdersCount + ' đơn)'}"
-                                                    th:disabled="${s.isOverloaded}">
+                                                    th:with="isCodExceeded=${ex.paymentMethod == 'COD' and (s.codDebt != null ? s.codDebt : 0).add(ex.finalAmount != null ? ex.finalAmount : 0).compareTo(dispatchConfig != null ? dispatchConfig.codCeilingLimit : 3000000) > 0}"
+                                                    th:text="${s.fullName + (s.operatingCity != null ? ' [' + s.operatingCity + ']' : '') + ' (' + s.ongoingOrdersCount + ' đơn' + (s.isOverloaded ? ' - Quá tải' : (isCodExceeded ? ' - Vượt trần COD' : '')) + ')'}"
+                                                    th:disabled="${s.isOverloaded or isCodExceeded}">
                                             </option>
                                         </select>
                                         <button type="submit" class="btn btn-sm text-nowrap"

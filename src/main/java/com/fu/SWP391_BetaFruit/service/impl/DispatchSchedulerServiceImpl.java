@@ -77,7 +77,11 @@ public class DispatchSchedulerServiceImpl {
     }
 
     /**
-     * Vấn đề 3: Tự động thu hồi và gán lại cho các đơn READY quá thời gian lấy hàng (> 15 phút).
+     * Vấn đề 3: Tự động xử lý các đơn READY quá thời gian lấy hàng (> 15 phút):
+     * - Cơ chế Smart Handover: Tìm tài xế thay thế khả dụng (ngoại trừ tài xế hiện tại).
+     * - Nếu tìm được tài xế mới: Chuyển giao phân công từ tài xế cũ sang tài xế mới.
+     * - Nếu KHÔNG tìm được ai thay thế: Giữ nguyên tài xế cũ (để nếu họ đến muộn vẫn lấy được hàng),
+     *   bắn thông báo nhắc nhở thúc giục (chống spam), và duy trì cờ PICKUP_TIMEOUT trên màn hình Staff.
      */
     public void handlePickupTimeoutOrders() {
         int timeoutMinutes = getPickupTimeoutMinutes();
@@ -94,42 +98,68 @@ public class DispatchSchedulerServiceImpl {
                 LocalDateTime assignedTime = assignment.getAssignedAt() != null ? assignment.getAssignedAt() : o.getCreatedAt();
 
                 if (assignedTime != null && assignedTime.isBefore(timeoutThreshold)) {
-                    Shipper oldShipper = assignment.getShipper();
-                    log.warn("Đơn hàng #{} đã quá {} phút kể từ lúc gán ({}) mà tài xế #{} chưa lấy. Tiến hành thu hồi tự động...",
-                            o.getOrderId(), timeoutMinutes, assignedTime, oldShipper != null ? oldShipper.getUserId() : null);
+                    Shipper currentShipper = assignment.getShipper();
+                    Integer currentShipperId = currentShipper != null ? currentShipper.getUserId() : null;
 
-                    // 1. Xóa bản ghi phân công cũ
-                    deliveryAssignmentRepository.delete(assignment);
+                    log.info("Đơn hàng #{} đã quá {} phút kể từ lúc gán ({}) mà tài xế #{} chưa lấy. Đang tìm tài xế thay thế...",
+                            o.getOrderId(), timeoutMinutes, assignedTime, currentShipperId);
 
-                    // 2. Ghi lịch sử thu hồi
-                    String note = String.format("Hệ thống tự động thu hồi đơn #%d do tài xế %s quá %d phút chưa tới lấy hàng.",
-                            o.getOrderId(),
-                            (oldShipper != null && oldShipper.getUser() != null) ? oldShipper.getUser().getFullName() : "Tài xế",
-                            timeoutMinutes);
-                    orderStatusHistoryRepository.save(new OrderStatusHistory(
-                            null, o, null, OrderStatus.READY, OrderStatus.READY, note, null
-                    ));
-
-                    // 3. Gửi thông báo cho tài xế cũ
-                    if (oldShipper != null && oldShipper.getUser() != null) {
-                        try {
-                            notificationService.createBaseNotification(
-                                    oldShipper.getUser(),
-                                    "⚠️ Thu hồi đơn hàng #" + o.getOrderId(),
-                                    "Đơn hàng #" + o.getOrderId() + " đã bị thu hồi do quá " + timeoutMinutes + " phút bạn chưa đến lấy tại Shop.",
-                                    NotificationType.ORDER_STATUS,
-                                    "/shipper/orders"
-                            );
-                        } catch (Exception e) {
-                            log.warn("Lỗi gửi thông báo thu hồi cho Shipper #{}: {}", oldShipper.getUserId(), e.getMessage());
-                        }
+                    // 1. Thử tìm và chuyển giao sang tài xế mới khả dụng (Smart Handover)
+                    Optional<DeliveryAssignment> reassignedOpt = Optional.empty();
+                    try {
+                        reassignedOpt = autoDispatchService.autoReassignOrder(
+                                o.getOrderId(), currentShipperId,
+                                String.format("Tài xế cũ quá %d phút chưa tới lấy hàng", timeoutMinutes));
+                    } catch (Exception e) {
+                        log.warn("Lỗi khi autoReassignOrder cho đơn #{}: {}", o.getOrderId(), e.getMessage());
                     }
 
-                    // 4. Lập tức thử tự động gán lại cho tài xế khác khả dụng
-                    try {
-                        autoDispatchService.autoDispatchOrder(o.getOrderId());
-                    } catch (Exception e) {
-                        log.warn("Lỗi tái gán sau khi thu hồi đơn #{}: {}", o.getOrderId(), e.getMessage());
+                    if (reassignedOpt.isPresent()) {
+                        log.info("Smart Handover thành công: Đơn #{} đã chuyển từ Shipper #{} sang Shipper #{}",
+                                o.getOrderId(), currentShipperId, reassignedOpt.get().getShipper().getUserId());
+                    } else {
+                        // 2. Không có ai thay thế -> VẪN GIỮ NGUYÊN TÀI XẾ CŨ!
+                        log.info("Không có tài xế nào khác rảnh để thay thế đơn #{}. Giữ nguyên Shipper #{} và gửi nhắc nhở.",
+                                o.getOrderId(), currentShipperId);
+
+                        // Chống spam: Kiểm tra xem đã gửi nhắc nhở cho lần gán này chưa
+                        boolean alreadyReminded = false;
+                        List<OrderStatusHistory> histories = orderStatusHistoryRepository.findByOrderOrderIdOrderByCreatedAtAscHistoryIdAsc(o.getOrderId());
+                        if (histories != null) {
+                            for (OrderStatusHistory h : histories) {
+                                if (h.getNote() != null && h.getNote().startsWith("[CẢNH BÁO QUÁ GIỜ]")) {
+                                    if (h.getCreatedAt() != null && assignedTime != null && h.getCreatedAt().isAfter(assignedTime)) {
+                                        alreadyReminded = true;
+                                        break;
+                                    } else if (h.getCreatedAt() == null) {
+                                        alreadyReminded = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!alreadyReminded && currentShipper != null && currentShipper.getUser() != null) {
+                            try {
+                                notificationService.createBaseNotification(
+                                        currentShipper.getUser(),
+                                        "⏰ Nhắc nhở khẩn trương: Đơn hàng #" + o.getOrderId() + " đã quá giờ lấy hàng!",
+                                        String.format("Đơn hàng #%d đã quá %d phút bạn chưa đến lấy tại Shop. Vui lòng khẩn trương di chuyển đến Shop để nhận kiện hàng!",
+                                                o.getOrderId(), timeoutMinutes),
+                                        NotificationType.ORDER_STATUS,
+                                        "/shipper/orders/" + o.getOrderId()
+                                );
+
+                                orderStatusHistoryRepository.save(new OrderStatusHistory(
+                                        null, o, null, OrderStatus.READY, OrderStatus.READY,
+                                        String.format("[CẢNH BÁO QUÁ GIỜ] Hệ thống đã gửi thông báo nhắc nhở tài xế %s khẩn trương đến Shop lấy hàng.",
+                                                currentShipper.getUser().getFullName()),
+                                        null
+                                ));
+                            } catch (Exception e) {
+                                log.warn("Lỗi khi gửi thông báo nhắc nhở cho Shipper #{}: {}", currentShipperId, e.getMessage());
+                            }
+                        }
                     }
                 }
             }

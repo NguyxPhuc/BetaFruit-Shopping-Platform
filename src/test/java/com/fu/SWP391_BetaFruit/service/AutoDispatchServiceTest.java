@@ -208,4 +208,51 @@ class AutoDispatchServiceTest {
         verify(shipperRepository, never()).findAll();
         verify(deliveryAssignmentService, never()).assign(any(), any(), any());
     }
+
+    @Test
+    @DisplayName("Auto-reassign (Smart Handover) thành công: Chuyển giao sang tài xế mới và loại trừ tài xế cũ")
+    void autoReassign_Success_ExcludesCurrentShipperAndSwaps() {
+        Shipper oldShipper = createShipper(101, "Shipper Cu (Bi qua han)", UserStatus.ACTIVE, BigDecimal.ZERO);
+        Shipper newShipper = createShipper(102, "Shipper Moi (Kha dung)", UserStatus.ACTIVE, BigDecimal.ZERO);
+
+        DeliveryAssignment oldAssignment = new DeliveryAssignment(88, readyOrder, oldShipper, shopOwner, null);
+
+        when(orderRepository.findLockedById(501)).thenReturn(Optional.of(readyOrder));
+        when(deliveryAssignmentRepository.findByOrderOrderId(501)).thenReturn(Optional.of(oldAssignment));
+        when(shipperRepository.findAll()).thenReturn(List.of(oldShipper, newShipper));
+        when(deliveryAssignmentRepository.countOngoingOrdersByShipper(eq(102), any())).thenReturn(1L);
+        when(deliveryAssignmentRepository.save(any(DeliveryAssignment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Optional<DeliveryAssignment> result = autoDispatchService.autoReassignOrder(501, 101, "Qua han 15 phut");
+
+        assertTrue(result.isPresent());
+        assertEquals(102, result.get().getShipper().getUserId());
+
+        // Kiểm chứng thu hồi phân công cũ và lưu phân công mới
+        verify(deliveryAssignmentRepository).delete(oldAssignment);
+        verify(deliveryAssignmentRepository).save(any(DeliveryAssignment.class));
+        verify(orderStatusHistoryRepository).save(any(OrderStatusHistory.class));
+
+        // Kiểm chứng thông báo đẩy cho cả tài xế cũ và mới
+        verify(notificationService).createBaseNotification(eq(oldShipper.getUser()), contains("chuyển giao"), any(), any(), any());
+        verify(notificationService).createBaseNotification(eq(newShipper.getUser()), contains("điều phối"), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Auto-reassign trả về empty khi không có tài xế thay thế khả dụng")
+    void autoReassign_ReturnsEmpty_WhenNoReplacementAvailable() {
+        Shipper oldShipper = createShipper(101, "Shipper Cu Duy Nhat", UserStatus.ACTIVE, BigDecimal.ZERO);
+        DeliveryAssignment oldAssignment = new DeliveryAssignment(88, readyOrder, oldShipper, shopOwner, null);
+
+        when(orderRepository.findLockedById(501)).thenReturn(Optional.of(readyOrder));
+        when(deliveryAssignmentRepository.findByOrderOrderId(501)).thenReturn(Optional.of(oldAssignment));
+        when(shipperRepository.findAll()).thenReturn(List.of(oldShipper)); // Chỉ có duy nhất tài xế cũ
+
+        Optional<DeliveryAssignment> result = autoDispatchService.autoReassignOrder(501, 101, "Qua han 15 phut");
+
+        assertTrue(result.isEmpty());
+        // Không xóa phân công cũ
+        verify(deliveryAssignmentRepository, never()).delete(any());
+        verify(deliveryAssignmentRepository, never()).save(any());
+    }
 }

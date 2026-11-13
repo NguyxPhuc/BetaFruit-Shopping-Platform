@@ -61,6 +61,8 @@ public class StaffDeliveryController {
             staffDispatchService.reassignShipper(orderId, shipperId, staffId, reason);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Đã điều phối và chuyển giao đơn hàng #" + orderId + " cho tài xế mới thành công!");
+        } catch (org.springframework.web.server.ResponseStatusException rse) {
+            redirectAttributes.addFlashAttribute("errorMessage", rse.getReason());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
@@ -100,6 +102,8 @@ public class StaffDeliveryController {
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Đã cập nhật các thông số điều phối vận hành thành công!");
             }
+        } catch (org.springframework.web.server.ResponseStatusException rse) {
+            redirectAttributes.addFlashAttribute("errorMessage", rse.getReason());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Lỗi cập nhật cấu hình: " + e.getMessage());
         }
