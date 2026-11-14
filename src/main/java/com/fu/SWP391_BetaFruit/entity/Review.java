@@ -48,6 +48,8 @@ public class Review {
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // Customer content edit timestamp; reporting/moderation must preserve it.
+    // Legacy data may initialize this to CreatedAt; edit checks retain that compatibility.
     @Column(name = "UpdatedAt")
     private LocalDateTime updatedAt;
 

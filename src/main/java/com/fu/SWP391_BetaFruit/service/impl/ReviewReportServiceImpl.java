@@ -88,7 +88,6 @@ public class ReviewReportServiceImpl implements ReviewReportService {
         reviewReportRepository.save(report);
 
         review.setIsReported(true);
-        review.setUpdatedAt(LocalDateTime.now());
         reviewRepository.save(review);
     }
 
@@ -133,7 +132,6 @@ public class ReviewReportServiceImpl implements ReviewReportService {
             review.setIsReported(false);
         }
 
-        review.setUpdatedAt(LocalDateTime.now());
         reviewRepository.save(review);
         reviewReportRepository.save(report);
     }

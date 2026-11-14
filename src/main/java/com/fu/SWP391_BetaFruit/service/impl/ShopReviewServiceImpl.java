@@ -22,7 +22,7 @@ public class ShopReviewServiceImpl implements ShopReviewService {
     public void saveReply(Integer ownerId, Integer reviewId, String reply) {
         Shop shop = shopRepository.findByOwner_UserId(ownerId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy gian hàng của bạn."));
-        Review review = reviewRepository.findById(reviewId)
+        Review review = reviewRepository.findByIdForUpdate(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đánh giá."));
 
         Integer reviewShopId = review.getOrderItem().getVariant().getProduct().getShop().getShopId();

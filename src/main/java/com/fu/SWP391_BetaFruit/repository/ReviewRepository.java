@@ -17,13 +17,18 @@ import jakarta.persistence.LockModeType;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Integer> {
 
+    // Khi truy vấn trong transaction, lấy khóa ghi cho bản ghi review có reviewId tương ứng.
+    // Giữ khóa suốt bước đọc, kiểm tra và cập nhật; chỉ thả khi transaction commit hoặc rollback.
+    // Thao tác khác muốn lấy khóa ghi trên cùng review phải chờ để tránh ghi đè dữ liệu.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM Review r WHERE r.reviewId = :reviewId")
     Optional<Review> findLockedById(@Param("reviewId") Integer reviewId);
 
-    @Query("SELECT r FROM Review r WHERE r.orderItem.variant.product.productId = :productId ")
     Optional<Review> findByOrderItem_OrderItemId(Integer orderItemId);
 
+    List<Review> findByOrderItem_Order_OrderId(Integer orderId);
+
+    // Cơ chế khóa giống findLockedById: giữ khóa bản ghi review đến khi transaction kết thúc.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM Review r WHERE r.reviewId = :reviewId")
     Optional<Review> findByIdForUpdate(@Param("reviewId") Integer reviewId);
