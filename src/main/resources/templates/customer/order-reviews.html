@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Đánh giá đơn hàng ' + ${order.orderCode} + ' | BetaFruit'">Đánh giá đơn hàng | BetaFruit</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <style>
+        body { margin:0; background:#f6f9f5; color:#1e293b; font-family:Arial,sans-serif; }
+        .review-page { max-width:860px; margin:2rem auto; padding:0 1rem; }
+        .review-page a { color:#166534; }
+        .review-heading { margin:1.5rem 0; }
+        .review-heading h1 { font-size:1.7rem; margin:0 0 .5rem; }
+        .review-heading p, .text-muted { color:#64748b; }
+        .review-list { display:flex; flex-direction:column; gap:1.25rem; }
+        .review-item, .review-message { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:1.5rem; }
+        .review-item h2 { font-size:1.15rem; margin:0 0 .5rem; overflow-wrap:anywhere; }
+        .review-item-meta { color:#64748b; margin:0 0 1rem; }
+        .review-saved { padding:1rem; background:#f8fafc; border-radius:10px; }
+        .review-item form { width:100%; box-sizing:border-box; }
+        .review-item textarea { width:100%; box-sizing:border-box; padding:.75rem; border:1px solid #cbd5e1; border-radius:8px; font:inherit; resize:vertical; }
+        .confirm-btn-hero, .btn-detail { padding:.75rem 1rem; border:0; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; }
+        .confirm-btn-hero { background:#16a34a; color:#fff; }
+        .confirm-btn-hero:hover { background:#15803d; }
+        .btn-detail { background:#f1f5f9; color:#334155; }
+        .review-message { margin-bottom:1rem; }
+        .review-success { background:#f0fdf4; color:#166534; }
+        .review-error { background:#fef2f2; color:#991b1b; }
+        @media(max-width:600px) { .review-item { padding:1rem; } }
+        .review-rating {
+            border: 0;
+            padding: 0;
+            margin: 0;
+        }
+        .review-rating legend {
+            margin-bottom: .25rem;
+            font-weight: 600;
+        }
+        .review-rating-stars {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+            gap: .15rem;
+        }
+        .review-rating-choice {
+            cursor: pointer;
+            color: #cbd5e1;
+            font-size: 2rem;
+            line-height: 1;
+            transition: color .15s ease, transform .15s ease;
+        }
+        .review-rating-choice input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+        .review-rating-choice:has(input:checked),
+        .review-rating-choice:has(input:checked) ~ .review-rating-choice,
+        .review-rating-choice:hover,
+        .review-rating-choice:hover ~ .review-rating-choice {
+            color: #f59e0b;
+        }
+        .review-rating-choice:has(input:focus-visible) {
+            outline: 2px solid #1e5631;
+            outline-offset: 3px;
+            border-radius: 3px;
+        }
+        .review-rating-choice:has(input:checked)::before,
+        .review-rating-choice:has(input:checked) ~ .review-rating-choice::before,
+        .review-rating-choice:hover::before,
+        .review-rating-choice:hover ~ .review-rating-choice::before {
+            content: '★';
+        }
+        .review-rating-choice:has(input:checked) span,
+        .review-rating-choice:has(input:checked) ~ .review-rating-choice span,
+        .review-rating-choice:hover span,
+        .review-rating-choice:hover ~ .review-rating-choice span {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+    <main class="review-page">
+        <a th:href="@{/orders/{id}(id=${order.orderId})}">← Quay lại chi tiết đơn hàng</a>
+        <header class="review-heading">
+            <h1>Đánh giá đơn hàng <span th:text="${order.orderCode}"></span></h1>
+            <p th:text="${order.shopName}"></p>
+            <p>Mỗi sản phẩm trong đơn có một đánh giá riêng. Bạn được sửa mỗi đánh giá một lần.</p>
+        </header>
+        <div th:if="${reviewSuccess != null}" class="review-message review-success" role="status" th:text="${reviewSuccess}"></div>
+        <div th:if="${reviewError != null}" class="review-message review-error" role="alert" th:text="${reviewError}"></div>
+        <div class="review-list">
+            <article class="review-item" th:each="item, position : ${order.items}" th:id="'review-item-' + ${item.orderItemId}">
+                <h2><span th:text="${position.count} + '. '"></span><span th:text="${item.productName}"></span></h2>
+                <p class="review-item-meta">
+                    <span th:if="${item.variantName != null and item.variantName != ''}" th:text="'Phân loại: ' + ${item.variantName} + ' · '"></span>
+                    <span th:text="'Số lượng: ' + ${item.quantity}"></span>
+                </p>
+                <div th:if="${order.orderStatus == 'RECEIVED' or order.orderStatus == 'SUCCESS'}" style="margin-top:.75rem;"
+                     th:with="hasDraft=${reviewDraft != null and reviewDraft.orderId == order.orderId and reviewDraft.orderItemId == item.orderItemId and reviewDraft.productId == item.productId}, formRating=${hasDraft ? reviewDraft.rating : item.rating}, formComment=${hasDraft ? reviewDraft.comment : item.comment}">
+                    <div th:if="${item.reviewId != null}" class="review-saved" style="margin-bottom:.75rem;">
+                        <div style="font-weight:700;">Đánh giá đã gửi</div>
+                        <div th:text="${item.rating} + ' / 5 sao'"></div>
+                        <p th:if="${item.comment != null and !#strings.isEmpty(item.comment)}" th:text="${item.comment}" style="white-space:pre-wrap;overflow-wrap:anywhere;margin:.5rem 0;"></p>
+                        <div th:if="${item.reviewVisibility != null and item.reviewVisibility.name() == 'HIDDEN_BY_USER'}" class="text-muted">Bạn đã ẩn đánh giá này khỏi trang sản phẩm.</div>
+                    </div>
+                    <form th:if="${item.reviewId == null}" th:action="@{/customer/reviews}" method="post" style="display:grid;gap:.5rem;max-width:520px;">
+                        <input type="hidden" name="orderId" th:value="${order.orderId}">
+                        <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
+                        <input type="hidden" name="productId" th:value="${item.productId}">
+                        <fieldset class="review-rating">
+                            <legend>Đánh giá sản phẩm</legend>
+                            <div class="review-rating-stars" role="radiogroup" aria-label="Chọn số sao">
+                                <label class="review-rating-choice" aria-label="5 sao"><input type="radio" name="rating" value="5" th:checked="${formRating == 5}" required><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="4 sao"><input type="radio" name="rating" value="4" th:checked="${formRating == 4}"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="3 sao"><input type="radio" name="rating" value="3" th:checked="${formRating == 3}"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="2 sao"><input type="radio" name="rating" value="2" th:checked="${formRating == 2}"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="1 sao"><input type="radio" name="rating" value="1" th:checked="${formRating == 1}"><span aria-hidden="true">☆</span></label>
+                            </div>
+                        </fieldset>
+                        <textarea name="comment" maxlength="5000" rows="3" th:text="${formComment}" placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"></textarea>
+                        <button type="submit" class="confirm-btn-hero">Gửi đánh giá</button>
+                    </form>
+                    <div th:if="${item.reviewId != null and item.reviewVisibility != null and item.reviewVisibility.name() == 'HIDDEN_BY_ADMIN'}" class="text-muted">Đánh giá này đã bị quản trị viên ẩn.</div>
+                    <form th:if="${item.reviewId != null and (item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_ADMIN') and item.reviewCanEdit}"
+                          th:action="@{/customer/reviews/{id}/edit(id=${item.reviewId})}" method="post" style="display:grid;gap:.5rem;max-width:520px;">
+                        <input type="hidden" name="orderId" th:value="${order.orderId}">
+                        <input type="hidden" name="orderItemId" th:value="${item.orderItemId}">
+                        <input type="hidden" name="productId" th:value="${item.productId}">
+                        <fieldset class="review-rating">
+                            <legend>Đánh giá của bạn</legend>
+                            <div class="review-rating-stars" role="radiogroup" aria-label="Chọn số sao">
+                                <label class="review-rating-choice" aria-label="5 sao"><input type="radio" name="rating" value="5" th:checked="${formRating == 5}" required><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="4 sao"><input type="radio" name="rating" value="4" th:checked="${formRating == 4}"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="3 sao"><input type="radio" name="rating" value="3" th:checked="${formRating == 3}"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="2 sao"><input type="radio" name="rating" value="2" th:checked="${formRating == 2}"><span aria-hidden="true">☆</span></label>
+                                <label class="review-rating-choice" aria-label="1 sao"><input type="radio" name="rating" value="1" th:checked="${formRating == 1}"><span aria-hidden="true">☆</span></label>
+                            </div>
+                        </fieldset>
+                        <textarea name="comment" maxlength="5000" rows="3" th:text="${formComment}" placeholder="Chia sẻ trải nghiệm của bạn (không bắt buộc)"></textarea>
+                        <div style="display:flex;gap:.5rem;">
+                            <button type="submit" class="confirm-btn-hero" onclick="return confirm('Bạn chỉ được sửa đánh giá này một lần duy nhất. Sau khi xác nhận, bạn sẽ không thể sửa lại. Bạn có muốn tiếp tục?');">Cập nhật đánh giá</button>
+                        </div>
+                    </form>
+                    <div th:if="${item.reviewId != null and (item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_ADMIN') and !item.reviewCanEdit}" class="text-muted" style="margin-top:.5rem;">Bạn đã sử dụng lượt sửa duy nhất cho đánh giá này.</div>
+                    <form th:if="${item.reviewId != null and (item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_ADMIN') and (item.reviewVisibility == null or item.reviewVisibility.name() != 'HIDDEN_BY_USER')}" th:action="@{/customer/reviews/{id}/hide(id=${item.reviewId})}" method="post" style="margin-top:.5rem;">
+                        <input type="hidden" name="orderId" th:value="${order.orderId}">
+                        <button type="submit" class="btn-detail" onclick="return confirm('Ẩn đánh giá này khỏi trang sản phẩm?');">Ẩn đánh giá</button>
+                    </form>
+                </div>
+            </article>
+        </div>
+        <p th:if="${#lists.isEmpty(order.items)}" class="review-message">Đơn hàng không có sản phẩm để đánh giá.</p>
+    </main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>
