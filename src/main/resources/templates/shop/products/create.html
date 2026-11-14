@@ -1100,7 +1100,7 @@
                         <input type="file"
                                id="imageFileInput"
                                name="imageFile"
-                               accept="image/*"
+                               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                                class="d-none"
                                onchange="handleFileSelect(this)">
 
@@ -1118,8 +1118,8 @@
                                 <div class="upload-cta-title">Bấm để tải ảnh từ máy tính hoặc kéo thả vào đây</div>
                                 <div class="upload-cta-subtitle">Hệ thống tối ưu hóa hiển thị ảnh tự động sắc nét</div>
                                 <div class="upload-badge-pills">
-                                    <span class="upload-pill">JPG, PNG, WEBP</span>
-                                    <span class="upload-pill">Tối đa 10MB</span>
+                                    <span class="upload-pill">JPG, PNG</span>
+                                    <span class="upload-pill">Tối đa 5MB</span>
                                     <span class="upload-pill">Khuyên dùng tỷ lệ 1:1</span>
                                 </div>
                             </div>
@@ -1252,6 +1252,22 @@
     function handleFileSelect(input) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
+            const maxBytes = 5 * 1024 * 1024;
+            const fileNameLower = (file.name || '').toLowerCase();
+            const isValidType = file.type === 'image/jpeg' || file.type === 'image/png'
+                || fileNameLower.endsWith('.jpg') || fileNameLower.endsWith('.jpeg') || fileNameLower.endsWith('.png');
+
+            if (!isValidType) {
+                alert('Chỉ chấp nhận ảnh định dạng JPG hoặc PNG.');
+                input.value = '';
+                return;
+            }
+            if (file.size > maxBytes) {
+                alert('Dung lượng ảnh vượt quá giới hạn tối đa 5MB.');
+                input.value = '';
+                return;
+            }
+
             const reader = new FileReader();
 
             reader.onload = function(e) {
@@ -1515,11 +1531,11 @@
             return;
         }
 
-        if (sPrice <= 0) {
+        if (sPrice < 1000) {
             input.classList.add('is-invalid');
             if (badge) badge.style.display = 'none';
             if (feedback) {
-                feedback.textContent = 'Giá khuyến mãi phải lớn hơn 0.';
+                feedback.textContent = 'Giá khuyến mãi nếu có phải từ 1,000 VNĐ trở lên.';
                 feedback.style.display = 'block';
             }
             updateSummaryMinPrice();
@@ -1678,6 +1694,30 @@
         const form = document.getElementById('createProductForm');
         if (form) {
             form.addEventListener('submit', function(e) {
+                const productNameInput = document.getElementById('productName');
+                if (!productNameInput || !productNameInput.value.trim()) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập tên hoa quả / nông sản!');
+                    if (productNameInput) productNameInput.focus();
+                    return false;
+                }
+
+                const categorySelect = document.getElementById('categoryId');
+                if (!categorySelect || !categorySelect.value) {
+                    e.preventDefault();
+                    alert('Vui lòng chọn danh mục hoa quả!');
+                    if (categorySelect) categorySelect.focus();
+                    return false;
+                }
+
+                const descriptionInput = document.getElementById('description');
+                if (!descriptionInput || descriptionInput.value.trim().length < 20) {
+                    e.preventDefault();
+                    alert('Mô tả chi tiết & nguồn gốc hoa quả phải có ít nhất 20 ký tự!');
+                    if (descriptionInput) descriptionInput.focus();
+                    return false;
+                }
+
                 if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
                     e.preventDefault();
                     if (dropArea) {
@@ -1689,51 +1729,77 @@
                     return false;
                 }
 
-                // Kiểm tra variants
+                // Kiểm tra tất cả thực thể (biến thể) theo thứ tự chuẩn
                 const variantCards = container.querySelectorAll('.variant-item-card');
-                let validVariants = 0;
-                for (let c of variantCards) {
+                if (variantCards.length === 0) {
+                    e.preventDefault();
+                    alert('Vui lòng nhập ít nhất 1 thực thể cho hoa quả!');
+                    return false;
+                }
+
+                for (let idx = 0; idx < variantCards.length; idx++) {
+                    const c = variantCards[idx];
                     const name = c.querySelector('.variant-input-name');
                     const price = c.querySelector('.variant-input-price');
                     const sale = c.querySelector('.variant-input-sale-price');
+                    const lowInput = c.querySelector('input[name*="lowStockThreshold"]');
+                    const vName = name ? name.value.trim() : '';
 
-                    const oVal = price ? parseFloat(price.value) : NaN;
-                    const sVal = sale && sale.value ? parseFloat(sale.value) : NaN;
+                    if (!vName) {
+                        e.preventDefault();
+                        alert('Vui lòng nhập tên cho Thực thể #' + (idx + 1) + ' (hoặc xóa thẻ trống nếu không dùng)!');
+                        if (name) name.focus();
+                        return false;
+                    }
+                    if (vName.length > 100) {
+                        e.preventDefault();
+                        alert('Tên của Thực thể #' + (idx + 1) + ' không được vượt quá 100 ký tự!');
+                        if (name) name.focus();
+                        return false;
+                    }
 
-                    if (sale && sale.value) {
-                        if (isNaN(sVal) || sVal <= 0) {
+                    const oVal = price && price.value !== '' ? Number(price.value) : NaN;
+                    if (isNaN(oVal) || oVal < 1000) {
+                        e.preventDefault();
+                        alert('Thực thể #' + (idx + 1) + ' ("' + vName + '") phải có giá bán từ 1,000 VNĐ trở lên!');
+                        if (price) price.focus();
+                        return false;
+                    }
+
+                    if (sale && sale.value !== '') {
+                        const sVal = Number(sale.value);
+                        if (isNaN(sVal) || sVal < 1000) {
                             e.preventDefault();
-                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải lớn hơn 0!');
-                            if (sale) sale.focus();
+                            alert('Giá khuyến mãi của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải từ 1,000 VNĐ trở lên!');
+                            sale.focus();
                             return false;
                         }
-                        if (!isNaN(oVal) && sVal >= oVal) {
+                        if (sVal >= oVal) {
                             e.preventDefault();
-                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải nhỏ hơn giá bán (' + formatVND(oVal) + ')!');
-                            if (sale) sale.focus();
+                            alert('Giá khuyến mãi của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải nhỏ hơn giá bán (' + formatVND(oVal) + ')!');
+                            sale.focus();
                             return false;
                         }
                     }
 
-                    if (name && name.value.trim() && price && parseFloat(price.value) >= 1000) {
-                        validVariants++;
+                    if (lowInput && lowInput.value !== '') {
+                        const lowVal = Number(lowInput.value);
+                        if (isNaN(lowVal) || lowVal < 0 || !Number.isInteger(lowVal)) {
+                            e.preventDefault();
+                            alert('Mức báo sắp hết của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải là số nguyên từ 0 trở lên!');
+                            lowInput.focus();
+                            return false;
+                        }
                     }
-                }
-
-                if (validVariants === 0) {
-                    e.preventDefault();
-                    alert('Vui lòng nhập đầy đủ tên và giá bán (từ 1,000 VNĐ) cho ít nhất 1 thực thể!');
-                    return false;
                 }
 
                 reindexVariants();
 
-                // Loading animation trên nút submit
+                // Loading animation trên nút submit (không gọi lại form.submit() để tránh gửi trùng 2 lần)
                 const btn = document.getElementById('submitProductBtn');
                 if (btn) {
                     btn.disabled = true;
                     btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Đang Gửi Kiểm Duyệt...`;
-                    form.submit();
                 }
             });
         }

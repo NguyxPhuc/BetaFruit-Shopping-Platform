@@ -37,6 +37,7 @@ public class VariantItemRequest {
     @Min(value = 0, message = "Số lượng tồn kho không được là số âm.")
     private Integer stockQuantity = 0;
 
+    @Min(value = 0, message = "Mức báo sắp hết không được là số âm.")
     private Integer lowStockThreshold = 5;
 
     public VariantItemRequest(String variantName, BigDecimal originalPrice, BigDecimal salePrice, BigDecimal costPrice, Integer stockQuantity, Integer lowStockThreshold) {
