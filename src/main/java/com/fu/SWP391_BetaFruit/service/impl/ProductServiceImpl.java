@@ -218,7 +218,7 @@ public class ProductServiceImpl implements ProductService {
             // Xử lý giá khuyến mãi (SalePrice): phải > 0 và < OriginalPrice để thỏa mãn CHECK constraint
             if (vReq.getSalePrice() != null) {
                 if (vReq.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0) {
-                    throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName() + "' phải lớn hơn 0 và nhỏ hơn giá niêm yết (" + vReq.getOriginalPrice() + " đ)!");
+                    throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName() + "' phải lớn hơn 0 và nhỏ hơn giá bán (" + vReq.getOriginalPrice() + " đ)!");
                 }
                 variant.setSalePrice(vReq.getSalePrice());
             } else {
@@ -634,11 +634,11 @@ public class ProductServiceImpl implements ProductService {
 
         for (VariantItemRequest vReq : reqVariants) {
             if (vReq.getOriginalPrice() == null || vReq.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
-                throw new IllegalArgumentException("Thực thể '" + vReq.getVariantName() + "' phải có giá niêm yết từ 1,000 VNĐ trở lên.");
+                throw new IllegalArgumentException("Thực thể '" + vReq.getVariantName() + "' phải có giá bán từ 1,000 VNĐ trở lên.");
             }
             if (vReq.getSalePrice() != null) {
                 if (vReq.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0) {
-                    throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName() + "' phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
+                    throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName() + "' phải lớn hơn 0 và nhỏ hơn giá bán.");
                 }
             }
 

@@ -25,8 +25,8 @@ public class VariantItemRequest {
     @Size(max = 100, message = "Tên thực thể tối đa 100 ký tự.")
     private String variantName;
 
-    @NotNull(message = "Giá gốc niêm yết không được để trống.")
-    @DecimalMin(value = "1000", message = "Giá gốc phải từ 1,000 VNĐ trở lên.")
+    @NotNull(message = "Giá bán không được để trống.")
+    @DecimalMin(value = "1000", message = "Giá bán phải từ 1,000 VNĐ trở lên.")
     private BigDecimal originalPrice;
 
     @DecimalMin(value = "1000", message = "Giá khuyến mãi nếu có phải từ 1,000 VNĐ trở lên.")

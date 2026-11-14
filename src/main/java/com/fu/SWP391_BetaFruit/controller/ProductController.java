@@ -141,14 +141,14 @@ public class ProductController {
                 VariantItemRequest v = effectiveVariants.get(i);
                 if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
                     model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                            + "') phải có giá niêm yết từ 1,000 VNĐ trở lên.");
+                            + "') phải có giá bán từ 1,000 VNĐ trở lên.");
                     break;
                 }
                 if (v.getSalePrice() != null) {
                     if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0
                             || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
                         model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                                + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
+                                + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá bán.");
                         break;
                     }
                 }
@@ -334,14 +334,14 @@ public class ProductController {
                 VariantItemRequest v = effectiveVariants.get(i);
                 if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
                     model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                            + "') phải có giá niêm yết từ 1,000 VNĐ trở lên.");
+                            + "') phải có giá bán từ 1,000 VNĐ trở lên.");
                     break;
                 }
                 if (v.getSalePrice() != null) {
                     if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0
                             || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
                         model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                                + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá niêm yết.");
+                                + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá bán.");
                         break;
                     }
                 }
