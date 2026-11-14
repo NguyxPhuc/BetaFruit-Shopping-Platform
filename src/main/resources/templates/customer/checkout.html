@@ -6,7 +6,7 @@
     <title>Thanh toán | BetaFruit</title>
     <link rel="stylesheet" th:href="@{/css/site.css}">
     <link rel="stylesheet" th:href="@{/css/customer-cart.css}">
-    <link rel="stylesheet" th:href="@{/css/customer-checkout.css(v='20261106-1')}">
+    <link rel="stylesheet" th:href="@{/css/customer-checkout.css(v='20261113-2')}">
 </head>
 <body class="cart-page">
 <div th:replace="~{fragments/header :: header}"></div>
@@ -19,17 +19,21 @@
     <div class="checkout-steps" aria-label="Tiến trình đặt hàng"><span>01 · Giỏ hàng</span><span>→</span><strong aria-current="step">02 · Thanh toán</strong><span>→</span><span>03 · Hoàn tất</span></div>
     <p role="alert" class="cart-notice cart-warning" th:if="${errorMessage}" th:text="${errorMessage}"></p>
     <p role="status" class="cart-notice" th:if="${successMessage}" th:text="${successMessage}"></p>
-    <form method="post" th:action="@{/customer/checkout}" class="cart-layout">
+    <form method="post" th:action="@{/customer/checkout}" class="cart-layout" th:attr="inert=${showAddressPicker == true ? 'inert' : null}">
         <input type="hidden" name="checkoutToken" th:value="${checkoutToken}">
         <div class="checkout-sections">
             <section class="checkout-card" aria-labelledby="addressHeading">
                 <div class="checkout-card-heading"><h2 id="addressHeading">01. Địa chỉ nhận hàng</h2><a th:href="@{/customer/address/create}">+ Thêm địa chỉ</a></div>
-                <p th:if="${addresses.isEmpty()}">Bạn chưa có địa chỉ nhận hàng. Thêm địa chỉ rồi quay lại trang này để tiếp tục.</p>
-                <label class="checkout-address" th:each="address, state : ${addresses}">
-                    <input type="radio" name="addressId" th:value="${address.addressId}" th:checked="${selectedAddressId != null ? selectedAddressId == address.addressId : state.first}" required>
-                    <span><strong><span th:text="${address.receiverName}"></span> · <span th:text="${address.receiverPhone}"></span><span class="checkout-default" th:if="${address.isDefault}">Mặc định</span></strong>
-                        <small th:text="${address.addressLine + ', ' + address.ward + ', ' + address.district + ', ' + address.city}"></small></span>
-                </label>
+                <p th:if="${addresses.isEmpty()}">Ví địa chỉ của bạn chưa có địa chỉ nhận hàng. Thêm địa chỉ rồi quay lại trang này để tiếp tục.</p>
+                <div th:if="${selectedAddress != null}" th:with="address=${selectedAddress}">
+                    <input type="hidden" name="addressId" th:value="${address.addressId}">
+                    <div class="checkout-address checkout-address-summary">
+                        <span><strong><span th:text="${address.receiverName}"></span> · <span th:text="${address.receiverPhone}"></span><span class="checkout-default" th:if="${address.isDefault}">Mặc định</span></strong>
+                            <small th:text="${address.addressLine + ', ' + address.ward + ', ' + address.district + ', ' + address.city}"></small></span>
+                    </div>
+                    <button type="submit" class="checkout-address-button" name="addressAction" value="open"
+                            th:formaction="@{/customer/checkout/address}" formnovalidate>Chọn từ ví địa chỉ</button>
+                </div>
             </section>
             <section class="checkout-card" aria-labelledby="productsHeading">
                 <h2 id="productsHeading">02. Sản phẩm đã chọn</h2>
@@ -117,6 +121,36 @@
             </div>
         </aside>
     </form>
+
+    <div class="checkout-address-backdrop" th:if="${showAddressPicker == true}">
+        <section class="checkout-address-dialog" role="dialog" aria-modal="true" aria-labelledby="checkoutAddressDialogTitle" aria-describedby="checkoutAddressDialogHelp">
+            <form method="post" th:action="@{/customer/checkout/address}" class="checkout-address-picker-form">
+                <input type="hidden" name="checkoutToken" th:value="${checkoutToken}">
+                <input type="hidden" name="addressId" th:value="${selectedAddressId}">
+                <input type="hidden" name="paymentMethod" th:value="${selectedPaymentMethod != null ? selectedPaymentMethod : 'COD'}">
+                <input type="hidden" name="couponCode" th:value="${enteredCouponCode}">
+                <div class="checkout-address-dialog-header">
+                    <h3 id="checkoutAddressDialogTitle">Chọn từ ví địa chỉ</h3>
+                    <button type="submit" name="addressAction" value="cancel" formnovalidate aria-label="Đóng ví địa chỉ">✕</button>
+                </div>
+                <p id="checkoutAddressDialogHelp">Chọn một địa chỉ đã lưu để nhận đơn hàng này.</p>
+                <div class="checkout-address-dialog-body">
+                    <p th:if="${addressError}" th:text="${addressError}" class="cart-notice cart-warning" role="alert"></p>
+                    <p th:if="${addresses.isEmpty()}">Ví địa chỉ chưa có địa chỉ nhận hàng. Đóng cửa sổ này và thêm địa chỉ để tiếp tục.</p>
+                    <label class="checkout-address" th:each="address : ${addresses}">
+                        <input type="radio" name="pendingAddressId" th:value="${address.addressId}" th:checked="${selectedAddressId == address.addressId}"
+                               th:attr="autofocus=${selectedAddressId == address.addressId ? 'autofocus' : null}" required>
+                        <span><strong><span th:text="${address.receiverName}"></span> · <span th:text="${address.receiverPhone}"></span><span class="checkout-default" th:if="${address.isDefault}">Mặc định</span></strong>
+                            <small th:text="${address.addressLine + ', ' + address.ward + ', ' + address.district + ', ' + address.city}"></small></span>
+                    </label>
+                </div>
+                <div class="checkout-address-dialog-footer">
+                    <button type="submit" class="checkout-address-button" name="addressAction" value="cancel" formnovalidate>Hủy</button>
+                    <button type="submit" class="checkout-address-button checkout-address-confirm" name="addressAction" value="confirm" th:disabled="${addresses.isEmpty()}">Giao đến địa chỉ này</button>
+                </div>
+            </form>
+        </section>
+    </div>
 
     <!-- Shopee Style Voucher Wallet Modal -->
     <div id="voucherModal" class="voucher-modal-backdrop" onclick="handleBackdropClick(event)">

@@ -11,5 +11,7 @@ public interface CustomerOrderService {
 
     CustomerOrderResponse getOrderDetail(Integer orderId, Integer customerId);
 
+    CustomerOrderResponse getOrderForReview(Integer orderId, Integer customerId);
+
     TierUpgradeResult confirmReceived(Integer orderId, Integer customerId);
 }

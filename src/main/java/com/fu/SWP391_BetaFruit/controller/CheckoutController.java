@@ -55,7 +55,7 @@ public class CheckoutController {
                 } catch (IllegalArgumentException ex) {
                     if (savedCode == null) throw ex;
                     preview = checkout.preview(id, ids);
-                    model.addAttribute("couponError", "MÃ£ Ä‘Ã£ Ã¡p dá»¥ng khÃ´ng cÃ²n há»£p lá»‡: " + ex.getMessage());
+                    model.addAttribute("couponError", "Mã đã áp dụng không còn hợp lệ: " + ex.getMessage());
                 }
                 // Adding an address or revisiting the same checkout must not invalidate
                 // a rendered form. Rotate only when the customer or reviewed cart changes.
@@ -64,7 +64,14 @@ public class CheckoutController {
                         ? previous : new Draft(id, preview, UUID.randomUUID().toString());
                 session.setAttribute("CHECKOUT_DRAFT", draft);
                 model.addAttribute("checkout", preview);
-                model.addAttribute("addresses", checkout.shippingAddresses(id));
+                var shippingAddresses = checkout.shippingAddresses(id);
+                Integer selectedId = (Integer) model.getAttribute("selectedAddressId");
+                var selectedAddress = shippingAddresses.stream()
+                        .filter(address -> Objects.equals(address.getAddressId(), selectedId))
+                        .findFirst().orElse(shippingAddresses.isEmpty() ? null : shippingAddresses.getFirst());
+                model.addAttribute("addresses", shippingAddresses);
+                model.addAttribute("selectedAddress", selectedAddress);
+                model.addAttribute("selectedAddressId", selectedAddress == null ? null : selectedAddress.getAddressId());
                 model.addAttribute("checkoutToken", draft.token());
                 model.addAttribute("cartCount", carts.getItemCount(id));
                 Integer shopId = (preview.shops() != null && !preview.shops().isEmpty())
@@ -80,6 +87,40 @@ public class CheckoutController {
         }
     }
 
+    @PostMapping("/address")
+    public String selectAddress(@RequestParam String checkoutToken,
+                                @RequestParam(defaultValue = "open") String addressAction,
+                                @RequestParam(required = false) Integer addressId,
+                                @RequestParam(required = false) Integer pendingAddressId,
+                                @RequestParam(defaultValue = "COD") PaymentMethod paymentMethod,
+                                @RequestParam(defaultValue = "") String couponCode,
+                                HttpSession session, RedirectAttributes redirect) {
+        synchronized (session) {
+            Draft draft = (Draft) session.getAttribute("CHECKOUT_DRAFT");
+            if (draft == null || !Objects.equals(draft.customerId(), customerId(session))
+                    || !draft.token().equals(checkoutToken)) {
+                redirect.addFlashAttribute("errorMessage", "Phiên chọn địa chỉ đã hết hạn. Vui lòng mở lại checkout.");
+                return "redirect:/cart";
+            }
+            boolean showPicker = "open".equals(addressAction);
+            if ("confirm".equals(addressAction)) {
+                boolean valid = checkout.shippingAddresses(customerId(session)).stream()
+                        .anyMatch(address -> Objects.equals(address.getAddressId(), pendingAddressId));
+                if (valid) {
+                    addressId = pendingAddressId;
+                } else {
+                    showPicker = true;
+                    redirect.addFlashAttribute("addressError", "Vui lòng chọn địa chỉ nhận hàng hợp lệ trong ví của bạn.");
+                }
+            }
+            redirect.addFlashAttribute("selectedAddressId", addressId);
+            redirect.addFlashAttribute("selectedPaymentMethod", paymentMethod.name());
+            redirect.addFlashAttribute("enteredCouponCode", couponCode);
+            redirect.addFlashAttribute("showAddressPicker", showPicker);
+            return "redirect:/customer/checkout#addressHeading";
+        }
+    }
+
     @PostMapping("/coupon")
     public String applyCoupon(@RequestParam String checkoutToken,
                               @RequestParam(defaultValue = "") String couponCode,
@@ -91,18 +132,18 @@ public class CheckoutController {
             Draft draft = (Draft) session.getAttribute("CHECKOUT_DRAFT");
             if (draft == null || !Objects.equals(draft.customerId(), customerId(session))
                     || !draft.token().equals(checkoutToken)) {
-                redirect.addFlashAttribute("errorMessage", "PhiÃªn Ã¡p dá»¥ng mÃ£ Ä‘Ã£ háº¿t háº¡n. Vui lÃ²ng má»Ÿ láº¡i checkout.");
+                redirect.addFlashAttribute("errorMessage", "Phiên áp dụng mã đã hết hạn. Vui lòng mở lại checkout.");
                 return "redirect:/cart";
             }
             try {
                 if (!"remove".equals(couponAction) && couponCode.isBlank())
-                    throw new IllegalArgumentException("Vui lÃ²ng nháº­p mÃ£ giáº£m giÃ¡.");
+                    throw new IllegalArgumentException("Vui lòng nhập mã giảm giá.");
                 var preview = "remove".equals(couponAction)
                         ? checkout.preview(customerId(session), draft.preview().itemIds())
                         : checkout.preview(customerId(session), draft.preview().itemIds(), couponCode);
                 session.setAttribute("CHECKOUT_DRAFT", new Draft(customerId(session), preview, UUID.randomUUID().toString()));
                 redirect.addFlashAttribute("couponSuccess", "remove".equals(couponAction)
-                        ? "ÄÃ£ bá» mÃ£ giáº£m giÃ¡." : "ÄÃ£ Ã¡p dá»¥ng mÃ£ giáº£m giÃ¡.");
+                        ? "Đã bỏ mã giảm giá." : "Đã áp dụng mã giảm giá.");
             } catch (IllegalArgumentException ex) {
                 redirect.addFlashAttribute("couponError", ex.getMessage());
                 redirect.addFlashAttribute("enteredCouponCode", couponCode);
@@ -128,7 +169,7 @@ public class CheckoutController {
             if (invalidReason != null) {
                 // Diagnose invalid submissions without logging tokens or session identifiers.
                 log.warn("Checkout submission rejected: {}", invalidReason);
-                redirect.addFlashAttribute("errorMessage", "PhiÃªn Ä‘áº·t hÃ ng Ä‘Ã£ háº¿t háº¡n hoáº·c Ä‘Ã£ Ä‘Æ°á»£c sá»­ dá»¥ng. Vui lÃ²ng kiá»ƒm tra láº¡i giá» hÃ ng.");
+                redirect.addFlashAttribute("errorMessage", "Phiên đặt hàng đã hết hạn hoặc đã được sử dụng. Vui lòng kiểm tra lại giỏ hàng.");
                 return "redirect:/cart";
             }
             try {
@@ -173,7 +214,7 @@ public class CheckoutController {
                     || receipt.paymentMethod() != PaymentMethod.VNPAY
                     || !receipt.paymentToken().equals(paymentToken)
                     || receipt.orders().stream().noneMatch(order -> order.orderId().equals(orderId))) {
-                redirect.addFlashAttribute("errorMessage", "PhiÃªn thanh toÃ¡n khÃ´ng há»£p lá»‡. Vui lÃ²ng kiá»ƒm tra láº¡i Ä‘Æ¡n hÃ ng.");
+                redirect.addFlashAttribute("errorMessage", "Phiên thanh toán không hợp lệ. Vui lòng kiểm tra lại đơn hàng.");
                 return "redirect:/cart";
             }
             return startPayment(orderId, session, redirect, request);
@@ -191,15 +232,15 @@ public class CheckoutController {
             return "redirect:" + checkoutPayments.start(customerId(session), orderId, ipAddress, baseUrl);
         } catch (Exception exception) {
             log.warn("Cannot start checkout payment for orderId={}", orderId, exception);
-            redirect.addFlashAttribute("errorMessage", "ÄÆ¡n hÃ ng Ä‘Ã£ Ä‘Æ°á»£c táº¡o nhÆ°ng chÆ°a thá»ƒ má»Ÿ thanh toÃ¡n. "
-                    + "Vui lÃ²ng kiá»ƒm tra tráº¡ng thÃ¡i vÃ  thá»­ láº¡i bÃªn dÆ°á»›i.");
+            redirect.addFlashAttribute("errorMessage", "Đơn hàng đã được tạo nhưng chưa thể mở thanh toán. "
+                    + "Vui lòng kiểm tra trạng thái và thử lại bên dưới.");
             return "redirect:/customer/checkout/success";
         }
     }
 
     @ExceptionHandler({org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
     public String invalidInput(RedirectAttributes redirect) {
-        redirect.addFlashAttribute("errorMessage", "ThÃ´ng tin checkout khÃ´ng há»£p lá»‡. Vui lÃ²ng chá»n láº¡i sáº£n pháº©m vÃ  Ä‘á»‹a chá»‰.");
+        redirect.addFlashAttribute("errorMessage", "Thông tin checkout không hợp lệ. Vui lòng chọn lại sản phẩm và địa chỉ.");
         return "redirect:/cart";
     }
 

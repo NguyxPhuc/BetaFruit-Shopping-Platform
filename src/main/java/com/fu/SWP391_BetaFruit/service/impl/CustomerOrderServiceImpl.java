@@ -67,6 +67,20 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public CustomerOrderResponse getOrderForReview(Integer orderId, Integer customerId) {
+        Order order = orderRepository.findByOrderIdAndCustomer_UserId(orderId, customerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng #" + orderId));
+        if (order.getOrderStatus() != OrderStatus.RECEIVED && order.getOrderStatus() != OrderStatus.SUCCESS) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Chỉ có thể đánh giá sau khi đã xác nhận nhận hàng");
+        }
+        var reviews = reviewRepository.findByOrderItem_Order_OrderId(orderId).stream()
+                .filter(review -> Objects.equals(review.getCustomer().getUserId(), customerId))
+                .collect(java.util.stream.Collectors.toMap(review -> review.getOrderItem().getOrderItemId(), review -> review));
+        return toResponse(order, reviews);
+    }
+
+    @Override
     @Transactional
     public TierUpgradeResult confirmReceived(Integer orderId, Integer customerId) {
         Order order = orderRepository.findLockedById(orderId)
@@ -135,9 +149,13 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     }
 
     private CustomerOrderResponse toResponse(Order order) {
+        return toResponse(order, java.util.Map.of());
+    }
+
+    private CustomerOrderResponse toResponse(Order order, java.util.Map<Integer, Review> reviews) {
         List<OrderItem> items = orderItemRepository.findByOrderOrderIdOrderByOrderItemIdAsc(order.getOrderId());
         List<CustomerOrderResponse.OrderItemResponse> itemResponses = items.stream()
-                .map(item -> toOrderItemResponse(item, order))
+                .map(item -> toOrderItemResponse(item, reviews.get(item.getOrderItemId())))
                 .toList();
 
         boolean canConfirm = (order.getOrderStatus() == OrderStatus.DELIVERED);
@@ -209,10 +227,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .build();
     }
 
-    private CustomerOrderResponse.OrderItemResponse toOrderItemResponse(OrderItem item, Order order) {
-        Review review = reviewRepository.findByOrderItem_OrderItemId(item.getOrderItemId())
-                .filter(found -> Objects.equals(found.getCustomer().getUserId(), order.getCustomer().getUserId()))
-                .orElse(null);
+    private CustomerOrderResponse.OrderItemResponse toOrderItemResponse(OrderItem item, Review review) {
         return new CustomerOrderResponse.OrderItemResponse(
                 item.getOrderItemId(), item.getVariant().getProduct().getProductId(),
                 item.getSnapshotProductName(), item.getSnapshotVariantName(), item.getQuantity(),

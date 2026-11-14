@@ -101,7 +101,7 @@ public class CustomerReviewServiceImpl implements CustomerReviewService {
     }
 
     private Review ownedReview(Integer customerId, Integer reviewId) {
-        Review review = reviewRepository.findById(reviewId)
+        Review review = reviewRepository.findByIdForUpdate(reviewId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"));
         if (!Objects.equals(review.getCustomer().getUserId(), customerId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền chỉnh sửa đánh giá này");
