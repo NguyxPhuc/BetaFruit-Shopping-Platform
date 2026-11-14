@@ -843,89 +843,6 @@
         .btn-submit-hero:active {
             transform: translateY(0);
         }
-
-        /* ══════════ FLOATING TOAST JUMP IN ══════════ */
-        .floating-toast-container {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            z-index: 99999;
-            max-width: 440px;
-            width: calc(100% - 48px);
-            animation: toastJumpIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @keyframes toastJumpIn {
-            0% {
-                opacity: 0;
-                transform: translate3d(80px, -20px, 0) scale(0.9);
-            }
-            60% {
-                opacity: 1;
-                transform: translate3d(-10px, 4px, 0) scale(1.02);
-            }
-            100% {
-                opacity: 1;
-                transform: translate3d(0, 0, 0) scale(1);
-            }
-        }
-
-        @keyframes toastFadeOut {
-            0% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-            100% { opacity: 0; transform: translate3d(60px, 0, 0) scale(0.95); }
-        }
-
-        .floating-toast-card {
-            background: #ffffff;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16), 0 4px 16px rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(167, 243, 208, 0.9);
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
-
-        .toast-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 6px;
-            background: linear-gradient(180deg, #059669, #10b981);
-        }
-
-        .toast-body-content {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.875rem;
-            padding: 1.15rem 1.25rem;
-        }
-
-        .toast-icon-wrap {
-            width: 42px;
-            height: 42px;
-            border-radius: var(--radius-md);
-            background: var(--brand-green-light);
-            color: var(--brand-green-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.35rem;
-            flex-shrink: 0;
-            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
-        }
-
-        .toast-progress-bar {
-            height: 3px;
-            background: linear-gradient(90deg, #059669, #34d399);
-            width: 100%;
-            animation: toastProgress 6s linear forwards;
-        }
-
-        @keyframes toastProgress {
-            0% { width: 100%; }
-            100% { width: 0%; }
-        }
     </style>
 
 <div class="page-container py-2">
@@ -948,28 +865,6 @@
             <p class="page-header-desc">
                 Cập nhật thông tin chi tiết, hình ảnh, thực thể đóng gói và giá bán của hoa quả trong gian hàng của bạn.
             </p>
-        </div>
-    </div>
-
-    <!-- ═══════════════ TOAST THÔNG BÁO NHẢY GÓC MÀN HÌNH ═══════════════ -->
-    <div th:if="${successMessage != null}" id="floatingSuccessToast" class="floating-toast-container" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="floating-toast-card">
-            <div class="toast-indicator"></div>
-            <div class="toast-body-content">
-                <div class="toast-icon-wrap">
-                    <i class="bi bi-check-circle-fill"></i>
-                </div>
-                <div class="toast-text-wrap flex-grow-1">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
-                        <strong class="text-dark fs-6">Đăng Bán Thành Công! 🎉</strong>
-                        <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" onclick="dismissToast()">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                    <div class="text-muted small" th:text="${successMessage}">Đăng bán hoa quả thành công!</div>
-                </div>
-            </div>
-            <div class="toast-progress-bar" id="toastProgressBar"></div>
         </div>
     </div>
 
@@ -1259,12 +1154,12 @@
                 || fileNameLower.endsWith('.jpg') || fileNameLower.endsWith('.jpeg') || fileNameLower.endsWith('.png');
 
             if (!isValidType) {
-                alert('Chỉ chấp nhận ảnh định dạng JPG hoặc PNG.');
+                showShopToast('Chỉ chấp nhận ảnh định dạng JPG hoặc PNG.', 'error', 'Ảnh không hợp lệ');
                 input.value = '';
                 return;
             }
             if (file.size > maxBytes) {
-                alert('Dung lượng ảnh vượt quá giới hạn tối đa 5MB.');
+                showShopToast('Dung lượng ảnh vượt quá giới hạn tối đa 5MB.', 'error', 'Ảnh không hợp lệ');
                 input.value = '';
                 return;
             }
@@ -1400,7 +1295,6 @@
                                oninput="handleSalePriceChange(this)">
                         <span class="input-group-text">VNĐ</span>
                     </div>
-                    <div class="sale-price-feedback text-danger" style="display: none; font-size: 0.75rem; margin-top: 2px;"></div>
                 </div>
 
                 <div class="col-12 col-md-6">
@@ -1451,7 +1345,7 @@
         if (!container) return;
 
         if (container.children.length <= 1) {
-            alert('Hoa quả phải có ít nhất 1 thực thể (biến thể)!');
+            showShopToast('Hoa quả phải có ít nhất 1 thực thể (biến thể)!', 'warning', 'Không thể xóa thực thể');
             return;
         }
 
@@ -1538,7 +1432,6 @@
 
         const priceInput = card.querySelector('.variant-input-price');
         const badge = card.querySelector('.variant-discount-badge');
-        const feedback = card.querySelector('.sale-price-feedback');
 
         const oPrice = parseFloat(priceInput ? priceInput.value : '');
         const sPrice = parseFloat(input.value);
@@ -1546,36 +1439,19 @@
         if (!input.value || isNaN(sPrice)) {
             input.classList.remove('is-invalid');
             if (badge) badge.style.display = 'none';
-            if (feedback) feedback.style.display = 'none';
             updateSummaryMinPrice();
             return;
         }
 
-        if (sPrice < 1000) {
+        if (sPrice < 1000 || (!isNaN(oPrice) && oPrice > 0 && sPrice >= oPrice)) {
             input.classList.add('is-invalid');
             if (badge) badge.style.display = 'none';
-            if (feedback) {
-                feedback.textContent = 'Giá khuyến mãi nếu có phải từ 1,000 VNĐ trở lên.';
-                feedback.style.display = 'block';
-            }
-            updateSummaryMinPrice();
-            return;
-        }
-
-        if (!isNaN(oPrice) && oPrice > 0 && sPrice >= oPrice) {
-            input.classList.add('is-invalid');
-            if (badge) badge.style.display = 'none';
-            if (feedback) {
-                feedback.textContent = 'Giá khuyến mãi phải nhỏ hơn giá bán (' + formatVND(oPrice) + ')!';
-                feedback.style.display = 'block';
-            }
             updateSummaryMinPrice();
             return;
         }
 
         // Hợp lệ: sPrice < oPrice
         input.classList.remove('is-invalid');
-        if (feedback) feedback.style.display = 'none';
 
         if (!isNaN(oPrice) && oPrice > 0) {
             const discountPercent = Math.round((1 - (sPrice / oPrice)) * 100);
@@ -1739,51 +1615,45 @@
         }
 
         // 3. Form Submit Validation
+        function failSubmitValidation(e, message, targetEl) {
+            e.preventDefault();
+            showShopToast(message, 'error', 'Thông tin chưa hợp lệ');
+            if (targetEl) targetEl.focus();
+            return false;
+        }
+
         const form = document.getElementById('createProductForm');
         if (form) {
             form.addEventListener('submit', function(e) {
                 const productNameInput = document.getElementById('productName');
                 if (!productNameInput || !productNameInput.value.trim()) {
-                    e.preventDefault();
-                    alert('Vui lòng nhập tên hoa quả / nông sản!');
-                    if (productNameInput) productNameInput.focus();
-                    return false;
+                    return failSubmitValidation(e, 'Vui lòng nhập tên hoa quả / nông sản!', productNameInput);
                 }
 
                 const categorySelect = document.getElementById('categoryId');
                 if (!categorySelect || !categorySelect.value) {
-                    e.preventDefault();
-                    alert('Vui lòng chọn danh mục hoa quả!');
-                    if (categorySelect) categorySelect.focus();
-                    return false;
+                    return failSubmitValidation(e, 'Vui lòng chọn danh mục hoa quả!', categorySelect);
                 }
 
                 const descriptionInput = document.getElementById('description');
                 if (!descriptionInput || descriptionInput.value.trim().length < 20) {
-                    e.preventDefault();
-                    alert('Mô tả chi tiết & nguồn gốc hoa quả phải có ít nhất 20 ký tự!');
-                    if (descriptionInput) descriptionInput.focus();
-                    return false;
+                    return failSubmitValidation(e, 'Mô tả chi tiết & nguồn gốc hoa quả phải có ít nhất 20 ký tự!', descriptionInput);
                 }
 
                 const currentUrl = urlInput ? urlInput.value : '';
                 if ((!fileInput || !fileInput.files || fileInput.files.length === 0) && (!currentUrl || currentUrl.trim() === '')) {
-                    e.preventDefault();
                     if (dropArea) {
                         dropArea.style.borderColor = '#ef4444';
                         dropArea.style.backgroundColor = '#fef2f2';
                         dropArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                    alert('Vui lòng bấm vào khung để tải ảnh đại diện hoa quả từ máy tính của bạn!');
-                    return false;
+                    return failSubmitValidation(e, 'Vui lòng bấm vào khung để tải ảnh đại diện hoa quả từ máy tính của bạn!', null);
                 }
 
                 // Kiểm tra tất cả thực thể (biến thể) theo thứ tự chuẩn
                 const variantCards = container.querySelectorAll('.variant-item-card');
                 if (variantCards.length === 0) {
-                    e.preventDefault();
-                    alert('Vui lòng nhập ít nhất 1 thực thể cho hoa quả!');
-                    return false;
+                    return failSubmitValidation(e, 'Vui lòng nhập ít nhất 1 thực thể cho hoa quả!', null);
                 }
 
                 for (let idx = 0; idx < variantCards.length; idx++) {
@@ -1796,59 +1666,38 @@
                     const vName = name ? name.value.trim() : '';
 
                     if (!vName) {
-                        e.preventDefault();
-                        alert('Vui lòng nhập tên cho Thực thể #' + (idx + 1) + ' (hoặc xóa thẻ trống nếu không dùng)!');
-                        if (name) name.focus();
-                        return false;
+                        return failSubmitValidation(e, 'Vui lòng nhập tên cho Thực thể #' + (idx + 1) + ' (hoặc xóa thẻ trống nếu không dùng)!', name);
                     }
                     if (vName.length > 100) {
-                        e.preventDefault();
-                        alert('Tên của Thực thể #' + (idx + 1) + ' không được vượt quá 100 ký tự!');
-                        if (name) name.focus();
-                        return false;
+                        return failSubmitValidation(e, 'Tên của Thực thể #' + (idx + 1) + ' không được vượt quá 100 ký tự!', name);
                     }
 
                     const oVal = price && price.value !== '' ? Number(price.value) : NaN;
                     if (isNaN(oVal) || oVal < 1000) {
-                        e.preventDefault();
-                        alert('Thực thể #' + (idx + 1) + ' ("' + vName + '") phải có giá bán từ 1,000 VNĐ trở lên!');
-                        if (price) price.focus();
-                        return false;
+                        return failSubmitValidation(e, 'Thực thể #' + (idx + 1) + ' ("' + vName + '") phải có giá bán từ 1,000 VNĐ trở lên!', price);
                     }
 
                     if (sale && sale.value !== '') {
                         const sVal = Number(sale.value);
                         if (isNaN(sVal) || sVal < 1000) {
-                            e.preventDefault();
-                            alert('Giá khuyến mãi của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải từ 1,000 VNĐ trở lên!');
-                            sale.focus();
-                            return false;
+                            return failSubmitValidation(e, 'Giá khuyến mãi của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải từ 1,000 VNĐ trở lên!', sale);
                         }
                         if (sVal >= oVal) {
-                            e.preventDefault();
-                            alert('Giá khuyến mãi của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải nhỏ hơn giá bán (' + formatVND(oVal) + ')!');
-                            sale.focus();
-                            return false;
+                            return failSubmitValidation(e, 'Giá khuyến mãi của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải nhỏ hơn giá bán (' + formatVND(oVal) + ')!', sale);
                         }
                     }
 
                     if (qtyInput && qtyInput.type !== 'hidden') {
                         const qtyVal = qtyInput.value !== '' ? Number(qtyInput.value) : NaN;
                         if (isNaN(qtyVal) || qtyVal < 0 || !Number.isInteger(qtyVal)) {
-                            e.preventDefault();
-                            alert('Số lượng tồn kho của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải là số nguyên từ 0 trở lên!');
-                            qtyInput.focus();
-                            return false;
+                            return failSubmitValidation(e, 'Số lượng tồn kho của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải là số nguyên từ 0 trở lên!', qtyInput);
                         }
                     }
 
                     if (lowInput && lowInput.value !== '') {
                         const lowVal = Number(lowInput.value);
                         if (isNaN(lowVal) || lowVal < 0 || !Number.isInteger(lowVal)) {
-                            e.preventDefault();
-                            alert('Mức báo sắp hết của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải là số nguyên từ 0 trở lên!');
-                            lowInput.focus();
-                            return false;
+                            return failSubmitValidation(e, 'Mức báo sắp hết của Thực thể #' + (idx + 1) + ' ("' + vName + '") phải là số nguyên từ 0 trở lên!', lowInput);
                         }
                     }
                 }
@@ -1864,24 +1713,8 @@
             });
         }
 
-        // 4. Toast Thông Báo Tự Động Biến Mất
-        const toast = document.getElementById('floatingSuccessToast');
-        if (toast) {
-            setTimeout(function() {
-                dismissToast();
-            }, 6000);
-        }
-
         updateCompletionProgress();
     });
-
-    function dismissToast() {
-        const toast = document.getElementById('floatingSuccessToast');
-        if (toast) {
-            toast.style.animation = 'toastFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
-            setTimeout(() => toast.remove(), 400);
-        }
-    }
 </script>
 </div>
 </body>

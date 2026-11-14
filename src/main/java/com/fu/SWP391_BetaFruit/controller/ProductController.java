@@ -362,8 +362,8 @@ public class ProductController {
             }
         }
 
-        // Bắt các lỗi binding/validation khác thuộc danh sách variants để không bị tải lại trang mà mất thông báo
-        if (bindingResult.hasErrors()) {
+        // Bắt các lỗi binding/validation khác (trên thực thể hoặc trường cơ bản) để luôn bật được toast lỗi
+        if (bindingResult.hasErrors() && !model.containsAttribute("errorMessage")) {
             for (FieldError fieldError : bindingResult.getFieldErrors()) {
                 if (fieldError.getField() != null && fieldError.getField().startsWith("variants")) {
                     String msg = fieldError.isBindingFailure()
@@ -372,6 +372,12 @@ public class ProductController {
                     model.addAttribute("errorMessage", msg);
                     return;
                 }
+            }
+            FieldError firstError = bindingResult.getFieldError();
+            if (firstError != null) {
+                model.addAttribute("errorMessage", firstError.isBindingFailure()
+                        ? "Dữ liệu nhập vào chưa hợp lệ, vui lòng kiểm tra lại."
+                        : firstError.getDefaultMessage());
             }
         }
     }

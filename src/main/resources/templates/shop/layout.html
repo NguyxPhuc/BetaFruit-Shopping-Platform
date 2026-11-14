@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, activeMenu, content)"
       th:classappend="${activeMenu == 'orders'} ? 'shop-orders-document' : ''">
 <head>
@@ -19,8 +19,10 @@
     <!-- BetaFruit Shop CSS -->
     <link rel="stylesheet" th:href="@{/css/shop.css(v=8)}" href="/css/shop.css?v=8">
     <link rel="stylesheet" th:href="@{/css/shop-notifications.css}">
+    <link rel="stylesheet" th:href="@{/css/shop-toast.css}">
 </head>
 <body class="shop-portal-body" th:classappend="${activeMenu == 'orders'} ? 'shop-orders-portal' : ''">
+    <script th:src="@{/js/shop-toast.js}"></script>
 
     <div class="shop-shell">
         <!-- ════════ SIDEBAR CHUYỂN TRANG CỐ ĐỊNH ════════ -->
@@ -33,17 +35,10 @@
 
             <!-- Main Page Outlet Area -->
             <main class="shop-content-outlet">
-                <!-- Flash Notification Messages (Duy nhất tại layout để tránh bị lặp) -->
-                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm rounded-3 mb-4 d-flex align-items-center" role="alert">
-                    <i class="bi bi-check-circle-fill me-2 fs-5 text-success"></i>
-                    <span class="fw-medium" th:text="${successMessage}">Thao tác thành công!</span>
-                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3 mb-4 d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5 text-danger"></i>
-                    <span class="fw-medium" th:text="${errorMessage}">Đã xảy ra lỗi!</span>
-                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+                <!-- Flash Notification Messages (Hiển thị dạng Toast đẩy từ góc trên bên phải) -->
+                <div id="shopFlashToastData" class="d-none"
+                     th:if="${successMessage != null or errorMessage != null}"
+                     th:attr="data-success=${successMessage},data-error=${errorMessage}"></div>
 
                 <!-- ════ NƠI NHÚNG NỘI DUNG CỦA TỪNG TRANG CON (TƯƠNG ĐƯƠNG OUTLET TRONG REACT) ════ -->
                 <div th:replace="${content}"></div>
