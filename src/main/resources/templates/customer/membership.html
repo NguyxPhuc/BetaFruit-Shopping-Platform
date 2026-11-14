@@ -16,6 +16,53 @@
     <link rel="stylesheet" th:href="@{/css/profile.css}" href="/css/profile.css">
 
     <style>
+        .bf-modal-dialog {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            max-width: 400px;
+            width: 90%;
+            margin: auto;
+        }
+        .bf-modal-dialog::backdrop {
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
+        }
+        .bf-modal-card {
+            background: #ffffff;
+            padding: 24px 20px 20px;
+            text-align: center;
+            border-radius: 12px;
+        }
+        .bf-modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 10px 0;
+        }
+        .bf-modal-message {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+        }
+        .bf-modal-btn-close {
+            background: #ea580c;
+            color: #ffffff;
+            border: none;
+            padding: 9px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.15s ease;
+        }
+        .bf-modal-btn-close:hover {
+            background: #c2410c;
+        }
+
         .membership-vip-card {
             background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%);
             border-radius: 16px;
@@ -492,6 +539,20 @@
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script>
+function showBfModal(message, title = "Thông báo") {
+    const modal = document.getElementById('bfAlertModal');
+    if (modal) {
+        document.getElementById('bfModalTitle').textContent = title;
+        document.getElementById('bfModalMessage').textContent = message;
+        modal.showModal();
+    }
+}
+
+function closeBfModal() {
+    const modal = document.getElementById('bfAlertModal');
+    if (modal) modal.close();
+}
+
 function copyVoucherCode(code, btn) {
     if (navigator.clipboard) {
         navigator.clipboard.writeText(code).then(function() {
@@ -503,13 +564,23 @@ function copyVoucherCode(code, btn) {
                 btn.style.background = "#2d6a4f";
             }, 2000);
         }).catch(function() {
-            alert("Mã voucher: " + code);
+            showBfModal("Mã voucher của bạn: " + code, "Thông tin Voucher");
         });
     } else {
-        alert("Mã voucher: " + code);
+        showBfModal("Mã voucher của bạn: " + code, "Thông tin Voucher");
     }
 }
 </script>
 
+<!-- POPUP THUẦN HTML5 / CSS (KHÔNG DÙNG ICON) -->
+<dialog id="bfAlertModal" class="bf-modal-dialog">
+    <div class="bf-modal-card">
+        <h4 class="bf-modal-title" id="bfModalTitle">Thông báo</h4>
+        <p class="bf-modal-message" id="bfModalMessage">Nội dung thông báo</p>
+        <div class="bf-modal-actions">
+            <button type="button" class="bf-modal-btn-close" onclick="closeBfModal()">Đóng</button>
+        </div>
+    </div>
+</dialog>
 </body>
 </html>

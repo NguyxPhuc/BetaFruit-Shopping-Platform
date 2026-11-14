@@ -926,6 +926,54 @@
             0% { width: 100%; }
             100% { width: 0%; }
         }
+
+        /* ═══════════ MODAL THÔNG BÁO THUẦN HTML5 / CSS (KHÔNG DÙNG ICON) ═══════════ */
+        .bf-modal-dialog {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            max-width: 400px;
+            width: 90%;
+            margin: auto;
+        }
+        .bf-modal-dialog::backdrop {
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
+        }
+        .bf-modal-card {
+            background: #ffffff;
+            padding: 24px 20px 20px;
+            text-align: center;
+            border-radius: 12px;
+        }
+        .bf-modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 10px 0;
+        }
+        .bf-modal-message {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+        }
+        .bf-modal-btn-close {
+            background: #ea580c;
+            color: #ffffff;
+            border: none;
+            padding: 9px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.15s ease;
+        }
+        .bf-modal-btn-close:hover {
+            background: #c2410c;
+        }
     </style>
 
 <div class="page-container py-2">
@@ -1432,12 +1480,26 @@
         }
     }
 
+    function showBfModal(message, title = "Thông báo") {
+        const modal = document.getElementById('bfAlertModal');
+        if (modal) {
+            document.getElementById('bfModalTitle').textContent = title;
+            document.getElementById('bfModalMessage').textContent = message;
+            modal.showModal();
+        }
+    }
+
+    function closeBfModal() {
+        const modal = document.getElementById('bfAlertModal');
+        if (modal) modal.close();
+    }
+
     function removeVariantRow(btn) {
         const container = document.getElementById('variantsContainer');
         if (!container) return;
 
         if (container.children.length <= 1) {
-            alert('Hoa quả phải có ít nhất 1 thực thể (biến thể)!');
+            showBfModal('Hoa quả phải có ít nhất 1 thực thể (biến thể)!');
             return;
         }
 
@@ -1736,7 +1798,7 @@
                         dropArea.style.backgroundColor = '#fef2f2';
                         dropArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                    alert('Vui lòng bấm vào khung để tải ảnh đại diện hoa quả từ máy tính của bạn!');
+                    showBfModal('Vui lòng bấm vào khung để tải ảnh đại diện hoa quả từ máy tính của bạn!');
                     return false;
                 }
 
@@ -1754,13 +1816,13 @@
                     if (sale && sale.value) {
                         if (isNaN(sVal) || sVal <= 0) {
                             e.preventDefault();
-                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải lớn hơn 0!');
+                            showBfModal('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải lớn hơn 0!');
                             if (sale) sale.focus();
                             return false;
                         }
                         if (!isNaN(oVal) && sVal >= oVal) {
                             e.preventDefault();
-                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải nhỏ hơn giá gốc (' + formatVND(oVal) + ')!');
+                            showBfModal('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải nhỏ hơn giá gốc (' + formatVND(oVal) + ')!');
                             if (sale) sale.focus();
                             return false;
                         }
@@ -1773,7 +1835,7 @@
 
                 if (validVariants === 0) {
                     e.preventDefault();
-                    alert('Vui lòng nhập đầy đủ tên và giá bán (từ 1,000 VNĐ) cho ít nhất 1 thực thể!');
+                    showBfModal('Vui lòng nhập đầy đủ tên và giá bán (từ 1,000 VNĐ) cho ít nhất 1 thực thể!');
                     return false;
                 }
 
@@ -1808,6 +1870,16 @@
         }
     }
 </script>
+    <!-- POPUP THUẦN HTML5 / CSS (KHÔNG DÙNG ICON) -->
+    <dialog id="bfAlertModal" class="bf-modal-dialog">
+        <div class="bf-modal-card">
+            <h4 class="bf-modal-title" id="bfModalTitle">Thông báo</h4>
+            <p class="bf-modal-message" id="bfModalMessage">Nội dung thông báo</p>
+            <div class="bf-modal-actions">
+                <button type="button" class="bf-modal-btn-close" onclick="closeBfModal()">Đóng</button>
+            </div>
+        </div>
+    </dialog>
 </div>
 </body>
 </html>

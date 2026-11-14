@@ -45,7 +45,7 @@ public class WebConfig implements WebMvcConfigurer {
                                 .addPathPatterns("/shop/**");
 
                 registry.addInterceptor(customerInterceptor)
-                                .addPathPatterns("/customer/**", "/cart");
+                                .addPathPatterns("/customer/**", "/cart", "/orders", "/orders/**");
 
                 registry.addInterceptor(shipperInterceptor)
                                 .addPathPatterns("/shipper/**");
