@@ -51,6 +51,7 @@ public class UserController {
     public String processChangePassword(@Valid @ModelAttribute("changePasswordRequest") ChangePasswordRequest request,
                                         BindingResult bindingResult,
                                         HttpSession session,
+                                        Model model,
                                         RedirectAttributes redirectAttributes) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (userId == null) {
@@ -64,8 +65,8 @@ public class UserController {
             redirectAttributes.addFlashAttribute("successMessage", "Đổi mật khẩu thành công!");
             return "redirect:/change-password";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/change-password";
+            model.addAttribute("errorMessage", e.getMessage());
+            return "auth/change-password";
         }
     }
 

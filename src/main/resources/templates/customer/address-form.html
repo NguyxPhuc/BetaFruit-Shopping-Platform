@@ -76,7 +76,7 @@
                                placeholder="Ví dụ: 0912345678"
                                required
                                maxlength="20" />
-                        <span class="field-error-msg" id="phoneErrorClient" style="display: none;">Số điện thoại không hợp lệ (10 chữ số).</span>
+                        <span class="field-error-msg" id="phoneErrorClient" style="display: none;">Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng 03, 05, 07, 08 hoặc 09.</span>
                         <span class="field-error-msg" th:if="${#fields.hasErrors('receiverPhone')}" th:errors="*{receiverPhone}"></span>
                     </div>
                 </div>
