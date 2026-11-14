@@ -6,7 +6,7 @@
     <meta name="description" content="Thiết lập hồ sơ cửa hàng BetaFruit - Khởi đầu hành trình kinh doanh nông sản tươi sạch">
     <title>Thiết lập hồ sơ cửa hàng | BetaFruit Partner</title>
 
-    <!-- Google Fonts (Đồng bộ font DM Sans với Shop Portal) -->
+    <!-- Google Fonts (Đồng bộ font DM Sans chuẩn với toàn bộ Shop Portal) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
@@ -16,6 +16,284 @@
 
     <!-- Custom Onboarding CSS -->
     <link rel="stylesheet" th:href="@{/css/shop-onboarding.css}">
+
+    <style>
+        /* ═══════════ ĐỒNG BỘ PHÔNG CHỮ DM SANS CHUẨN SHOP PORTAL ═══════════ */
+        *, body, input, textarea, button, select, .form-label, .section-title, h1, h2, h3, p, span {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        }
+
+        body.onboarding-body {
+            background-color: #fdfbf7;
+            color: #1e293b;
+        }
+
+        .onboarding-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 24px 16px 48px;
+        }
+
+        /* ═══════════ FORM CARD SẠCH SẼ & TINH TẾ ═══════════ */
+        .onboarding-card {
+            background: #ffffff;
+            border: 1px solid #fed7aa;
+            border-radius: 18px;
+            padding: 36px 40px;
+            box-shadow: 0 4px 20px rgba(194, 65, 12, 0.05);
+        }
+
+        .card-header-bar {
+            margin-bottom: 28px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #ffedd5;
+        }
+        .card-header-bar h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #431407;
+            margin: 0 0 6px 0;
+            line-height: 1.3;
+        }
+        .card-header-bar p {
+            font-size: 14px;
+            color: #78350f;
+            margin: 0;
+        }
+
+        /* Tiêu đề từng phân mục */
+        .form-section-title {
+            font-size: 15.5px;
+            font-weight: 700;
+            color: #7c2d12;
+            margin: 0 0 18px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #fed7aa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+        .form-label .required {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+        .form-label-hint {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        /* Input & Textarea */
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: #0f172a;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.15s ease;
+            box-sizing: border-box;
+        }
+        .form-input:focus, .form-textarea:focus {
+            border-color: #ea580c;
+            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+        }
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: #94a3b8;
+            font-size: 13.5px;
+        }
+
+        /* ═══════════ KHU VỰC TẢI ẢNH LOGO & BANNER ═══════════ */
+        .bf-upload-card {
+            border: 1.5px dashed #fed7aa;
+            background: #fffaf5;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            min-height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bf-upload-card:hover {
+            border-color: #ea580c;
+            background: #fff7ed;
+        }
+        .bf-upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        .bf-upload-circle-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ffedd5;
+            color: #ea580c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .bf-upload-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #7c2d12;
+        }
+        .bf-upload-hint {
+            font-size: 11.5px;
+            color: #9a3412;
+            opacity: 0.8;
+        }
+        .bf-upload-preview-wrap {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bf-logo-preview-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .bf-banner-preview-img {
+            width: 100%;
+            height: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+        .bf-btn-remove-img {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            transition: transform 0.15s ease;
+        }
+        .bf-btn-remove-img:hover {
+            transform: scale(1.1);
+            background: #dc2626;
+        }
+
+        /* Dòng ghi chú bảo mật tài khoản */
+        .security-note {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12.5px;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .security-note i {
+            color: #059669;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        /* Nút thao tác gửi form */
+        .form-actions-clean {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .btn-clean-cancel {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .btn-clean-cancel:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #94a3b8;
+        }
+        .btn-clean-submit {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: 1px solid #ea580c;
+            background: #ea580c;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(234, 88, 12, 0.2);
+            transition: all 0.15s ease;
+        }
+        .btn-clean-submit:hover {
+            background: #c2410c;
+            border-color: #c2410c;
+            box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+        }
+
+        @media (max-width: 640px) {
+            .onboarding-card {
+                padding: 24px 18px;
+            }
+            .form-actions-clean {
+                flex-direction: column-reverse;
+                width: 100%;
+            }
+            .btn-clean-cancel, .btn-clean-submit {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body class="onboarding-body">
 
@@ -96,13 +374,10 @@
 
             <!-- ═════ ONBOARDING CARD ═════ -->
             <div class="onboarding-card">
-                <div class="onboarding-card__hero">
-                    <div class="onboarding-card__hero-badge">
-                        <i class="bi bi-stars"></i>
-                        <span>Chào mừng đối tác mới</span>
-                    </div>
+                <!-- Clean Header Bar -->
+                <div class="card-header-bar">
                     <h2>Thiết Lập Hồ Sơ Gian Hàng</h2>
-                    <p>Hoàn thành thông tin cửa hàng và tài khoản ngân hàng để ban quản trị BetaFruit tiến hành thẩm định và kích hoạt quyền bán hàng.</p>
+                    <p>Hoàn thiện thông tin thương hiệu và tài khoản ngân hàng để ban quản trị thẩm định và kích hoạt quyền bán lẻ.</p>
                 </div>
 
                 <!-- Global Server-side Error Alert -->
@@ -115,49 +390,40 @@
                 </div>
 
                 <!-- ═════ FORM ═════ -->
-                <form th:action="@{/shop/setup-profile}" th:object="${shopSetupRequest}" method="post" class="onboarding-form" novalidate>
+                <form th:action="@{/shop/setup-profile}" th:object="${shopSetupRequest}" method="post" enctype="multipart/form-data" class="onboarding-form" novalidate>
 
-                    <!-- SECTION 1: SHOP INFORMATION -->
-                    <fieldset class="form-fieldset">
-                        <div class="form-fieldset__header">
-                            <div class="form-fieldset__icon">
-                                <i class="bi bi-shop"></i>
-                            </div>
-                            <div>
-                                <h3 class="form-fieldset__title">Thông tin gian hàng</h3>
-                                <p class="form-fieldset__desc">Thông tin hiển thị công khai tới người tiêu dùng trên sàn BetaFruit</p>
-                            </div>
-                        </div>
+                    <!-- PHẦN 1: THÔNG TIN THƯƠNG HIỆU & GIAN HÀNG -->
+                    <div style="margin-bottom: 28px;">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-shop"></i> Thông tin thương hiệu &amp; Gian hàng
+                        </h3>
 
-                        <!-- Shop Name -->
+                        <!-- Tên cửa hàng -->
                         <div class="form-group">
                             <label for="shopName" class="form-label">
                                 <span>Tên cửa hàng <span class="required">*</span></span>
-                                <span class="char-counter"><span id="shopNameCount">0</span>/255</span>
+                                <span class="form-label-hint"><span id="shopNameCount">0</span>/255</span>
                             </label>
-                            <div class="input-wrapper">
-                                <i class="bi bi-tag-fill input-icon"></i>
-                                <input type="text"
-                                       id="shopName"
-                                       th:field="*{shopName}"
-                                       class="form-input"
-                                       th:classappend="${#fields.hasErrors('shopName')} ? 'is-invalid' : ''"
-                                       placeholder="Ví dụ: Nông Sản Xanh Đà Lạt, Trái Cây Ba Miền..."
-                                       maxlength="255"
-                                       required
-                                       autofocus
-                                       oninput="updateCount('shopName', 'shopNameCount', 255)">
-                            </div>
+                            <input type="text"
+                                   id="shopName"
+                                   th:field="*{shopName}"
+                                   class="form-input"
+                                   th:classappend="${#fields.hasErrors('shopName')} ? 'is-invalid' : ''"
+                                   placeholder="Ví dụ: Nông Sản Xanh Đà Lạt, Trái Cây Ba Miền..."
+                                   maxlength="255"
+                                   required
+                                   autofocus
+                                   oninput="updateCount('shopName', 'shopNameCount', 255)">
                             <span class="form-error" th:if="${#fields.hasErrors('shopName')}" th:errors="*{shopName}">
                                 <i class="bi bi-exclamation-circle"></i> Vui lòng nhập tên cửa hàng hợp lệ.
                             </span>
                         </div>
 
-                        <!-- Shop Description -->
+                        <!-- Mô tả gian hàng -->
                         <div class="form-group">
                             <label for="shopDescription" class="form-label">
-                                <span>Mô tả / Giới thiệu cửa hàng</span>
-                                <span class="char-counter"><span id="descCount">0</span>/2000</span>
+                                <span>Mô tả giới thiệu gian hàng</span>
+                                <span class="form-label-hint"><span id="descCount">0</span>/2000</span>
                             </label>
                             <textarea id="shopDescription"
                                       th:field="*{shopDescription}"
@@ -165,104 +431,157 @@
                                       th:classappend="${#fields.hasErrors('shopDescription')} ? 'is-invalid' : ''"
                                       rows="3"
                                       maxlength="2000"
-                                      placeholder="Mô tả nguồn gốc hoa quả, cam kết chất lượng sạch/VietGAP, chính sách đổi trả..."
+                                      placeholder="Mô tả nguồn gốc hoa quả sạch, tiêu chuẩn VietGAP/GlobalGAP, cam kết chất lượng..."
                                       oninput="updateCount('shopDescription', 'descCount', 2000)"></textarea>
                             <span class="form-error" th:if="${#fields.hasErrors('shopDescription')}" th:errors="*{shopDescription}">
                                 <i class="bi bi-exclamation-circle"></i> Mô tả không được vượt quá 2000 ký tự.
                             </span>
                         </div>
-                    </fieldset>
 
-                    <!-- SECTION 2: BANK & FINANCIAL INFORMATION -->
-                    <fieldset class="form-fieldset">
-                        <div class="form-fieldset__header">
-                            <div class="form-fieldset__icon">
-                                <i class="bi bi-bank2"></i>
+                        <!-- Upload Logo & Banner -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+                            <!-- Logo Upload -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">
+                                    <span>Ảnh đại diện (Logo gian hàng)</span>
+                                    <span class="form-label-hint">Tỉ lệ 1:1, tối đa 5MB</span>
+                                </label>
+                                <div class="bf-upload-card" onclick="document.getElementById('logoFileInput').click()">
+                                    <input type="file"
+                                           id="logoFileInput"
+                                           th:field="*{logoFile}"
+                                           accept="image/png, image/jpeg"
+                                           style="display: none;"
+                                           onchange="handleImagePreview(this, 'logoPreview', 'logoPlaceholder')">
+                                    <div id="logoPlaceholder" class="bf-upload-placeholder">
+                                        <div class="bf-upload-circle-icon">
+                                            <i class="bi bi-image"></i>
+                                        </div>
+                                        <span class="bf-upload-text">Tải ảnh Logo</span>
+                                        <span class="bf-upload-hint">Định dạng JPG, PNG</span>
+                                    </div>
+                                    <div id="logoPreview" class="bf-upload-preview-wrap" style="display: none;">
+                                        <img src="" alt="Logo xem trước" class="bf-logo-preview-img">
+                                        <button type="button" class="bf-btn-remove-img" onclick="event.stopPropagation(); removeImage('logoFileInput', 'logoPreview', 'logoPlaceholder')" title="Xóa ảnh">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <span class="form-error" th:if="${#fields.hasErrors('logoFile')}" th:errors="*{logoFile}">
+                                    <i class="bi bi-exclamation-circle"></i> Tệp ảnh logo không hợp lệ.
+                                </span>
                             </div>
-                            <div>
-                                <h3 class="form-fieldset__title">Tài khoản ngân hàng thụ hưởng</h3>
-                                <p class="form-fieldset__desc">Dùng để đối soát và nhận tiền thanh toán doanh thu định kỳ từ sàn</p>
+
+                            <!-- Banner Upload -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label">
+                                    <span>Ảnh bìa gian hàng (Banner ngang)</span>
+                                    <span class="form-label-hint">Khổ ngang 1200x400px</span>
+                                </label>
+                                <div class="bf-upload-card" onclick="document.getElementById('bannerFileInput').click()">
+                                    <input type="file"
+                                           id="bannerFileInput"
+                                           th:field="*{bannerFile}"
+                                           accept="image/png, image/jpeg"
+                                           style="display: none;"
+                                           onchange="handleImagePreview(this, 'bannerPreview', 'bannerPlaceholder')">
+                                    <div id="bannerPlaceholder" class="bf-upload-placeholder">
+                                        <div class="bf-upload-circle-icon">
+                                            <i class="bi bi-aspect-ratio"></i>
+                                        </div>
+                                        <span class="bf-upload-text">Tải ảnh bìa Banner</span>
+                                        <span class="bf-upload-hint">Định dạng JPG, PNG</span>
+                                    </div>
+                                    <div id="bannerPreview" class="bf-upload-preview-wrap" style="display: none;">
+                                        <img src="" alt="Banner xem trước" class="bf-banner-preview-img">
+                                        <button type="button" class="bf-btn-remove-img" onclick="event.stopPropagation(); removeImage('bannerFileInput', 'bannerPreview', 'bannerPlaceholder')" title="Xóa ảnh">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <span class="form-error" th:if="${#fields.hasErrors('bannerFile')}" th:errors="*{bannerFile}">
+                                    <i class="bi bi-exclamation-circle"></i> Tệp ảnh bìa không hợp lệ.
+                                </span>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Bank Name -->
+                    <!-- PHẦN 2: TÀI KHOẢN NHẬN THANH TOÁN DOANH THU -->
+                    <div style="margin-bottom: 8px;">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-bank2"></i> Tài khoản nhận thanh toán doanh thu
+                        </h3>
+
+                        <!-- Ngân hàng -->
                         <div class="form-group">
                             <label for="bankName" class="form-label">
                                 <span>Ngân hàng thụ hưởng <span class="required">*</span></span>
                             </label>
-                            <div class="input-wrapper">
-                                <i class="bi bi-building-fill-check input-icon"></i>
-                                <input type="text"
-                                       id="bankName"
-                                       th:field="*{bankName}"
-                                       list="bankSuggestions"
-                                       class="form-input"
-                                       th:classappend="${#fields.hasErrors('bankName')} ? 'is-invalid' : ''"
-                                       placeholder="Chọn hoặc nhập tên ngân hàng (Ví dụ: Vietcombank, MB Bank...)"
-                                       maxlength="100"
-                                       required>
-                                <datalist id="bankSuggestions">
-                                    <option value="Vietcombank - Ngân hàng Ngoại thương Việt Nam">
-                                    <option value="MB Bank - Ngân hàng Quân Đội">
-                                    <option value="Techcombank - Ngân hàng Kỹ Thương Việt Nam">
-                                    <option value="BIDV - Ngân hàng Đầu tư và Phát triển Việt Nam">
-                                    <option value="VietinBank - Ngân hàng Công Thương Việt Nam">
-                                    <option value="ACB - Ngân hàng Á Châu">
-                                    <option value="TPBank - Ngân hàng Tiên Phong">
-                                    <option value="VPBank - Ngân hàng Việt Nam Thịnh Vượng">
-                                    <option value="Sacombank - Ngân hàng Sài Gòn Thương Tín">
-                                    <option value="HDBank - Ngân hàng Phát triển TP.HCM">
-                                    <option value="VIB - Ngân hàng Quốc Tế">
-                                </datalist>
-                            </div>
+                            <input type="text"
+                                   id="bankName"
+                                   th:field="*{bankName}"
+                                   list="bankSuggestions"
+                                   class="form-input"
+                                   th:classappend="${#fields.hasErrors('bankName')} ? 'is-invalid' : ''"
+                                   placeholder="Chọn hoặc nhập tên ngân hàng (Ví dụ: Vietcombank, MB Bank...)"
+                                   maxlength="100"
+                                   required>
+                            <datalist id="bankSuggestions">
+                                <option value="Vietcombank - Ngân hàng Ngoại thương Việt Nam">
+                                <option value="MB Bank - Ngân hàng Quân Đội">
+                                <option value="Techcombank - Ngân hàng Kỹ Thương Việt Nam">
+                                <option value="BIDV - Ngân hàng Đầu tư và Phát triển Việt Nam">
+                                <option value="VietinBank - Ngân hàng Công Thương Việt Nam">
+                                <option value="ACB - Ngân hàng Á Châu">
+                                <option value="TPBank - Ngân hàng Tiên Phong">
+                                <option value="VPBank - Ngân hàng Việt Nam Thịnh Vượng">
+                                <option value="Sacombank - Ngân hàng Sài Gòn Thương Tín">
+                                <option value="HDBank - Ngân hàng Phát triển TP.HCM">
+                                <option value="VIB - Ngân hàng Quốc Tế">
+                            </datalist>
                             <span class="form-error" th:if="${#fields.hasErrors('bankName')}" th:errors="*{bankName}">
                                 <i class="bi bi-exclamation-circle"></i> Vui lòng chọn hoặc nhập tên ngân hàng.
                             </span>
                         </div>
 
+                        <!-- Số tài khoản & Tên chủ tài khoản -->
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
                             <!-- Bank Account Number -->
-                            <div class="form-group">
+                            <div class="form-group" style="margin-bottom: 0;">
                                 <label for="bankAccountNumber" class="form-label">
                                     <span>Số tài khoản ngân hàng <span class="required">*</span></span>
                                 </label>
-                                <div class="input-wrapper">
-                                    <i class="bi bi-credit-card-2-front-fill input-icon"></i>
-                                    <input type="text"
-                                           id="bankAccountNumber"
-                                           th:field="*{bankAccountNumber}"
-                                           class="form-input"
-                                           th:classappend="${#fields.hasErrors('bankAccountNumber')} ? 'is-invalid' : ''"
-                                           placeholder="Nhập số tài khoản"
-                                           inputmode="numeric"
-                                           pattern="^[0-9]+$"
-                                           maxlength="50"
-                                           required
-                                           style="letter-spacing: 0.04em; font-family: monospace; font-size: 0.95rem;">
-                                </div>
+                                <input type="text"
+                                       id="bankAccountNumber"
+                                       th:field="*{bankAccountNumber}"
+                                       class="form-input"
+                                       th:classappend="${#fields.hasErrors('bankAccountNumber')} ? 'is-invalid' : ''"
+                                       placeholder="Ví dụ: 190368888888"
+                                       inputmode="numeric"
+                                       pattern="^[0-9]+$"
+                                       maxlength="50"
+                                       required
+                                       style="letter-spacing: 0.04em; font-family: monospace; font-size: 0.95rem;">
                                 <span class="form-error" th:if="${#fields.hasErrors('bankAccountNumber')}" th:errors="*{bankAccountNumber}">
                                     <i class="bi bi-exclamation-circle"></i> Số tài khoản chỉ được chứa chữ số (tối đa 50 số).
                                 </span>
                             </div>
 
                             <!-- Account Holder Name -->
-                            <div class="form-group">
+                            <div class="form-group" style="margin-bottom: 0;">
                                 <label for="accountName" class="form-label">
                                     <span>Tên chủ tài khoản <span class="required">*</span></span>
                                 </label>
-                                <div class="input-wrapper">
-                                    <i class="bi bi-person-badge-fill input-icon"></i>
-                                    <input type="text"
-                                           id="accountName"
-                                           th:field="*{accountName}"
-                                           class="form-input"
-                                           th:classappend="${#fields.hasErrors('accountName')} ? 'is-invalid' : ''"
-                                           placeholder="NGUYEN VAN A"
-                                           maxlength="100"
-                                           required
-                                           style="text-transform: uppercase;"
-                                           oninput="this.value = this.value.toUpperCase()">
-                                </div>
+                                <input type="text"
+                                       id="accountName"
+                                       th:field="*{accountName}"
+                                       class="form-input"
+                                       th:classappend="${#fields.hasErrors('accountName')} ? 'is-invalid' : ''"
+                                       placeholder="NGUYEN VAN A"
+                                       maxlength="100"
+                                       required
+                                       style="text-transform: uppercase;"
+                                       oninput="this.value = this.value.toUpperCase()">
                                 <span class="form-error" th:if="${#fields.hasErrors('accountName')}" th:errors="*{accountName}">
                                     <i class="bi bi-exclamation-circle"></i> Vui lòng nhập tên chủ tài khoản.
                                 </span>
@@ -270,21 +589,19 @@
                         </div>
 
                         <!-- Security Note -->
-                        <div class="security-callout">
-                            <i class="bi bi-shield-lock-fill"></i>
-                            <div>
-                                <strong>Bảo mật thanh toán:</strong> Tài khoản này dùng để nhận thanh toán doanh thu từ BetaFruit. Vui lòng đảm bảo thông tin trùng khớp với tài khoản ngân hàng chính chủ.
-                            </div>
+                        <div class="security-note">
+                            <i class="bi bi-shield-check"></i>
+                            <span>Tài khoản này dùng để nhận đối soát thanh toán doanh thu từ BetaFruit. Vui lòng đảm bảo thông tin chính xác.</span>
                         </div>
-                    </fieldset>
+                    </div>
 
                     <!-- FORM ACTIONS -->
-                    <div class="form-actions">
-                        <a th:href="@{/}" class="btn-outline">
+                    <div class="form-actions-clean">
+                        <a th:href="@{/}" class="btn-clean-cancel">
                             <i class="bi bi-house-door"></i>
                             <span>Về trang chủ sàn</span>
                         </a>
-                        <button type="submit" class="btn-primary" id="submitBtn">
+                        <button type="submit" class="btn-clean-submit" id="submitBtn">
                             <i class="bi bi-send-check-fill"></i>
                             <span>Hoàn tất &amp; Nộp hồ sơ duyệt</span>
                         </button>
@@ -293,22 +610,58 @@
                 </form>
             </div>
 
-            <!-- Support Help Box -->
-            <div class="support-box">
-                <i class="bi bi-headset"></i>
-                <span>Cần trợ giúp trong quá trình thiết lập? Hotline: <strong>1900 6868</strong> hoặc <a href="mailto:support@betafruit.vn">support@betafruit.vn</a></span>
+            <!-- Support Help Line (Discreet) -->
+            <div style="text-align: center; margin-top: 20px; font-size: 13px; color: #94a3b8;">
+                <i class="bi bi-headset me-1"></i> Cần hỗ trợ trong quá trình thiết lập? Hotline: <strong style="color: #64748b;">1900 6868</strong> hoặc <a href="mailto:support@betafruit.vn" style="color: #ea580c; text-decoration: none;">support@betafruit.vn</a>
             </div>
 
         </div>
     </main>
 
-    <!-- Simple Script for dynamic counters & double submission prevention -->
+    <!-- Simple Script for dynamic counters, image preview & double submission prevention -->
     <script>
         function updateCount(inputId, countId, max) {
             const el = document.getElementById(inputId);
             const counter = document.getElementById(countId);
             if (el && counter) {
                 counter.textContent = el.value.length;
+            }
+        }
+
+        function handleImagePreview(input, previewWrapId, placeholderId) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                // Kiểm tra dung lượng tối đa 5MB
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Dung lượng ảnh vượt quá 5MB. Vui lòng chọn ảnh nhẹ hơn.');
+                    input.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewWrap = document.getElementById(previewWrapId);
+                    const placeholder = document.getElementById(placeholderId);
+                    const img = previewWrap.querySelector('img');
+                    img.src = e.target.result;
+                    placeholder.style.display = 'none';
+                    previewWrap.style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeImage(inputId, previewWrapId, placeholderId) {
+            const input = document.getElementById(inputId);
+            const previewWrap = document.getElementById(previewWrapId);
+            const placeholder = document.getElementById(placeholderId);
+            if (input) input.value = '';
+            if (previewWrap) {
+                const img = previewWrap.querySelector('img');
+                if (img) img.src = '';
+                previewWrap.style.display = 'none';
+            }
+            if (placeholder) {
+                placeholder.style.display = 'flex';
             }
         }
 

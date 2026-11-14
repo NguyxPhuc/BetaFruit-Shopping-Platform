@@ -20,7 +20,11 @@ public interface UserService {
     void createUser(UserRequest userRequest);
 
     long countUsers();
-    Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir);
+    Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, Integer tierId, int page, int size, String sortBy, String sortDir);
+
+    default Map<String, Object> getAdminUserPageData(String keyword, Long roleId, String status, int page, int size, String sortBy, String sortDir) {
+        return getAdminUserPageData(keyword, roleId, status, null, page, size, sortBy, sortDir);
+    }
 
     void changePassword(Integer userId, ChangePasswordRequest changePasswordRequest) throws Exception;
 

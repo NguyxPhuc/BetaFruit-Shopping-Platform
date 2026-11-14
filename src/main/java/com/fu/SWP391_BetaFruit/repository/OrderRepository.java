@@ -12,10 +12,32 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Integer> {
+
+    // Received orders whose holding period elapsed, plus completed orders awaiting settlement.
+    @Query("""
+            select o.orderId from Order o
+            where (o.orderStatus = com.fu.SWP391_BetaFruit.enums.OrderStatus.RECEIVED
+                and exists (select h.historyId from OrderStatusHistory h
+                    where h.order = o
+                    and h.statusTo = com.fu.SWP391_BetaFruit.enums.OrderStatus.RECEIVED
+                    and h.createdAt <= :cutoff))
+            or (o.orderStatus = com.fu.SWP391_BetaFruit.enums.OrderStatus.SUCCESS
+                and (o.isSettled = false or o.isSettled is null)
+                and ((o.paymentMethod = com.fu.SWP391_BetaFruit.enums.PaymentMethod.COD
+                        and (o.isCodRemitted = true or o.finalAmount = 0))
+                    or (o.paymentMethod = com.fu.SWP391_BetaFruit.enums.PaymentMethod.VNPAY
+                        and exists (select p.transactionId from PaymentTransaction p
+                            where p.order = o and p.status = com.fu.SWP391_BetaFruit.enums.PaymentStatus.PAID
+                            and upper(p.gateway) = 'VNPAY'))))
+            order by o.orderId
+            """)
+    List<Integer> findCompletionAndSettlementCandidates(@Param("cutoff") LocalDateTime cutoff);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from Order o where o.orderId = :orderId")
@@ -58,9 +80,14 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query("SELECT COALESCE(SUM(o.discountAmount), 0) FROM Order o WHERE o.coupon.couponId = :couponId AND o.shop.shopId = :shopId")
     BigDecimal sumTotalDiscountByCouponIdAndShopId(@Param("couponId") Integer couponId, @Param("shopId") Integer shopId);
 
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.customer.userId = :customerId AND o.coupon.couponId = :couponId AND o.orderStatus NOT IN (com.fu.SWP391_BetaFruit.enums.OrderStatus.CANCELLED, com.fu.SWP391_BetaFruit.enums.OrderStatus.REJECTED)")
+    long countValidUsedCouponByCustomer(@Param("customerId") Integer customerId, @Param("couponId") Integer couponId);
+
     Optional<Order> findByOrderId(Integer orderId);
 
     long countByCustomer_UserIdAndOrderStatus(Integer customerId, OrderStatus orderStatus);
+
+    long countByCustomer_UserIdAndOrderStatusIn(Integer customerId, Collection<OrderStatus> orderStatuses);
 
     @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o WHERE o.customer.userId = :customerId AND o.orderStatus = :orderStatus")
     BigDecimal sumTotalSpentByCustomerIdAndStatus(@Param("customerId") Integer customerId, @Param("orderStatus") OrderStatus orderStatus);

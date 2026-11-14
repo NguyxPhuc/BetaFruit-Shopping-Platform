@@ -6,7 +6,7 @@
     <title>Thanh toán | BetaFruit</title>
     <link rel="stylesheet" th:href="@{/css/site.css}">
     <link rel="stylesheet" th:href="@{/css/customer-cart.css}">
-    <link rel="stylesheet" th:href="@{/css/customer-checkout.css(v='20261024-2')}">
+    <link rel="stylesheet" th:href="@{/css/customer-checkout.css(v='20261106-1')}">
 </head>
 <body class="cart-page">
 <div th:replace="~{fragments/header :: header}"></div>
@@ -55,6 +55,13 @@
                            placeholder="Ví dụ: GIAM10" th:value="${enteredCouponCode != null ? enteredCouponCode : (checkout.coupon != null ? checkout.coupon.code : '')}"
                            th:attr="aria-invalid=${couponError != null},aria-describedby=${couponError != null ? 'couponHelp couponError' : 'couponHelp'}">
                     <button type="submit" name="couponAction" value="apply" th:formaction="@{/customer/checkout/coupon}" formnovalidate>Áp dụng</button>
+                </div>
+                <div class="checkout-voucher-picker-row">
+                    <button type="button" class="btn-open-voucher-modal" onclick="openVoucherModal()">
+                        <span>🏷️ Chọn voucher có sẵn</span>
+                        <span class="badge-count" th:if="${availableCoupons != null and !availableCoupons.isEmpty()}"
+                              th:text="${#lists.size(availableCoupons)}">0</span>
+                    </button>
                 </div>
                 <div id="couponError" class="checkout-coupon-error" role="alert" th:if="${couponError != null}">
                     <span class="checkout-feedback-icon" aria-hidden="true">!</span>
@@ -110,7 +117,171 @@
             </div>
         </aside>
     </form>
+
+    <!-- Shopee Style Voucher Wallet Modal -->
+    <div id="voucherModal" class="voucher-modal-backdrop" onclick="handleBackdropClick(event)">
+        <div class="voucher-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="voucherModalTitle">
+            <div class="voucher-modal-header">
+                <h3 id="voucherModalTitle"><span>🏷️</span> Chọn BetaFruit Voucher</h3>
+                <button type="button" class="voucher-modal-close" onclick="closeVoucherModal()" aria-label="Đóng">✕</button>
+            </div>
+            <div class="voucher-modal-tabs">
+                <button type="button" class="voucher-tab-btn active" data-tab="all" onclick="filterVoucherTab('all', this)">
+                    Tất cả (<span th:text="${availableCoupons != null ? #lists.size(availableCoupons) : 0}">0</span>)
+                </button>
+                <button type="button" class="voucher-tab-btn" data-tab="SHIPPING" onclick="filterVoucherTab('SHIPPING', this)">
+                    Mã Freeship
+                </button>
+                <button type="button" class="voucher-tab-btn" data-tab="PRODUCT" onclick="filterVoucherTab('PRODUCT', this)">
+                    Giảm giá sản phẩm
+                </button>
+            </div>
+            <div class="voucher-modal-body">
+                <!-- Empty state -->
+                <div th:if="${availableCoupons == null or availableCoupons.isEmpty()}" style="text-align: center; padding: 30px 10px; color: #64748b;">
+                    <p style="font-size: 1.1rem; margin-bottom: 6px;">🎁 Chưa có mã giảm giá nào</p>
+                    <p style="font-size: 0.9rem; margin: 0;">Hiện tại chưa có mã ưu đãi phù hợp với giỏ hàng này.</p>
+                </div>
+
+                <div th:if="${availableCoupons != null and !availableCoupons.isEmpty()}">
+                    <!-- Group 1: Eligible Coupons -->
+                    <div class="voucher-group-eligible">
+                        <div class="voucher-group-title">
+                            <span>✨ Mã có thể áp dụng</span>
+                        </div>
+                        <div th:each="v : ${availableCoupons}" th:if="${v.eligible}"
+                             class="modal-voucher-card" th:attr="data-category=${v.category}">
+                            <div class="modal-voucher-badge" th:classappend="${v.badgeType == 'FREESHIP' ? 'freeship' : 'discount'}">
+                                <span class="badge-label" th:text="${v.badgeType == 'FREESHIP' ? 'FREESHIP' : 'GIẢM GIÁ'}">GIẢM GIÁ</span>
+                                <span class="badge-sub" th:text="${v.category == T(com.fu.SWP391_BetaFruit.enums.CouponCategory).SHIPPING ? 'Vận chuyển' : 'Đơn hàng'}">Đơn hàng</span>
+                            </div>
+                            <div class="modal-voucher-content">
+                                <div class="modal-voucher-header">
+                                    <div>
+                                        <h4 class="modal-voucher-title" th:text="${v.title}">Giảm 10%</h4>
+                                        <span class="modal-voucher-scope" th:text="${v.scopeLabel}">Toàn sàn</span>
+                                    </div>
+                                </div>
+                                <div class="modal-voucher-condition" th:text="${v.minOrderValue != null ? 'Đơn tối thiểu ' + #numbers.formatDecimal(v.minOrderValue, 0, 'POINT', 0, 'COMMA') + ' ₫' : 'Không giới hạn đơn tối thiểu'}">Đơn tối thiểu 100.000 ₫</div>
+                                <div class="modal-voucher-condition" style="font-size: 11px; color: #16a34a; font-weight: 600;" th:text="${v.usageProgressText}">Còn lại 1/1 lượt</div>
+                                <div class="modal-voucher-footer">
+                                    <span class="modal-voucher-saving" th:if="${v.estimatedDiscount != null and v.estimatedDiscount.signum() > 0}">
+                                        Giảm: <strong th:text="${#numbers.formatDecimal(v.estimatedDiscount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</strong>
+                                    </span>
+                                    <span th:if="${v.estimatedDiscount == null or v.estimatedDiscount.signum() <= 0}"></span>
+                                    <div class="modal-voucher-action">
+                                        <button type="button" th:if="${checkout.coupon != null and checkout.coupon.code.equalsIgnoreCase(v.code)}"
+                                                class="btn-applied" disabled>
+                                            ✓ Đang dùng
+                                        </button>
+                                        <button type="button" th:unless="${checkout.coupon != null and checkout.coupon.code.equalsIgnoreCase(v.code)}"
+                                                th:data-code="${v.code}"
+                                                onclick="applyVoucherFromModal(this.getAttribute('data-code'))">
+                                            Áp dụng
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Group 2: Ineligible Coupons -->
+                    <div class="voucher-group-ineligible" style="margin-top: 16px;">
+                        <div class="voucher-group-title" style="color: #94a3b8;">
+                            <span>🔒 Chưa đủ điều kiện sử dụng</span>
+                        </div>
+                        <div th:each="v : ${availableCoupons}" th:unless="${v.eligible}"
+                             class="modal-voucher-card ineligible" th:attr="data-category=${v.category}">
+                            <div class="modal-voucher-badge">
+                                <span class="badge-label" th:text="${v.badgeType == 'FREESHIP' ? 'FREESHIP' : 'GIẢM GIÁ'}">GIẢM GIÁ</span>
+                                <span class="badge-sub" th:text="${v.category == T(com.fu.SWP391_BetaFruit.enums.CouponCategory).SHIPPING ? 'Vận chuyển' : 'Đơn hàng'}">Đơn hàng</span>
+                            </div>
+                            <div class="modal-voucher-content">
+                                <div class="modal-voucher-header">
+                                    <div>
+                                        <h4 class="modal-voucher-title" th:text="${v.title}">Freeship 30.000 ₫</h4>
+                                        <span class="modal-voucher-scope" style="background: #f1f5f9; color: #64748b;" th:text="${v.scopeLabel}">Toàn sàn</span>
+                                    </div>
+                                </div>
+                                <div class="modal-voucher-condition" th:text="${v.minOrderValue != null ? 'Đơn tối thiểu ' + #numbers.formatDecimal(v.minOrderValue, 0, 'POINT', 0, 'COMMA') + ' ₫' : 'Không giới hạn'}">Đơn tối thiểu 200.000 ₫</div>
+                                <div>
+                                    <span class="modal-voucher-reason" th:text="'⚠️ ' + ${v.ineligibleReason}">Mua thêm 50.000 ₫ để sử dụng</span>
+                                </div>
+                                <div class="modal-voucher-footer">
+                                    <span style="font-size: 11px; color: #94a3b8;" th:text="${v.usageProgressText}"></span>
+                                    <div class="modal-voucher-action">
+                                        <button type="button" disabled>Chưa đủ ĐK</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="voucher-modal-footer">
+                <span>Mỗi đơn chỉ áp dụng 1 voucher hợp lệ</span>
+                <button type="button" onclick="closeVoucherModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
 </main>
 <div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    function openVoucherModal() {
+        const modal = document.getElementById('voucherModal');
+        if (modal) {
+            modal.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeVoucherModal() {
+        const modal = document.getElementById('voucherModal');
+        if (modal) {
+            modal.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function handleBackdropClick(e) {
+        if (e.target && e.target.id === 'voucherModal') {
+            closeVoucherModal();
+        }
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeVoucherModal();
+        }
+    });
+
+    function filterVoucherTab(category, btn) {
+        document.querySelectorAll('.voucher-tab-btn').forEach(b => b.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+
+        const cards = document.querySelectorAll('.modal-voucher-card');
+        cards.forEach(card => {
+            const cardCat = card.getAttribute('data-category');
+            if (category === 'all' || cardCat === category) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    function applyVoucherFromModal(code) {
+        const input = document.getElementById('couponCode');
+        if (input) {
+            input.value = code;
+        }
+        closeVoucherModal();
+        const applyBtn = document.querySelector('button[name="couponAction"][value="apply"]');
+        if (applyBtn) {
+            applyBtn.click();
+        }
+    }
+</script>
 </body>
 </html>

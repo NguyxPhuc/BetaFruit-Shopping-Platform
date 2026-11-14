@@ -212,6 +212,7 @@ class ReviewModerationWebTest {
         @Bean ReviewReportService reports() { return mock(ReviewReportService.class); }
         @Bean NotificationService notifications() { return mock(NotificationService.class); }
         @Bean ShopService shops() { return mock(ShopService.class); }
+        @Bean ShopAnalyticsService shopAnalyticsService() { return mock(ShopAnalyticsService.class); }
         @Bean AdminReviewController admin() { return new AdminReviewController(reports()); }
         @Bean ShopController shop() { return new ShopController(); }
         @Bean StaffController staff() { return new StaffController(shops(), products(), reports()); }

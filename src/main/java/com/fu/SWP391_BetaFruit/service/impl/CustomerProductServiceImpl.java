@@ -141,7 +141,7 @@ public class CustomerProductServiceImpl implements CustomerProductService {
                     break;
                 case "bestseller":
                     Map<Integer, Long> soldQuantities = new HashMap<>();
-                    for (Object[] row : orderItemRepository.sumSoldQuantityByProduct(OrderStatus.SUCCESS)) {
+                    for (Object[] row : orderItemRepository.sumSoldQuantityByProductIn(List.of(OrderStatus.RECEIVED, OrderStatus.SUCCESS))) {
                         soldQuantities.put(((Number) row[0]).intValue(), ((Number) row[1]).longValue());
                     }
                     filtered.sort(Comparator.comparingLong((CustomerProductCardResponse card) ->

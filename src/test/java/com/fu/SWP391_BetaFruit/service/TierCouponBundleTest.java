@@ -60,8 +60,8 @@ class TierCouponBundleTest {
 
     @BeforeEach
     void setUp() {
-        silverTier = new MembershipTier(2, "Hạng Bạc", BigDecimal.valueOf(2_000_000), BigDecimal.valueOf(3.0));
-        goldTier = new MembershipTier(3, "Hạng Vàng", BigDecimal.valueOf(5_000_000), BigDecimal.valueOf(6.0));
+        silverTier = new MembershipTier(2, "Hạng Bạc", BigDecimal.valueOf(2_000_000), 3);
+        goldTier = new MembershipTier(3, "Hạng Vàng", BigDecimal.valueOf(5_000_000), 10);
 
         // Coupon 1: Toàn sàn (Platform, shop == null)
         platformCoupon1 = new Coupon();
@@ -146,6 +146,44 @@ class TierCouponBundleTest {
     }
 
     @Test
+    @DisplayName("Khách hàng đã dùng 1 trong 2 voucher -> Voucher đó hiển thị isUsed = true, voucher còn lại isUsed = false")
+    void testCustomerTierVoucherUsedStatusDetection() {
+        User user = new User();
+        user.setUserId(10);
+        user.setFullName("Nguyễn Văn Khách");
+
+        CustomerMembership membership = new CustomerMembership();
+        membership.setUser(user);
+        membership.setTier(goldTier);
+        membership.setTotalCumulativeSpend(BigDecimal.valueOf(6_000_000));
+
+        when(userRepository.findById(10)).thenReturn(Optional.of(user));
+        when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(membership));
+        when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
+                .thenReturn(List.of(
+                        new MembershipTier(1, "Hạng Đồng", BigDecimal.ZERO, 0),
+                        silverTier,
+                        goldTier
+                ));
+
+        TierCoupon tc1 = new TierCoupon(goldTier, platformCoupon1);
+        TierCoupon tc2 = new TierCoupon(goldTier, platformCoupon2);
+        when(tierCouponRepository.findByTier_TierId(3)).thenReturn(List.of(tc1, tc2));
+
+        when(orderRepository.countValidUsedCouponByCustomer(10, 101)).thenReturn(1L);
+        when(orderRepository.countValidUsedCouponByCustomer(10, 102)).thenReturn(0L);
+
+        CustomerMembershipResponse response = membershipTierService.getCustomerMembershipData(10);
+
+        assertNotNull(response);
+        assertNotNull(response.getTierVouchers());
+        assertEquals(2, response.getTierVouchers().size());
+
+        assertTrue(response.getTierVouchers().get(0).isUsed(), "Mã BETAFRUIT10 đã dùng phải có isUsed = true");
+        assertFalse(response.getTierVouchers().get(1).isUsed(), "Mã GOLD_FREESHIP chưa dùng phải có isUsed = false");
+    }
+
+    @Test
     @DisplayName("Khách hàng vào trang /membership thấy chính xác các voucher động trong gói do Admin gán")
     void testCustomerViewsDynamicVouchersConfiguredByAdmin() {
         User user = new User();
@@ -159,10 +197,10 @@ class TierCouponBundleTest {
 
         when(userRepository.findById(10)).thenReturn(Optional.of(user));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(membership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(5L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(5L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(
-                        new MembershipTier(1, "Hạng Đồng", BigDecimal.ZERO, BigDecimal.ZERO),
+                        new MembershipTier(1, "Hạng Đồng", BigDecimal.ZERO, 0),
                         silverTier,
                         goldTier
                 ));
@@ -196,5 +234,81 @@ class TierCouponBundleTest {
 
         verify(tierCouponRepository).deleteByTier_TierId(3);
         verify(tierCouponRepository, never()).saveAll(any());
+    }
+    @Test
+    @DisplayName("Admin cấu hình số lượt sử dụng (Quota) tùy chỉnh cho từng mã voucher trong Hạng")
+    void testAdminConfiguresCustomQuotaForTierCoupons() {
+        when(membershipTierRepository.findById(3)).thenReturn(Optional.of(goldTier));
+        when(couponRepository.findAllById(List.of(101, 102))).thenReturn(List.of(platformCoupon1, platformCoupon2));
+
+        Map<Integer, Integer> quotaMap = Map.of(101, 2, 102, 3);
+        membershipTierService.updateTierCoupons(3, List.of(101, 102), quotaMap);
+
+        verify(tierCouponRepository).deleteByTier_TierId(3);
+        ArgumentCaptor<List<TierCoupon>> captor = ArgumentCaptor.forClass(List.class);
+        verify(tierCouponRepository).saveAll(captor.capture());
+
+        List<TierCoupon> saved = captor.getValue();
+        assertEquals(2, saved.size());
+        assertEquals(2, saved.get(0).getUsageQuota());
+        assertEquals(3, saved.get(1).getUsageQuota());
+    }
+
+    @Test
+    @DisplayName("Khách hàng hiển thị số lượt còn lại và tiến trình theo Quota đã được cấp")
+    void testCustomerVoucherQuotaProgressAndUsageRemaining() {
+        User user = new User();
+        user.setUserId(10);
+        user.setFullName("Khách VIP");
+
+        CustomerMembership membership = new CustomerMembership();
+        membership.setUser(user);
+        membership.setTier(goldTier);
+        membership.setTotalCumulativeSpend(BigDecimal.valueOf(6_000_000));
+
+        when(userRepository.findById(10)).thenReturn(Optional.of(user));
+        when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(membership));
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(5L);
+        when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
+                .thenReturn(List.of(new MembershipTier(1, "Hạng Đồng", BigDecimal.ZERO, 0), silverTier, goldTier));
+
+        // TierCoupon với Quota = 3
+        TierCoupon tc = new TierCoupon(goldTier, platformCoupon2, 3);
+        when(tierCouponRepository.findByTier_TierId(3)).thenReturn(List.of(tc));
+
+        // Khách hàng đã sử dụng 1 lần trong đơn hàng thành công
+        when(orderRepository.countValidUsedCouponByCustomer(10, 102)).thenReturn(1L);
+
+        CustomerMembershipResponse response = membershipTierService.getCustomerMembershipData(10);
+
+        assertNotNull(response);
+        assertEquals(1, response.getTierVouchers().size());
+        var v = response.getTierVouchers().get(0);
+        assertEquals(3, v.getTotalQuota());
+        assertEquals(1, v.getUsedCount());
+        assertEquals(2, v.getRemainingQuota());
+        assertFalse(v.isUsed()); // Chưa hết lượt
+        assertEquals("x3 lượt", v.getQuotaBadgeText());
+        assertEquals("Còn lại 2/3 lượt", v.getUsageProgressText());
+    }
+
+    @Test
+    @DisplayName("Kiểm tra phân giải định mức và chặn khi đã dùng hết sạch Quota khi Checkout")
+    void testCheckoutTierQuotaEnforcement() {
+        TierCoupon tc = new TierCoupon(goldTier, platformCoupon2, 3);
+        List<TierCoupon> bundle = List.of(tc);
+
+        // Phân giải quota của Hạng Vàng = 3
+        int quota = com.fu.SWP391_BetaFruit.service.impl.CheckoutCouponRules.resolveTierQuota(bundle, goldTier, 1);
+        assertEquals(3, quota);
+
+        // Lần 1 và Lần 2 (used = 1, 2) -> Cho phép
+        assertDoesNotThrow(() -> com.fu.SWP391_BetaFruit.service.impl.CheckoutCouponRules.validateUserUsageLimit(1, quota));
+        assertDoesNotThrow(() -> com.fu.SWP391_BetaFruit.service.impl.CheckoutCouponRules.validateUserUsageLimit(2, quota));
+
+        // Lần 4 (đã dùng đủ 3 lần, used = 3) -> Ném ngoại lệ chặn lịch sự
+        var ex = assertThrows(IllegalArgumentException.class,
+                () -> com.fu.SWP391_BetaFruit.service.impl.CheckoutCouponRules.validateUserUsageLimit(3, quota));
+        assertTrue(ex.getMessage().contains("Bạn đã sử dụng hết 3 lượt cho mã ưu đãi này"));
     }
 }

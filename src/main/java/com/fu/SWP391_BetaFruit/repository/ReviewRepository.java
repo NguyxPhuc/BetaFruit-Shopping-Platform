@@ -1,6 +1,7 @@
 package com.fu.SWP391_BetaFruit.repository;
 
 import com.fu.SWP391_BetaFruit.entity.Review;
+import com.fu.SWP391_BetaFruit.enums.ReviewVisibility;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -52,4 +53,9 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
             @Param("rating") Integer rating,
             @Param("isReported") Boolean isReported,
             Pageable pageable);
+
+    @Query("SELECT r.orderItem.variant.product.shop.shopId, AVG(CAST(r.rating AS double)), COUNT(r) FROM Review r " +
+           "WHERE (r.visibilityStatus IS NULL OR r.visibilityStatus = :status) " +
+           "GROUP BY r.orderItem.variant.product.shop.shopId")
+    List<Object[]> getRatingStatsGroupedByShop(@Param("status") ReviewVisibility status);
 }

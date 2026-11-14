@@ -6,6 +6,161 @@
 </head>
 <body>
 <div th:fragment="content">
+    <style>
+        /* Styling thẻ thống kê phân bố hạng (Tier Stat Cards) */
+        .tier-stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .tier-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        }
+        .tier-stat-card.active-tier-filter {
+            border-width: 2px !important;
+            transform: translateY(-2px);
+        }
+
+        /* Kim Cương (Diamond) */
+        .tier-diamond {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-color: #bae6fd;
+        }
+        .tier-diamond .tier-stat-icon {
+            background-color: #0284c7;
+            color: #ffffff;
+        }
+        .tier-diamond.active-tier-filter {
+            border-color: #0284c7 !important;
+        }
+        .badge-tier-diamond {
+            background-color: #e0f2fe !important;
+            color: #0369a1 !important;
+            border: 1px solid #7dd3fc;
+        }
+
+        /* Vàng (Gold) */
+        .tier-gold {
+            background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+            border-color: #fef08a;
+        }
+        .tier-gold .tier-stat-icon {
+            background-color: #ca8a04;
+            color: #ffffff;
+        }
+        .tier-gold.active-tier-filter {
+            border-color: #ca8a04 !important;
+        }
+        .badge-tier-gold {
+            background-color: #fef9c3 !important;
+            color: #854d0e !important;
+            border: 1px solid #fde047;
+        }
+
+        /* Bạc (Silver) */
+        .tier-silver {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-color: #cbd5e1;
+        }
+        .tier-silver .tier-stat-icon {
+            background-color: #64748b;
+            color: #ffffff;
+        }
+        .tier-silver.active-tier-filter {
+            border-color: #475569 !important;
+        }
+        .badge-tier-silver {
+            background-color: #f1f5f9 !important;
+            color: #334155 !important;
+            border: 1px solid #cbd5e1;
+        }
+
+        /* Đồng (Bronze) */
+        .tier-bronze {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border-color: #fed7aa;
+        }
+        .tier-bronze .tier-stat-icon {
+            background-color: #ea580c;
+            color: #ffffff;
+        }
+        .tier-bronze.active-tier-filter {
+            border-color: #ea580c !important;
+        }
+        .badge-tier-bronze {
+            background-color: #ffedd5 !important;
+            color: #9a3412 !important;
+            border: 1px solid #fdba74;
+        }
+
+        /* Nội bộ / Chưa xếp hạng (Unranked) */
+        .tier-unranked {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        .tier-unranked .tier-stat-icon {
+            background-color: #94a3b8;
+            color: #ffffff;
+        }
+        .tier-unranked.active-tier-filter {
+            border-color: #64748b !important;
+        }
+        .badge-tier-unranked {
+            background-color: #f1f5f9 !important;
+            color: #64748b !important;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Avatar Pastel Styling theo vai trò */
+        .avatar-admin {
+            background-color: #ede9fe !important;
+            color: #6d28d9 !important;
+            border: 1px solid #ddd6fe;
+        }
+        .avatar-staff {
+            background-color: #f1f5f9 !important;
+            color: #475569 !important;
+            border: 1px solid #cbd5e1;
+        }
+        .avatar-shop {
+            background-color: #ffedd5 !important;
+            color: #c2410c !important;
+            border: 1px solid #fed7aa;
+        }
+        .avatar-shipper {
+            background-color: #fef9c3 !important;
+            color: #a16207 !important;
+            border: 1px solid #fde047;
+        }
+        .avatar-customer {
+            background-color: #dcfce7 !important;
+            color: #15803d !important;
+            border: 1px solid #bbf7d0;
+        }
+        .avatar-default {
+            background-color: #e0f2fe !important;
+            color: #0369a1 !important;
+            border: 1px solid #bae6fd;
+        }
+
+        /* Tiện ích hiệu ứng tương tác Badge Hội Viên */
+        .hover-scale {
+            transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12) !important;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .transition-transform {
+            transition: transform 0.25s ease-in-out;
+        }
+    </style>
+
     <!-- Header Section -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div>
@@ -64,15 +219,95 @@
         </div>
     </div>
 
+    <!-- Interactive Tier Filter Cards (Thống kê số lượng & Lọc 1-chạm - MẶC ĐỊNH ẨN) -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <!-- Header bar with Toggle Button - ALWAYS VISIBLE -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <button class="btn btn-sm btn-outline-dark d-flex align-items-center rounded-3 px-3 py-1.5 shadow-xs" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#tierStatsCollapse" 
+                            aria-expanded="false" 
+                            aria-controls="tierStatsCollapse"
+                            id="toggleTierStatsBtn">
+                        <i class="bi bi-trophy-fill text-warning me-2 fs-6"></i>
+                        <span class="fw-semibold" id="toggleTierStatsText">Xem Phân Bố Hạng Hội Viên</span>
+                        <span class="badge bg-secondary-subtle text-secondary border ms-2" th:text="${tierStats != null ? tierStats.size() : 0} + ' nhóm'">7 nhóm</span>
+                        <i class="bi bi-chevron-down ms-2 small transition-transform" id="tierCollapseChevron"></i>
+                    </button>
+                    <small class="text-muted d-none d-md-inline" id="tierStatsHint">
+                        <i class="bi bi-info-circle me-1"></i>(Mặc định đang ẩn - Bấm để mở bảng thống kê & lọc 1-chạm)
+                    </small>
+                </div>
+
+                <!-- Active Filter Indicator & Clear button -->
+                <div class="d-flex align-items-center gap-2">
+                    <div th:if="${currentTierId != null}" class="d-flex align-items-center gap-1">
+                        <span class="badge bg-primary text-white rounded-pill px-3 py-1.5 shadow-xs d-flex align-items-center">
+                            <i class="bi bi-funnel-fill me-1"></i>
+                            <span th:each="stat : ${tierStats}" th:if="${stat.tierId == currentTierId}" th:text="'Đang lọc: ' + ${stat.tierName}">Đang lọc</span>
+                        </span>
+                        <a th:href="@{/admin/users(keyword=${keyword}, roleId=${currentRoleId}, status=${currentStatus}, sortBy=${sortBy}, sortDir=${sortDir})}" 
+                           class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1"
+                           title="Hủy lọc hạng">
+                            <i class="bi bi-x-circle me-1"></i>Hủy lọc
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Khối chứa 7 thẻ thống kê - MẶC ĐỊNH ẨN (class "collapse" KHÔNG CÓ "show") -->
+            <div class="collapse mt-3" id="tierStatsCollapse">
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-secondary fw-semibold">
+                            <i class="bi bi-hand-index-thumb me-1"></i>Nhấp trực tiếp vào bất kỳ thẻ nào dưới đây để lọc danh sách khách hàng tương ứng:
+                        </small>
+                        <button type="button" class="btn btn-sm btn-link text-secondary text-decoration-none p-0" 
+                                data-bs-toggle="collapse" data-bs-target="#tierStatsCollapse">
+                            <i class="bi bi-chevron-up me-1"></i>Thu gọn lại
+                        </button>
+                    </div>
+
+                    <div class="row g-2 row-cols-2 row-cols-sm-3 row-cols-md-5">
+                        <div class="col" th:each="stat : ${tierStats}">
+                            <a th:href="${currentTierId != null and currentTierId == stat.tierId} ? 
+                                        @{/admin/users(keyword=${keyword}, roleId=${currentRoleId}, status=${currentStatus}, sortBy=${sortBy}, sortDir=${sortDir})} : 
+                                        @{/admin/users(tierId=${stat.tierId}, keyword=${keyword}, roleId=${currentRoleId}, status=${currentStatus}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                               class="tier-stat-card text-decoration-none d-block h-100 p-3 rounded-3 border transition-all"
+                               th:classappend="${stat.cardClass + ((currentTierId != null and currentTierId == stat.tierId) ? ' active-tier-filter' : '')}">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="tier-stat-icon rounded-circle d-flex align-items-center justify-content-center"
+                                          style="width: 34px; height: 34px; font-size: 15px;">
+                                        <i th:class="${'bi ' + stat.iconClass}"></i>
+                                    </span>
+                                    <span th:if="${currentTierId != null and currentTierId == stat.tierId}" 
+                                          class="badge bg-primary text-white rounded-pill px-2 py-1 small" style="font-size: 0.7rem;">
+                                        <i class="bi bi-check2 me-1"></i>Đang lọc
+                                    </span>
+                                </div>
+                                <div class="text-truncate fw-semibold small text-secondary" th:text="${stat.tierName}">Hạng Đồng</div>
+                                <div class="fs-5 fw-bold text-dark mt-1" th:text="${#numbers.formatInteger(stat.count, 0, 'POINT')} + ' người'">0 người</div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Search and Filter Bar -->
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body p-3">
             <form th:action="@{/admin/users}" method="get" class="row g-2 align-items-center">
                 <input type="hidden" name="sortBy" th:value="${sortBy}" />
                 <input type="hidden" name="sortDir" th:value="${sortDir}" />
+                <input type="hidden" name="size" th:value="${pageData != null ? pageData.size : 5}" />
 
                 <!-- Filter by Role -->
-                <div class="col-12 col-md-3 col-lg-3">
+                <div class="col-12 col-md-6 col-lg-2">
                     <div class="input-group">
                         <span class="input-group-text bg-white text-muted">
                             <i class="bi bi-shield-check"></i>
@@ -89,8 +324,29 @@
                     </div>
                 </div>
 
+                <!-- Filter by Tier -->
+                <div class="col-12 col-md-6 col-lg-2">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white text-muted">
+                            <i class="bi bi-trophy"></i>
+                        </span>
+                        <select name="tierId" class="form-select" onchange="this.form.submit()">
+                            <option value="" th:selected="${currentTierId == null}">-- Tất cả hạng --</option>
+                            <option th:each="t : ${allTiers}" 
+                                    th:value="${t.tierId}" 
+                                    th:text="${t.tierName}" 
+                                    th:selected="${currentTierId != null and currentTierId == t.tierId}">
+                                Thành viên Đồng
+                            </option>
+                            <option value="-1" th:selected="${currentTierId != null and currentTierId == -1}">
+                                Nội bộ / Chưa có
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Filter by Status -->
-                <div class="col-12 col-md-3 col-lg-2">
+                <div class="col-12 col-md-6 col-lg-2">
                     <div class="input-group">
                         <span class="input-group-text bg-white text-muted">
                             <i class="bi bi-toggle2-on"></i>
@@ -104,7 +360,7 @@
                 </div>
 
                 <!-- Search Input -->
-                <div class="col-12 col-md-4 col-lg-4">
+                <div class="col-12 col-md-6 col-lg-3">
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0 text-muted">
                             <i class="bi bi-search"></i>
@@ -121,8 +377,8 @@
                         <i class="bi bi-filter me-1"></i> Tìm kiếm
                     </button>
                 </div>
-                <div class="col-auto" th:if="${(keyword != null and !#strings.isEmpty(keyword)) or currentRoleId != null or (currentStatus != null and currentStatus != 'ALL')}">
-                    <a th:href="@{/admin/users}" class="btn btn-outline-secondary d-flex align-items-center">
+                <div class="col-auto" th:if="${(keyword != null and !#strings.isEmpty(keyword)) or currentRoleId != null or currentTierId != null or (currentStatus != null and currentStatus != 'ALL')}">
+                    <a th:href="@{/admin/users(size=${pageData != null ? pageData.size : 5})}" class="btn btn-outline-secondary d-flex align-items-center">
                         <i class="bi bi-x-circle me-1"></i> Xóa lọc
                     </a>
                 </div>
@@ -136,17 +392,33 @@
             <h6 class="m-0 fw-bold text-dark">
                 <i class="bi bi-list-ul me-2"></i>Danh Sách Người Dùng Hệ Thống
             </h6>
-            <span class="badge bg-light text-secondary border" th:text="${pageData != null ? pageData.totalElements : 0} + ' tài khoản'">0 tài khoản</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-secondary border" th:text="${pageData != null ? pageData.totalElements : 0} + ' tài khoản'">0 tài khoản</span>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle rounded-pill px-2.5 py-1 shadow-2xs" 
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                            title="Số lượng người dùng hiển thị trên mỗi trang">
+                        <i class="bi bi-layout-text-window me-1"></i>
+                        <span th:text="${pageData != null ? pageData.size : 5} + ' dòng / trang'">5 dòng / trang</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li><a class="dropdown-item small" th:classappend="${pageData != null and pageData.size == 5 ? 'active fw-bold' : ''}" th:href="@{/admin/users(page=1, size=5, keyword=${keyword}, roleId=${currentRoleId}, status=${currentStatus}, tierId=${currentTierId}, sortBy=${sortBy}, sortDir=${sortDir})}">5 dòng / trang</a></li>
+                        <li><a class="dropdown-item small" th:classappend="${pageData != null and pageData.size == 10 ? 'active fw-bold' : ''}" th:href="@{/admin/users(page=1, size=10, keyword=${keyword}, roleId=${currentRoleId}, status=${currentStatus}, tierId=${currentTierId}, sortBy=${sortBy}, sortDir=${sortDir})}">10 dòng / trang (Khuyên dùng)</a></li>
+                        <li><a class="dropdown-item small" th:classappend="${pageData != null and pageData.size == 20 ? 'active fw-bold' : ''}" th:href="@{/admin/users(page=1, size=20, keyword=${keyword}, roleId=${currentRoleId}, status=${currentStatus}, tierId=${currentTierId}, sortBy=${sortBy}, sortDir=${sortDir})}">20 dòng / trang</a></li>
+                        <li><a class="dropdown-item small" th:classappend="${pageData != null and pageData.size == 50 ? 'active fw-bold' : ''}" th:href="@{/admin/users(page=1, size=50, keyword=${keyword}, roleId=${currentRoleId}, status=${currentStatus}, tierId=${currentTierId}, sortBy=${sortBy}, sortDir=${sortDir})}">50 dòng / trang</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th class="ps-4" style="width: 90px;">
+                        <th class="ps-4 text-center" style="width: 60px;">
                             <th:block th:replace="~{admin/fragments/sort-header :: column(title='ID', field='userId', baseUrl='/admin/users')}"></th:block>
                         </th>
-                        <th>
+                        <th style="min-width: 220px;">
                             <th:block th:replace="~{admin/fragments/sort-header :: column(title='Tài khoản', field='username', baseUrl='/admin/users')}"></th:block>
                             <span class="text-muted fw-normal"> / </span>
                             <th:block th:replace="~{admin/fragments/sort-header :: column(title='Họ tên', field='fullName', baseUrl='/admin/users')}"></th:block>
@@ -154,19 +426,20 @@
                         <th>
                             <th:block th:replace="~{admin/fragments/sort-header :: column(title='Email / Liên hệ', field='email', baseUrl='/admin/users')}"></th:block>
                         </th>
+                        <th style="min-width: 160px;">Hạng hội viên</th>
                         <th>Vai trò đảm nhận</th>
-                        <th style="width: 160px;">
+                        <th style="width: 140px;">
                             <th:block th:replace="~{admin/fragments/sort-header :: column(title='Trạng thái', field='status', baseUrl='/admin/users')}"></th:block>
                         </th>
-                        <th style="width: 150px;">
+                        <th style="width: 120px;">
                             <th:block th:replace="~{admin/fragments/sort-header :: column(title='Ngày tạo', field='createdAt', baseUrl='/admin/users')}"></th:block>
                         </th>
-                        <th class="text-end pe-4" style="width: 200px;">Thao tác</th>
+                        <th class="text-end pe-4" style="width: 160px;">Thao tác</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(users)}">
-                        <td colspan="7" class="text-center py-5 text-muted">
+                        <td colspan="8" class="text-center py-5 text-muted">
                             <i class="bi bi-person-x fs-1 d-block mb-2 text-secondary opacity-50"></i>
                             <span th:if="${(keyword != null and !#strings.isEmpty(keyword)) or currentRoleId != null or (currentStatus != null and currentStatus != 'ALL')}">
                                 Không tìm thấy người dùng nào phù hợp với bộ lọc đã chọn!
@@ -176,29 +449,73 @@
                             </span>
                         </td>
                     </tr>
-                    <tr th:each="user : ${users}">
-                        <td class="ps-4 fw-bold text-secondary" th:text="${user.userId}">1</td>
+                    <tr th:each="user : ${users}"
+                        th:with="primaryRole=${!#lists.isEmpty(user.roles) ? user.roles[0].roleName.name() : ''}">
+                        <td class="ps-4 text-center fw-bold text-secondary" th:text="${user.userId}">1</td>
                         <td>
-                            <div class="d-flex align-items-center">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold shadow-sm"
+                            <div class="d-flex align-items-center text-nowrap">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-2.5 fw-bold shadow-2xs flex-shrink-0"
                                      style="width: 38px; height: 38px; font-size: 14px;"
+                                     th:classappend="${primaryRole == 'ADMIN' ? 'avatar-admin' :
+                                                     (primaryRole == 'STAFF' ? 'avatar-staff' :
+                                                     (primaryRole == 'SHOP_OWNER' ? 'avatar-shop' :
+                                                     (primaryRole == 'DELIVERY_STAFF' ? 'avatar-shipper' :
+                                                     (primaryRole == 'CUSTOMER' ? 'avatar-customer' : 'avatar-default'))))}"
                                      th:text="${user.fullName != null and !#strings.isEmpty(user.fullName) ? #strings.substring(user.fullName, 0, 1).toUpperCase() : (user.username != null and !#strings.isEmpty(user.username) ? #strings.substring(user.username, 0, 1).toUpperCase() : 'U')}">
                                     U
                                 </div>
-                                <div>
-                                    <div class="fw-bold text-dark" th:text="${user.fullName}">Nguyễn Văn A</div>
-                                    <div class="text-muted small">
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold text-dark text-nowrap" th:text="${user.fullName}">Nguyễn Văn A</div>
+                                    <div class="text-muted small text-nowrap">
                                         <i class="bi bi-person me-1"></i><span th:text="${user.username}">username</span>
                                     </div>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <div class="small text-dark">
+                            <div class="small text-dark text-nowrap">
                                 <i class="bi bi-envelope text-secondary me-1"></i><span th:text="${user.email}">email@domain.com</span>
                             </div>
-                            <div class="small text-muted" th:if="${user.phone != null and !#strings.isEmpty(user.phone)}">
+                            <div class="small text-muted text-nowrap" th:if="${user.phone != null and !#strings.isEmpty(user.phone)}">
                                 <i class="bi bi-telephone text-secondary me-1"></i><span th:text="${user.phone}">0912345678</span>
+                            </div>
+                        </td>
+                        <td>
+                            <!-- Cột Hạng Hội Viên & Chi Tiêu Tích Lũy -->
+                            <div th:if="${user.customerMembership != null and user.customerMembership.tier != null}">
+                                <button type="button" 
+                                        class="btn p-0 border-0 text-start view-loyalty-btn"
+                                        th:data-user-id="${user.userId}"
+                                        th:data-user-fullname="${user.fullName}"
+                                        th:data-user-name="${user.username}"
+                                        title="Nhấp để xem hồ sơ hội viên & gói voucher đặc quyền">
+                                    <span class="badge rounded-pill px-2.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1 shadow-2xs cursor-pointer hover-scale"
+                                          th:classappend="${(#strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'kim cương') or #strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'diamond')) ? 'badge-tier-diamond' :
+                                                           ((#strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'vàng') or #strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'gold')) ? 'badge-tier-gold' :
+                                                           ((#strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'bạc') or #strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'silver')) ? 'badge-tier-silver' : 'badge-tier-bronze'))}">
+                                        <i th:class="${(#strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'kim cương') or #strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'diamond')) ? 'bi bi-gem-fill text-info' :
+                                                       ((#strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'vàng') or #strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'gold')) ? 'bi bi-award-fill text-warning' :
+                                                       ((#strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'bạc') or #strings.containsIgnoreCase(user.customerMembership.tier.tierName, 'silver')) ? 'bi bi-shield-shaded text-secondary' : 'bi bi-circle-fill text-danger'))}"></i>
+                                        <span th:text="${user.customerMembership.tier.tierName}">Thành viên Đồng</span>
+                                        <i class="bi bi-info-circle ms-1 opacity-75 small"></i>
+                                    </span>
+                                </button>
+                                <div class="text-secondary small mt-1 d-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                                    <i class="bi bi-wallet2 text-success"></i>
+                                    <span>Tích lũy:</span>
+                                    <span class="fw-bold text-dark"
+                                          th:text="${user.customerMembership.totalCumulativeSpend != null ? #numbers.formatDecimal(user.customerMembership.totalCumulativeSpend, 0, 'POINT', 0, 'POINT') + ' đ' : '0 đ'}">
+                                        0 đ
+                                    </span>
+                                </div>
+                            </div>
+                            <!-- Tài khoản nội bộ hoặc chưa kích hoạt hội viên -->
+                            <div th:unless="${user.customerMembership != null and user.customerMembership.tier != null}">
+                                <span th:if="${primaryRole == 'CUSTOMER'}" class="badge badge-tier-unranked px-2 py-1 rounded-pill fw-normal d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-dash-circle text-muted"></i>
+                                    <span>Chưa có hạng</span>
+                                </span>
+                                <span th:unless="${primaryRole == 'CUSTOMER'}" class="text-secondary opacity-50 px-2 fw-semibold fs-6" title="Không áp dụng xếp hạng hội viên cho tài khoản này">—</span>
                             </div>
                         </td>
                         <td>
@@ -207,11 +524,11 @@
                                     Chưa có vai trò
                                 </span>
                                 <th:block th:each="r : ${user.roles}">
-                                    <span class="badge"
-                                          th:classappend="${(r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')) ? 'bg-danger' : 
-                                                           ((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary' : 
-                                                           ((r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')) ? 'bg-warning text-dark' : 
-                                                           ((r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')) ? 'bg-secondary' : 'bg-info text-dark')))}"
+                                    <span class="badge rounded-pill px-2.5 py-1 fw-semibold"
+                                          th:classappend="${(r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary-subtle text-primary border border-primary-subtle' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')) ? 'bg-warning-subtle text-warning-emphasis border border-warning-subtle' : 
+                                                           ((r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')) ? 'bg-secondary-subtle text-secondary border border-secondary-subtle' : 'bg-info-subtle text-info-emphasis border border-info-subtle')))}"
                                           th:text="${r.roleName}">
                                         Customer
                                     </span>
@@ -229,7 +546,7 @@
                             </span>
                             <span th:if="${user.status == null}" 
                                   class="badge bg-secondary-subtle text-secondary border px-2 py-1 rounded-pill">
-                                Chưa rõ
+                                <i class="bi bi-question-circle me-1"></i>Chưa rõ
                             </span>
                         </td>
                         <td>
@@ -239,10 +556,10 @@
                             </span>
                         </td>
                         <td class="text-end pe-4">
-                            <div class="d-flex justify-content-end gap-1">
+                            <div class="d-inline-flex align-items-center justify-content-end btn-group btn-group-sm rounded-pill shadow-2xs overflow-hidden border">
                                 <!-- Button Phân vai trò -->
                                 <button type="button" 
-                                        class="btn btn-sm btn-outline-primary assign-role-btn d-flex align-items-center"
+                                        class="btn btn-white bg-white text-primary border-0 assign-role-btn d-flex align-items-center px-2.5 py-1"
                                         data-bs-toggle="modal" 
                                         data-bs-target="#assignRoleModal"
                                         th:data-user-id="${user.userId}"
@@ -250,22 +567,24 @@
                                         th:data-user-fullname="${user.fullName}"
                                         th:data-user-roles="${user.roleIds}"
                                         title="Phân vai trò cho người dùng">
-                                    <i class="bi bi-shield-lock me-1"></i> Vai trò
+                                    <i class="bi bi-shield-check me-1"></i><span>Vai trò</span>
                                 </button>
 
                                 <!-- Button Khóa / Mở khóa -->
                                 <form th:action="@{/admin/users/{id}/toggle-status(id=${user.userId})}" 
-                                      method="post" class="d-inline"
+                                      method="post" class="d-inline m-0"
                                       th:data-confirm="${user.status != null and user.status.name() == 'ACTIVE' ? 'Bạn có chắc chắn muốn KHÓA tài khoản [' + user.username + '] không?' : 'Bạn có chắc chắn muốn MỞ KHÓA tài khoản [' + user.username + '] không?'}"
                                       onsubmit="return confirm(this.getAttribute('data-confirm'));">
                                     <input type="hidden" name="page" th:value="${pageData != null ? pageData.number + 1 : 1}" />
+                                    <input type="hidden" name="size" th:value="${pageData != null ? pageData.size : 5}" />
                                     <input type="hidden" name="keyword" th:value="${keyword}" />
                                     <input type="hidden" name="roleId" th:value="${currentRoleId}" />
                                     <input type="hidden" name="status" th:value="${currentStatus}" />
+                                    <input type="hidden" name="tierId" th:value="${currentTierId}" />
                                     <button type="submit" 
-                                            class="btn btn-sm d-flex align-items-center"
-                                            th:classappend="${user.status != null and user.status.name() == 'ACTIVE' ? 'btn-outline-danger' : 'btn-outline-success'}"
-                                            th:title="${user.status != null and user.status.name() == 'ACTIVE' ? 'Khóa tài khoản này' : 'Mở khóa tài khoản này'}">
+                                            class="btn btn-sm border-0 border-start d-flex align-items-center px-2.5 py-1"
+                                            th:classappend="${user.status != null and user.status.name() == 'ACTIVE' ? 'btn-outline-danger text-danger bg-white' : 'btn-outline-success text-success bg-white'}"
+                                            th:title="${user.status != null and user.status.name() == 'ACTIVE' ? 'Khóa quyền truy cập tài khoản này' : 'Mở khóa tài khoản này'}">
                                         <i class="bi" th:classappend="${user.status != null and user.status.name() == 'ACTIVE' ? 'bi-lock-fill' : 'bi-unlock-fill'}"></i>
                                         <span class="ms-1" th:text="${user.status != null and user.status.name() == 'ACTIVE' ? 'Khóa' : 'Mở'}">Khóa</span>
                                     </button>
@@ -439,6 +758,7 @@
                     <input type="hidden" name="keyword" th:value="${keyword}" />
                     <input type="hidden" name="roleId" th:value="${currentRoleId}" />
                     <input type="hidden" name="status" th:value="${currentStatus}" />
+                    <input type="hidden" name="tierId" th:value="${currentTierId}" />
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title fw-bold" id="assignRoleModalLabel">
                             <i class="bi bi-shield-lock-fill me-2"></i>Phân Vai Trò Tài Khoản
@@ -500,6 +820,174 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chi Tiết Hội Viên & Tiến Trình Thăng Hạng (Customer Loyalty Modal) -->
+    <div class="modal fade" id="customerLoyaltyModal" tabindex="-1" aria-labelledby="customerLoyaltyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <!-- Modal Header -->
+                <div class="modal-header bg-dark text-white border-0 py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-warning-subtle text-warning p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                            <i class="bi bi-award-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0 text-white" id="customerLoyaltyModalLabel">
+                                Hồ Sơ Hội Viên & Tiến Trình Thăng Hạng
+                            </h5>
+                            <small class="text-light opacity-75">Hệ thống khách hàng thân thiết BetaFruit Rewards</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body p-4">
+                    <!-- Loading Spinner -->
+                    <div id="loyaltyLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Đang tải...</span>
+                        </div>
+                        <div class="text-muted mt-2 small">Đang nạp dữ liệu hội viên từ hệ thống...</div>
+                    </div>
+
+                    <!-- Error Container -->
+                    <div id="loyaltyError" class="alert alert-danger d-none" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span id="loyaltyErrorMsg">Không thể tải thông tin hội viên.</span>
+                    </div>
+
+                    <!-- Content Container -->
+                    <div id="loyaltyContent" class="d-none">
+                        <!-- Khách hàng Info Banner -->
+                        <div class="card bg-light border-0 p-3 rounded-3 mb-4">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 shadow-sm"
+                                         style="width: 52px; height: 52px;" id="modalCustomerAvatar">
+                                        U
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-0 text-dark" id="modalCustomerFullName">Nguyễn Văn A</h5>
+                                        <div class="text-muted small">
+                                            <i class="bi bi-person me-1"></i><span id="modalCustomerUsername">username</span>
+                                            <span class="mx-2">•</span>
+                                            <i class="bi bi-hash me-1"></i>ID: <span id="modalCustomerUserId">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Hạng hiện tại Badge -->
+                                <div class="text-end">
+                                    <div class="text-muted small mb-1">Cấp bậc hiện tại</div>
+                                    <span class="badge rounded-pill px-3 py-2 fs-6 fw-bold shadow-xs d-inline-flex align-items-center gap-2" id="modalCurrentTierBadge">
+                                        <i class="bi bi-award-fill" id="modalCurrentTierIcon"></i>
+                                        <span id="modalCurrentTierName">Thành viên Vàng</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2 Thẻ Chỉ Số Cốt Lõi (Chi tiêu + Đơn hàng) -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-sm-6">
+                                <div class="card border border-success-subtle bg-success-subtle bg-opacity-10 p-3 h-100 rounded-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-success text-white p-2.5 me-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                                            <i class="bi bi-wallet2 fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-secondary small">Tổng chi tiêu tích lũy</div>
+                                            <h4 class="fw-bold text-success mb-0" id="modalTotalSpend">0 đ</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="card border border-primary-subtle bg-primary-subtle bg-opacity-10 p-3 h-100 rounded-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary text-white p-2.5 me-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                                            <i class="bi bi-bag-check fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-secondary small">Đơn hàng hoàn tất</div>
+                                            <h4 class="fw-bold text-primary mb-0" id="modalCompletedOrders">0 đơn</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tiến trình thăng hạng (Next Tier Progress) -->
+                        <div class="card border-0 shadow-xs bg-white border p-3 rounded-3 mb-4" id="modalProgressSection">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center">
+                                    <i class="bi bi-graph-up-arrow text-primary me-2"></i>Tiến Trình Lên Hạng Kế Tiếp
+                                </h6>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill" id="modalNextTierTarget">
+                                    Mục tiêu: Hạng Vàng
+                                </span>
+                            </div>
+
+                            <!-- Progress Bar Chi Tiêu -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between small text-secondary mb-1">
+                                    <span>Tiến độ chi tiêu (<span id="modalSpendProgressText">0%</span>)</span>
+                                    <span>Cần thêm: <strong class="text-danger" id="modalAmountNeeded">0 đ</strong></span>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" 
+                                         id="modalSpendProgressBar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar Đơn Hàng -->
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small text-secondary mb-1">
+                                    <span>Tiến độ số đơn hàng (<span id="modalOrdersProgressText">0%</span>)</span>
+                                    <span>Cần thêm: <strong class="text-danger" id="modalOrdersNeeded">0 đơn</strong></span>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" 
+                                         id="modalOrdersProgressBar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+
+                            <div class="small text-muted fst-italic mt-2">
+                                <i class="bi bi-lightning-charge text-warning me-1"></i>Khách hàng chỉ cần thỏa mãn <strong>1 trong 2 tiêu chí</strong> (đạt mốc chi tiêu hoặc đạt mốc số đơn) là sẽ tự động được thăng hạng!
+                            </div>
+                        </div>
+
+                        <!-- Thông báo khi đạt hạng cao nhất -->
+                        <div class="alert alert-success d-none py-3 px-4 rounded-3 d-flex align-items-center gap-3 mb-4" id="modalMaxTierAlert">
+                            <i class="bi bi-gem-fill text-warning fs-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Đã Đạt Cấp Bậc Cao Nhất!</h6>
+                                <p class="mb-0 small text-secondary">Khách hàng này hiện đang sở hữu hạng hội viên tối cao của hệ thống BetaFruit và được hưởng toàn bộ mọi đặc quyền cao cấp nhất.</p>
+                            </div>
+                        </div>
+
+                        <!-- Gói Voucher Đặc Quyền Hiện Có -->
+                        <div class="card border-0 bg-light p-3 rounded-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center">
+                                    <i class="bi bi-ticket-perforated-fill text-danger me-2"></i>Gói Voucher Đặc Quyền Cấp Bậc
+                                </h6>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill" id="modalVoucherCount">0 ưu đãi</span>
+                            </div>
+                            <div id="modalVoucherList" class="row g-2 mt-1">
+                                <!-- Injected dynamically via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer border-0 bg-light py-2 px-3">
+                    <button type="button" class="btn btn-secondary btn-sm px-3 rounded-pill" data-bs-dismiss="modal">Đóng</button>
+                </div>
             </div>
         </div>
     </div>
@@ -675,6 +1163,162 @@
                     }
                 });
             }
+        });
+    </script>
+
+    <!-- Script xử lý Nút Ẩn/Hiện Phân Bố Hạng & Modal Chi Tiết Hội Viên (Shopee Rewards) -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. Xử lý Nút Ẩn/Hiện Thống Kê Phân Bố Hạng (Collapse Chevron & Text)
+            const tierCollapse = document.getElementById("tierStatsCollapse");
+            const tierChevron = document.getElementById("tierCollapseChevron");
+            const toggleTierStatsText = document.getElementById("toggleTierStatsText");
+
+            if (tierCollapse && tierChevron) {
+                tierCollapse.addEventListener("show.bs.collapse", function () {
+                    tierChevron.classList.remove("bi-chevron-down");
+                    tierChevron.classList.add("bi-chevron-up");
+                    if (toggleTierStatsText) toggleTierStatsText.textContent = "Thu Gọn Phân Bố Hạng";
+                });
+                tierCollapse.addEventListener("hide.bs.collapse", function () {
+                    tierChevron.classList.remove("bi-chevron-up");
+                    tierChevron.classList.add("bi-chevron-down");
+                    if (toggleTierStatsText) toggleTierStatsText.textContent = "Xem Phân Bố Hạng Hội Viên";
+                });
+            }
+
+            // 2. Xử lý Modal Chi Tiết Hội Viên & Tiến Trình Thăng Hạng (AJAX Modal)
+            const loyaltyModalEl = document.getElementById("customerLoyaltyModal");
+            let loyaltyModalInstance = null;
+            if (loyaltyModalEl && typeof bootstrap !== "undefined") {
+                loyaltyModalInstance = new bootstrap.Modal(loyaltyModalEl);
+            }
+
+            document.querySelectorAll(".view-loyalty-btn").forEach(btn => {
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const userId = this.getAttribute("data-user-id");
+                    if (!userId) return;
+
+                    const loadingEl = document.getElementById("loyaltyLoading");
+                    const errorEl = document.getElementById("loyaltyError");
+                    const contentEl = document.getElementById("loyaltyContent");
+
+                    if (loadingEl) loadingEl.classList.remove("d-none");
+                    if (errorEl) errorEl.classList.add("d-none");
+                    if (contentEl) contentEl.classList.add("d-none");
+
+                    if (loyaltyModalInstance) {
+                        loyaltyModalInstance.show();
+                    }
+
+                    fetch("/admin/users/" + userId + "/loyalty-details")
+                        .then(res => {
+                            if (!res.ok) throw new Error("Không thể tải dữ liệu hội viên (Mã lỗi: " + res.status + ")");
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (loadingEl) loadingEl.classList.add("d-none");
+                            if (contentEl) contentEl.classList.remove("d-none");
+
+                            // Thông tin cơ bản khách hàng
+                            const fullName = data.fullName || "Khách hàng";
+                            document.getElementById("modalCustomerFullName").textContent = fullName;
+                            document.getElementById("modalCustomerUsername").textContent = data.username || "";
+                            document.getElementById("modalCustomerUserId").textContent = data.userId || userId;
+                            document.getElementById("modalCustomerAvatar").textContent = fullName.substring(0, 1).toUpperCase();
+
+                            // Hạng hiện tại
+                            const tierName = data.currentTierName || "Chưa xếp hạng";
+                            document.getElementById("modalCurrentTierName").textContent = tierName;
+
+                            const tierBadge = document.getElementById("modalCurrentTierBadge");
+                            tierBadge.className = "badge rounded-pill px-3 py-2 fs-6 fw-bold shadow-xs d-inline-flex align-items-center gap-2";
+                            const nameLower = tierName.toLowerCase();
+                            if (nameLower.includes("kim cương") || nameLower.includes("diamond")) {
+                                tierBadge.classList.add("badge-tier-diamond");
+                            } else if (nameLower.includes("vàng") || nameLower.includes("gold")) {
+                                tierBadge.classList.add("badge-tier-gold");
+                            } else if (nameLower.includes("bạc") || nameLower.includes("silver")) {
+                                tierBadge.classList.add("badge-tier-silver");
+                            } else {
+                                tierBadge.classList.add("badge-tier-bronze");
+                            }
+
+                            // Tổng chi tiêu và số đơn hoàn tất
+                            const totalSpend = data.totalCumulativeSpend != null ? Number(data.totalCumulativeSpend) : 0;
+                            document.getElementById("modalTotalSpend").textContent = totalSpend.toLocaleString("vi-VN") + " đ";
+                            document.getElementById("modalCompletedOrders").textContent = (data.completedOrdersCount || 0) + " đơn";
+
+                            // Tiến trình lên hạng kế tiếp
+                            const progressSection = document.getElementById("modalProgressSection");
+                            const maxTierAlert = document.getElementById("modalMaxTierAlert");
+
+                            if (data.hasNextTier && data.nextTierName) {
+                                if (progressSection) progressSection.classList.remove("d-none");
+                                if (maxTierAlert) maxTierAlert.classList.add("d-none");
+
+                                document.getElementById("modalNextTierTarget").textContent = "Mục tiêu: " + data.nextTierName;
+
+                                const spendPct = Math.min(100, Math.max(0, Math.round(data.progressPercentage || 0)));
+                                document.getElementById("modalSpendProgressText").textContent = spendPct + "%";
+                                document.getElementById("modalSpendProgressBar").style.width = spendPct + "%";
+                                const amountNeeded = data.amountNeeded != null ? Number(data.amountNeeded) : 0;
+                                document.getElementById("modalAmountNeeded").textContent = amountNeeded.toLocaleString("vi-VN") + " đ";
+
+                                const ordersPct = Math.min(100, Math.max(0, Math.round(data.progressOrdersPercentage || 0)));
+                                document.getElementById("modalOrdersProgressText").textContent = ordersPct + "%";
+                                document.getElementById("modalOrdersProgressBar").style.width = ordersPct + "%";
+                                document.getElementById("modalOrdersNeeded").textContent = (data.ordersNeeded || 0) + " đơn";
+                            } else {
+                                if (progressSection) progressSection.classList.add("d-none");
+                                if (maxTierAlert) maxTierAlert.classList.remove("d-none");
+                            }
+
+                            // Danh sách Voucher đặc quyền
+                            const voucherListEl = document.getElementById("modalVoucherList");
+                            voucherListEl.innerHTML = "";
+                            const vouchers = data.tierVouchers || [];
+                            document.getElementById("modalVoucherCount").textContent = vouchers.length + " ưu đãi";
+
+                            if (vouchers.length === 0) {
+                                voucherListEl.innerHTML = '<div class="col-12 text-center text-muted py-3 small"><i class="bi bi-info-circle me-1"></i>Hạng này hiện chưa gắn gói Voucher đặc quyền nào.</div>';
+                            } else {
+                                vouchers.forEach(v => {
+                                    const col = document.createElement("div");
+                                    col.className = "col-12 col-md-6";
+                                    const minSpendStr = v.minOrderValueText || (v.minOrderAmount != null ? Number(v.minOrderAmount).toLocaleString("vi-VN") + " đ" : "Không yêu cầu");
+                                    const discountTitle = v.title || v.discountDisplay || 'Ưu đãi đặc quyền';
+                                    const isUsed = v.isUsed === true;
+                                    const progressBadge = v.usageProgressText ? `<span class="badge ${isUsed ? 'bg-secondary-subtle text-secondary' : 'bg-primary-subtle text-primary'} ms-auto" style="font-size: 0.68rem;">${v.usageProgressText}</span>` : (isUsed ? '<span class="badge bg-secondary-subtle text-secondary ms-auto" style="font-size: 0.65rem;">Đã hết lượt</span>' : '');
+                                    col.innerHTML = `
+                                        <div class="p-2.5 bg-white border border-danger-subtle rounded-3 shadow-2xs d-flex align-items-center gap-2 h-100 ${isUsed ? 'opacity-75 bg-light' : ''}">
+                                            <div class="rounded-circle ${isUsed ? 'bg-secondary-subtle text-secondary' : 'bg-danger-subtle text-danger'} p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
+                                                <i class="bi bi-tag-fill"></i>
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <span class="fw-bold text-dark text-truncate small">${v.couponCode || 'VOUCHER'}</span>
+                                                    ${progressBadge}
+                                                </div>
+                                                <div class="${isUsed ? 'text-secondary' : 'text-danger'} small fw-semibold" style="font-size: 0.78rem;">${discountTitle}</div>
+                                                <div class="text-muted" style="font-size: 0.72rem;">${minSpendStr}</div>
+                                            </div>
+                                        </div>
+                                    `;
+                                    voucherListEl.appendChild(col);
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            if (loadingEl) loadingEl.classList.add("d-none");
+                            if (errorEl) {
+                                errorEl.classList.remove("d-none");
+                                document.getElementById("loyaltyErrorMsg").textContent = err.message || "Lỗi khi nạp dữ liệu hội viên.";
+                            }
+                        });
+                });
+            });
         });
     </script>
 </div>

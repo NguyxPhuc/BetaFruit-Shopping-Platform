@@ -50,10 +50,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<CustomerOrderResponse> getCustomerOrders(Integer customerId, OrderStatus status, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Order> orderPage = (status == null)
-                ? orderRepository.findByCustomer_UserId(customerId, pageable)
-                : orderRepository.findByCustomer_UserIdAndOrderStatus(customerId, status, pageable);
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(100, Math.max(1, size)), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Order> orderPage = loadPage(page, size, index -> (status == null)
+                ? orderRepository.findByCustomer_UserId(customerId, pageable.withPage(index))
+                : orderRepository.findByCustomer_UserIdAndOrderStatus(customerId, status, pageable.withPage(index)));
 
         return orderPage.map(this::toResponse);
     }
@@ -102,8 +102,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             if (notificationService != null) {
                 notificationService.createBaseNotification(
                         customer,
-                        "🎉 Đơn hàng #" + order.getOrderId() + " đã hoàn tất!",
-                        "Cảm ơn bạn đã lựa chọn mua sắm tại BetaFruit! Chúc bạn thưởng thức hoa quả thật ngon miệng.",
+                        "Đã xác nhận nhận hàng cho đơn #" + order.getOrderId(),
+                        "Đơn hàng sẽ tự động hoàn tất sau thời gian chờ được hệ thống cấu hình.",
                         NotificationType.ORDER_STATUS,
                         "/orders/" + order.getOrderId()
                 );
@@ -119,7 +119,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                     if (assignment.getShipper() != null && assignment.getShipper().getUser() != null) {
                         notificationService.createBaseNotification(
                                 assignment.getShipper().getUser(),
-                                "✅ Đơn hàng #" + order.getOrderId() + " đã hoàn tất!",
+                                "✅ Khách đã nhận đơn hàng #" + order.getOrderId(),
                                 "Khách hàng đã nhận kiện hàng hoa quả và xác nhận hài lòng. Cuốc giao đã kết thúc trọn vẹn.",
                                 NotificationType.ORDER_STATUS,
                                 "/shipper/orders/" + order.getOrderId()
@@ -246,5 +246,17 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             case CANCELLED -> "Đã hủy";
             case REJECTED -> "Từ chối nhận đơn";
         };
+    }
+
+    /** Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result. */
+    private <T> Page<T> loadPage(int page, int size, java.util.function.IntFunction<Page<T>> query) {
+        int index = Math.max(0, page);
+        // Keep the SQL offset within the range accepted by JPA providers.
+        Page<T> result = query.apply(index > Integer.MAX_VALUE / Math.min(100, Math.max(1, size)) ? 0 : index);
+        int last = Math.max(0, result.getTotalPages() - 1);
+        int target = Math.min(index, last);
+        if (result.getNumber() != target) result = query.apply(target);
+        if (result.isEmpty() && result.getNumber() > 0) result = query.apply(0);
+        return result;
     }
 }

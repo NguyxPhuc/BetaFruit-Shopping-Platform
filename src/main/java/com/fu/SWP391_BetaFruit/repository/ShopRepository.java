@@ -124,4 +124,17 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
 
     @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.owner WHERE s.approvalStatus = com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.APPROVED")
     List<Shop> findApprovedShopsWithOwners();
+
+    @Query(value = "SELECT s FROM Shop s JOIN s.owner u WHERE " +
+           "s.approvalStatus = :shopStatus " +
+           "AND u.status = :userStatus",
+           countQuery = "SELECT COUNT(s) FROM Shop s JOIN s.owner u WHERE " +
+           "s.approvalStatus = :shopStatus " +
+           "AND u.status = :userStatus")
+    Page<Shop> findPublicActiveShops(Pageable pageable, @Param("shopStatus") ShopApprovalStatus shopStatus, @Param("userStatus") UserStatus userStatus);
+
+    @Query("SELECT s FROM Shop s JOIN FETCH s.owner u WHERE " +
+           "s.approvalStatus = :shopStatus " +
+           "AND u.status = :userStatus")
+    List<Shop> findPublicActiveShops(@Param("shopStatus") ShopApprovalStatus shopStatus, @Param("userStatus") UserStatus userStatus );
 }
