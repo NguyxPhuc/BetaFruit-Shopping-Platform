@@ -354,11 +354,21 @@
                         <div class="mb-3">
                             <label for="commissionRateInput" class="form-label fw-bold">Tỷ lệ chiết khấu phí sàn (%) <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input type="number" step="0.01" min="0" max="100" class="form-control" id="commissionRateInput" name="commissionRate" required placeholder="5.00">
+                                <input type="number" step="0.01" min="0" max="30" class="form-control" id="commissionRateInput" name="commissionRate" required placeholder="5.00">
                                 <span class="input-group-text fw-bold">%</span>
                             </div>
-                            <div class="form-text text-muted">
-                                Tỷ lệ phần trăm doanh thu sàn trích lại trên mỗi đơn hàng hoàn thành của cửa hàng này (từ 0.00% đến 100.00%).
+                            <!-- Quick Preset Buttons -->
+                            <div class="d-flex flex-wrap gap-1 mt-2 mb-2">
+                                <span class="small text-muted align-self-center me-1" style="font-size: 0.8rem;">Gợi ý:</span>
+                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 rounded-pill preset-rate-btn" data-rate="0.00" style="font-size: 0.75rem;">0% Miễn phí</button>
+                                <button type="button" class="btn btn-xs btn-outline-success py-0 px-2 rounded-pill preset-rate-btn" data-rate="3.00" style="font-size: 0.75rem;">3% Ưu đãi</button>
+                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 rounded-pill preset-rate-btn" data-rate="5.00" style="font-size: 0.75rem;">5% Chuẩn</button>
+                                <button type="button" class="btn btn-xs btn-outline-info py-0 px-2 rounded-pill preset-rate-btn" data-rate="10.00" style="font-size: 0.75rem;">10% Nâng cao</button>
+                                <button type="button" class="btn btn-xs btn-outline-warning py-0 px-2 rounded-pill preset-rate-btn" data-rate="15.00" style="font-size: 0.75rem;">15% Đặc biệt</button>
+                            </div>
+                            <!-- Dynamic validation hint and level badge -->
+                            <div id="rateFeedback" class="small mt-1 text-muted" style="font-size: 0.82rem;">
+                                <i class="bi bi-shield-check me-1 text-success"></i>Tỷ lệ cho phép từ 0.00% đến 30.00% (theo chuẩn TMĐT).
                             </div>
                         </div>
                     </div>
@@ -430,6 +440,43 @@
             const commissionForm = document.getElementById("commissionForm");
             const commissionShopName = document.getElementById("commissionShopName");
             const commissionRateInput = document.getElementById("commissionRateInput");
+            const presetButtons = document.querySelectorAll(".preset-rate-btn");
+            const rateFeedback = document.getElementById("rateFeedback");
+            const saveBtn = commissionForm.querySelector("button[type='submit']");
+
+            function updateRateFeedback() {
+                const val = parseFloat(commissionRateInput.value);
+                if (isNaN(val)) {
+                    rateFeedback.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Vui lòng nhập tỷ lệ phí sàn hợp lệ!</span>';
+                    saveBtn.disabled = true;
+                } else if (val < 0) {
+                    rateFeedback.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Tỷ lệ phí sàn không được nhỏ hơn 0.00%!</span>';
+                    saveBtn.disabled = true;
+                } else if (val > 30) {
+                    rateFeedback.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-slash-circle-fill me-1"></i>Phí sàn tối đa là 30.00% (theo chuẩn TMĐT bảo vệ đối tác Shop)!</span>';
+                    saveBtn.disabled = true;
+                } else {
+                    saveBtn.disabled = false;
+                    if (val === 0) {
+                        rateFeedback.innerHTML = '<span class="text-secondary"><i class="bi bi-gift-fill text-success me-1"></i>0.00% - Miễn phí sàn hoàn toàn cho gian hàng đối tác.</span>';
+                    } else if (val <= 5) {
+                        rateFeedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>' + val.toFixed(2) + '% - Mức phí tiêu chuẩn / ưu đãi lành mạnh.</span>';
+                    } else if (val <= 15) {
+                        rateFeedback.innerHTML = '<span class="text-primary"><i class="bi bi-info-circle-fill me-1"></i>' + val.toFixed(2) + '% - Mức phí trung bình (ngành hàng cao cấp / quảng bá).</span>';
+                    } else {
+                        rateFeedback.innerHTML = '<span class="text-warning-emphasis"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>' + val.toFixed(2) + '% - Mức phí cao (dành cho gian hàng bao tiêu toàn diện).</span>';
+                    }
+                }
+            }
+
+            commissionRateInput.addEventListener("input", updateRateFeedback);
+
+            presetButtons.forEach(btn => {
+                btn.addEventListener("click", function () {
+                    commissionRateInput.value = this.getAttribute("data-rate");
+                    updateRateFeedback();
+                });
+            });
 
             commissionButtons.forEach(button => {
                 button.addEventListener("click", function () {
@@ -440,6 +487,7 @@
                     commissionShopName.textContent = shopName + " (ID: #" + shopId + ")";
                     commissionRateInput.value = rate ? rate : "5.00";
                     commissionForm.action = "/admin/shops/" + shopId + "/commission";
+                    updateRateFeedback();
                 });
             });
         });

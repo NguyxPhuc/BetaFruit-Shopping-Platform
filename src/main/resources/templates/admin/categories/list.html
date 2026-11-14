@@ -157,11 +157,21 @@
                     <tr th:each="cat : ${categories}">
                         <td class="ps-4 fw-bold text-secondary" th:text="${cat.categoryId}">1</td>
                         <td>
-                            <div class="d-flex align-items-center">
-                                <span class="p-2 bg-success-subtle text-success rounded me-2">
-                                     <i class="bi bi-basket2"></i>
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pe-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="p-2 bg-success-subtle text-success rounded me-2">
+                                         <i class="bi bi-basket2"></i>
+                                    </span>
+                                    <span class="fw-bold text-dark fs-6" th:text="${cat.categoryName}">Trái cây nhập khẩu</span>
+                                </div>
+                                <span class="badge rounded-pill"
+                                      th:with="pCount=${productCountMap != null and productCountMap.get(cat.categoryId) != null ? productCountMap.get(cat.categoryId) : 0}"
+                                      th:classappend="${pCount > 0 ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-light text-secondary border'}"
+                                      style="font-size: 0.78rem; font-weight: 500;"
+                                      th:title="${pCount > 0 ? 'Danh mục có ' + pCount + ' sản phẩm' : 'Chưa có sản phẩm nào'}">
+                                    <i class="bi bi-box-seam me-1"></i>
+                                    <span th:text="${pCount + ' sản phẩm'}">0 sản phẩm</span>
                                 </span>
-                                <span class="fw-bold text-dark fs-6" th:text="${cat.categoryName}">Trái cây nhập khẩu</span>
                             </div>
                         </td>
                         <td>
@@ -185,18 +195,21 @@
                                     <i class="bi bi-pencil-square me-1"></i> Sửa
                                 </button>
 
-                                <!-- Nút Ẩn / Kích hoạt lại (Giữ nguyên phân trang và bộ lọc) -->
+                                <!-- Nút Ẩn / Kích hoạt lại (Giữ nguyên phân trang và bộ lọc, chặn ẩn nếu có sản phẩm) -->
                                 <form th:action="@{/admin/categories/{id}/toggle-status(id=${cat.categoryId})}" 
                                       method="post" class="d-inline"
-                                      th:data-confirm="${cat.isActive == true ? 'Bạn có chắc chắn muốn ẨN danh mục [' + cat.categoryName + '] không? Các shop sẽ tạm thời không chọn được danh mục này khi đăng bán.' : 'Bạn có chắc chắn muốn KÍCH HOẠT lại danh mục [' + cat.categoryName + '] không?'}"
-                                      onsubmit="return confirm(this.getAttribute('data-confirm'));">
+                                      th:with="pCount=${productCountMap != null and productCountMap.get(cat.categoryId) != null ? productCountMap.get(cat.categoryId) : 0}"
+                                      th:data-is-active="${cat.isActive == true}"
+                                      th:data-pcount="${pCount}"
+                                      th:data-cat-name="${cat.categoryName}"
+                                      onsubmit="if (this.getAttribute('data-is-active') === 'true' && parseInt(this.getAttribute('data-pcount') || '0') > 0) { alert('⚠️ Không thể ẩn danh mục [' + this.getAttribute('data-cat-name') + '] vì hiện đang có ' + this.getAttribute('data-pcount') + ' sản phẩm thuộc danh mục này!\n\nVui lòng chuyển sản phẩm sang danh mục khác trước khi ẩn.'); return false; } return confirm(this.getAttribute('data-is-active') === 'true' ? ('Bạn có chắc chắn muốn ẨN danh mục [' + this.getAttribute('data-cat-name') + '] không?') : ('Bạn có chắc chắn muốn KÍCH HOẠT lại danh mục [' + this.getAttribute('data-cat-name') + '] không?'));">
                                     <input type="hidden" name="page" th:value="${pageData != null ? pageData.number + 1 : 1}" />
                                     <input type="hidden" name="keyword" th:value="${keyword}" />
                                     <input type="hidden" name="status" th:value="${currentStatus}" />
                                     <button type="submit" 
                                             class="btn btn-sm d-flex align-items-center"
                                             th:classappend="${cat.isActive == true ? 'btn-outline-secondary' : 'btn-outline-success'}"
-                                            th:title="${cat.isActive == true ? 'Tạm ẩn danh mục này' : 'Kích hoạt lại danh mục này'}">
+                                            th:title="${cat.isActive == true ? (pCount > 0 ? 'Danh mục đang có ' + pCount + ' sản phẩm (Không thể ẩn)' : 'Tạm ẩn danh mục này') : 'Kích hoạt lại danh mục này'}">
                                         <i class="bi" th:classappend="${cat.isActive == true ? 'bi-eye-slash' : 'bi-eye'}"></i>
                                         <span class="ms-1" th:text="${cat.isActive == true ? 'Ẩn' : 'Hiện'}">Ẩn</span>
                                     </button>

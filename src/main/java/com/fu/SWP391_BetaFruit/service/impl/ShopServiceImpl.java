@@ -102,14 +102,14 @@ public class ShopServiceImpl implements ShopService {
      * Updates the platform commission rate for a specific shop.
      *
      * @param shopId         the ID of the shop to update
-     * @param commissionRate the new commission rate percentage (0.00 to 100.00)
-     * @throws IllegalArgumentException if the commission rate is null or out of range [0, 100]
+     * @param commissionRate the new commission rate percentage (0.00 to 30.00)
+     * @throws IllegalArgumentException if the commission rate is null or out of range [0, 30]
      */
     @Override
     @Transactional
     public void updateCommissionRate(Integer shopId, BigDecimal commissionRate) {
-        if (commissionRate == null || commissionRate.compareTo(BigDecimal.ZERO) < 0 || commissionRate.compareTo(new BigDecimal("100")) > 0) {
-            throw new IllegalArgumentException("Tỷ lệ chiết khấu phí sàn phải nằm trong khoảng từ 0% đến 100%!");
+        if (commissionRate == null || commissionRate.compareTo(BigDecimal.ZERO) < 0 || commissionRate.compareTo(new BigDecimal("30.00")) > 0) {
+            throw new IllegalArgumentException("Tỷ lệ chiết khấu phí sàn phải nằm trong khoảng từ 0.00% đến 30.00%!");
         }
         Shop shop = getShopById(shopId);
         shop.setCommissionRate(commissionRate);

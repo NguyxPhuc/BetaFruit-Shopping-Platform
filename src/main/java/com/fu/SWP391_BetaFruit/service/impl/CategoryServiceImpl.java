@@ -3,6 +3,7 @@ package com.fu.SWP391_BetaFruit.service.impl;
 import com.fu.SWP391_BetaFruit.dto.request.CategoryRequest;
 import com.fu.SWP391_BetaFruit.entity.MasterCategory;
 import com.fu.SWP391_BetaFruit.repository.MasterCategoryRepository;
+import com.fu.SWP391_BetaFruit.repository.ProductRepository;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
 import com.fu.SWP391_BetaFruit.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.Set;
 public class CategoryServiceImpl implements CategoryService {
 
     private final MasterCategoryRepository masterCategoryRepository;
+    private final ProductRepository productRepository;
 
     @Override
     public List<MasterCategory> getActiveCategories() {
@@ -75,6 +77,13 @@ public class CategoryServiceImpl implements CategoryService {
     public void toggleCategoryStatus(Integer id) {
         MasterCategory category = getCategoryById(id);
         boolean currentStatus = category.getIsActive() != null && category.getIsActive();
+        if (currentStatus) {
+            long productCount = productRepository.countByCategory_CategoryId(id);
+            if (productCount > 0) {
+                throw new IllegalStateException("Không thể ẩn danh mục '" + category.getCategoryName()
+                        + "' vì hiện đang có " + productCount + " sản phẩm thuộc danh mục này! Vui lòng chuyển các sản phẩm sang danh mục khác trước khi ẩn.");
+            }
+        }
         category.setIsActive(!currentStatus);
         masterCategoryRepository.save(category);
     }
@@ -119,10 +128,21 @@ public class CategoryServiceImpl implements CategoryService {
 
         Page<MasterCategory> categoryPage = masterCategoryRepository.filterCategories(cleanKeyword, isActive, pageable);
 
+        List<Object[]> productCountRows = productRepository.countProductsGroupedByCategory();
+        Map<Integer, Long> categoryProductCountMap = new HashMap<>();
+        if (productCountRows != null) {
+            for (Object[] row : productCountRows) {
+                if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                    categoryProductCountMap.put(((Number) row[0]).intValue(), ((Number) row[1]).longValue());
+                }
+            }
+        }
+
         Map<String, Object> data = new HashMap<>();
         data.put("categories", categoryPage.getContent());
         data.put("categoryPage", categoryPage);
         data.put("pageData", categoryPage);
+        data.put("productCountMap", categoryProductCountMap);
         data.put("newCategory", new CategoryRequest());
         data.put("keyword", cleanKeyword != null ? cleanKeyword : "");
         data.put("currentStatus", currentStatus);
