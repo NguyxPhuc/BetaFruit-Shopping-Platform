@@ -2,6 +2,7 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.request.ProductCreateRequest;
 import com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ShopProductFilterRequest;
 import com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.*;
@@ -10,6 +11,7 @@ import com.fu.SWP391_BetaFruit.service.NotificationService;
 import com.fu.SWP391_BetaFruit.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -17,11 +19,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -254,12 +260,295 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<Product> getShopProductsPaginated(Integer userId, String keyword, int page, int size) {
-        Shop shop = getShopByUserId(userId);
-        Pageable pageable = PageRequest.of(Math.max(0, page - 1), size, Sort.by(Sort.Direction.DESC, "productId"));
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            return productRepository.findByShop_ShopIdAndProductNameContainingIgnoreCase(shop.getShopId(), keyword.trim(), pageable);
+        ShopProductFilterRequest request = ShopProductFilterRequest.builder()
+                .keyword(keyword)
+                .page(page)
+                .size(size)
+                .build();
+        Map<String, Object> data = getShopProductPageData(userId, request);
+        return (Page<Product>) data.get("productPage");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getShopProductPageData(Integer userId, ShopProductFilterRequest filterRequest) {
+        if (filterRequest == null) {
+            filterRequest = new ShopProductFilterRequest();
         }
-        return productRepository.findByShop_ShopId(shop.getShopId(), pageable);
+
+        Shop shop = getShopByUserId(userId);
+        List<Product> allShopProducts = productRepository.findByShop_ShopIdOrderByProductIdDesc(shop.getShopId());
+
+        // Eager-touch collections to avoid any lazy loading issues in Thymeleaf view
+        allShopProducts.forEach(p -> {
+            if (p.getVariants() != null) p.getVariants().size();
+            if (p.getImages() != null) p.getImages().size();
+            if (p.getCategory() != null) p.getCategory().getCategoryName();
+        });
+
+        // 1. Calculate live tab counters across all products of the shop
+        long totalCount = allShopProducts.size();
+        long activeCount = allShopProducts.stream()
+                .filter(p -> p.getApprovalStatus() == ProductApprovalStatus.APPROVED
+                        && p.getVisibilityStatus() == ProductVisibility.ACTIVE)
+                .count();
+        long pendingCount = allShopProducts.stream()
+                .filter(p -> p.getApprovalStatus() == ProductApprovalStatus.PENDING)
+                .count();
+        long hiddenCount = allShopProducts.stream()
+                .filter(p -> p.getVisibilityStatus() == ProductVisibility.HIDDEN)
+                .count();
+        long rejectedCount = allShopProducts.stream()
+                .filter(p -> p.getApprovalStatus() == ProductApprovalStatus.REJECTED)
+                .count();
+        long lowStockTabCount = allShopProducts.stream()
+                .filter(this::isProductLowStockOrOutOfStock)
+                .count();
+
+        // 2. Resolve price range boundaries
+        BigDecimal effectiveMinPrice = null;
+        BigDecimal effectiveMaxPrice = null;
+        String priceRange = filterRequest.getPriceRange() != null ? filterRequest.getPriceRange().trim().toUpperCase() : "ALL";
+
+        switch (priceRange) {
+            case "UNDER_50K":
+                effectiveMaxPrice = new BigDecimal("50000");
+                break;
+            case "50K_150K":
+                effectiveMinPrice = new BigDecimal("50000");
+                effectiveMaxPrice = new BigDecimal("150000");
+                break;
+            case "150K_300K":
+                effectiveMinPrice = new BigDecimal("150000");
+                effectiveMaxPrice = new BigDecimal("300000");
+                break;
+            case "OVER_300K":
+                effectiveMinPrice = new BigDecimal("300000");
+                break;
+            case "CUSTOM":
+            default:
+                if (filterRequest.getMinPrice() != null && filterRequest.getMinPrice().compareTo(BigDecimal.ZERO) > 0) {
+                    effectiveMinPrice = filterRequest.getMinPrice();
+                }
+                if (filterRequest.getMaxPrice() != null && filterRequest.getMaxPrice().compareTo(BigDecimal.ZERO) > 0) {
+                    effectiveMaxPrice = filterRequest.getMaxPrice();
+                }
+                break;
+        }
+
+        final BigDecimal finalMinPrice = effectiveMinPrice;
+        final BigDecimal finalMaxPrice = effectiveMaxPrice;
+        final String tab = filterRequest.getTab() != null ? filterRequest.getTab().trim().toUpperCase() : "ALL";
+        final String keyword = filterRequest.getKeyword() != null ? filterRequest.getKeyword().trim().toLowerCase() : "";
+        final Integer categoryId = filterRequest.getCategoryId();
+        final String stockStatus = filterRequest.getStockStatus() != null ? filterRequest.getStockStatus().trim().toUpperCase() : "ALL";
+
+        // 3. Filter stream
+        List<Product> filteredProducts = allShopProducts.stream()
+                // Filter by Tab
+                .filter(p -> {
+                    switch (tab) {
+                        case "ACTIVE":
+                            return p.getApprovalStatus() == ProductApprovalStatus.APPROVED
+                                    && p.getVisibilityStatus() == ProductVisibility.ACTIVE;
+                        case "PENDING":
+                            return p.getApprovalStatus() == ProductApprovalStatus.PENDING;
+                        case "HIDDEN":
+                            return p.getVisibilityStatus() == ProductVisibility.HIDDEN;
+                        case "REJECTED":
+                            return p.getApprovalStatus() == ProductApprovalStatus.REJECTED;
+                        case "LOW_STOCK":
+                            return isProductLowStockOrOutOfStock(p);
+                        case "ALL":
+                        default:
+                            return true;
+                    }
+                })
+                // Filter by Keyword
+                .filter(p -> {
+                    if (keyword.isEmpty()) return true;
+                    return p.getProductName() != null && p.getProductName().toLowerCase().contains(keyword);
+                })
+                // Filter by Category
+                .filter(p -> {
+                    if (categoryId == null || categoryId <= 0) return true;
+                    return p.getCategory() != null && categoryId.equals(p.getCategory().getCategoryId());
+                })
+                // Filter by Stock Status
+                .filter(p -> {
+                    switch (stockStatus) {
+                        case "IN_STOCK":
+                            return isProductHealthyStock(p);
+                        case "LOW_STOCK":
+                            return isProductLowStockOnly(p);
+                        case "OUT_OF_STOCK":
+                            return isProductOutOfStock(p);
+                        case "ALL":
+                        default:
+                            return true;
+                    }
+                })
+                // Filter by Price Range
+                .filter(p -> matchesPrice(p, finalMinPrice, finalMaxPrice))
+                .collect(Collectors.toList());
+
+        // 4. Sort stream
+        String sortBy = filterRequest.getSortBy() != null ? filterRequest.getSortBy().trim().toLowerCase() : "newest";
+        Comparator<Product> comparator;
+        switch (sortBy) {
+            case "oldest":
+                comparator = Comparator.comparing(Product::getProductId, Comparator.nullsLast(Comparator.naturalOrder()));
+                break;
+            case "price_asc":
+                comparator = Comparator.comparing(this::getLowestPrice, Comparator.nullsLast(Comparator.naturalOrder()));
+                break;
+            case "price_desc":
+                comparator = Comparator.comparing(this::getLowestPrice, Comparator.nullsLast(Comparator.reverseOrder()));
+                break;
+            case "stock_asc":
+                comparator = Comparator.comparing(this::getTotalStock, Comparator.nullsLast(Comparator.naturalOrder()));
+                break;
+            case "stock_desc":
+                comparator = Comparator.comparing(this::getTotalStock, Comparator.nullsLast(Comparator.reverseOrder()));
+                break;
+            case "name_asc":
+                comparator = Comparator.comparing(p -> p.getProductName() != null ? p.getProductName().toLowerCase() : "", Comparator.naturalOrder());
+                break;
+            case "name_desc":
+                comparator = Comparator.comparing(p -> p.getProductName() != null ? p.getProductName().toLowerCase() : "", Comparator.reverseOrder());
+                break;
+            case "newest":
+            default:
+                comparator = Comparator.comparing(Product::getProductId, Comparator.nullsLast(Comparator.reverseOrder()));
+                break;
+        }
+        filteredProducts.sort(comparator);
+
+        // 5. Pagination
+        int pageSize = filterRequest.getSize() > 0 ? filterRequest.getSize() : 5;
+        int totalItems = filteredProducts.size();
+        int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+        if (totalPages == 0) totalPages = 1;
+
+        int currentPage = filterRequest.getPage();
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        int fromIndex = (currentPage - 1) * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalItems);
+        List<Product> pagedList = (fromIndex < totalItems) ? filteredProducts.subList(fromIndex, toIndex) : Collections.emptyList();
+
+        Page<Product> productPage = new PageImpl<>(pagedList, PageRequest.of(currentPage - 1, pageSize), totalItems);
+
+        // 6. Build response data map
+        Map<String, Object> data = new HashMap<>();
+        data.put("products", pagedList);
+        data.put("productPage", productPage);
+        data.put("currentPage", currentPage);
+        data.put("totalPages", totalPages);
+        data.put("totalItems", totalItems);
+        data.put("keyword", filterRequest.getKeyword() != null ? filterRequest.getKeyword().trim() : "");
+        data.put("tab", tab);
+        data.put("categoryId", categoryId);
+        data.put("stockStatus", stockStatus);
+        data.put("priceRange", priceRange);
+        data.put("minPrice", filterRequest.getMinPrice());
+        data.put("maxPrice", filterRequest.getMaxPrice());
+        data.put("sortBy", sortBy);
+        data.put("hasActiveFilters", filterRequest.hasActiveFilters());
+
+        // Tab counts
+        data.put("totalCount", totalCount);
+        data.put("activeCount", activeCount);
+        data.put("pendingCount", pendingCount);
+        data.put("hiddenCount", hiddenCount);
+        data.put("rejectedCount", rejectedCount);
+        data.put("lowStockTabCount", lowStockTabCount);
+
+        return data;
+    }
+
+    private boolean isProductLowStockOrOutOfStock(Product product) {
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            return false;
+        }
+        return product.getVariants().stream().anyMatch(v -> {
+            int threshold = (v.getLowStockThreshold() != null) ? v.getLowStockThreshold() : 5;
+            int stock = (v.getStockQuantity() != null) ? v.getStockQuantity() : 0;
+            return stock <= threshold;
+        });
+    }
+
+    private boolean isProductHealthyStock(Product product) {
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            return false;
+        }
+        return product.getVariants().stream().allMatch(v -> {
+            int threshold = (v.getLowStockThreshold() != null) ? v.getLowStockThreshold() : 5;
+            int stock = (v.getStockQuantity() != null) ? v.getStockQuantity() : 0;
+            return stock > threshold;
+        });
+    }
+
+    private boolean isProductLowStockOnly(Product product) {
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            return false;
+        }
+        return product.getVariants().stream().anyMatch(v -> {
+            int threshold = (v.getLowStockThreshold() != null) ? v.getLowStockThreshold() : 5;
+            int stock = (v.getStockQuantity() != null) ? v.getStockQuantity() : 0;
+            return stock > 0 && stock <= threshold;
+        });
+    }
+
+    private boolean isProductOutOfStock(Product product) {
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            return false;
+        }
+        return product.getVariants().stream().anyMatch(v -> {
+            int stock = (v.getStockQuantity() != null) ? v.getStockQuantity() : 0;
+            return stock <= 0;
+        });
+    }
+
+    private boolean matchesPrice(Product product, BigDecimal minPrice, BigDecimal maxPrice) {
+        if (minPrice == null && maxPrice == null) {
+            return true;
+        }
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            return false;
+        }
+        return product.getVariants().stream().anyMatch(v -> {
+            BigDecimal price = (v.getSalePrice() != null && v.getSalePrice().compareTo(BigDecimal.ZERO) > 0)
+                    ? v.getSalePrice()
+                    : v.getOriginalPrice();
+            if (price == null) return false;
+            boolean matchesMin = (minPrice == null || price.compareTo(minPrice) >= 0);
+            boolean matchesMax = (maxPrice == null || price.compareTo(maxPrice) <= 0);
+            return matchesMin && matchesMax;
+        });
+    }
+
+    private BigDecimal getLowestPrice(Product product) {
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            return BigDecimal.valueOf(Long.MAX_VALUE);
+        }
+        return product.getVariants().stream()
+                .map(v -> (v.getSalePrice() != null && v.getSalePrice().compareTo(BigDecimal.ZERO) > 0)
+                        ? v.getSalePrice()
+                        : v.getOriginalPrice())
+                .filter(Objects::nonNull)
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.valueOf(Long.MAX_VALUE));
+    }
+
+    private int getTotalStock(Product product) {
+        if (product.getVariants() == null || product.getVariants().isEmpty()) {
+            return 0;
+        }
+        return product.getVariants().stream()
+                .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
+                .sum();
     }
 
     @Override

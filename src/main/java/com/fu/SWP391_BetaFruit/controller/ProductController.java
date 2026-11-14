@@ -2,6 +2,7 @@ package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.ProductCreateRequest;
 import com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ShopProductFilterRequest;
 import com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest;
 import com.fu.SWP391_BetaFruit.entity.Product;
 import com.fu.SWP391_BetaFruit.entity.ProductVariant;
@@ -31,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Controller
@@ -42,11 +44,9 @@ public class ProductController {
     private final InventoryService inventoryService;
 
     // 1. DANH SÁCH HOA QUẢ CỦA CỬA HÀNG (SHOP OWNER)
-    // URL chuẩn 3 cấp: /shop/products
+    // URL chuẩn 3 cấp: /shop/products (Hỗ trợ đa bộ lọc: Trạng thái, Danh mục, Kho hàng, Mức giá, Sắp xếp)
     @GetMapping("/shop/products")
-    public String listShopProducts(@RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "page", defaultValue = "1") int page,
-            @RequestParam(value = "size", defaultValue = "5") int size,
+    public String listShopProducts(@ModelAttribute ShopProductFilterRequest filterRequest,
             HttpSession session,
             Model model) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
@@ -56,16 +56,12 @@ public class ProductController {
 
         try {
             Shop shop = productService.getShopByUserId(userId);
-            Page<Product> productPage = productService.getShopProductsPaginated(userId, keyword, page, size);
+            Map<String, Object> pageData = productService.getShopProductPageData(userId, filterRequest);
             long lowStockCount = inventoryService.countLowStockVariants(userId);
 
             model.addAttribute("shop", shop);
-            model.addAttribute("products", productPage.getContent());
-            model.addAttribute("productPage", productPage);
-            model.addAttribute("currentPage", page);
-            model.addAttribute("totalPages", productPage.getTotalPages());
-            model.addAttribute("totalItems", productPage.getTotalElements());
-            model.addAttribute("keyword", keyword != null ? keyword.trim() : "");
+            model.addAllAttributes(pageData);
+            model.addAttribute("categories", categoryService.getActiveCategories());
             model.addAttribute("lowStockCount", lowStockCount);
             model.addAttribute("lowStockVariants", inventoryService.getLowStockVariants(userId));
 
