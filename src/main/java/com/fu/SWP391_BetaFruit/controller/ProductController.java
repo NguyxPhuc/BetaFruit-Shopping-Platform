@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -70,7 +71,7 @@ public class ProductController {
     // URL chuẩn 3 cấp: /shop/products/create
     // Chỉ hiển thị và gắn cho duy nhất 1 cửa hàng mà Shop Owner đang sở hữu
     @GetMapping("/shop/products/create")
-    public String showCreateProductForm(HttpSession session, Model model) {
+    public String showCreateProductForm(HttpSession session, RedirectAttributes redirectAttributes, Model model) {
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
         if (userId == null) {
             return "redirect:/auth/login";
@@ -93,7 +94,7 @@ public class ProductController {
 
             return "shop/products/create";
         } catch (IllegalArgumentException ex) {
-            model.addAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/shop/profile";
         }
     }
@@ -126,35 +127,11 @@ public class ProductController {
                     "Vui lòng tải lên hình ảnh đại diện của hoa quả từ máy tính.");
         }
 
-        // Kiểm tra hợp lệ danh sách thực thể (biến thể)
+        validateDescriptionTrimmedLength(request.getDescription(), bindingResult);
+
+        // Kiểm tra hợp lệ danh sách thực thể (biến thể) và các lỗi binding của variants
         List<VariantItemRequest> effectiveVariants = request.getEffectiveVariants();
-        if (effectiveVariants.isEmpty()) {
-            model.addAttribute("errorMessage", "Vui lòng nhập ít nhất 1 thực thể cho hoa quả.");
-        } else {
-            for (int i = 0; i < effectiveVariants.size(); i++) {
-                VariantItemRequest v = effectiveVariants.get(i);
-                if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
-                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                            + "') phải có giá bán từ 1,000 VNĐ trở lên.");
-                    break;
-                }
-                if (v.getSalePrice() != null) {
-                    if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0
-                            || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
-                        model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                                + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá bán.");
-                        break;
-                    }
-                }
-                if (v.getStockQuantity() == null) {
-                    v.setStockQuantity(0);
-                } else if (v.getStockQuantity() < 0) {
-                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                            + "') có số lượng tồn kho không được âm.");
-                    break;
-                }
-            }
-        }
+        validateVariantsAndPopulateError(effectiveVariants, bindingResult, model);
 
         // Kiểm tra hợp lệ dữ liệu cơ bản
         if (bindingResult.hasErrors() || model.containsAttribute("errorMessage")) {
@@ -295,35 +272,11 @@ public class ProductController {
             return "redirect:/shop/products";
         }
 
-        // Kiểm tra hợp lệ danh sách thực thể (biến thể)
+        validateDescriptionTrimmedLength(request.getDescription(), bindingResult);
+
+        // Kiểm tra hợp lệ danh sách thực thể (biến thể) và các lỗi binding của variants
         List<VariantItemRequest> effectiveVariants = request.getEffectiveVariants();
-        if (effectiveVariants.isEmpty()) {
-            model.addAttribute("errorMessage", "Vui lòng nhập ít nhất 1 thực thể cho hoa quả.");
-        } else {
-            for (int i = 0; i < effectiveVariants.size(); i++) {
-                VariantItemRequest v = effectiveVariants.get(i);
-                if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
-                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                            + "') phải có giá bán từ 1,000 VNĐ trở lên.");
-                    break;
-                }
-                if (v.getSalePrice() != null) {
-                    if (v.getSalePrice().compareTo(BigDecimal.ZERO) <= 0
-                            || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0) {
-                        model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                                + "') có giá khuyến mãi phải lớn hơn 0 và nhỏ hơn giá bán.");
-                        break;
-                    }
-                }
-                if (v.getStockQuantity() == null) {
-                    v.setStockQuantity(0);
-                } else if (v.getStockQuantity() < 0) {
-                    model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                            + "') có số lượng tồn kho không được âm.");
-                    break;
-                }
-            }
-        }
+        validateVariantsAndPopulateError(effectiveVariants, bindingResult, model);
 
         // Kiểm tra lỗi validation
         if (bindingResult.hasErrors() || model.containsAttribute("errorMessage")) {
@@ -357,6 +310,75 @@ public class ProductController {
             model.addAttribute("categories", categoryService.getActiveCategories());
             model.addAttribute("originalProduct", originalProduct);
             return "shop/products/edit";
+        }
+    }
+
+    private void validateDescriptionTrimmedLength(String description, BindingResult bindingResult) {
+        if (!bindingResult.hasFieldErrors("description")
+                && description != null
+                && !description.trim().isEmpty()
+                && description.trim().length() < 20) {
+            bindingResult.rejectValue("description", "error.description",
+                    "Mô tả chi tiết hoa quả phải có ít nhất 20 ký tự.");
+        }
+    }
+
+    private void validateVariantsAndPopulateError(List<VariantItemRequest> effectiveVariants,
+            BindingResult bindingResult,
+            Model model) {
+        if (effectiveVariants.isEmpty()) {
+            model.addAttribute("errorMessage", "Vui lòng nhập ít nhất 1 thực thể cho hoa quả.");
+            return;
+        }
+
+        BigDecimal minPrice = new BigDecimal("1000");
+        for (int i = 0; i < effectiveVariants.size(); i++) {
+            VariantItemRequest v = effectiveVariants.get(i);
+            if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(minPrice) < 0) {
+                model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                        + "') phải có giá bán từ 1,000 VNĐ trở lên.");
+                return;
+            }
+            if (v.getSalePrice() != null
+                    && (v.getSalePrice().compareTo(minPrice) < 0
+                            || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0)) {
+                model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                        + "') có giá khuyến mãi phải từ 1,000 VNĐ trở lên và nhỏ hơn giá bán.");
+                return;
+            }
+            if (v.getStockQuantity() == null) {
+                v.setStockQuantity(0);
+            } else if (v.getStockQuantity() < 0) {
+                model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                        + "') có số lượng tồn kho không được âm.");
+                return;
+            }
+            if (v.getLowStockThreshold() == null) {
+                v.setLowStockThreshold(5);
+            } else if (v.getLowStockThreshold() < 0) {
+                model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
+                        + "') có mức báo sắp hết không được là số âm.");
+                return;
+            }
+        }
+
+        // Bắt các lỗi binding/validation khác (trên thực thể hoặc trường cơ bản) để luôn bật được toast lỗi
+        if (bindingResult.hasErrors() && !model.containsAttribute("errorMessage")) {
+            for (FieldError fieldError : bindingResult.getFieldErrors()) {
+                if (fieldError.getField() != null && fieldError.getField().startsWith("variants")) {
+                    String msg = fieldError.isBindingFailure()
+                            ? "Dữ liệu số ở phần thực thể không hợp lệ, vui lòng kiểm tra lại."
+                            : fieldError.getDefaultMessage();
+                    model.addAttribute("errorMessage", msg);
+                    return;
+                }
+            }
+            FieldError firstError = bindingResult.getFieldError();
+            if (firstError != null) {
+                model.addAttribute("errorMessage", firstError.isBindingFailure()
+                        ? "Dữ liệu nhập vào chưa hợp lệ, vui lòng kiểm tra lại."
+                        : firstError.getDefaultMessage());
+            }
         }
     }
 }

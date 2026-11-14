@@ -200,12 +200,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         for (VariantItemRequest vReq : variantList) {
-            if (vReq.getSalePrice() != null
-                    && (vReq.getSalePrice().compareTo(BigDecimal.ZERO) <= 0
-                            || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0)) {
-                throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName()
-                        + "' phải lớn hơn 0 và nhỏ hơn giá bán (" + vReq.getOriginalPrice() + " đ)!");
-            }
+            validateVariantItem(vReq);
         }
 
         // Lưu ảnh lên MinIO nếu có MultipartFile tải lên
@@ -635,14 +630,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         for (VariantItemRequest vReq : reqVariants) {
-            if (vReq.getOriginalPrice() == null || vReq.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
-                throw new IllegalArgumentException("Thực thể '" + vReq.getVariantName() + "' phải có giá bán từ 1,000 VNĐ trở lên.");
-            }
-            if (vReq.getSalePrice() != null) {
-                if (vReq.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0) {
-                    throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName() + "' phải lớn hơn 0 và nhỏ hơn giá bán.");
-                }
-            }
+            validateVariantItem(vReq);
         }
 
         // Lưu ảnh mới lên MinIO nếu người dùng tải tệp ảnh lên
@@ -731,6 +719,25 @@ public class ProductServiceImpl implements ProductService {
                 storageService.clearUp(List.of(uploadedMinioUrl));
             }
             throw ex;
+        }
+    }
+
+    private void validateVariantItem(VariantItemRequest vReq) {
+        BigDecimal minPrice = new BigDecimal("1000");
+        if (vReq.getOriginalPrice() == null || vReq.getOriginalPrice().compareTo(minPrice) < 0) {
+            throw new IllegalArgumentException("Thực thể '" + vReq.getVariantName() + "' phải có giá bán từ 1,000 VNĐ trở lên.");
+        }
+        if (vReq.getSalePrice() != null) {
+            if (vReq.getSalePrice().compareTo(minPrice) < 0 || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0) {
+                throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName()
+                        + "' phải từ 1,000 VNĐ trở lên và nhỏ hơn giá bán (" + vReq.getOriginalPrice() + " đ)!");
+            }
+        }
+        if (vReq.getStockQuantity() != null && vReq.getStockQuantity() < 0) {
+            throw new IllegalArgumentException("Số lượng tồn kho của thực thể '" + vReq.getVariantName() + "' không được là số âm.");
+        }
+        if (vReq.getLowStockThreshold() != null && vReq.getLowStockThreshold() < 0) {
+            throw new IllegalArgumentException("Mức báo sắp hết của thực thể '" + vReq.getVariantName() + "' không được là số âm.");
         }
     }
 }
