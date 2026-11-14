@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{shop/layout :: layout(~{::title}, 'products-create', ~{::content})}">
 <head>
@@ -1260,9 +1260,7 @@
                 const container = document.getElementById('imagePreviewContainer');
                 const fileInfo = document.getElementById('fileUploadInfo');
                 const fileNameSpan = document.getElementById('selectedFileName');
-                const urlInput = document.getElementById('imageUrl');
 
-                if (urlInput) urlInput.value = 'local-upload:' + file.name;
                 if (fileNameSpan) fileNameSpan.textContent = file.name;
                 if (fileInfo) fileInfo.classList.add('active');
 
@@ -1349,7 +1347,7 @@
 
                 <div class="col-12 col-md-6">
                     <label class="form-label small fw-bold mb-1">
-                        <span>Giá niêm yết (Giá gốc) <span class="required-badge">*</span></span>
+                        <span>Giá bán <span class="required-badge">*</span></span>
                     </label>
                     <div class="input-group input-group-sm">
                         <input type="number"
@@ -1532,7 +1530,7 @@
             input.classList.add('is-invalid');
             if (badge) badge.style.display = 'none';
             if (feedback) {
-                feedback.textContent = 'Giá khuyến mãi phải nhỏ hơn giá gốc (' + formatVND(oPrice) + ')!';
+                feedback.textContent = 'Giá khuyến mãi phải nhỏ hơn giá bán (' + formatVND(oPrice) + ')!';
                 feedback.style.display = 'block';
             }
             updateSummaryMinPrice();
@@ -1711,7 +1709,7 @@
                         }
                         if (!isNaN(oVal) && sVal >= oVal) {
                             e.preventDefault();
-                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải nhỏ hơn giá gốc (' + formatVND(oVal) + ')!');
+                            alert('Giá khuyến mãi của thực thể "' + (name ? name.value : '') + '" phải nhỏ hơn giá bán (' + formatVND(oVal) + ')!');
                             if (sale) sale.focus();
                             return false;
                         }
