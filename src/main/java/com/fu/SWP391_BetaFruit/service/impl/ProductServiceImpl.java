@@ -9,6 +9,7 @@ import com.fu.SWP391_BetaFruit.enums.*;
 import com.fu.SWP391_BetaFruit.repository.*;
 import com.fu.SWP391_BetaFruit.service.NotificationService;
 import com.fu.SWP391_BetaFruit.service.ProductService;
+import com.fu.SWP391_BetaFruit.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -40,6 +42,7 @@ public class ProductServiceImpl implements ProductService {
     private final UserRepository userRepository;
     private final MasterCategoryRepository masterCategoryRepository;
     private final NotificationService notificationService;
+    private final StorageService storageService;
 
     @Override
     public Product getProductById(Integer productId) {
@@ -191,55 +194,76 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("Danh mục hoa quả này hiện đang tạm đóng, vui lòng chọn danh mục khác!");
         }
 
-        // 1. Lưu Thực thể Product (Hoa quả)
-        Product product = new Product();
-        product.setShop(shop);
-        product.setCategory(category);
-        product.setProductName(request.getProductName().trim());
-        product.setDescription(request.getDescription().trim());
-        // Mặc định hoa quả mới đăng ký: chờ kiểm duyệt chất lượng (PENDING) và tạm ẩn (HIDDEN)
-        product.setApprovalStatus(ProductApprovalStatus.PENDING);
-        product.setVisibilityStatus(ProductVisibility.HIDDEN);
-
-        Product savedProduct = productRepository.save(product);
-
-        // 2. Lưu các Thực thể ProductVariant (Hỗ trợ nhiều quy cách đóng gói & Giá bán)
         List<VariantItemRequest> variantList = request.getEffectiveVariants();
         if (variantList.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng nhập ít nhất 1 thực thể (biến thể) cho hoa quả!");
         }
 
         for (VariantItemRequest vReq : variantList) {
-            ProductVariant variant = new ProductVariant();
-            variant.setProduct(savedProduct);
-            variant.setVariantName(vReq.getVariantName().trim());
-            variant.setOriginalPrice(vReq.getOriginalPrice());
-            
-            // Xử lý giá khuyến mãi (SalePrice): phải > 0 và < OriginalPrice để thỏa mãn CHECK constraint
-            if (vReq.getSalePrice() != null) {
-                if (vReq.getSalePrice().compareTo(BigDecimal.ZERO) <= 0 || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0) {
-                    throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName() + "' phải lớn hơn 0 và nhỏ hơn giá bán (" + vReq.getOriginalPrice() + " đ)!");
-                }
-                variant.setSalePrice(vReq.getSalePrice());
-            } else {
-                variant.setSalePrice(null);
+            if (vReq.getSalePrice() != null
+                    && (vReq.getSalePrice().compareTo(BigDecimal.ZERO) <= 0
+                            || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0)) {
+                throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName()
+                        + "' phải lớn hơn 0 và nhỏ hơn giá bán (" + vReq.getOriginalPrice() + " đ)!");
             }
-
-            variant.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
-            variant.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
-            variant.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
-            variant.setIsAvailable(true);
-
-            productVariantRepository.save(variant);
         }
 
-        // 3. Lưu Thực thể ProductImage (Ảnh đại diện hoa quả)
-        ProductImage image = new ProductImage();
-        image.setProduct(savedProduct);
-        image.setImageUrl(request.getImageUrl().trim());
-        image.setIsPrimary(true);
+        // Lưu ảnh lên MinIO nếu có MultipartFile tải lên
+        String imageUrl;
+        String uploadedMinioUrl = null;
+        MultipartFile imageFile = request.getImageFile();
+        if (imageFile != null && !imageFile.isEmpty()) {
+            storageService.validateImage(imageFile);
+            uploadedMinioUrl = storageService.storeImage(imageFile, "products");
+            imageUrl = uploadedMinioUrl;
+        } else if (request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
+            imageUrl = request.getImageUrl().trim();
+        } else {
+            throw new IllegalArgumentException("Vui lòng tải lên hình ảnh đại diện của hoa quả!");
+        }
 
-        productImageRepository.save(image);
+        Product savedProduct;
+        try {
+            // 1. Lưu Thực thể Product (Hoa quả)
+            Product product = new Product();
+            product.setShop(shop);
+            product.setCategory(category);
+            product.setProductName(request.getProductName().trim());
+            product.setDescription(request.getDescription().trim());
+            // Mặc định hoa quả mới đăng ký: chờ kiểm duyệt chất lượng (PENDING) và tạm ẩn (HIDDEN)
+            product.setApprovalStatus(ProductApprovalStatus.PENDING);
+            product.setVisibilityStatus(ProductVisibility.HIDDEN);
+
+            savedProduct = productRepository.save(product);
+
+            // 2. Lưu các Thực thể ProductVariant (Hỗ trợ nhiều quy cách đóng gói & Giá bán)
+            for (VariantItemRequest vReq : variantList) {
+                ProductVariant variant = new ProductVariant();
+                variant.setProduct(savedProduct);
+                variant.setVariantName(vReq.getVariantName().trim());
+                variant.setOriginalPrice(vReq.getOriginalPrice());
+                variant.setSalePrice(vReq.getSalePrice());
+                variant.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
+                variant.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
+                variant.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
+                variant.setIsAvailable(true);
+
+                productVariantRepository.save(variant);
+            }
+
+            // 3. Lưu Thực thể ProductImage (Ảnh đại diện hoa quả)
+            ProductImage image = new ProductImage();
+            image.setProduct(savedProduct);
+            image.setImageUrl(imageUrl);
+            image.setIsPrimary(true);
+
+            productImageRepository.save(image);
+        } catch (Exception ex) {
+            if (uploadedMinioUrl != null) {
+                storageService.clearUp(List.of(uploadedMinioUrl));
+            }
+            throw ex;
+        }
 
         // 4. Tạo thông báo hệ thống gửi đến tài khoản chủ Shop
         try {
@@ -604,33 +628,11 @@ public class ProductServiceImpl implements ProductService {
             product.setApprovalStatus(ProductApprovalStatus.PENDING);
         }
 
-        // Cập nhật ảnh đại diện nếu có
-        if (request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
-            String newImgUrl = request.getImageUrl().trim();
-            if (product.getImages() != null && !product.getImages().isEmpty()) {
-                ProductImage primaryImg = product.getImages().stream()
-                        .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
-                        .findFirst()
-                        .orElse(product.getImages().get(0));
-                primaryImg.setImageUrl(newImgUrl);
-                productImageRepository.save(primaryImg);
-            } else {
-                ProductImage newImg = new ProductImage();
-                newImg.setProduct(product);
-                newImg.setImageUrl(newImgUrl);
-                newImg.setIsPrimary(true);
-                productImageRepository.save(newImg);
-            }
-        }
-
-        // Cập nhật thực thể (Variants)
+        // Kiểm tra thực thể trước khi upload ảnh lên MinIO
         List<VariantItemRequest> reqVariants = request.getEffectiveVariants();
         if (reqVariants.isEmpty()) {
             throw new IllegalArgumentException("Hoa quả phải có ít nhất 1 thực thể!");
         }
-
-        List<ProductVariant> existingVariants = productVariantRepository.findByProduct_ProductId(productId);
-        Set<Integer> keptVariantIds = new HashSet<>();
 
         for (VariantItemRequest vReq : reqVariants) {
             if (vReq.getOriginalPrice() == null || vReq.getOriginalPrice().compareTo(new BigDecimal("1000")) < 0) {
@@ -641,52 +643,94 @@ public class ProductServiceImpl implements ProductService {
                     throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName() + "' phải lớn hơn 0 và nhỏ hơn giá bán.");
                 }
             }
-
-            if (vReq.getVariantId() != null) {
-                // Sửa biến thể có sẵn
-                ProductVariant existing = existingVariants.stream()
-                        .filter(v -> v.getVariantId().equals(vReq.getVariantId()))
-                        .findFirst()
-                        .orElse(null);
-                if (existing != null) {
-                    existing.setVariantName(vReq.getVariantName().trim());
-                    existing.setOriginalPrice(vReq.getOriginalPrice());
-                    existing.setSalePrice(vReq.getSalePrice());
-                    existing.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
-                    existing.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
-                    existing.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
-                    existing.setIsAvailable(vReq.getIsAvailable() != null ? vReq.getIsAvailable() : true);
-                    productVariantRepository.save(existing);
-                    keptVariantIds.add(existing.getVariantId());
-                }
-            } else {
-                // Tạo biến thể mới thêm vào
-                ProductVariant newV = new ProductVariant();
-                newV.setProduct(product);
-                newV.setVariantName(vReq.getVariantName().trim());
-                newV.setOriginalPrice(vReq.getOriginalPrice());
-                newV.setSalePrice(vReq.getSalePrice());
-                newV.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
-                newV.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
-                newV.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
-                newV.setIsAvailable(true);
-                ProductVariant savedV = productVariantRepository.save(newV);
-                keptVariantIds.add(savedV.getVariantId());
-            }
         }
 
-        // Với các biến thể đã bị người dùng xóa khỏi form: xóa hoặc soft-delete
-        for (ProductVariant existing : existingVariants) {
-            if (!keptVariantIds.contains(existing.getVariantId())) {
-                try {
-                    productVariantRepository.delete(existing);
-                } catch (Exception ex) {
-                    existing.setIsAvailable(false);
-                    productVariantRepository.save(existing);
-                }
-            }
+        // Lưu ảnh mới lên MinIO nếu người dùng tải tệp ảnh lên
+        String newImgUrl = null;
+        String uploadedMinioUrl = null;
+        MultipartFile imageFile = request.getImageFile();
+        if (imageFile != null && !imageFile.isEmpty()) {
+            storageService.validateImage(imageFile);
+            uploadedMinioUrl = storageService.storeImage(imageFile, "products");
+            newImgUrl = uploadedMinioUrl;
+        } else if (request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
+            newImgUrl = request.getImageUrl().trim();
         }
 
-        return productRepository.save(product);
+        try {
+            // Cập nhật ảnh đại diện nếu có
+            if (newImgUrl != null) {
+                if (product.getImages() != null && !product.getImages().isEmpty()) {
+                    ProductImage primaryImg = product.getImages().stream()
+                            .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+                            .findFirst()
+                            .orElse(product.getImages().get(0));
+                    primaryImg.setImageUrl(newImgUrl);
+                    productImageRepository.save(primaryImg);
+                } else {
+                    ProductImage newImg = new ProductImage();
+                    newImg.setProduct(product);
+                    newImg.setImageUrl(newImgUrl);
+                    newImg.setIsPrimary(true);
+                    productImageRepository.save(newImg);
+                }
+            }
+
+            List<ProductVariant> existingVariants = productVariantRepository.findByProduct_ProductId(productId);
+            Set<Integer> keptVariantIds = new HashSet<>();
+
+            for (VariantItemRequest vReq : reqVariants) {
+                if (vReq.getVariantId() != null) {
+                    // Sửa biến thể có sẵn
+                    ProductVariant existing = existingVariants.stream()
+                            .filter(v -> v.getVariantId().equals(vReq.getVariantId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (existing != null) {
+                        existing.setVariantName(vReq.getVariantName().trim());
+                        existing.setOriginalPrice(vReq.getOriginalPrice());
+                        existing.setSalePrice(vReq.getSalePrice());
+                        existing.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
+                        existing.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
+                        existing.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
+                        existing.setIsAvailable(vReq.getIsAvailable() != null ? vReq.getIsAvailable() : true);
+                        productVariantRepository.save(existing);
+                        keptVariantIds.add(existing.getVariantId());
+                    }
+                } else {
+                    // Tạo biến thể mới thêm vào
+                    ProductVariant newV = new ProductVariant();
+                    newV.setProduct(product);
+                    newV.setVariantName(vReq.getVariantName().trim());
+                    newV.setOriginalPrice(vReq.getOriginalPrice());
+                    newV.setSalePrice(vReq.getSalePrice());
+                    newV.setCostPrice(vReq.getCostPrice() != null ? vReq.getCostPrice() : BigDecimal.ZERO);
+                    newV.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
+                    newV.setLowStockThreshold(vReq.getLowStockThreshold() != null ? vReq.getLowStockThreshold() : 5);
+                    newV.setIsAvailable(true);
+                    ProductVariant savedV = productVariantRepository.save(newV);
+                    keptVariantIds.add(savedV.getVariantId());
+                }
+            }
+
+            // Với các biến thể đã bị người dùng xóa khỏi form: xóa hoặc soft-delete
+            for (ProductVariant existing : existingVariants) {
+                if (!keptVariantIds.contains(existing.getVariantId())) {
+                    try {
+                        productVariantRepository.delete(existing);
+                    } catch (Exception ex) {
+                        existing.setIsAvailable(false);
+                        productVariantRepository.save(existing);
+                    }
+                }
+            }
+
+            return productRepository.save(product);
+        } catch (Exception ex) {
+            if (uploadedMinioUrl != null) {
+                storageService.clearUp(List.of(uploadedMinioUrl));
+            }
+            throw ex;
+        }
     }
 }

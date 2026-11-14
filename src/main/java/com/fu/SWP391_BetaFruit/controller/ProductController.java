@@ -7,6 +7,7 @@ import com.fu.SWP391_BetaFruit.dto.request.VariantItemRequest;
 import com.fu.SWP391_BetaFruit.entity.Product;
 import com.fu.SWP391_BetaFruit.entity.ProductVariant;
 import com.fu.SWP391_BetaFruit.entity.Shop;
+import com.fu.SWP391_BetaFruit.exception.InvalidUploadImageException;
 import com.fu.SWP391_BetaFruit.service.CategoryService;
 import com.fu.SWP391_BetaFruit.service.InventoryService;
 import com.fu.SWP391_BetaFruit.service.ProductService;
@@ -22,18 +23,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -175,38 +169,14 @@ public class ProductController {
             return "shop/products/create";
         }
 
-        // Nếu người dùng tải ảnh từ máy tính, lưu vào thư mục uploads/products/
-        if (hasFile) {
-            try {
-                MultipartFile file = request.getImageFile();
-                String originalFilename = file.getOriginalFilename();
-                String extension = "";
-                if (originalFilename != null && originalFilename.contains(".")) {
-                    extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                }
-                String filename = UUID.randomUUID() + extension;
-                Path uploadDir = Paths.get("uploads", "products");
-                if (!Files.exists(uploadDir)) {
-                    Files.createDirectories(uploadDir);
-                }
-                Path targetLocation = uploadDir.resolve(filename);
-                Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-                request.setImageUrl("/uploads/products/" + filename);
-            } catch (IOException e) {
-                model.addAttribute("errorMessage", "Lỗi khi lưu tệp hình ảnh tải lên: " + e.getMessage());
-                model.addAttribute("shop", shop);
-                model.addAttribute("categories", categoryService.getActiveCategories());
-                return "shop/products/create";
-            }
-        }
-
+        // Ảnh đại diện sẽ được ProductServiceImpl kiểm tra định dạng và lưu lên MinIO
         try {
             Product savedProduct = productService.createProductForShop(userId, request);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Đăng ký hoa quả '" + savedProduct.getProductName()
                             + "' thành công! Sản phẩm đang trong trạng thái chờ ban quản trị phê duyệt chất lượng.");
             return "redirect:/shop/products";
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | InvalidUploadImageException ex) {
             model.addAttribute("errorMessage", ex.getMessage());
             model.addAttribute("shop", shop);
             model.addAttribute("categories", categoryService.getActiveCategories());
@@ -369,38 +339,13 @@ public class ProductController {
             return "shop/products/edit";
         }
 
-        // Nếu người dùng chọn ảnh mới tải lên từ máy tính
-        if (request.getImageFile() != null && !request.getImageFile().isEmpty()) {
-            try {
-                MultipartFile file = request.getImageFile();
-                String originalFilename = file.getOriginalFilename();
-                String extension = "";
-                if (originalFilename != null && originalFilename.contains(".")) {
-                    extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-                }
-                String filename = UUID.randomUUID() + extension;
-                Path uploadDir = Paths.get("uploads", "products");
-                if (!Files.exists(uploadDir)) {
-                    Files.createDirectories(uploadDir);
-                }
-                Path targetLocation = uploadDir.resolve(filename);
-                Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-                request.setImageUrl("/uploads/products/" + filename);
-            } catch (IOException e) {
-                model.addAttribute("errorMessage", "Lỗi khi lưu tệp hình ảnh tải lên: " + e.getMessage());
-                model.addAttribute("shop", shop);
-                model.addAttribute("categories", categoryService.getActiveCategories());
-                model.addAttribute("originalProduct", originalProduct);
-                return "shop/products/edit";
-            }
-        }
-
+        // Nếu có ảnh mới tải lên, ProductServiceImpl sẽ kiểm tra định dạng và lưu lên MinIO
         try {
             Product updatedProduct = productService.updateProductForShop(userId, id, request);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Cập nhật hoa quả '" + updatedProduct.getProductName() + "' thành công!");
             return "redirect:/shop/products";
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | InvalidUploadImageException ex) {
             model.addAttribute("errorMessage", ex.getMessage());
             model.addAttribute("shop", shop);
             model.addAttribute("categories", categoryService.getActiveCategories());
