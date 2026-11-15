@@ -1,6 +1,12 @@
 package com.fu.SWP391_BetaFruit.controller;
 
 import com.fu.SWP391_BetaFruit.dto.request.CouponRequest;
+import com.fu.SWP391_BetaFruit.dto.request.CouponDashboardFilterRequest;
+import com.fu.SWP391_BetaFruit.dto.response.CouponDashboardResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import com.fu.SWP391_BetaFruit.dto.response.CouponUsageResponse;
 import com.fu.SWP391_BetaFruit.entity.Coupon;
 import com.fu.SWP391_BetaFruit.enums.CouponCategory;
@@ -261,5 +267,41 @@ public class ShopCouponController {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/shop/coupons";
         }
+    }
+    // =========================================================================
+    // 8. DASHBOARD THỐNG KÊ CHI PHÍ & HIỆU QUẢ VOUCHER (SHOP)
+    // URL: /shop/coupons/dashboard
+    // =========================================================================
+    @GetMapping("/dashboard")
+    public String viewDashboard(@ModelAttribute("filter") CouponDashboardFilterRequest filter,
+                                HttpSession session,
+                                Model model) {
+        Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (userId == null) {
+            return "redirect:/auth/login";
+        }
+        try {
+            CouponDashboardResponse dashboardData = couponService.getShopVoucherDashboardData(userId, filter);
+            model.addAttribute("dashboard", dashboardData);
+            model.addAttribute("filter", filter);
+            return "shop/coupons/dashboard";
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("errorMessage", ex.getMessage());
+            return "redirect:/shop/coupons";
+        }
+    }
+
+    @GetMapping("/dashboard/export")
+    public ResponseEntity<byte[]> exportDashboard(HttpSession session,
+                                                  @ModelAttribute CouponDashboardFilterRequest filter) {
+        Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        byte[] csvBytes = couponService.exportShopVoucherReportCsv(userId, filter);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"BaoCao_Voucher_Shop.csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(csvBytes);
     }
 }

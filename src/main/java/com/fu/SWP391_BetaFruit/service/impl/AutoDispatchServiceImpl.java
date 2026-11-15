@@ -40,33 +40,25 @@ public class AutoDispatchServiceImpl implements AutoDispatchService {
     private final AddressRepository addressRepository;
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
 
-    @Override
-    @Transactional
-    public Optional<DeliveryAssignment> autoDispatchOrder(Integer orderId) {
-        Order order = orderRepository.findLockedById(orderId).orElse(null);
-        if (order == null) {
-            log.warn("Không tìm thấy đơn hàng #{} để tự động gán Shipper", orderId);
-            return Optional.empty();
-        }
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.fu.SWP391_BetaFruit.service.DispatchConfigService dispatchConfigService;
 
-        if (order.getOrderStatus() != OrderStatus.READY) {
-            log.info("Đơn hàng #{} không ở trạng thái READY (hiện tại: {}), bỏ qua auto-dispatch",
-                    orderId, order.getOrderStatus());
-            return Optional.empty();
-        }
+    public int getMaxOngoingOrders() {
+        return dispatchConfigService != null ? dispatchConfigService.getMaxOngoingOrders() : MAX_ONGOING_ORDERS;
+    }
 
-        if (deliveryAssignmentRepository.findByOrderOrderId(orderId).isPresent()) {
-            log.info("Đơn hàng #{} đã có bản ghi DeliveryAssignment, bỏ qua auto-dispatch", orderId);
-            return Optional.empty();
-        }
+    public BigDecimal getCodCeilingLimit() {
+        return dispatchConfigService != null ? dispatchConfigService.getCodCeilingLimit() : COD_CEILING_LIMIT;
+    }
 
+    record Candidate(Shipper shipper, long ongoingOrders, BigDecimal codDebt) {}
+
+    private List<Candidate> findEligibleCandidates(Order order, Integer excludeShipperId) {
         List<Shipper> allShippers = shipperRepository.findAll();
         if (allShippers.isEmpty()) {
-            log.warn("Hệ thống chưa có tài khoản Shipper nào để điều phối đơn #{}", orderId);
-            return Optional.empty();
+            return Collections.emptyList();
         }
 
-        // Lấy khu vực của Shop (từ địa chỉ PICKUP của Shop Owner)
         String shopCity = "";
         if (addressRepository != null && order.getShop() != null && order.getShop().getOwner() != null) {
             Integer ownerId = order.getShop().getOwner().getUserId();
@@ -74,32 +66,35 @@ public class AutoDispatchServiceImpl implements AutoDispatchService {
                     .stream().findFirst().map(Address::getCity).orElse("");
         }
 
-        // Lọc và chấm điểm các ứng viên Shipper
-        record Candidate(Shipper shipper, long ongoingOrders, BigDecimal codDebt) {}
-        List<Candidate> candidates = new ArrayList<>();
-
         BigDecimal orderAmount = (order.getFinalAmount() != null) ? order.getFinalAmount() : BigDecimal.ZERO;
         boolean isCod = (order.getPaymentMethod() == PaymentMethod.COD);
+        int maxOrders = getMaxOngoingOrders();
+        BigDecimal ceilingLimit = getCodCeilingLimit();
 
+        List<Candidate> candidates = new ArrayList<>();
         for (Shipper shipper : allShippers) {
+            if (excludeShipperId != null && shipper.getUserId().equals(excludeShipperId)) {
+                continue;
+            }
+
             User user = shipper.getUser();
             // Rule 1: Tài khoản ACTIVE
             if (user == null || user.getStatus() != UserStatus.ACTIVE) {
                 continue;
             }
 
-            // Rule 2: Cân bằng tải - số đơn dở dang < 5
+            // Rule 2: Cân bằng tải - số đơn dở dang < maxOngoingOrders
             long ongoingOrders = deliveryAssignmentRepository.countOngoingOrdersByShipper(
                     shipper.getUserId(), ONGOING_STATUSES);
-            if (ongoingOrders >= MAX_ONGOING_ORDERS) {
+            if (ongoingOrders >= maxOrders) {
                 continue;
             }
 
-            // Rule 3: Kiểm soát rủi ro công nợ COD <= 3.000.000 ₫
+            // Rule 3: Kiểm soát rủi ro công nợ COD <= codCeilingLimit
             BigDecimal currentDebt = (shipper.getCodDebt() != null) ? shipper.getCodDebt() : BigDecimal.ZERO;
             if (isCod) {
                 BigDecimal projectedDebt = currentDebt.add(orderAmount);
-                if (projectedDebt.compareTo(COD_CEILING_LIMIT) > 0) {
+                if (projectedDebt.compareTo(ceilingLimit) > 0) {
                     continue; // Bỏ qua nếu vượt trần nợ COD
                 }
             }
@@ -121,15 +116,36 @@ public class AutoDispatchServiceImpl implements AutoDispatchService {
             candidates.add(new Candidate(shipper, ongoingOrders, currentDebt));
         }
 
-        if (candidates.isEmpty()) {
-            log.warn("Tất cả Shipper đều quá tải, chạm trần COD hoặc không cùng khu vực với Shop '{}'. Đơn hàng #{} cần Operations Staff can thiệp.",
-                    shopCity, orderId);
+        candidates.sort(Comparator.comparingLong(Candidate::ongoingOrders)
+                .thenComparing(Candidate::codDebt));
+        return candidates;
+    }
+
+    @Override
+    @Transactional
+    public Optional<DeliveryAssignment> autoDispatchOrder(Integer orderId) {
+        Order order = orderRepository.findLockedById(orderId).orElse(null);
+        if (order == null) {
+            log.warn("Không tìm thấy đơn hàng #{} để tự động gán Shipper", orderId);
             return Optional.empty();
         }
 
-        // Sắp xếp ưu tiên: ít đơn dở dang nhất -> nợ COD ít nhất
-        candidates.sort(Comparator.comparingLong(Candidate::ongoingOrders)
-                .thenComparing(Candidate::codDebt));
+        if (order.getOrderStatus() != OrderStatus.READY) {
+            log.info("Đơn hàng #{} không ở trạng thái READY (hiện tại: {}), bỏ qua auto-dispatch",
+                    orderId, order.getOrderStatus());
+            return Optional.empty();
+        }
+
+        if (deliveryAssignmentRepository.findByOrderOrderId(orderId).isPresent()) {
+            log.info("Đơn hàng #{} đã có bản ghi DeliveryAssignment, bỏ qua auto-dispatch", orderId);
+            return Optional.empty();
+        }
+
+        List<Candidate> candidates = findEligibleCandidates(order, null);
+        if (candidates.isEmpty()) {
+            log.warn("Tất cả Shipper đều quá tải, chạm trần COD hoặc không cùng khu vực với Shop. Đơn hàng #{} cần Operations Staff can thiệp.", orderId);
+            return Optional.empty();
+        }
 
         Shipper selectedShipper = candidates.get(0).shipper();
         User assigner = (order.getShop() != null && order.getShop().getOwner() != null)
@@ -169,127 +185,77 @@ public class AutoDispatchServiceImpl implements AutoDispatchService {
 
     @Override
     @Transactional
-    public Optional<DeliveryAssignment> autoDispatchLeg2(Integer orderId, Integer currentShipperId) {
+    public Optional<DeliveryAssignment> autoReassignOrder(Integer orderId, Integer currentShipperId, String reason) {
         Order order = orderRepository.findLockedById(orderId).orElse(null);
-        if (order == null) {
-            log.warn("Không tìm thấy đơn hàng #{} để tự động gán Shipper chặng 2", orderId);
+        if (order == null || order.getOrderStatus() != OrderStatus.READY) {
             return Optional.empty();
         }
 
-        // Lấy địa chỉ giao hàng của Khách hàng
-        String customerCity = "";
-        if (addressRepository != null && order.getCustomer() != null) {
-            customerCity = addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(
-                    order.getCustomer().getUserId(), AddressType.SHIPPING)
-                    .stream().findFirst().map(Address::getCity).orElse("");
-        }
-        if (customerCity.isBlank() && order.getSnapshotShippingAddress() != null) {
-            customerCity = order.getSnapshotShippingAddress();
+        DeliveryAssignment existingAssignment = deliveryAssignmentRepository.findByOrderOrderId(orderId).orElse(null);
+        if (existingAssignment == null) {
+            return Optional.empty();
         }
 
-        List<Shipper> allShippers = shipperRepository.findAll();
-        BigDecimal orderAmount = (order.getFinalAmount() != null) ? order.getFinalAmount() : BigDecimal.ZERO;
-        boolean isCod = (order.getPaymentMethod() == PaymentMethod.COD);
-
-        record Candidate(Shipper shipper, long ongoingOrders, BigDecimal codDebt, String area) {}
-        List<Candidate> candidates = new ArrayList<>();
-
-        for (Shipper shipper : allShippers) {
-            // Loại trừ Shipper 1 (tài xế vừa bàn giao tại trạm)
-            if (currentShipperId != null && Objects.equals(shipper.getUserId(), currentShipperId)) {
-                continue;
-            }
-
-            User user = shipper.getUser();
-            if (user == null || user.getStatus() != UserStatus.ACTIVE) {
-                continue;
-            }
-
-            long ongoingOrders = deliveryAssignmentRepository.countOngoingOrdersByShipper(
-                    shipper.getUserId(), ONGOING_STATUSES);
-            if (ongoingOrders >= MAX_ONGOING_ORDERS) {
-                continue;
-            }
-
-            BigDecimal currentDebt = (shipper.getCodDebt() != null) ? shipper.getCodDebt() : BigDecimal.ZERO;
-            if (isCod) {
-                BigDecimal projectedDebt = currentDebt.add(orderAmount);
-                if (projectedDebt.compareTo(COD_CEILING_LIMIT) > 0) {
-                    continue;
-                }
-            }
-
-            // Kiểm tra khu vực hoạt động của Shipper 2 có khớp với Khách hàng không
-            String shipperCity = "";
-            if (addressRepository != null) {
-                shipperCity = addressRepository.findByUser_UserIdAndAddressTypeAndIsActiveTrue(
-                        shipper.getUserId(), AddressType.PICKUP)
-                        .stream().findFirst().map(Address::getCity).orElse("");
-            }
-
-            if (!isAreaMatching(customerCity, shipperCity)) {
-                log.info("Shipper #{} (khu vực: '{}') không cùng khu vực với Khách hàng (khu vực: '{}'), bỏ qua chặng 2",
-                        shipper.getUserId(), shipperCity, customerCity);
-                continue;
-            }
-
-            candidates.add(new Candidate(shipper, ongoingOrders, currentDebt, shipperCity));
-        }
-
+        // Tìm ứng viên thay thế khả dụng (loại trừ currentShipperId)
+        List<Candidate> candidates = findEligibleCandidates(order, currentShipperId);
         if (candidates.isEmpty()) {
-            log.warn("Chặng 2: Không tìm thấy Shipper khả dụng cùng khu vực khách hàng '{}'. Cần Staff can thiệp.", customerCity);
-            return Optional.empty();
+            return Optional.empty(); // Không có ai thay thế -> không swap, giữ nguyên tài xế cũ
         }
 
-        candidates.sort(Comparator.comparingLong(Candidate::ongoingOrders)
-                .thenComparing(Candidate::codDebt));
+        Shipper selectedShipper = candidates.get(0).shipper();
+        Shipper oldShipper = existingAssignment.getShipper();
+        User assigner = existingAssignment.getAssignedBy() != null ? existingAssignment.getAssignedBy() : selectedShipper.getUser();
 
-        Candidate best = candidates.get(0);
-        Shipper selectedShipper = best.shipper();
+        // 1. Thu hồi phân công cũ và tạo phân công mới
+        deliveryAssignmentRepository.delete(existingAssignment);
+        deliveryAssignmentRepository.flush();
 
-        try {
-            DeliveryAssignment assignment = deliveryAssignmentRepository.findByOrderOrderId(orderId).orElse(null);
-            if (assignment != null) {
-                assignment.setShipper(selectedShipper);
-                assignment.setAssignedBy(selectedShipper.getUser());
-                deliveryAssignmentRepository.save(assignment);
-            } else {
-                assignment = deliveryAssignmentRepository.save(
-                        new DeliveryAssignment(null, order, selectedShipper, selectedShipper.getUser(), null)
-                );
-            }
+        DeliveryAssignment newAssignment = new DeliveryAssignment(null, order, selectedShipper, assigner, null);
+        DeliveryAssignment saved = deliveryAssignmentRepository.save(newAssignment);
 
-            // Ghi lịch sử chuyển giao sang Shipper 2
-            if (orderStatusHistoryRepository != null) {
-                String note = "Hệ thống tự động điều phối Chặng 2: Gán tài xế " + selectedShipper.getUser().getFullName()
-                        + " (Khu vực: " + best.area() + ") tiếp nhận kiện hàng tại trạm ảo";
-                orderStatusHistoryRepository.save(new OrderStatusHistory(
-                        null, order, selectedShipper.getUser(), order.getOrderStatus(), order.getOrderStatus(), note, null
-                ));
-            }
+        // 2. Ghi log lịch sử chuyển giao
+        String note = String.format("Hệ thống tự động chuyển giao đơn cho tài xế mới: %s%s",
+                selectedShipper.getUser().getFullName(),
+                (reason != null && !reason.isBlank() ? " (Lý do: " + reason.trim() + ")" : ""));
+        orderStatusHistoryRepository.save(new OrderStatusHistory(
+                null, order, null, OrderStatus.READY, OrderStatus.READY, note, null
+        ));
 
-            // Bắn thông báo đẩy cho Shipper 2
+        // 3. Thông báo cho tài xế cũ
+        if (oldShipper != null && oldShipper.getUser() != null) {
             try {
                 notificationService.createBaseNotification(
-                        selectedShipper.getUser(),
-                        "🛵 Kiện hàng trung chuyển #" + orderId + " đã sẵn sàng!",
-                        "Bạn được tự động điều phối tiếp nhận đơn #" + orderId + " tại trạm ảo để giao cho khách.",
+                        oldShipper.getUser(),
+                        "⚠️ Đơn hàng #" + orderId + " đã được chuyển giao cho tài xế khác",
+                        "Đơn hàng #" + orderId + " đã được chuyển sang tài xế khác do quá hạn lấy hàng tại Shop.",
                         NotificationType.ORDER_STATUS,
-                        "/shipper/orders/" + orderId
+                        "/shipper/orders"
                 );
             } catch (Exception e) {
-                log.warn("Không thể gửi thông báo cho Shipper #{}: {}", selectedShipper.getUserId(), e.getMessage());
+                log.warn("Lỗi gửi thông báo chuyển giao cho Shipper cũ #{}: {}", oldShipper.getUserId(), e.getMessage());
             }
-
-            log.info("Auto-Dispatch Chặng 2 THÀNH CÔNG: Đơn hàng #{} đã được tự động gán cho Shipper #{} ({})",
-                    orderId, selectedShipper.getUserId(), selectedShipper.getUser().getFullName());
-
-            return Optional.of(assignment);
-        } catch (Exception e) {
-            log.error("Lỗi khi gán Chặng 2 đơn #{} cho Shipper #{}: {}", orderId, selectedShipper.getUserId(), e.getMessage());
-            return Optional.empty();
         }
+
+        // 4. Thông báo cho tài xế mới
+        String shopName = (order.getShop() != null) ? order.getShop().getShopName() : "Cửa hàng";
+        try {
+            notificationService.createBaseNotification(
+                    selectedShipper.getUser(),
+                    "🛵 Đơn hàng mới #" + orderId + " được điều phối cho bạn!",
+                    String.format("Cửa hàng %s đã chuẩn bị xong hoa quả. Vui lòng đến lấy hàng trong vòng 15 phút.", shopName),
+                    NotificationType.ORDER_STATUS,
+                    "/shipper/orders/" + orderId
+            );
+        } catch (Exception e) {
+            log.warn("Lỗi gửi thông báo cho Shipper mới #{}: {}", selectedShipper.getUserId(), e.getMessage());
+        }
+
+        log.info("Smart Handover THÀNH CÔNG: Đơn hàng #{} đã chuyển giao từ Shipper #{} sang Shipper #{}",
+                orderId, currentShipperId, selectedShipper.getUserId());
+
+        return Optional.of(saved);
     }
+
 
     private boolean isAreaMatching(String areaA, String areaB) {
         if (areaA == null || areaB == null || areaA.isBlank() || areaB.isBlank()) return true;

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,4 +44,11 @@ public interface CouponRepository extends JpaRepository<Coupon, Integer> {
     boolean existsByCouponCodeIgnoreCaseAndCouponIdNot(String couponCode, Integer couponId);
 
     Optional<Coupon> findByCouponCodeIgnoreCase(String couponCode);
+
+    @Query("SELECT c FROM Coupon c " +
+           "WHERE c.isActive = true " +
+           "  AND c.endDate >= :now " +
+           "  AND c.endDate <= :cutoffTime " +
+           "  AND (c.usageLimit IS NULL OR c.usedCount < c.usageLimit)")
+    List<Coupon> findExpiringCoupons(@Param("now") LocalDateTime now, @Param("cutoffTime") LocalDateTime cutoffTime);
 }

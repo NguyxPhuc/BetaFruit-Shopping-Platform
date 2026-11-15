@@ -25,8 +25,8 @@ public class VariantItemRequest {
     @Size(max = 100, message = "Tên thực thể tối đa 100 ký tự.")
     private String variantName;
 
-    @NotNull(message = "Giá gốc niêm yết không được để trống.")
-    @DecimalMin(value = "1000", message = "Giá gốc phải từ 1,000 VNĐ trở lên.")
+    @NotNull(message = "Giá bán không được để trống.")
+    @DecimalMin(value = "1000", message = "Giá bán phải từ 1,000 VNĐ trở lên.")
     private BigDecimal originalPrice;
 
     @DecimalMin(value = "1000", message = "Giá khuyến mãi nếu có phải từ 1,000 VNĐ trở lên.")
@@ -34,10 +34,10 @@ public class VariantItemRequest {
 
     private BigDecimal costPrice;
 
-    @NotNull(message = "Số lượng tồn kho không được để trống.")
     @Min(value = 0, message = "Số lượng tồn kho không được là số âm.")
-    private Integer stockQuantity;
+    private Integer stockQuantity = 0;
 
+    @Min(value = 0, message = "Mức báo sắp hết không được là số âm.")
     private Integer lowStockThreshold = 5;
 
     public VariantItemRequest(String variantName, BigDecimal originalPrice, BigDecimal salePrice, BigDecimal costPrice, Integer stockQuantity, Integer lowStockThreshold) {

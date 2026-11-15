@@ -51,6 +51,13 @@ public class TierCouponInitializer implements CommandLineRunner {
             stmt.execute(createTableSql);
             log.info("TierCouponInitializer: Verified/Created table TierCoupon successfully.");
 
+            // Đảm bảo cột UsageQuota tồn tại
+            String alterColumnSql = "IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'TierCoupon' AND COLUMN_NAME = 'UsageQuota') " +
+                    "BEGIN " +
+                    "    ALTER TABLE TierCoupon ADD UsageQuota INT NOT NULL CONSTRAINT DF_TierCoupon_UsageQuota DEFAULT 1; " +
+                    "END";
+            stmt.execute(alterColumnSql);
+
             // 2. Kiểm tra nếu bảng chưa có dữ liệu thì nạp dữ liệu mẫu cho các Hạng
             boolean isEmpty = true;
             try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM TierCoupon")) {

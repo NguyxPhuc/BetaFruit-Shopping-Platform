@@ -1,11 +1,14 @@
 package com.fu.SWP391_BetaFruit.service;
 
 import com.fu.SWP391_BetaFruit.dto.response.CustomerMembershipResponse;
-import com.fu.SWP391_BetaFruit.dto.response.MembershipDiscountResult;
 import com.fu.SWP391_BetaFruit.dto.response.TierUpgradeResult;
+import com.fu.SWP391_BetaFruit.entity.Coupon;
 import com.fu.SWP391_BetaFruit.entity.CustomerMembership;
 import com.fu.SWP391_BetaFruit.entity.MembershipTier;
+import com.fu.SWP391_BetaFruit.entity.TierCoupon;
 import com.fu.SWP391_BetaFruit.entity.User;
+import com.fu.SWP391_BetaFruit.enums.CouponCategory;
+import com.fu.SWP391_BetaFruit.enums.DiscountType;
 import com.fu.SWP391_BetaFruit.enums.NotificationType;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import com.fu.SWP391_BetaFruit.repository.CouponRepository;
@@ -74,29 +77,29 @@ class LoyaltyEngineTest {
         testUser.setUsername("customer_an");
         testUser.setFullName("Nguyễn Bình An");
 
-        bronzeTier = new MembershipTier(1, "Thành viên Đồng", BigDecimal.ZERO, BigDecimal.ZERO);
-        silverTier = new MembershipTier(2, "Thành viên Bạc", new BigDecimal("1000000.00"), new BigDecimal("3.00"));
-        goldTier = new MembershipTier(3, "Thành viên Vàng", new BigDecimal("5000000.00"), new BigDecimal("6.00"));
-        diamondTier = new MembershipTier(4, "Thành viên Kim Cương", new BigDecimal("15000000.00"), new BigDecimal("10.00"));
+        bronzeTier = new MembershipTier(1, "Thành viên Đồng", BigDecimal.ZERO, 0);
+        silverTier = new MembershipTier(2, "Thành viên Bạc", new BigDecimal("1000000.00"), 3);
+        goldTier = new MembershipTier(3, "Thành viên Vàng", new BigDecimal("5000000.00"), 10);
+        diamondTier = new MembershipTier(4, "Thành viên Kim Cương", new BigDecimal("15000000.00"), 25);
 
         customerMembership = new CustomerMembership(testUser.getUserId(), testUser, BigDecimal.ZERO, bronzeTier);
     }
 
     @Test
-    @DisplayName("Case 1: Khách đạt ngưỡng chi tiêu 1.000.000 ₫ -> Tự động thăng hạng Bạc và gửi thông báo")
+    @DisplayName("Case 1: Khách đạt ĐỒNG THỜI cả 2 tiêu chí (Chi tiêu >= 1.000.000 ₫ VÀ Đơn hàng >= 3 đơn) -> Tự động thăng hạng Bạc")
     void testUpgradeBySpendThreshold() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(1L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(3L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
-        // Khách hoàn thành đơn 1.200.000 ₫
+        // Khách hoàn thành đơn 1.200.000 ₫ và đạt mốc 3 đơn
         TierUpgradeResult result = membershipTierService.processOrderCompleted(10, 101, new BigDecimal("1200000.00"));
 
-        assertTrue(result.isUpgraded(), "Khách hàng phải được nâng hạng");
+        assertTrue(result.isUpgraded(), "Khách hàng phải được nâng hạng khi đạt cả chi tiêu và số đơn");
         assertEquals("Thành viên Bạc", result.getNewTierName());
-        assertEquals(new BigDecimal("3.00"), result.getNewDiscountPercent());
+        assertEquals(BigDecimal.ZERO, result.getNewDiscountPercent());
         assertEquals(new BigDecimal("1200000.00"), result.getCumulativeSpend());
 
         // Kiểm tra việc cập nhật DB
@@ -116,28 +119,41 @@ class LoyaltyEngineTest {
     }
 
     @Test
-    @DisplayName("Case 2: Tiêu chí kép Shopee - Chi tiêu chưa đủ nhưng đạt 3 đơn hoàn tất -> Vẫn thăng hạng Bạc")
+    @DisplayName("Case 2: Tiêu chí kép Shopee - Đủ 3 đơn hoàn tất nhưng chi tiêu chưa đủ (200k < 1tr) -> KHÔNG thăng hạng Bạc")
     void testUpgradeByOrderCountThreshold_ShopeeDualCriteria() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        // Chi tiêu đơn chỉ 200.000đ nhưng đây là đơn thứ 3 hoàn tất
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(3L);
+        // Chi tiêu đơn chỉ 200.000đ dù đây là đơn thứ 3 hoàn tất
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(3L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
         TierUpgradeResult result = membershipTierService.processOrderCompleted(10, 102, new BigDecimal("200000.00"));
 
-        assertTrue(result.isUpgraded(), "Tiêu chí kép Shopee: Đạt số đơn tối thiểu (3 đơn) phải được lên hạng");
-        assertEquals("Thành viên Bạc", result.getNewTierName());
-        assertEquals(new BigDecimal("3.00"), result.getNewDiscountPercent());
+        assertFalse(result.isUpgraded(), "Tiêu chí kép Shopee: Bắt buộc phải đồng thời đạt cả chi tiêu và số đơn mới được lên hạng");
+        assertEquals(new BigDecimal("200000.00"), result.getCumulativeSpend());
     }
 
     @Test
-    @DisplayName("Case 3: Thăng hạng nhảy cóc (Multi-tier Leap) - Mua đơn 16.000.000 ₫ nhảy thẳng lên Kim Cương")
+    @DisplayName("Case 3: Chi tiêu cao 16.000.000 ₫ nhưng mới có 1 đơn (< 25 đơn Kim Cương) -> KHÔNG lên Kim Cương")
+    void testSpendSufficientButOrdersInsufficient_ShouldNotUpgradeToDiamond() {
+        when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
+        when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(1L);
+        when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
+                .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
+
+        TierUpgradeResult result = membershipTierService.processOrderCompleted(10, 103, new BigDecimal("16000000.00"));
+
+        assertFalse(result.isUpgraded(), "Chi tiêu dù đạt 16tr nhưng mới có 1 đơn (< 25 đơn Kim Cương, < 3 đơn Bạc) thì không được lên hạng");
+    }
+
+    @Test
+    @DisplayName("Case 3b: Thăng hạng nhảy cóc khi ĐỒNG THỜI đạt cả 16.000.000 ₫ VÀ 25 đơn -> Lên thẳng Kim Cương")
     void testMultiTierLeap_ToDiamond() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(1L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(25L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
@@ -145,7 +161,7 @@ class LoyaltyEngineTest {
 
         assertTrue(result.isUpgraded());
         assertEquals("Thành viên Kim Cương", result.getNewTierName());
-        assertEquals(new BigDecimal("10.00"), result.getNewDiscountPercent());
+        assertEquals(BigDecimal.ZERO, result.getNewDiscountPercent());
 
         // Đảm bảo chỉ gửi đúng 1 thông báo thăng hạng cao nhất
         verify(notificationService, times(1)).createBaseNotification(
@@ -162,7 +178,7 @@ class LoyaltyEngineTest {
     void testAccumulateWithoutUpgrade() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(1L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(1L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
@@ -175,32 +191,25 @@ class LoyaltyEngineTest {
     }
 
     @Test
-    @DisplayName("Case 5: Tính toán chiết khấu đặc quyền thành viên tại Checkout (FE-09.2)")
-    void testCalculateMembershipDiscount_AtCheckout() {
-        customerMembership.setTier(goldTier); // Khách hạng Vàng (giảm 6%)
-        when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-
-        // Khách mua đơn hoa quả tạm tính 500.000 ₫
-        BigDecimal subtotal = new BigDecimal("500000.00");
-        MembershipDiscountResult discountResult = membershipTierService.calculateMembershipDiscount(10, subtotal);
-
-        assertNotNull(discountResult);
-        assertEquals("Thành viên Vàng", discountResult.getTierName());
-        assertEquals(new BigDecimal("6.00"), discountResult.getDiscountPercent());
-        assertEquals(new BigDecimal("30000.00"), discountResult.getDiscountAmount(), "Giảm 6% của 500.000 phải là 30.000 ₫");
-        assertEquals(new BigDecimal("470000.00"), discountResult.getFinalAmount(), "Thực trả phải là 470.000 ₫");
-    }
-
-    @Test
-    @DisplayName("Case 6: Lấy danh sách Voucher đặc quyền theo cấp bậc (Shopee Rewards Exclusive Vouchers)")
+    @DisplayName("Case 5: Lấy danh sách Voucher đặc quyền theo cấp bậc (Shopee Rewards Exclusive Vouchers)")
     void testGetCustomerMembershipData_WithExclusiveTierVouchers() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatus(10, OrderStatus.SUCCESS)).thenReturn(5L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(5L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc()).thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
         // Khách có 2.500.000 ₫ -> Hạng Bạc
         CustomerMembership silverMember = new CustomerMembership(10, testUser, new BigDecimal("2500000.00"), silverTier);
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(silverMember));
+
+        // Mock cấu hình TierCoupon động cho Hạng Bạc
+        Coupon silverVoucher = new Coupon();
+        silverVoucher.setCouponId(201);
+        silverVoucher.setCouponCode("SILVER_FREESHIP");
+        silverVoucher.setDiscountType(DiscountType.FIXED_AMOUNT);
+        silverVoucher.setDiscountValue(new BigDecimal("30000.00"));
+        silverVoucher.setCouponCategory(CouponCategory.SHIPPING);
+        silverVoucher.setIsActive(true);
+        when(tierCouponRepository.findByTier_TierId(2)).thenReturn(List.of(new TierCoupon(1, silverTier, silverVoucher)));
 
         CustomerMembershipResponse response = membershipTierService.getCustomerMembershipData(10);
 
@@ -210,5 +219,44 @@ class LoyaltyEngineTest {
         assertFalse(response.getTierVouchers().isEmpty(), "Hạng Bạc phải có ít nhất 1 voucher đặc quyền");
         assertEquals("SILVER_FREESHIP", response.getTierVouchers().get(0).getCouponCode());
         assertEquals("FREESHIP", response.getTierVouchers().get(0).getBadgeType());
+    }
+
+    @Test
+    @DisplayName("Case 7: Thăng hạng với tên hạng tùy biến (ví dụ: VIP Bạch Kim) và Voucher động lấy từ CSDL")
+    void testUpgradeWithCustomTierNameAndDynamicVouchers() {
+        MembershipTier customTier = new MembershipTier(5, "VIP Bạch Kim", new BigDecimal("10000000.00"), 15);
+
+        when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
+        when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(15L);
+        when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
+                .thenReturn(List.of(bronzeTier, silverTier, goldTier, customTier));
+
+        Coupon customCoupon = new Coupon();
+        customCoupon.setCouponId(301);
+        customCoupon.setCouponCode("PLATINUM_REWARD");
+        customCoupon.setIsActive(true);
+        when(tierCouponRepository.findByTier_TierId(5))
+                .thenReturn(List.of(new TierCoupon(2, customTier, customCoupon)));
+
+        TierUpgradeResult result = membershipTierService.processOrderCompleted(10, 105, new BigDecimal("10500000.00"));
+
+        assertTrue(result.isUpgraded());
+        assertEquals("VIP Bạch Kim", result.getNewTierName());
+        assertEquals("PLATINUM_REWARD", result.getWelcomeCouponCode());
+        assertTrue(result.getWelcomeMessage().contains("VIP Bạch Kim"));
+        assertTrue(result.getWelcomeMessage().contains("PLATINUM_REWARD"));
+
+        ArgumentCaptor<String> titleCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(notificationService).createBaseNotification(
+                eq(testUser),
+                titleCaptor.capture(),
+                messageCaptor.capture(),
+                eq(NotificationType.PROMOTION),
+                eq("/membership")
+        );
+        assertTrue(titleCaptor.getValue().contains("VIP Bạch Kim"));
+        assertTrue(messageCaptor.getValue().contains("PLATINUM_REWARD"));
     }
 }

@@ -1,0 +1,10 @@
+.shop-notification-menu {
+    width: min(380px, calc(100vw - 32px));
+    max-height: min(600px, 80vh);
+    overflow-y: auto;
+}
+
+.shop-notification-menu button:focus-visible {
+    outline: 2px solid var(--bs-success, #198754);
+    outline-offset: 3px;
+}

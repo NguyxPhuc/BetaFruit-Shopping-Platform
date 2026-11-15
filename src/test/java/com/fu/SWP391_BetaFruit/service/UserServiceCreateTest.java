@@ -148,8 +148,8 @@ class UserServiceCreateTest {
     }
 
     @Test
-    @DisplayName("Tạo tài khoản ADMIN thành công -> Lưu User, không tạo Cart và Membership")
-    void createUser_WhenAdminRole_ShouldNotCreateCartOrMembership() {
+    @DisplayName("Tạo tài khoản với vai trò ADMIN -> Ném ngoại lệ IllegalArgumentException chặn tạo")
+    void createUser_WhenAdminRole_ShouldThrowException() {
         UserRequest request = new UserRequest();
         request.setUsername("admin1");
         request.setPassword("AdminPass@123");
@@ -164,12 +164,40 @@ class UserServiceCreateTest {
         when(userRepository.existsByUsername("admin1")).thenReturn(false);
         when(userRepository.existsByEmail("admin1@example.com")).thenReturn(false);
         when(roleRepository.findAllById(List.of(3L))).thenReturn(List.of(adminRole));
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertDoesNotThrow(() -> userService.createUser(request));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> userService.createUser(request));
+        assertTrue(ex.getMessage().contains("Không được phép khởi tạo tài khoản với vai trò Quản trị viên (ADMIN)"));
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository, never()).save(any());
         verify(cartRepository, never()).save(any(Cart.class));
         verify(customerMembershipRepository, never()).save(any(CustomerMembership.class));
+    }
+
+    @Test
+    @DisplayName("Tạo tài khoản với nhiều vai trò có chứa ADMIN -> Ném ngoại lệ IllegalArgumentException chặn tạo")
+    void createUser_WhenMultipleRolesContainAdmin_ShouldThrowException() {
+        UserRequest request = new UserRequest();
+        request.setUsername("staff_admin");
+        request.setPassword("StaffPass@123");
+        request.setFullName("Nhân Viên Quản Trị");
+        request.setEmail("staff_admin@example.com");
+        request.setRoleIds(List.of(2L, 3L));
+
+        Role staffRole = new Role();
+        staffRole.setRoleId(2L);
+        staffRole.setRoleName(RoleName.STAFF);
+
+        Role adminRole = new Role();
+        adminRole.setRoleId(3L);
+        adminRole.setRoleName(RoleName.ADMIN);
+
+        when(userRepository.existsByUsername("staff_admin")).thenReturn(false);
+        when(userRepository.existsByEmail("staff_admin@example.com")).thenReturn(false);
+        when(roleRepository.findAllById(List.of(2L, 3L))).thenReturn(List.of(staffRole, adminRole));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> userService.createUser(request));
+        assertTrue(ex.getMessage().contains("Không được phép khởi tạo tài khoản với vai trò Quản trị viên (ADMIN)"));
+
+        verify(userRepository, never()).save(any());
     }
 }

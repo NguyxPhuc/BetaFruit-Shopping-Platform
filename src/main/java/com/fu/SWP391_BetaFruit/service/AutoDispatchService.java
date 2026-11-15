@@ -13,8 +13,9 @@ public interface AutoDispatchService {
     Optional<DeliveryAssignment> autoDispatchOrder(Integer orderId);
 
     /**
-     * Tự động quét và điều phối Shipper chặng 2 (Trạm ảo -> Khách hàng).
-     * Tìm Shipper có khu vực hoạt động trùng với địa chỉ nhận hàng của khách.
+     * Tự động tìm tài xế thay thế khả dụng (loại trừ tài xế hiện tại) cho đơn hàng quá hạn (Smart Handover).
+     * Nếu tìm được tài xế mới: thực hiện chuyển giao và trả về Optional chứa DeliveryAssignment mới.
+     * Nếu không tìm được ai khác: trả về Optional.empty() để giữ nguyên tài xế hiện tại.
      */
-    Optional<DeliveryAssignment> autoDispatchLeg2(Integer orderId, Integer currentShipperId);
+    Optional<DeliveryAssignment> autoReassignOrder(Integer orderId, Integer currentShipperId, String reason);
 }

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{shop/layout :: layout(~{::title}, 'payout-create', ~{::content})}">
+<head>
+    <title>Lập Yêu Cầu Rút Tiền | BetaFruit</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <!-- Header Trang Chuẩn Shop -->
+    <div class="mb-4 pb-2 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <div class="text-muted small mb-1">
+                <a th:href="@{/shop/balance}" class="text-decoration-none text-muted">Ví Tài Chính</a> / <span>Lập Yêu Cầu Rút</span>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">Tạo Yêu Cầu Rút Tiền</h3>
+            <p class="text-muted small mb-0">Nhập số tiền và thông tin tài khoản ngân hàng thụ hưởng để nhận giải ngân doanh thu.</p>
+        </div>
+        <div>
+            <a th:href="@{/shop/payout-request}" class="btn btn-outline-secondary fw-semibold px-3 py-2 rounded-pill shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="bi bi-clock-history"></i>
+                <span>Xem Lịch Sử Lệnh Rút</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Form Panel Card -->
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8 col-xl-7">
+            <div class="import-panel-card">
+                <div class="import-panel-header">
+                    <h2>
+                        <i class="bi bi-cash-coin text-success"></i>
+                        <span>Thông Tin Đề Nghị Rút Doanh Thu</span>
+                    </h2>
+                </div>
+
+                <div class="import-panel-body p-4 p-md-5">
+                    <form th:action="@{/shop/payout-request-form}"
+                          th:object="${payoutCreateRequest}"
+                          method="post"
+                          id="payoutForm">
+
+                        <!-- Số tiền rút -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small mb-1">
+                                Số tiền muốn rút (VNĐ) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="number"
+                                       th:field="*{requestedAmount}"
+                                       class="form-control font-monospace fw-bold text-success fs-5"
+                                       min="50000"
+                                       step="10000"
+                                       placeholder="Ví dụ: 1000000"
+                                       required>
+                                <span class="input-group-text fw-bold bg-light">VNĐ</span>
+                            </div>
+                            <span class="text-danger small mt-1 d-block"
+                                  th:if="${#fields.hasErrors('requestedAmount')}"
+                                  th:errors="*{requestedAmount}"></span>
+                            <small class="text-muted d-block mt-2" style="font-size: 0.8rem;">
+                                * Số tiền rút tối thiểu: <strong>50.000 VNĐ</strong>
+                            </small>
+                        </div>
+
+                        <!-- Ngân hàng -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small mb-1">
+                                Ngân hàng nhận tiền <span class="text-danger">*</span>
+                            </label>
+                            <select th:field="*{bankName}" class="form-select form-select-md" required>
+                                <option value="" disabled selected>-- Chọn ngân hàng thụ hưởng --</option>
+                                <option value="Ngân hàng Ngoại Thương (Vietcombank)">Vietcombank</option>
+                                <option value="Ngân hàng Kỹ Thương (Techcombank)">Techcombank</option>
+                                <option value="Ngân hàng Quân Đội (MB Bank)">MB Bank</option>
+                                <option value="Ngân hàng Công Thương (VietinBank)">VietinBank</option>
+                                <option value="Ngân hàng Nông Nghiệp & PTNT (Agribank)">Agribank</option>
+                                <option value="Ngân hàng Đầu Tư & Phát Triển (BIDV)">BIDV</option>
+                                <option value="Ngân hàng Á Châu (ACB)">ACB</option>
+                                <option value="Ngân hàng Việt Nam Thịnh Vượng (VPBank)">VPBank</option>
+                                <option value="Ngân hàng Tiên Phong (TPBank)">TPBank</option>
+                            </select>
+                            <span class="text-danger small mt-1 d-block"
+                                  th:if="${#fields.hasErrors('bankName')}"
+                                  th:errors="*{bankName}"></span>
+                        </div>
+
+                        <!-- Số tài khoản -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small mb-1">
+                                Số tài khoản ngân hàng <span class="text-danger">*</span>
+                            </label>
+                            <input type="text"
+                                   th:field="*{bankAccountNumber}"
+                                   class="form-control font-monospace"
+                                   placeholder="Ví dụ: 0071001234567"
+                                   maxlength="30"
+                                   required>
+                            <span class="text-danger small mt-1 d-block"
+                                  th:if="${#fields.hasErrors('bankAccountNumber')}"
+                                  th:errors="*{bankAccountNumber}"></span>
+                        </div>
+
+                        <!-- Tên chủ tài khoản -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small mb-1">
+                                Tên chủ tài khoản (In hoa không dấu) <span class="text-danger">*</span>
+                            </label>
+                            <input type="text"
+                                   th:field="*{accountName}"
+                                   class="form-control text-uppercase fw-semibold"
+                                   placeholder="Ví dụ: NGUYEN VAN A"
+                                   maxlength="100"
+                                   required>
+                            <span class="text-danger small mt-1 d-block"
+                                  th:if="${#fields.hasErrors('accountName')}"
+                                  th:errors="*{accountName}"></span>
+                        </div>
+
+                        <!-- Cảnh báo -->
+                        <div class="p-3 bg-light rounded-3 border mb-4 d-flex align-items-start gap-2">
+                            <i class="bi bi-shield-exclamation text-warning fs-5"></i>
+                            <div class="small text-muted">
+                                Vui lòng đảm bảo thông tin số tài khoản và tên chủ thẻ là chính xác để quá trình giải ngân diễn ra thuận lợi.
+                            </div>
+                        </div>
+
+                        <!-- Nút Submit -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-shop-primary justify-content-center py-2 fs-6">
+                                <i class="bi bi-check2-circle fs-5"></i>
+                                <span>Xác Nhận & Gửi Yêu Cầu Rút</span>
+                            </button>
+                            <a th:href="@{/shop/balance}" class="btn btn-shop-secondary justify-content-center">
+                                Hủy Bỏ
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

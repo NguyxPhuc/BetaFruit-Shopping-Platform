@@ -7,6 +7,7 @@ import com.fu.SWP391_BetaFruit.dto.response.ImportNoteItemResponse;
 import com.fu.SWP391_BetaFruit.dto.response.ImportNoteResponse;
 import com.fu.SWP391_BetaFruit.entity.*;
 import com.fu.SWP391_BetaFruit.enums.InventoryTransactionType;
+import com.fu.SWP391_BetaFruit.enums.ProductApprovalStatus;
 import com.fu.SWP391_BetaFruit.repository.*;
 import com.fu.SWP391_BetaFruit.service.ImportNoteService;
 import com.fu.SWP391_BetaFruit.utils.ImportNoteUtils;
@@ -17,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ImportNoteServiceImpl implements ImportNoteService {
@@ -31,7 +34,8 @@ public class ImportNoteServiceImpl implements ImportNoteService {
     private ShopRepository shopRepository;
 
     @Autowired
-    private ProductVariantRepository  productVariantRepository;
+    private ProductVariantRepository productVariantRepository;
+
     @Autowired
     private InventoryTransactionRepository inventoryTransactionRepository;
 
@@ -40,6 +44,22 @@ public class ImportNoteServiceImpl implements ImportNoteService {
     public void createImportNote(Integer ownerId, ImportNoteRequest importNoteRequest) throws Exception {
         Shop shop = shopRepository.findByOwner_UserId(ownerId)
                 .orElseThrow(() -> new Exception("Lỗi hệ thống: không tìm thấy thông tin shop."));
+
+        if (importNoteRequest.getDetails() == null || importNoteRequest.getDetails().isEmpty()) {
+            throw new Exception("Phiếu nhập phải có ít nhất 1 mặt hàng.");
+        }
+
+        // Kiểm tra trùng lặp phân loại trong cùng một phiếu nhập
+        Set<Integer> checkedVariantIds = new HashSet<>();
+        for (ImportNoteDetailRequest item : importNoteRequest.getDetails()) {
+            if (item.getVariantId() == null) {
+                throw new Exception("Vui lòng chọn phân loại sản phẩm cho tất cả các dòng.");
+            }
+            if (!checkedVariantIds.add(item.getVariantId())) {
+                throw new Exception("Phân loại sản phẩm không được trùng lặp trong cùng một phiếu nhập.");
+            }
+        }
+
         ImportNote importNote = new ImportNote();
         importNote.setShop(shop);
         importNote.setNote(importNoteRequest.getNote());
@@ -50,21 +70,33 @@ public class ImportNoteServiceImpl implements ImportNoteService {
         List<InventoryTransaction> transactionsToSave = new ArrayList<>();
 
         for (ImportNoteDetailRequest item : importNoteRequest.getDetails()) {
-            ProductVariant productVariant = productVariantRepository.findById(item.getVariantId())
-                    .orElseThrow(() -> new Exception("Không tìm thấy phân loại sản phẩm"));
+            // Sử dụng findForStockUpdate với PESSIMISTIC_WRITE để chống race-condition
+            ProductVariant productVariant = productVariantRepository.findForStockUpdate(item.getVariantId())
+                    .orElseThrow(() -> new Exception("Không tìm thấy phân loại sản phẩm."));
 
             if (!productVariant.getProduct().getShop().getShopId().equals(shop.getShopId())) {
                 throw new Exception("Sản phẩm không thuộc quyền quản lý của cửa hàng bạn.");
             }
-            int oldStock = productVariant.getStockQuantity();
+            if (productVariant.getProduct().getApprovalStatus() != ProductApprovalStatus.APPROVED) {
+                throw new Exception("Sản phẩm '" + productVariant.getProduct().getProductName() + "' chưa được phê duyệt hoặc đã bị từ chối.");
+            }
+
+            int oldStock = productVariant.getStockQuantity() != null ? productVariant.getStockQuantity() : 0;
             int importQty = item.getQuantity();
             int newStock = oldStock + importQty;
-
             BigDecimal lineTotal = item.getImportPrice().multiply(BigDecimal.valueOf(importQty));
             grandTotal = grandTotal.add(lineTotal);
-            if(newStock > 0){
-                BigDecimal oldTotalValue = productVariant.getCostPrice().multiply(BigDecimal.valueOf(oldStock));
-                BigDecimal newMacCost = (oldTotalValue.add(lineTotal)).divide(BigDecimal.valueOf(newStock), 2, RoundingMode.HALF_UP);
+            // Tính giá vốn bình quân di động (MAC):
+            // Nếu tồn kho cũ <= 0 hoặc giá vốn cũ null thì giá vốn mới chính bằng giá nhập mới.
+            if (newStock > 0) {
+                BigDecimal oldCost = productVariant.getCostPrice() != null ? productVariant.getCostPrice() : BigDecimal.ZERO;
+                BigDecimal newMacCost;
+                if (oldStock <= 0) {
+                    newMacCost = item.getImportPrice();
+                } else {
+                    BigDecimal oldTotalValue = oldCost.multiply(BigDecimal.valueOf(oldStock));
+                    newMacCost = (oldTotalValue.add(lineTotal)).divide(BigDecimal.valueOf(newStock), 2, RoundingMode.HALF_UP);
+                }
                 productVariant.setCostPrice(newMacCost);
             }
             productVariant.setStockQuantity(newStock);
@@ -144,7 +176,7 @@ public class ImportNoteServiceImpl implements ImportNoteService {
         response.setNote(importNote.getNote());
         response.setTotalCost(importNote.getTotalCost());
         response.setImportDate(importNote.getCreatedAt());
-        response.setImportDate(importNote.getCreatedAt());
+
         // lấy danh sách tất cả các variant đã nhập trong phiếu nhập kho
         List<ImportNoteDetail> details = importNoteDetailRepository.findByImportNote_ImportId(importId);
         List<ImportNoteItemResponse> itemResponseList = new ArrayList<>();

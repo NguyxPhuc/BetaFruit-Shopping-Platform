@@ -173,7 +173,11 @@
                 <h1 class="h3 fw-bold text-dark mb-0">Quản Lý Mã Giảm Giá Cửa Hàng</h1>
                 <p class="text-muted small mb-0 mt-1">Thiết lập các chương trình khuyến mãi, giảm giá hoa quả và hỗ trợ phí giao hàng cho khách hàng.</p>
             </div>
-            <div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/shop/coupons/dashboard}" class="btn btn-outline-warning text-dark border-warning-subtle bg-white d-inline-flex align-items-center gap-2 shadow-sm">
+                    <i class="bi bi-graph-up-arrow text-warning"></i>
+                    <span>Dashboard Thống Kê</span>
+                </a>
                 <a th:href="@{/shop/coupons/create}" class="btn btn-fruit d-inline-flex align-items-center gap-2 shadow-sm">
                     <i class="bi bi-plus-circle-fill"></i>
                     <span>Tạo mã giảm giá mới</span>

@@ -20,23 +20,29 @@
                         Theo dõi thời gian thực các đơn hàng chưa tìm được tài xế tự động, bị quá giờ lấy hàng hoặc gặp sự cố hỏng xe/tai nạn trên đường để kịp thời điều động xe cứu viện.
                     </p>
                 </div>
-                <div class="col-lg-4 text-lg-end">
+                <div class="col-lg-4 text-lg-end d-flex flex-column align-items-lg-end gap-2">
                     <span class="badge bg-light text-dark fs-6 px-3 py-2 border shadow-sm">
                         <i class="bi bi-bell-fill text-danger me-1"></i> <span th:text="${exceptions.size()}">0</span> sự cố / ngoại lệ cần xử lý
                     </span>
+                    <button type="button" class="btn btn-sm btn-light border text-dark shadow-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#configDispatchModal">
+                        <i class="bi bi-sliders me-1 text-primary"></i> Cấu Hình Ngưỡng Vận Hành
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Notices -->
-    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${successMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${errorMessage}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- Thanh thông số vận hành động (Live Dispatch Parameters) -->
+    <div class="alert alert-light border bg-white shadow-sm rounded-3 py-2 px-3 mb-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="small text-secondary d-flex align-items-center gap-3 flex-wrap">
+            <span><i class="bi bi-info-circle-fill text-primary me-1"></i><strong>Thông số vận hành hiện tại:</strong></span>
+            <span><i class="bi bi-box-seam me-1 text-primary"></i>Tải tối đa: <strong class="text-dark" th:text="${dispatchConfig != null ? dispatchConfig.maxOngoingOrders : 5} + ' đơn/tài xế'">5 đơn/tài xế</strong></span>
+            <span><i class="bi bi-cash-stack me-1 text-success"></i>Trần công nợ COD: <strong class="text-dark" th:text="${dispatchConfig != null ? #numbers.formatDecimal(dispatchConfig.codCeilingLimit, 0, 'POINT', 0, 'COMMA') + ' ₫' : '3.000.000 ₫'}">3.000.000 ₫</strong></span>
+            <span><i class="bi bi-clock-history me-1 text-danger"></i>Hạn chờ lấy hàng: <strong class="text-dark" th:text="${dispatchConfig != null ? dispatchConfig.pickupTimeoutMinutes : 15} + ' phút'">15 phút</strong></span>
+        </div>
+        <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2" data-bs-toggle="modal" data-bs-target="#configDispatchModal">
+            <i class="bi bi-pencil-square me-1"></i>Điều chỉnh
+        </button>
     </div>
 
     <!-- 1. Danh sách Đơn ngoại lệ & Sự cố khẩn cấp -->
@@ -49,16 +55,16 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0" style="min-width: 1150px;">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-4">Mã Đơn</th>
-                            <th>Cửa Hàng</th>
-                            <th>Khách Hàng &amp; Địa Chỉ</th>
-                            <th>Trạng Thái &amp; Loại Ngoại Lệ</th>
-                            <th>Tài Xế Hiện Tại</th>
-                            <th>Chi Tiết Sự Cố</th>
-                            <th class="text-end pe-4">Hành Động Cứu Viện</th>
+                            <th class="ps-3" style="width: 105px; min-width: 95px;">Mã Đơn</th>
+                            <th style="width: 160px; min-width: 140px;">Cửa Hàng</th>
+                            <th style="width: 220px; min-width: 190px;">Khách Hàng &amp; Địa Chỉ</th>
+                            <th style="width: 190px; min-width: 170px;">Trạng Thái &amp; Ngoại Lệ</th>
+                            <th style="width: 150px; min-width: 130px;">Tài Xế Hiện Tại</th>
+                            <th style="min-width: 210px;">Chi Tiết Sự Cố</th>
+                            <th class="text-end pe-3" style="width: 290px; min-width: 280px;">Hành Động Cứu Viện</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -68,45 +74,67 @@
                                 Tuyệt vời! Hiện tại không có đơn hàng nào bị sự cố hoặc cần can thiệp.
                             </td>
                         </tr>
-                        <tr th:each="ex : ${exceptions}" th:classappend="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'table-danger-subtle' : ''}">
-                            <td class="ps-4 fw-bold">
+                        <tr th:each="ex : ${exceptions}" th:classappend="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'table-danger-subtle' : (ex.exceptionType == 'PICKUP_TIMEOUT' ? 'table-warning-subtle' : '')}">
+                            <td class="ps-3 fw-bold">
                                 <span class="badge bg-light text-dark border" th:text="${ex.orderCode}">#BF000001</span>
                             </td>
                             <td>
-                                <strong th:text="${ex.shopName}">Shop Hoa Quả</strong>
+                                <strong class="text-dark" th:text="${ex.shopName}">Shop Hoa Quả</strong>
                             </td>
                             <td>
-                                <div class="fw-semibold text-dark" th:text="${ex.customerName}">Khách hàng</div>
-                                <small class="text-muted text-truncate d-inline-block" style="max-width: 200px;" th:text="${ex.shippingAddress}">Địa chỉ giao</small>
+                                <div class="fw-semibold text-dark text-truncate" style="max-width: 200px;" th:text="${ex.customerName}">Khách hàng</div>
+                                <small class="text-muted text-truncate d-inline-block" style="max-width: 200px;" th:title="${ex.shippingAddress}" th:text="${ex.shippingAddress}">Địa chỉ giao</small>
                             </td>
                             <td>
-                                <span class="badge" th:classappend="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'bg-danger text-white' : 'bg-warning text-dark'}"
-                                      th:text="${ex.exceptionType == 'INCIDENT_REPORTED' ? '⚠️ SỰ CỐ TRÊN ĐƯỜNG' : '⏳ CHƯA CÓ TÀI XẾ'}">Loại</span>
-                                <div class="small text-muted mt-1" th:text="${ex.orderStatusLabel}">Sẵn sàng giao</div>
+                                <span th:if="${ex.exceptionType == 'INCIDENT_REPORTED'}" class="badge bg-danger text-white">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>SỰ CỐ TRÊN ĐƯỜNG
+                                </span>
+                                <span th:if="${ex.exceptionType == 'UNASSIGNED'}" class="badge bg-warning-subtle text-dark border border-warning">
+                                    <i class="bi bi-hourglass-split me-1 text-warning-emphasis"></i>CHƯA CÓ TÀI XẾ
+                                </span>
+                                <span th:if="${ex.exceptionType == 'PICKUP_TIMEOUT'}" class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                    <i class="bi bi-alarm-fill me-1"></i>QUÁ GIỜ LẤY HÀNG
+                                </span>
+                                <div class="small text-muted mt-1">
+                                    <i class="bi bi-info-circle me-1"></i><span th:text="${ex.orderStatusLabel}">Sẵn sàng giao</span>
+                                </div>
                             </td>
                             <td>
-                                <span th:if="${ex.currentShipperName != 'Chưa có'}" class="badge bg-secondary" th:text="${ex.currentShipperName}">Shipper A</span>
-                                <span th:if="${ex.currentShipperName == 'Chưa có'}" class="text-muted fst-italic">Chưa gán</span>
+                                <span th:if="${ex.currentShipperName != 'Chưa có'}" class="badge bg-secondary-subtle text-dark border">
+                                    <i class="bi bi-person-fill me-1 text-secondary"></i><span th:text="${ex.currentShipperName}">Shipper A</span>
+                                </span>
+                                <span th:if="${ex.currentShipperName == 'Chưa có'}" class="text-muted fst-italic small">
+                                    <i class="bi bi-dash-circle me-1"></i>Chưa gán
+                                </span>
                             </td>
                             <td>
-                                <div class="small text-danger fw-semibold" th:text="${ex.incidentDetails}">Chi tiết sự cố</div>
+                                <div class="small text-danger fw-semibold lh-base">
+                                    <i class="bi bi-chat-left-dots-fill me-1 text-danger"></i>
+                                    <span th:text="${ex.incidentDetails}">Chi tiết sự cố</span>
+                                </div>
                             </td>
-                            <td class="text-end pe-4">
+                            <td class="text-end pe-3">
                                 <!-- Reassign / Rescue Form -->
-                                <form method="post" th:action="@{/staff/deliveries/reassign}" class="d-inline-flex gap-2 align-items-center">
+                                <form method="post" th:action="@{/staff/deliveries/reassign}" class="d-inline-block">
                                     <input type="hidden" name="orderId" th:value="${ex.orderId}">
-                                    <select name="shipperId" class="form-select form-select-sm" style="width: 230px;" required>
-                                        <option value="" disabled selected>-- Chọn tài xế cứu viện --</option>
-                                        <option th:each="s : ${shippers}" th:value="${s.shipperId}"
-                                                th:text="${s.fullName + (s.operatingCity != null ? ' [' + s.operatingCity + ']' : '') + ' (' + s.ongoingOrdersCount + ' đơn)'}"
-                                                th:disabled="${s.isOverloaded}">
-                                        </option>
-                                    </select>
-                                    <input type="hidden" name="reason" value="Điều phối cứu viện do tài xế báo cáo sự cố">
-                                    <button type="submit" class="btn btn-sm btn-danger text-nowrap"
-                                            onclick="return confirm('Xác nhận phân công tài xế mới tiếp nhận đơn hàng này?');">
-                                        <i class="bi bi-truck me-1"></i> Cứu viện
-                                    </button>
+                                    <input type="hidden" name="reason" th:value="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'Điều phối cứu viện do tài xế báo cáo sự cố' : (ex.exceptionType == 'PICKUP_TIMEOUT' ? 'Điều phối lại do tài xế cũ quá giờ lấy hàng' : 'Điều phối thủ công do hệ thống chưa gán tự động')}">
+                                    <div class="input-group input-group-sm" style="min-width: 270px; max-width: 290px;">
+                                        <select name="shipperId" class="form-select form-select-sm" required>
+                                            <option value="" disabled selected th:text="${ex.exceptionType == 'INCIDENT_REPORTED' ? '-- Chọn tài xế cứu viện --' : '-- Chọn tài xế phân công --'}">-- Chọn tài xế --</option>
+                                            <option th:each="s : ${shippers}" th:value="${s.shipperId}"
+                                                    th:with="isCodExceeded=${ex.paymentMethod == 'COD' and (s.codDebt != null ? s.codDebt : 0).add(ex.finalAmount != null ? ex.finalAmount : 0).compareTo(dispatchConfig != null ? dispatchConfig.codCeilingLimit : 3000000) > 0}"
+                                                    th:text="${s.fullName + (s.operatingCity != null ? ' [' + s.operatingCity + ']' : '') + ' (' + s.ongoingOrdersCount + ' đơn' + (s.isOverloaded ? ' - Quá tải' : (isCodExceeded ? ' - Vượt trần COD' : '')) + ')'}"
+                                                    th:disabled="${s.isOverloaded or isCodExceeded}">
+                                            </option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm text-nowrap"
+                                                th:classappend="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'btn-danger' : (ex.exceptionType == 'PICKUP_TIMEOUT' ? 'btn-warning text-dark' : 'btn-primary')}"
+                                                th:attr="data-confirm-msg=${ex.exceptionType == 'INCIDENT_REPORTED' ? 'Xác nhận phân công tài xế cứu viện tiếp nhận đơn hàng này?' : 'Xác nhận gán đơn hàng cho tài xế này?'}"
+                                                onclick="return confirm(this.getAttribute('data-confirm-msg'));">
+                                            <i th:class="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'bi bi-truck me-1' : 'bi bi-person-check-fill me-1'}"></i>
+                                            <span th:text="${ex.exceptionType == 'INCIDENT_REPORTED' ? 'Cứu viện' : 'Gán'}">Gán</span>
+                                        </button>
+                                    </div>
                                 </form>
                             </td>
                         </tr>
@@ -122,50 +150,107 @@
             <h5 class="fw-bold text-dark mb-0">
                 <i class="bi bi-people-fill text-primary me-2"></i>Đội Ngũ Shipper Khả Dụng &amp; Tải Hiện Tại
             </h5>
-            <small class="text-muted">Tự động cân bằng tải: Tối đa 5 đơn / Shipper</small>
+            <small class="text-muted">Tự động cân bằng tải: Tối đa <span th:text="${dispatchConfig != null ? dispatchConfig.maxOngoingOrders : 5}">5</span> đơn / Shipper</small>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0" style="min-width: 950px;">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-4">Mã Tài Xế</th>
-                            <th>Họ Và Tên</th>
-                            <th>Khu Vực Hoạt Động</th>
-                            <th>Số Điện Thoại</th>
-                            <th>Đơn Dở Dang (Tải)</th>
-                            <th>Công Nợ COD Hiện Tại</th>
-                            <th>Tình Trạng</th>
+                            <th class="ps-3" style="width: 110px; min-width: 90px;">Mã Tài Xế</th>
+                            <th style="width: 180px; min-width: 150px;">Họ Và Tên</th>
+                            <th style="width: 160px; min-width: 130px;">Khu Vực Hoạt Động</th>
+                            <th style="width: 130px; min-width: 110px;">Số Điện Thoại</th>
+                            <th style="width: 150px; min-width: 130px;">Đơn Dở Dang (Tải)</th>
+                            <th style="width: 180px; min-width: 150px;">Công Nợ COD Hiện Tại</th>
+                            <th class="pe-3" style="width: 180px; min-width: 160px;">Tình Trạng</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="s : ${shippers}">
-                            <td class="ps-4 font-monospace" th:text="'#SH' + ${s.shipperId}">#SH101</td>
+                            <td class="ps-3 font-monospace" th:text="'#SH' + ${s.shipperId}">#SH101</td>
                             <td class="fw-bold text-dark" th:text="${s.fullName}">Nguyễn Văn Tài</td>
                             <td>
                                 <span class="badge bg-light text-dark border" th:text="${s.operatingCity}">TP. Hồ Chí Minh</span>
                             </td>
                             <td th:text="${s.phone}">0912345678</td>
                             <td>
-                                <span class="badge" th:classappend="${s.ongoingOrdersCount >= 5 ? 'bg-danger' : (s.ongoingOrdersCount >= 3 ? 'bg-warning text-dark' : 'bg-success')}"
-                                      th:text="${s.ongoingOrdersCount + ' / 5 đơn'}">1 / 5 đơn</span>
+                                <span class="badge" th:classappend="${s.ongoingOrdersCount >= (dispatchConfig != null ? dispatchConfig.maxOngoingOrders : 5) ? 'bg-danger' : (s.ongoingOrdersCount >= 3 ? 'bg-warning text-dark' : 'bg-success')}"
+                                      th:text="${s.ongoingOrdersCount + ' / ' + (dispatchConfig != null ? dispatchConfig.maxOngoingOrders : 5) + ' đơn'}">1 / 5 đơn</span>
                             </td>
                             <td>
                                 <span class="fw-semibold" th:classappend="${s.isCodWarning ? 'text-danger' : 'text-dark'}"
                                       th:text="${#numbers.formatDecimal(s.codDebt, 0, 'POINT', 0, 'COMMA')} + ' ₫'">500.000 ₫</span>
                                 <small th:if="${s.isCodWarning}" class="badge bg-danger-subtle text-danger ms-1">Chạm trần nợ</small>
                             </td>
-                            <td>
+                            <td class="pe-3">
                                 <span th:if="${!s.isOverloaded and !s.isCodWarning}" class="badge bg-success-subtle text-success border border-success-subtle">
                                     <i class="bi bi-check-circle me-1"></i>Sẵn sàng nhận việc
                                 </span>
                                 <span th:if="${s.isOverloaded}" class="badge bg-danger-subtle text-danger border border-danger-subtle">
-                                    <i class="bi bi-exclamation-triangle me-1"></i>Quá tải (&ge; 5 đơn)
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Quá tải (&ge; <span th:text="${dispatchConfig != null ? dispatchConfig.maxOngoingOrders : 5}">5</span> đơn)
                                 </span>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cấu Hình Ngưỡng Vận Hành -->
+    <div class="modal fade" id="configDispatchModal" tabindex="-1" aria-labelledby="configDispatchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="configDispatchModalLabel">
+                        <i class="bi bi-sliders me-2"></i>Cấu Hình Thông Số Điều Phối &amp; Vận Hành
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" th:action="@{/staff/deliveries/config}">
+                    <div class="modal-body p-4">
+                        <p class="text-secondary small mb-3">
+                            Staff có thể linh hoạt điều chỉnh ngưỡng vận hành theo điều kiện thời tiết, giờ cao điểm hoặc số lượng tài xế trực ca.
+                        </p>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-box-seam me-1 text-primary"></i>Số Đơn Dở Dang Tối Đa / Shipper
+                            </label>
+                            <input type="number" name="maxOngoingOrders" class="form-control" min="1" max="50" step="1"
+                                   th:value="${dispatchConfig != null ? dispatchConfig.maxOngoingOrders : 5}" required>
+                            <div class="form-text">Tài xế đạt ngưỡng này sẽ bị đánh dấu quá tải và không được nhận thêm đơn.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-cash-stack me-1 text-success"></i>Trần Công Nợ COD Tối Đa (₫)
+                            </label>
+                            <input type="number" name="codCeilingLimit" class="form-control" min="0" step="100000"
+                                   th:value="${dispatchConfig != null ? dispatchConfig.codCeilingLimit : 3000000}" required>
+                            <div class="form-text">Tài xế nợ tiền mặt COD vượt trần này sẽ không thể nhận thêm đơn COD mới.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-clock-history me-1 text-danger"></i>Thời Gian Chờ Lấy Hàng Tối Đa (Phút)
+                            </label>
+                            <input type="number" name="pickupTimeoutMinutes" class="form-control" min="5" max="120" step="1"
+                                   th:value="${dispatchConfig != null ? dispatchConfig.pickupTimeoutMinutes : 15}" required>
+                            <div class="form-text">Sau số phút này kể từ lúc gán, nếu tài xế chưa đến Shop lấy hàng, đơn sẽ vào hàng đợi cảnh báo timeout và tự động thu hồi/tái gán.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light d-flex justify-content-between">
+                        <button type="submit" name="resetDefaults" value="true" class="btn btn-outline-secondary btn-sm"
+                                onclick="return confirm('Bạn có chắc chắn muốn khôi phục về giá trị mặc định (5 đơn, 3.000.000 ₫, 15 phút)?');">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Khôi phục mặc định
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary btn-sm px-3">
+                                <i class="bi bi-save me-1"></i>Lưu Cấu Hình
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

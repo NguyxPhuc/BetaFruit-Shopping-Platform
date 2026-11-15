@@ -258,7 +258,8 @@
                 </section>
                 <section class="detail-card">
                     <h2>Thu nhập của shop</h2>
-                    <p class="payment-note" th:if="${order.orderStatus == 'DELIVERED'}">Đơn đã giao. Tiền chưa được cộng vào số dư shop; đơn chỉ hoàn tất sau đủ 3 ngày nếu không có tranh chấp.</p>
+                    <p class="payment-note" th:if="${order.orderStatus == 'DELIVERED' or order.orderStatus == 'RECEIVED'}"
+                       th:text="${order.orderStatus == 'RECEIVED' ? 'Khách đã xác nhận nhận hàng. Tiền vẫn đang được giữ và chưa cộng vào số dư shop.' : 'Shipper đã xác nhận giao hàng. Tiền chưa được cộng vào số dư shop.'}">Trạng thái giao hàng và đối soát</p>
                     <dl class="money-lines">
                         <div><dt>Tỷ lệ phí sàn</dt><dd th:text="${#numbers.formatDecimal(detail.commissionRate, 0, 'COMMA', 2, 'POINT')} + '%'"></dd></div>
                         <div th:if="${order.couponSource == 'SHOP'}"><dt>− Voucher do shop chịu</dt><dd th:text="${#numbers.formatDecimal(detail.shopDiscountAmount, 0, 'COMMA', (detail.shopDiscountAmount.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></dd></div>

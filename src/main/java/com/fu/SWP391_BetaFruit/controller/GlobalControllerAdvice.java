@@ -3,6 +3,7 @@ package com.fu.SWP391_BetaFruit.controller;
 import com.fu.SWP391_BetaFruit.dto.response.NotificationResponse;
 import com.fu.SWP391_BetaFruit.service.NotificationService;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -19,12 +20,15 @@ public class GlobalControllerAdvice {
     private com.fu.SWP391_BetaFruit.service.CartService cartService;
 
     @ModelAttribute("cartCount")
-    public long cartCount(HttpSession session) {
+    public long cartCount(HttpSession session, HttpServletRequest request) {
+        if (isNotificationFeed(request)) return 0;
         return cartService.getItemCount((Integer) session.getAttribute("LOGGED_IN_USER_ID"));
     }
 
     @ModelAttribute
-    public void addGlobalAttributes(HttpSession session, Model model) {
+    public void addGlobalAttributes(HttpSession session, Model model, HttpServletRequest request) {
+        // Polling returns JSON; do not load the entire notification history for a page layout.
+        if (isNotificationFeed(request)) return;
         Integer userId = (Integer) session.getAttribute("LOGGED_IN_USER_ID");
 
         if (userId != null) {
@@ -40,5 +44,9 @@ public class GlobalControllerAdvice {
                 model.addAttribute("globalRecentNotifs", null);
             }
         }
+    }
+
+    private boolean isNotificationFeed(HttpServletRequest request) {
+        return request.getRequestURI().equals(request.getContextPath() + "/notifications/feed");
     }
 }

@@ -22,7 +22,7 @@ public class CheckoutPaymentService {
     private final PaymentTransactionRepository transactions;
     private final PaymentService payments;
 
-    public record State(boolean paid, boolean canPay) {}
+    public record State(boolean paid, boolean canPay, String statusLabel) {}
 
     @Transactional(readOnly = true)
     public Map<Integer, State> states(Integer customerId, List<Integer> orderIds) {
@@ -30,9 +30,19 @@ public class CheckoutPaymentService {
         for (Integer id : orderIds) {
             Order order = owned(orders.findByOrderId(id).orElseThrow(
                     () -> new IllegalArgumentException("Không tìm thấy đơn hàng.")), customerId);
-            boolean paid = paid(order);
-            result.put(id, new State(paid, order.getPaymentMethod() == PaymentMethod.VNPAY
-                    && order.getOrderStatus() == OrderStatus.PENDING && !paid));
+            List<com.fu.SWP391_BetaFruit.entity.PaymentTransaction> orderTransactions =
+                    transactions.findByOrderOrderIdOrderByCreatedAtAscTransactionIdAsc(id).stream()
+                            .filter(tx -> "VNPAY".equalsIgnoreCase(tx.getGateway())).toList();
+            boolean paid = orderTransactions.stream().anyMatch(tx -> tx.getStatus() == PaymentStatus.PAID);
+            boolean canPay = order.getPaymentMethod() == PaymentMethod.VNPAY
+                    && order.getOrderStatus() == OrderStatus.PENDING && !paid;
+            PaymentStatus latestStatus = orderTransactions.isEmpty() ? null
+                    : orderTransactions.getLast().getStatus();
+            String statusLabel = paid ? "Đã thanh toán"
+                    : canPay && latestStatus != PaymentStatus.FAILED ? "Chưa thanh toán"
+                    : latestStatus == PaymentStatus.FAILED ? "Thanh toán thất bại"
+                    : canPay ? "Chưa thanh toán" : "Chưa hoàn tất thanh toán";
+            result.put(id, new State(paid, canPay, statusLabel));
         }
         return result;
     }

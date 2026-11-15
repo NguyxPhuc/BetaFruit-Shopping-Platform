@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class CustomerReviewResponse {
     private Integer reviewId;
     private String customerName;
+    private String variantName;
     private Integer rating;
     private String comment;
     private String shopReply;

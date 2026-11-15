@@ -1,22 +1,39 @@
 package com.fu.SWP391_BetaFruit.repository;
 
 import com.fu.SWP391_BetaFruit.entity.Review;
+import com.fu.SWP391_BetaFruit.enums.ReviewVisibility;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
+import jakarta.persistence.LockModeType;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Integer> {
 
-    @Query("SELECT r FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Review r WHERE r.reviewId = :reviewId")
+    Optional<Review> findLockedById(@Param("reviewId") Integer reviewId);
+
+    Optional<Review> findByOrderItem_OrderItemId(Integer orderItemId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Review r WHERE r.reviewId = :reviewId")
+    Optional<Review> findByIdForUpdate(@Param("reviewId") Integer reviewId);
+
+    @Query(value = "SELECT r FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
            "AND (r.visibilityStatus IS NULL OR r.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ReviewVisibility.VISIBLE) " +
-           "ORDER BY r.createdAt DESC")
-    List<Review> findByProductId(@Param("productId") Integer productId);
+           "ORDER BY r.createdAt DESC",
+           countQuery = "SELECT COUNT(r) FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
+                   "AND (r.visibilityStatus IS NULL OR r.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ReviewVisibility.VISIBLE)")
+    Page<Review> findByProductId(@Param("productId") Integer productId, Pageable pageable);
 
     @Query("SELECT AVG(CAST(r.rating AS double)) FROM Review r WHERE r.orderItem.variant.product.productId = :productId " +
            "AND (r.visibilityStatus IS NULL OR r.visibilityStatus = com.fu.SWP391_BetaFruit.enums.ReviewVisibility.VISIBLE)")
@@ -28,11 +45,16 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
 
     @Query("SELECT r FROM Review r WHERE r.orderItem.variant.product.shop.shopId = :shopId " +
            "AND (:rating IS NULL OR r.rating = :rating) " +
-           "AND (:isReported IS NULL OR r.isReported = :isReported) " +
+           "AND (:isReported IS NULL OR COALESCE(r.isReported, false) = :isReported) " +
            "ORDER BY r.createdAt DESC")
     Page<Review> findShopReviews(
             @Param("shopId") Integer shopId,
             @Param("rating") Integer rating,
             @Param("isReported") Boolean isReported,
             Pageable pageable);
+
+    @Query("SELECT r.orderItem.variant.product.shop.shopId, AVG(CAST(r.rating AS double)), COUNT(r) FROM Review r " +
+           "WHERE (r.visibilityStatus IS NULL OR r.visibilityStatus = :status) " +
+           "GROUP BY r.orderItem.variant.product.shop.shopId")
+    List<Object[]> getRatingStatsGroupedByShop(@Param("status") ReviewVisibility status);
 }

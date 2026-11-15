@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{admin/layout :: layout(~{::title}, 'reviews', ~{::content})}">
 <head>
-    <title>Kiểm Duyệt Đánh Giá - BetaFruit Staff</title>
+    <title>Kiểm Duyệt Đánh Giá - BetaFruit</title>
 </head>
 <body>
 <div th:fragment="content">
@@ -24,7 +24,7 @@
         <div class="card-body p-3">
             <ul class="nav nav-pills gap-2">
                 <li class="nav-item">
-                    <a th:href="@{/staff/reviews(status='PENDING')}"
+                    <a th:href="@{${reportBasePath}(status='PENDING',size=${pageSize})}"
                        class="nav-link px-3 py-2 fw-medium d-flex align-items-center gap-2"
                        th:classappend="${currentStatus == 'PENDING'} ? 'active bg-warning text-dark' : 'text-secondary bg-light'">
                         <i class="bi bi-hourglass-split"></i>
@@ -33,7 +33,14 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a th:href="@{/staff/reviews(status='APPROVED_HIDDEN')}"
+                    <a th:href="@{${reportBasePath}(status='UNDER_REVIEW',size=${pageSize})}"
+                       class="nav-link px-3 py-2 fw-medium"
+                       th:classappend="${currentStatus == 'UNDER_REVIEW'} ? 'active bg-warning text-dark' : 'text-secondary bg-light'">
+                        Đang thụ lý <span class="badge bg-dark text-white" th:text="${underReviewCount}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{${reportBasePath}(status='APPROVED_HIDDEN',size=${pageSize})}"
                        class="nav-link px-3 py-2 fw-medium d-flex align-items-center gap-2"
                        th:classappend="${currentStatus == 'APPROVED_HIDDEN'} ? 'active bg-success text-white' : 'text-secondary bg-light'">
                         <i class="bi bi-eye-slash-fill"></i>
@@ -42,7 +49,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a th:href="@{/staff/reviews(status='REJECTED')}"
+                    <a th:href="@{${reportBasePath}(status='REJECTED',size=${pageSize})}"
                        class="nav-link px-3 py-2 fw-medium d-flex align-items-center gap-2"
                        th:classappend="${currentStatus == 'REJECTED'} ? 'active bg-danger text-white' : 'text-secondary bg-light'">
                         <i class="bi bi-x-circle-fill"></i>
@@ -51,7 +58,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a th:href="@{/staff/reviews(status='ALL')}"
+                    <a th:href="@{${reportBasePath}(status='ALL',size=${pageSize})}"
                        class="nav-link px-3 py-2 fw-medium d-flex align-items-center gap-2"
                        th:classappend="${currentStatus == 'ALL'} ? 'active bg-secondary text-white' : 'text-secondary bg-light'">
                         <i class="bi bi-collection-fill"></i>
@@ -117,20 +124,22 @@
                             <div class="small text-dark text-break" th:text="${report.explanation}">Giải trình của Shop</div>
                             <!-- Evidence link/photo if present -->
                             <div th:if="${report.evidenceUrls != null and !#strings.isEmpty(report.evidenceUrls)}" class="mt-1">
-                                <a th:href="${report.evidenceUrls}" target="_blank" class="small text-decoration-none fw-bold text-primary">
+                                <a th:if="${#strings.startsWith(#strings.toLowerCase(report.evidenceUrls), 'https://') or #strings.startsWith(#strings.toLowerCase(report.evidenceUrls), 'http://')}"
+                                   th:href="${report.evidenceUrls}" target="_blank" rel="noopener noreferrer" class="small text-decoration-none fw-bold text-primary">
                                     <i class="bi bi-image me-1"></i>Xem bằng chứng Shop gửi
                                 </a>
                             </div>
                         </td>
                         <td class="text-center">
                             <span th:if="${report.status.name() == 'PENDING'}" class="badge bg-warning-subtle text-dark border border-warning">Chờ xử lý</span>
+                            <span th:if="${report.status.name() == 'UNDER_REVIEW'}" class="badge bg-warning-subtle text-dark border border-warning">Đang thụ lý</span>
                             <span th:if="${report.status.name() == 'APPROVED_HIDDEN'}" class="badge bg-success-subtle text-success border border-success">Đã ẩn review</span>
                             <span th:if="${report.status.name() == 'REJECTED'}" class="badge bg-danger-subtle text-danger border border-danger">Bác bỏ</span>
                             <span th:if="${report.status.name() == 'REJECTED_WITH_WARNING'}" class="badge bg-danger text-white">Cảnh cáo Shop</span>
                         </td>
                         <td class="text-end">
                             <!-- Action button for PENDING reports -->
-                            <button th:if="${report.status.name() == 'PENDING'}"
+                            <button th:if="${report.status.name() == 'PENDING' or report.status.name() == 'UNDER_REVIEW'}"
                                     type="button" class="btn btn-sm btn-success fw-bold px-3 shadow-sm"
                                     data-bs-toggle="modal"
                                     th:data-bs-target="'#resolveModal' + ${report.reportId}">
@@ -138,24 +147,28 @@
                             </button>
 
                             <!-- Resolved info for completed reports -->
-                            <div th:unless="${report.status.name() == 'PENDING'}" class="small text-muted text-end">
+                            <div th:unless="${report.status.name() == 'PENDING' or report.status.name() == 'UNDER_REVIEW'}" class="small text-muted text-end">
                                 <span class="d-block text-secondary" th:text="${report.processedBy != null ? report.processedBy.fullName : 'Hệ thống'}">Staff</span>
                                 <span class="text-muted" style="font-size: 0.75rem;" th:if="${report.staffNote != null}" th:title="${report.staffNote}">
                                     <i class="bi bi-chat-left-dots me-1"></i>Có ghi chú
                                 </span>
+                                <div class="small text-break mt-1" th:text="${report.staffNote}"></div>
+                                <time th:if="${report.resolvedAt != null}" th:text="${#temporals.format(report.resolvedAt, 'dd/MM/yyyy HH:mm')}"></time>
                             </div>
 
                             <!-- Resolution Modal for each item -->
-                            <div class="modal fade text-start" th:id="'resolveModal' + ${report.reportId}" tabindex="-1" aria-hidden="true">
+                            <div th:if="${report.status.name() == 'PENDING' or report.status.name() == 'UNDER_REVIEW'}"
+                                 class="modal fade text-start" th:id="'resolveModal' + ${report.reportId}" tabindex="-1" aria-hidden="true"
+                                 th:attr="aria-labelledby=|resolveTitle${report.reportId}|">
                                 <div class="modal-dialog modal-lg modal-dialog-centered">
                                     <div class="modal-content border-0 shadow">
                                         <div class="modal-header bg-light">
-                                            <h5 class="modal-title fw-bold text-dark">
+                                            <h5 class="modal-title fw-bold text-dark" th:id="|resolveTitle${report.reportId}|">
                                                 <i class="bi bi-shield-check text-success me-2"></i>Phán Quyết Khiếu Nại Đánh Giá #<span th:text="${report.reportId}">1</span>
                                             </h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <form th:action="@{/staff/reviews/{id}/resolve(id=${report.reportId})}" method="post">
+                                        <form th:action="@{${reportBasePath + '/' + report.reportId + '/resolve'}}" method="post">
                                             <input type="hidden" name="currentStatus" th:value="${currentStatus}">
                                             <div class="modal-body p-4">
                                                 <!-- Side-by-side verification block -->
@@ -190,7 +203,8 @@
                                                             </div>
                                                             <p class="mb-2 text-dark text-break small" th:text="${report.explanation}">Giải trình của người bán</p>
                                                             <div th:if="${report.evidenceUrls != null and !#strings.isEmpty(report.evidenceUrls)}" class="mt-2">
-                                                                <a th:href="${report.evidenceUrls}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                                                                <a th:if="${#strings.startsWith(#strings.toLowerCase(report.evidenceUrls), 'https://') or #strings.startsWith(#strings.toLowerCase(report.evidenceUrls), 'http://')}"
+                                                                   th:href="${report.evidenceUrls}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100">
                                                                     <i class="bi bi-box-arrow-up-right me-1"></i>Xem link bằng chứng
                                                                 </a>
                                                             </div>
@@ -200,15 +214,15 @@
 
                                                 <!-- Staff Action Choice -->
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold text-dark">Quyết định phán xử của Staff: <span class="text-danger">*</span></label>
+                                                    <p class="form-label fw-bold text-dark">Quyết định kiểm duyệt: <span class="text-danger">*</span></p>
                                                     <div class="d-flex flex-column gap-2">
                                                         <div class="form-check p-3 border rounded-3 bg-white">
-                                                            <input class="form-check-input" type="radio" name="action" th:id="'actApprove' + ${report.reportId}" value="APPROVE_HIDE" checked>
+                                                            <input class="form-check-input" type="radio" name="action" th:id="'actApprove' + ${report.reportId}" value="APPROVE_HIDE" required>
                                                             <label class="form-check-label fw-bold text-success" th:for="'actApprove' + ${report.reportId}">
                                                                 <i class="bi bi-check-circle-fill me-1"></i>Chấp thuận khiếu nại (Ẩn đánh giá vi phạm)
                                                             </label>
                                                             <div class="text-muted small ms-4">
-                                                                Đánh giá sẽ bị chuyển sang trạng thái <strong>HIDDEN_BY_ADMIN</strong> và tự động trừ khỏi điểm Rating trung bình của hoa quả.
+                                                                Đánh giá sẽ được ẩn khỏi trang sản phẩm và không còn được tính vào điểm trung bình.
                                                             </div>
                                                         </div>
                                                         <div class="form-check p-3 border rounded-3 bg-white">
@@ -234,8 +248,8 @@
 
                                                 <!-- Staff Note -->
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold text-dark">Ghi chú xử lý của Nhân viên Vận hành:</label>
-                                                    <textarea class="form-control" name="staffNote" rows="2" placeholder="Ghi chú nội bộ hoặc lý do ngắn gọn gửi thông báo..."></textarea>
+                                                    <label class="form-label fw-bold text-dark" th:for="|staffNote${report.reportId}|">Ghi chú xử lý (tối đa 500 ký tự):</label>
+                                                    <textarea class="form-control" name="staffNote" th:id="|staffNote${report.reportId}|" rows="2" maxlength="500" placeholder="Nhập lý do đưa ra quyết định..."></textarea>
                                                 </div>
                                             </div>
                                             <div class="modal-footer bg-light">
@@ -260,13 +274,13 @@
             </span>
             <ul class="pagination pagination-sm mb-0">
                 <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled' : ''">
-                    <a class="page-link" th:href="@{/staff/reviews(status=${currentStatus}, page=${currentPage - 1})}">Trước</a>
+                    <a class="page-link" th:href="@{${reportBasePath}(status=${currentStatus}, page=${currentPage - 1},size=${pageSize})}">Trước</a>
                 </li>
                 <li th:each="p : ${#numbers.sequence(1, totalPages)}" class="page-item" th:classappend="${p == currentPage} ? 'active' : ''">
-                    <a class="page-link" th:href="@{/staff/reviews(status=${currentStatus}, page=${p})}" th:text="${p}">1</a>
+                    <a class="page-link" th:href="@{${reportBasePath}(status=${currentStatus}, page=${p},size=${pageSize})}" th:text="${p}">1</a>
                 </li>
                 <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled' : ''">
-                    <a class="page-link" th:href="@{/staff/reviews(status=${currentStatus}, page=${currentPage + 1})}">Sau</a>
+                    <a class="page-link" th:href="@{${reportBasePath}(status=${currentStatus}, page=${currentPage + 1},size=${pageSize})}">Sau</a>
                 </li>
             </ul>
         </div>

@@ -24,6 +24,7 @@ public record ShipperOrderResponse(
             case "PICKED_UP" -> "Đã lấy hàng";
             case "DELIVERING" -> "Đang giao hàng";
             case "DELIVERED" -> "Đã giao - chờ hoàn tất";
+            case "RECEIVED" -> "Khách đã nhận hàng";
             case "SUCCESS" -> "Đơn hoàn tất";
             case "FAILED" -> "Giao thất bại";
             case "CANCELLED" -> "Đã hủy";

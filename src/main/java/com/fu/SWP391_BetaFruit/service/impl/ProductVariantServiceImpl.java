@@ -34,13 +34,11 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     public List<VariantResponse> getAllVariantsByShopId(Integer userId) throws Exception {
         Shop shop = shopRepository.findByOwner_UserId(userId)
                 .orElseThrow(() -> new Exception("Không tìm thấy shop."));
-        List<ProductVariant> variantList = productVariantRepository.findAllActiveVariantsByShopOwner(userId);
+        List<ProductVariant> variantList = productVariantRepository.findAllApprovedVariantsByShopOwner(userId);
         List<VariantResponse> variantResponseList = new ArrayList<>();
         for (ProductVariant productVariant : variantList) {
             variantResponseList.add(toVariantResponse(productVariant));
         }
         return variantResponseList;
     }
-
-
 }

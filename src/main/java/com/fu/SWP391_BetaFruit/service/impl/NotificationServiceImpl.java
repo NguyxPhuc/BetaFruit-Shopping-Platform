@@ -2,6 +2,7 @@ package com.fu.SWP391_BetaFruit.service.impl;
 
 import com.fu.SWP391_BetaFruit.dto.response.NotificationResponse;
 import com.fu.SWP391_BetaFruit.entity.Notification;
+import com.fu.SWP391_BetaFruit.entity.Order;
 import com.fu.SWP391_BetaFruit.entity.User;
 import com.fu.SWP391_BetaFruit.enums.NotificationType;
 import com.fu.SWP391_BetaFruit.repository.NotificationRepository;
@@ -20,6 +21,29 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Override
+    @Transactional
+    public void notifyNewOrder(Order order) {
+        User owner = order.getShop().getOwner();
+        String actionUrl = "/shop/orders/" + order.getOrderId();
+        String title = "Bạn có đơn hàng mới #" + order.getOrderId();
+        // Payment callbacks hold the order lock, so retries cannot create duplicate alerts.
+        if (!notificationRepository.existsByUser_UserIdAndNotificationTypeAndActionUrlAndTitle(
+                owner.getUserId(), NotificationType.ORDER_STATUS, actionUrl, title)) {
+            createBaseNotification(owner, title,
+                    "Đơn hàng #" + order.getOrderId() + " đã sẵn sàng để xác nhận. Vui lòng chuẩn bị hàng để giao cho shipper.",
+                    NotificationType.ORDER_STATUS, actionUrl);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getRecentNotifications(Integer userId) {
+        if (userId == null) return Collections.emptyList();
+        return notificationRepository.findTop20ByUser_UserIdAndIsHiddenFalseOrderByCreatedAtDescNotificationIdDesc(userId)
+                .stream().map(this::toNotificationResponse).toList();
+    }
 
     @Override
     public void createBaseNotification(User user, String title, String message, NotificationType type, String actionUrl) {

@@ -98,7 +98,7 @@
         .status-CONFIRMED, .status-PREPARING, .status-READY { background: #e2e8f0; color: #4a5568; }
         .status-PICKED_UP, .status-DELIVERING { background: #eebfef; color: #6b21a8; }
         .status-DELIVERED { background: #c6f6d5; color: #22543d; border: 1px solid #48bb78; }
-        .status-SUCCESS { background: #d1fae5; color: #065f46; }
+        .status-RECEIVED, .status-SUCCESS { background: #d1fae5; color: #065f46; }
         .status-FAILED, .status-CANCELLED, .status-REJECTED { background: #fed7d7; color: #9b2c2c; }
 
         .order-item-row {
@@ -166,6 +166,12 @@
             color: #cbd5e0;
             margin-bottom: 1rem;
         }
+        .page-size-field { display:flex; flex-wrap:wrap; align-items:center; gap:8px; color:inherit; font-size:13px; }
+        .page-size-field input, .page-size-field button { width:auto; max-width:140px; min-height:40px; padding:8px 10px; border:1px solid #d6e8f5; border-radius:9px; background:#fff; color:inherit; font:inherit; }
+        .page-size-field button { cursor:pointer; }
+        .page-size-field button:hover { background:#f6faff; border-color:#8eb4ee; }
+        .page-size-field :focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+        .order-filters { flex-wrap:wrap; }
     </style>
 </head>
 <body class="orders-page">
@@ -176,14 +182,24 @@
 
         <!-- Navigation Status Tabs -->
         <nav class="status-tabs" aria-label="Bộ lọc trạng thái">
-            <a th:href="@{/orders}" class="tab-link" th:classappend="${selectedStatus == null ? 'active' : ''}">Tất cả</a>
-            <a th:href="@{/orders(status='PENDING')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'PENDING' ? 'active' : ''}">Chờ xác nhận</a>
-            <a th:href="@{/orders(status='DELIVERING')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERING' ? 'active' : ''}">Đang giao</a>
-            <a th:href="@{/orders(status='DELIVERED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERED' ? 'active' : ''}">Đã giao</a>
-            <a th:href="@{/orders(status='SUCCESS')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'SUCCESS' ? 'active' : ''}">Hoàn tất</a>
-            <a th:href="@{/orders(status='CANCELLED')}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'CANCELLED' ? 'active' : ''}">Đã hủy</a>
+            <a th:href="@{/orders(size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus == null ? 'active' : ''}">Tất cả</a>
+            <a th:href="@{/orders(status='PENDING',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'PENDING' ? 'active' : ''}">Chờ xác nhận</a>
+            <a th:href="@{/orders(status='DELIVERING',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERING' ? 'active' : ''}">Đang giao</a>
+            <a th:href="@{/orders(status='DELIVERED',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'DELIVERED' ? 'active' : ''}">Đã giao</a>
+            <a th:href="@{/orders(status='RECEIVED',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'RECEIVED' ? 'active' : ''}">Đã nhận hàng</a>
+            <a th:href="@{/orders(status='SUCCESS',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'SUCCESS' ? 'active' : ''}">Hoàn tất</a>
+            <a th:href="@{/orders(status='CANCELLED',size=${pageSize})}" class="tab-link" th:classappend="${selectedStatus != null && selectedStatus.name() == 'CANCELLED' ? 'active' : ''}">Đã hủy</a>
         </nav>
 
+        <form method="get" th:action="@{/orders}" style="margin:16px 0;">
+            <input type="hidden" name="status" th:value="${selectedStatus}" th:if="${selectedStatus != null}">
+            <div class="page-size-field">
+                <label for="page-size">Số bản ghi/trang</label>
+                <input id="page-size" name="size" type="number" min="1" max="100" step="1"
+                       th:value="${pageSize}" required aria-label="Số bản ghi mỗi trang từ 1 đến 100">
+                <button type="submit" class="page-size-apply">Áp dụng</button>
+            </div>
+        </form>
         <!-- Orders List -->
         <div th:if="${ordersPage != null && !ordersPage.isEmpty()}">
             <article class="order-card" th:each="order : ${ordersPage.content}">
@@ -196,6 +212,9 @@
                     </div>
                     <div>
                         <span class="status-badge" th:classappend="'status-' + ${order.orderStatus}" th:text="${order.orderStatusLabel}">Trạng thái</span>
+                        <span th:if="${order.paymentMethod == 'VNPAY'}" th:with="paymentState=${paymentStates[order.orderId]}"
+                              class="status-badge" style="margin-left:.35rem;background:#fff7ed;color:#9a3412;"
+                              th:text="${paymentState.statusLabel}">Chưa thanh toán</span>
                     </div>
                 </div>
 
@@ -221,6 +240,9 @@
                     </div>
                     <div class="action-btns">
                         <a th:href="@{/orders/{id}(id=${order.orderId})}" class="btn-detail">Xem chi tiết</a>
+                        <form th:if="${order.paymentMethod == 'VNPAY' and paymentStates[order.orderId].canPay}" method="post" th:action="@{/orders/{id}/pay(id=${order.orderId})}" style="display:inline;">
+                            <button type="submit" class="btn-confirm"><i class="bi bi-credit-card"></i> Thanh toán VNPay</button>
+                        </form>
                         <!-- Prominent Button if DELIVERED -->
                         <form th:if="${order.canConfirmReceived}" method="post" th:action="@{/orders/{id}/confirm-received(id=${order.orderId})}" style="display: inline;">
                             <button type="submit" class="btn-confirm" onclick="return confirm('Bạn xác nhận đã nhận đầy đủ hoa quả và hài lòng với chất lượng?');">
@@ -239,6 +261,11 @@
             <p>Khám phá hoa quả tươi ngon tại BetaFruit ngay hôm nay!</p>
             <a th:href="@{/products}" class="btn-confirm" style="display: inline-block; margin-top: 1rem; text-decoration: none;">Mua sắm ngay</a>
         </div>
+        <nav th:if="${totalPages > 1}" aria-label="Phân trang đơn mua" style="display:flex;gap:12px;align-items:center;margin:20px 0;">
+            <a th:if="${currentPage > 0}" class="btn-detail" th:href="@{/orders(status=${selectedStatus},page=${currentPage - 1},size=${pageSize})}">Trước</a>
+            <span th:text="${'Trang ' + (currentPage + 1) + ' / ' + totalPages}"></span>
+            <a th:if="${currentPage + 1 < totalPages}" class="btn-detail" th:href="@{/orders(status=${selectedStatus},page=${currentPage + 1},size=${pageSize})}">Sau</a>
+        </nav>
     </main>
 
     <div th:replace="~{fragments/footer :: footer}"></div>

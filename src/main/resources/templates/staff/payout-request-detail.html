@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'payout-management', ~{::content})}">
+<head>
+    <title>Xử Lý Yêu Cầu Rút Tiền | Staff Portal BetaFruit</title>
+</head>
+<body>
+<div th:fragment="content">
+
+    <div class="mb-4 pb-2 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <div class="text-muted small mb-1">
+                <a th:href="@{/staff/payout-request}" class="text-decoration-none text-muted">Danh Sách Duyệt Rút Tiền</a> / 
+                <span>Hồ Sơ Yêu Cầu</span>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">Kiểm Tra Hồ Sơ & Quyết Định Giải Ngân</h3>
+            <p class="text-muted small mb-0">Đối soát thông tin tài khoản ngân hàng thụ hưởng và thực hiện thao tác duyệt chuyển khoản hoặc từ chối hoàn tiền.</p>
+        </div>
+        <div>
+            <a th:href="@{/staff/payout-request}" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-semibold shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i>
+                <span>Quay Lại Danh Sách</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 justify-content-center" th:if="${detailResponse}">
+        <!-- Cột trái: Thông tin tài khoản & số tiền cần chuyển -->
+        <div class="col-12 col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <div class="card-header bg-light border-bottom p-4">
+                    <span class="badge bg-secondary-subtle text-secondary text-uppercase mb-2">HỒ SƠ THỤ HƯỞNG</span>
+                    <h4 class="fw-bold text-dark mb-0">Chi Tiết Lệnh Chuyển Khoản</h4>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- Hộp số tiền -->
+                    <div class="p-4 bg-light-subtle rounded-3 border mb-4 text-center">
+                        <span class="text-muted text-uppercase small d-block mb-1">SỐ TIỀN THỰC CHI</span>
+                        <h1 class="fw-bold text-success font-monospace mb-0" th:text="${#numbers.formatDecimal(detailResponse.requestedAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</h1>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-sm-5 text-muted small fw-semibold">Ngân hàng thụ hưởng:</div>
+                        <div class="col-sm-7 fw-bold text-dark" th:text="${detailResponse.bankName}">Vietcombank</div>
+
+                        <div class="col-sm-5 text-muted small fw-semibold">Số tài khoản:</div>
+                        <div class="col-sm-7">
+                            <span class="fw-bold font-monospace fs-5 text-primary" th:text="${detailResponse.bankAccountNumber}">0071001234567</span>
+                        </div>
+
+                        <div class="col-sm-5 text-muted small fw-semibold">Tên chủ tài khoản:</div>
+                        <div class="col-sm-7 fw-bold text-uppercase text-dark" th:text="${detailResponse.accountName}">NGUYEN VAN A</div>
+
+                        <div class="col-sm-5 text-muted small fw-semibold">Thời gian tạo yêu cầu:</div>
+                        <div class="col-sm-7 text-dark" th:text="${#temporals.format(detailResponse.createdAt, 'dd/MM/yyyy HH:mm:ss')}">15/10/2026 14:00:00</div>
+
+                        <div class="col-sm-5 text-muted small fw-semibold">Trạng thái hồ sơ:</div>
+                        <div class="col-sm-7">
+                            <span th:if="${detailResponse.status.name() == 'PENDING'}" class="badge bg-warning text-dark px-3 py-1 rounded-pill">
+                                <i class="bi bi-clock me-1"></i> Chờ Duyệt
+                            </span>
+                            <span th:if="${detailResponse.status.name() == 'COMPLETED'}" class="badge bg-success px-3 py-1 rounded-pill">
+                                <i class="bi bi-check-circle me-1"></i> Đã Hoàn Tất Giải Ngân
+                            </span>
+                            <span th:if="${detailResponse.status.name() == 'REJECTED'}" class="badge bg-danger px-3 py-1 rounded-pill">
+                                <i class="bi bi-x-circle me-1"></i> Đã Từ Chối
+                            </span>
+                        </div>
+
+                        <div class="col-sm-5 text-muted small fw-semibold">Nhân viên xử lý:</div>
+                        <div class="col-sm-7 text-dark fw-semibold" th:text="${detailResponse.processesBy}">Chưa xử lý</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Form Quyết định phê duyệt (Chỉ hiển thị khi đang PENDING) -->
+        <div class="col-12 col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden" th:if="${detailResponse.status.name() == 'PENDING'}">
+                <div class="card-header bg-dark text-white p-3 px-4">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle fs-5"></i>
+                        <span>Thực Hiện Quyết Định</span>
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form th:action="@{'/staff/payout-request/' + ${requestId} + '/process'}"
+                          method="post"
+                          id="processPayoutForm">
+
+                        <!-- Ghi chú / Lý do từ chối -->
+                        <div class="mb-4">
+                            <label for="note" class="form-label fw-bold text-dark small">
+                                Ghi chú nội bộ hoặc Lý do từ chối:
+                            </label>
+                            <textarea name="note"
+                                      id="note"
+                                      class="form-control"
+                                      rows="3"
+                                      placeholder="Ví dụ: Đã chuyển khoản qua Internet Banking mã GD #VCB123456... Hoặc: Sai tên chủ tài khoản thụ hưởng so với CCCD."></textarea>
+                            <small class="text-muted d-block mt-1">
+                                * Ghi chú này sẽ được gửi trực tiếp vào Thông báo của chủ cửa hàng nếu bạn bấm Từ Chối.
+                            </small>
+                        </div>
+
+                        <!-- 2 Nút hành động -->
+                        <div class="d-grid gap-3">
+                            <!-- Nút Chấp thuận -->
+                            <button type="submit"
+                                    name="payoutStatus"
+                                    value="COMPLETED"
+                                    class="btn btn-success btn-lg rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
+                                    onclick="return confirm('Bạn xác nhận ĐÃ CHUYỂN KHOẢN thành công cho Shop và muốn DUYỆT yêu cầu này?');">
+                                <i class="bi bi-check2-circle fs-5"></i>
+                                <span>Phê Duyệt & Giải Ngân</span>
+                            </button>
+
+                            <!-- Nút Từ chối -->
+                            <button type="submit"
+                                    name="payoutStatus"
+                                    value="REJECTED"
+                                    class="btn btn-outline-danger btn-lg rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2"
+                                    onclick="return confirm('Bạn có chắc chắn muốn TỪ CHỐI yêu cầu rút tiền này? Tiền sẽ được tự động hoàn lại ví cho Shop.');">
+                                <i class="bi bi-x-circle fs-5"></i>
+                                <span>Từ Chối & Hoàn Tiền Ví</span>
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+            <!-- Trường hợp đã được xử lý xong -->
+            <div class="alert alert-secondary border-0 shadow-sm rounded-4 p-4 text-center" th:if="${detailResponse.status.name() != 'PENDING'}">
+                <i class="bi bi-check-all fs-1 text-success d-block mb-2"></i>
+                <h6 class="fw-bold text-dark">Hồ sơ này đã được kết thúc xử lý!</h6>
+                <p class="small text-muted mb-0">Không thể thay đổi trạng thái sau khi đã có quyết định Phê duyệt hoặc Từ chối.</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

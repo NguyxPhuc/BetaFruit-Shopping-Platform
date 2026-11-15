@@ -12,5 +12,6 @@ public interface CustomerProductService {
     CustomerProductPageResponse getProductsPage(ProductFilterRequest request);
     List<CustomerProductCardResponse> getFeaturedProducts(int limit);
     CustomerProductDetailResponse getProductDetail(Integer productId);
+    CustomerProductDetailResponse getProductDetail(Integer productId, int reviewPage);
     List<MasterCategory> getAllActiveCategories();
 }

@@ -16,6 +16,40 @@
 
     <!-- Actions Bên Phải: Profile Info & Quick Link -->
     <div class="shop-topbar-actions">
+        <div class="dropdown" id="shop-live-notifications" th:if="${session.LOGGED_IN_USER_ID != null}"
+             th:data-feed-url="@{/notifications/feed}" th:data-read-base="@{/notifications/read/}">
+            <button class="btn btn-outline-secondary position-relative" type="button" id="shop-notification-toggle"
+                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="Thông báo">
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                <span data-notification-count class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                      th:classappend="${globalUnreadCount == null or globalUnreadCount == 0} ? 'd-none' : ''"
+                      th:text="${globalUnreadCount ?: 0}">0</span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end p-0 shop-notification-menu" aria-labelledby="shop-notification-toggle">
+                <div class="d-flex align-items-center justify-content-between gap-2 border-bottom p-3">
+                    <strong>Thông báo</strong>
+                    <form th:action="@{/notifications/read-all}" method="post">
+                        <button type="submit" class="btn btn-sm btn-link">Đọc tất cả</button>
+                    </form>
+                </div>
+                <div data-notification-list>
+                    <p class="text-muted p-3 mb-0" th:if="${#lists.isEmpty(globalRecentNotifs)}">Bạn chưa có thông báo nào.</p>
+                    <div th:each="notif, state : ${globalRecentNotifs}" th:if="${state.index < 20}"
+                         class="border-bottom p-3" th:classappend="${notif.isRead != true} ? 'bg-light' : ''">
+                        <form th:action="@{/notifications/read/{id}(id=${notif.notificationId})}" method="post">
+                            <input type="hidden" name="redirect" th:value="${notif.actionUrl}">
+                            <button type="submit" class="btn btn-link text-start text-decoration-none p-0 w-100">
+                                <span class="d-block fw-semibold text-dark" th:text="${notif.title}">Đơn hàng mới</span>
+                                <span class="d-block small text-secondary text-break" th:text="${notif.message}">Nội dung thông báo</span>
+                                <span class="d-block small text-muted mt-1" th:text="${notif.createdAt == null ? '' : #temporals.format(notif.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <a th:href="@{/shop/orders}" class="d-block text-center p-3 text-decoration-none">Xem đơn hàng của shop</a>
+            </div>
+        </div>
+        <span class="visually-hidden" id="shop-notification-announcement" role="status" aria-live="polite"></span>
         <!-- Profile Mini Card -->
         <a th:href="@{/shop/profile}" href="/shop/profile" class="text-decoration-none">
             <div class="shop-owner-mini-card">

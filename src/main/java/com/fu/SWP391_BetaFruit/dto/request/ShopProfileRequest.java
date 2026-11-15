@@ -1,5 +1,6 @@
 package com.fu.SWP391_BetaFruit.dto.request;
 
+import com.fu.SWP391_BetaFruit.utils.RegexUtils;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -23,7 +24,7 @@ public class ShopProfileRequest {
     private String email;
 
     @NotBlank(message = "Vui lòng nhập số điện thoại")
-    @Pattern(regexp = "^(0[3|5|7|8|9])+([0-9]{8})$", message = "Số điện thoại không hợp lệ (Phải là số Việt Nam gồm 10 chữ số)")
+    @Pattern(regexp = RegexUtils.PHONE_REGEX, message = "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng các đầu số 03, 05, 07, 08 hoặc 09")
     @Size(max = 20, message = "Số điện thoại không được vượt quá 20 ký tự")
     private String phone;
 

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/layout :: layout(~{::title}, 'cod-collections', ~{::content})}">
+<head>
+    <title>Lập Phiếu Thu COD - BetaFruit Staff</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a th:href="@{/staff/cod-collections}">Thu &amp; Đối Soát COD</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Lập Phiếu Thu Tiền</li>
+                </ol>
+            </nav>
+            <h3 class="fw-bold text-dark mb-0">Lập Phiếu Thu Tiền COD Từ Tài Xế</h3>
+        </div>
+        <a th:href="@{/staff/cod-collections}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+    </div>
+
+
+    <!-- Step 1: Select Shipper Card -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-person-badge text-primary me-2"></i>Bước 1: Chọn Tài Xế Nộp Tiền
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="get" th:action="@{/staff/cod-collections/create}" id="selectShipperForm" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">Nhân viên giao hàng (Shipper)</label>
+                    <select name="shipperId" class="form-select form-select-lg" onchange="document.getElementById('selectShipperForm').submit()">
+                        <option value="">-- Vui lòng chọn tài xế để đối soát --</option>
+                        <option th:each="sh : ${allShippers}"
+                                th:value="${sh.userId}"
+                                th:text="${sh.user.fullName} + ' (SĐT: ' + ${sh.user.phone != null ? sh.user.phone : 'N/A'} + ') — Nợ COD: ' + ${#numbers.formatDecimal(sh.codDebt != null ? sh.codDebt : 0, 0, 'POINT', 0, 'COMMA')} + ' ₫'"
+                                th:selected="${selectedShipperId != null and selectedShipperId == sh.userId}">
+                            Tài xế Nam
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-4" th:if="${selectedShipperId != null}">
+                    <div class="p-3 bg-light rounded-3 border">
+                        <small class="text-muted d-block text-uppercase fw-bold">Công nợ hiện tại trên hệ thống</small>
+                        <span class="fs-4 fw-bold text-danger" th:text="${#numbers.formatDecimal(currentDebt, 0, 'POINT', 0, 'COMMA')} + ' ₫'">0 ₫</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Step 2: Select Orders to Remit -->
+    <div class="card shadow-sm border-0 rounded-3 mb-4" th:if="${selectedShipperId != null}">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold text-dark mb-0">
+                <i class="bi bi-check2-square text-success me-2"></i>Bước 2: Chọn Các Đơn Hàng Đối Soát Nộp Tiền
+            </h5>
+            <span class="badge bg-primary-subtle text-primary border" th:text="${#lists.size(pendingAssignments)} + ' đơn chờ nộp'">0 đơn</span>
+        </div>
+        <div class="card-body p-0">
+            <form method="post" th:action="@{/staff/cod-collections/create}" id="remitForm" th:if="${not #lists.isEmpty(pendingAssignments)}">
+                <input type="hidden" name="shipperId" th:value="${selectedShipperId}">
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 48px;" class="text-center">
+                                    <input type="checkbox" id="selectAllCheckbox" class="form-check-input" checked onchange="toggleSelectAll(this)">
+                                </th>
+                                <th>MÃ ĐƠN</th>
+                                <th>KHÁCH HÀNG &amp; ĐỊA CHỈ</th>
+                                <th>CỬA HÀNG</th>
+                                <th>TIỀN COD CẦN THU</th>
+                                <th>TRẠNG THÁI GIAO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="assignment : ${pendingAssignments}">
+                                <td class="text-center">
+                                    <input type="checkbox" name="orderIds" th:value="${assignment.order.orderId}"
+                                           th:attr="data-amount=${assignment.order.finalAmount}"
+                                           class="form-check-input order-checkbox" checked onchange="recalculateTotal()">
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-primary" th:text="'#' + ${assignment.order.orderId}">#1</span>
+                                    <div class="small text-muted" th:text="'BF' + ${#numbers.formatInteger(assignment.order.orderId, 6)}">BF000001</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark" th:text="${assignment.order.customer.fullName}">Nguyễn Văn A</div>
+                                    <small class="text-muted text-truncate d-inline-block" style="max-width: 280px;" th:text="${assignment.order.snapshotShippingAddress}">Hà Nội</small>
+                                </td>
+                                <td th:text="${assignment.order.shop.shopName}">Nông sản Đà Lạt</td>
+                                <td>
+                                    <span class="fw-bold text-danger" th:text="${#numbers.formatDecimal(assignment.order.finalAmount, 0, 'POINT', 0, 'COMMA')} + ' ₫'">100.000 ₫</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                        <i class="bi bi-check-circle me-1"></i>Đã giao khách
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer Summary & Submit -->
+                <div class="p-4 bg-light border-top d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <div class="text-muted small text-uppercase fw-bold">Tổng số tiền mặt thu về Hub lần này:</div>
+                        <div class="fs-3 fw-bold text-success" id="totalAmountDisplay">0 ₫</div>
+                        <small class="text-muted">Đã chọn <span id="selectedCountDisplay">0</span> đơn hàng</small>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-lg px-4 fw-bold shadow-sm" onclick="return confirm('Bạn xác nhận ĐÃ NHẬN ĐỦ số tiền mặt trên từ Shipper và đồng ý tất toán cấn trừ nợ?');">
+                        <i class="bi bi-check2-circle me-2"></i> Xác Nhận Thu Tiền &amp; Tất Toán Nợ
+                    </button>
+                </div>
+            </form>
+
+            <div th:if="${#lists.isEmpty(pendingAssignments)}" class="text-center py-5 text-muted">
+                <i class="bi bi-shield-check text-success fs-1 d-block mb-3"></i>
+                <h5>Tài xế này hiện không có đơn COD nào tồn đọng cần nộp!</h5>
+                <p class="mb-0 text-muted">Toàn bộ các đơn COD đã giao của tài xế đều đã được lập phiếu thu và đối soát trước đó.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    function toggleSelectAll(source) {
+        const checkboxes = document.querySelectorAll('.order-checkbox');
+        checkboxes.forEach(cb => cb.checked = source.checked);
+        recalculateTotal();
+    }
+
+    function recalculateTotal() {
+        const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+        let total = 0;
+        checkboxes.forEach(cb => {
+            const val = parseFloat(cb.getAttribute('data-amount') || 0);
+            total += val;
+        });
+        document.getElementById('selectedCountDisplay').innerText = checkboxes.length;
+        document.getElementById('totalAmountDisplay').innerText = total.toLocaleString('vi-VN') + ' ₫';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        recalculateTotal();
+    });
+</script>
+</body>
+</html>

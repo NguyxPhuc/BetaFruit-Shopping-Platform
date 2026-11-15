@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,6 +21,14 @@ import java.util.Optional;
 public interface ShopRepository extends JpaRepository<Shop, Integer> {
     Optional<Shop> findByOwner(User owner);
     Optional<Shop> findByOwner_UserId(Integer userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM Shop s WHERE s.shopId = :shopId")
+    Optional<Shop> findByIdForUpdate(@Param("shopId") Integer shopId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM Shop s WHERE s.owner.userId = :ownerId")
+    Optional<Shop> findByOwnerUserIdForUpdate(@Param("ownerId") Integer ownerId);
 
     long countByApprovalStatus(ShopApprovalStatus status);
 
@@ -73,8 +83,8 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
            " LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Shop> searchShopsForAdmin(@Param("keyword") String keyword,
-                                   @Param("status") ShopApprovalStatus status,
-                                   Pageable pageable);
+                                    @Param("status") ShopApprovalStatus status,
+                                    Pageable pageable);
 
     @Query(value = "SELECT s FROM Shop s JOIN s.owner u WHERE " +
            "s.approvalStatus != com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.DRAFT AND " +
@@ -86,8 +96,8 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
            " LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            " LOWER(u.phone) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Shop> searchShopsForStaff(@Param("keyword") String keyword,
-                                   @Param("status") ShopApprovalStatus status,
-                                   Pageable pageable);
+                                    @Param("status") ShopApprovalStatus status,
+                                    Pageable pageable);
 
     @Query("SELECT s FROM Shop s JOIN s.owner u WHERE " +
            "s.approvalStatus = 'APPROVED' AND " +
@@ -108,4 +118,23 @@ public interface ShopRepository extends JpaRepository<Shop, Integer> {
 
     @Query("SELECT COUNT(s) FROM Shop s JOIN s.owner u WHERE s.approvalStatus = 'APPROVED' AND u.status = :status")
     long countApprovedShopsByOwnerStatus(@Param("status") UserStatus status);
+
+    @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.owner")
+    List<Shop> findAllWithOwners();
+
+    @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.owner WHERE s.approvalStatus = com.fu.SWP391_BetaFruit.enums.ShopApprovalStatus.APPROVED")
+    List<Shop> findApprovedShopsWithOwners();
+
+    @Query(value = "SELECT s FROM Shop s JOIN s.owner u WHERE " +
+           "s.approvalStatus = :shopStatus " +
+           "AND u.status = :userStatus",
+           countQuery = "SELECT COUNT(s) FROM Shop s JOIN s.owner u WHERE " +
+           "s.approvalStatus = :shopStatus " +
+           "AND u.status = :userStatus")
+    Page<Shop> findPublicActiveShops(Pageable pageable, @Param("shopStatus") ShopApprovalStatus shopStatus, @Param("userStatus") UserStatus userStatus);
+
+    @Query("SELECT s FROM Shop s JOIN FETCH s.owner u WHERE " +
+           "s.approvalStatus = :shopStatus " +
+           "AND u.status = :userStatus")
+    List<Shop> findPublicActiveShops(@Param("shopStatus") ShopApprovalStatus shopStatus, @Param("userStatus") UserStatus userStatus );
 }
