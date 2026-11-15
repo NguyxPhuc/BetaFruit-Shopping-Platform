@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PayoutDetailResponse {
+    private Integer requestId;
     private String bankName;
     private String bankAccountNumber;
     private String accountName;

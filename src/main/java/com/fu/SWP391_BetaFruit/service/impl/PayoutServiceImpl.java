@@ -134,6 +134,7 @@ public class PayoutServiceImpl implements PayoutService {
         PayoutRequest payoutRequest = payoutRequestRepository.findByRequestIdAndShop(requestId, shop)
                 .orElseThrow(() -> new Exception("Không tìm thấy yêu cầu rút tiền."));
         PayoutDetailResponse payoutDetailResponse = new PayoutDetailResponse();
+        payoutDetailResponse.setRequestId(payoutRequest.getRequestId());
         payoutDetailResponse.setAccountName(payoutRequest.getAccountName());
         payoutDetailResponse.setBankName(payoutRequest.getBankName());
         payoutDetailResponse.setBankAccountNumber(payoutRequest.getBankAccountNumber());
@@ -165,6 +166,7 @@ public class PayoutServiceImpl implements PayoutService {
         PayoutRequest payoutRequest = payoutRequestRepository.findByRequestId(requestId)
                 .orElseThrow(() -> new Exception("Không tìm thấy yêu cầu rút tiền."));
         PayoutDetailResponse payoutDetailResponse = new PayoutDetailResponse();
+        payoutDetailResponse.setRequestId(payoutRequest.getRequestId());
         payoutDetailResponse.setAccountName(payoutRequest.getAccountName());
         payoutDetailResponse.setBankName(payoutRequest.getBankName());
         payoutDetailResponse.setBankAccountNumber(payoutRequest.getBankAccountNumber());
@@ -206,23 +208,28 @@ public class PayoutServiceImpl implements PayoutService {
 
         if (processPayoutRequest.getPayoutStatus() == PayoutStatus.COMPLETED) {
             payoutRequestRepository.save(payoutRequest);
+            String formattedAmount = String.format("%,.0f VNĐ", payoutRequest.getRequestedAmount());
             notificationService.createBaseNotification(
                     shop.getOwner(),
                     "Rút tiền thành công!",
-                    "Yêu cầu rút " + payoutRequest.getRequestedAmount().toString() + " của bạn đã được sàn duyệt và giải ngân vào tài khoản " + payoutRequest.getBankAccountNumber() + " (" + payoutRequest.getBankName() + ").",
+                    "Yêu cầu rút " + formattedAmount + " của bạn đã được sàn duyệt và giải ngân vào tài khoản " + payoutRequest.getBankAccountNumber() + " (" + payoutRequest.getBankName() + ").",
                     NotificationType.PAYMENT_UPDATE,
                     "/shop/payout-request"
             );
         } else if (processPayoutRequest.getPayoutStatus() == PayoutStatus.REJECTED) {
+            if (processPayoutRequest.getNote() == null || processPayoutRequest.getNote().trim().isEmpty()) {
+                throw new Exception("Vui lòng nhập lý do từ chối yêu cầu rút tiền.");
+            }
             BigDecimal currentBalance = shop.getAvailableBalance() != null ? shop.getAvailableBalance() : BigDecimal.ZERO;
             shop.setAvailableBalance(currentBalance.add(payoutRequest.getRequestedAmount()));
             shopRepository.save(shop);
             payoutRequestRepository.save(payoutRequest);
-            String reason = (processPayoutRequest.getNote() != null && !processPayoutRequest.getNote().isBlank()) ? "Lý do: " + processPayoutRequest.getNote() : "Thông tin ngân hàng không hợp lệ.";
+            String formattedAmount = String.format("%,.0f VNĐ", payoutRequest.getRequestedAmount());
+            String reason = "Lý do: " + processPayoutRequest.getNote().trim();
             notificationService.createBaseNotification(
                     shop.getOwner(),
-                    "Yêu cầu rút tiền bị từ chối",
-                    "Yêu cầu rút " + payoutRequest.getRequestedAmount().toString()  + " bị từ chối. Số tiền đã được hoàn trả lại ví của bạn. " + reason,
+                    "Yêu cầu rút tiền #" + payoutRequest.getRequestId() + " bị từ chối",
+                    "Yêu cầu rút " + formattedAmount + " bị từ chối. Số tiền đã được hoàn trả lại ví của bạn. " + reason,
                     NotificationType.PAYMENT_UPDATE,
                     "/shop/payout-request"
             );
