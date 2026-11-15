@@ -708,21 +708,20 @@
                                 <i class="bi bi-shield-check text-success me-1"></i>Chọn vai trò áp dụng: <span class="text-danger">*</span>
                             </label>
                             <div class="d-flex flex-column gap-2 border rounded p-3 bg-white">
-                                <div th:each="r : ${allRoles}" class="form-check p-2 rounded hover-bg"
+                                <th:block th:each="r : ${allRoles}">
+                                <div th:if="${r.roleName != null and r.roleName.name() != 'ADMIN' and r.roleName != 'Admin'}" class="form-check p-2 rounded hover-bg"
                                      th:classappend="${!r.active} ? 'opacity-75 bg-light' : ''">
                                     <input class="form-check-input ms-0 me-2" type="checkbox"
                                            name="roleIds" th:value="${r.roleId}" th:id="${'new_role_' + r.roleId}"
                                            th:disabled="${!r.active}">
                                     <label class="form-check-label w-100 cursor-pointer" th:for="${'new_role_' + r.roleId}">
                                         <span class="badge"
-                                              th:classappend="${(r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')) ? 'bg-danger' : 
-                                                               ((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary' : 
+                                              th:classappend="${((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary' : 
                                                                ((r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')) ? 'bg-secondary text-white' : 
                                                                ((r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')) ? 'bg-secondary' : 'bg-info text-dark')))}"
                                               th:text="${r.roleName}">
                                             Role
                                         </span>
-                                        <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')}">- Quản trị viên tối cao hệ thống</span>
                                         <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')}">- Nhân viên vận hành & kiểm duyệt</span>
                                         <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'CUSTOMER' or r.roleName == 'Customer')}">- Khách hàng mua sắm hoa quả (Tự sinh Giỏ hàng & Hạng thành viên)</span>
                                         <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')}">- Chủ gian hàng bán hoa quả</span>
@@ -732,6 +731,7 @@
                                         </th:block>
                                     </label>
                                 </div>
+                                </th:block>
                             </div>
                             <div class="form-text mt-2 text-muted small">
                                 <i class="bi bi-info-circle me-1"></i>Vui lòng tích chọn ít nhất một vai trò hợp lệ để cấp quyền truy cập.
@@ -1060,7 +1060,7 @@
 
             // 1. Hàm sinh Tên đăng nhập ngẫu nhiên (chuẩn viết liền, dùng _, không dấu cách, không dùng tên người cố định)
             function generateRandomUsername() {
-                const prefixes = ["staff", "admin", "mod", "user"];
+                const prefixes = ["staff", "mod", "user"];
                 const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
                 const chars = "abcdefghjkmnpqrstuvwxyz23456789";
                 let token = "";
