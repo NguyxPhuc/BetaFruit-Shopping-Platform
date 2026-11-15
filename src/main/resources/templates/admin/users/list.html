@@ -613,7 +613,7 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4">
-                        <!-- Họ tên & Tên đăng nhập -->
+                        <!-- Họ tên & Tên người dùng -->
                         <div class="row g-3 mb-3">
                             <div class="col-12 col-md-6">
                                 <label for="createFullName" class="form-label fw-bold">
@@ -626,14 +626,14 @@
                             </div>
                             <div class="col-12 col-md-6">
                                 <label for="createUsername" class="form-label fw-bold">
-                                    Tên đăng nhập <span class="text-danger">*</span>
+                                    Tên người dùng <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="createUsername" name="username"
                                            placeholder="VD: staff_a8k9m" required pattern="^(?!.*(.)\1{2,})[a-zA-Z0-9_]{3,50}$"
                                            title="Từ 3 đến 50 ký tự, chỉ chứa chữ cái, số và dấu gạch dưới (_), không chứa dấu cách và không lặp ký tự liên tiếp quá 2 lần!"
                                            autocomplete="off">
-                                    <button class="btn btn-outline-success d-flex align-items-center" type="button" id="randomUsernameBtn" title="Tạo tên đăng nhập ngẫu nhiên">
+                                    <button class="btn btn-outline-success d-flex align-items-center" type="button" id="randomUsernameBtn" title="Tạo tên người dùng ngẫu nhiên">
                                         <i class="bi bi-shuffle"></i>
                                     </button>
                                 </div>
@@ -641,7 +641,7 @@
                                     Chỉ gồm chữ cái, số và dấu gạch dưới (_), viết liền không dấu cách (VD: staff_a8k9m).
                                 </div>
                                 <div class="text-danger small mt-1 d-none" id="usernameWarning">
-                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Tên đăng nhập viết liền không khoảng trắng, chỉ dùng dấu gạch dưới (_) và không nhập @!
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Tên người dùng viết liền không khoảng trắng, chỉ dùng dấu gạch dưới (_) và không nhập @!
                                 </div>
                             </div>
                         </div>
@@ -708,21 +708,20 @@
                                 <i class="bi bi-shield-check text-success me-1"></i>Chọn vai trò áp dụng: <span class="text-danger">*</span>
                             </label>
                             <div class="d-flex flex-column gap-2 border rounded p-3 bg-white">
-                                <div th:each="r : ${allRoles}" class="form-check p-2 rounded hover-bg"
+                                <th:block th:each="r : ${allRoles}">
+                                <div th:if="${r.roleName != null and r.roleName.name() != 'ADMIN' and r.roleName != 'Admin'}" class="form-check p-2 rounded hover-bg"
                                      th:classappend="${!r.active} ? 'opacity-75 bg-light' : ''">
                                     <input class="form-check-input ms-0 me-2" type="checkbox"
                                            name="roleIds" th:value="${r.roleId}" th:id="${'new_role_' + r.roleId}"
                                            th:disabled="${!r.active}">
                                     <label class="form-check-label w-100 cursor-pointer" th:for="${'new_role_' + r.roleId}">
                                         <span class="badge"
-                                              th:classappend="${(r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')) ? 'bg-danger' : 
-                                                               ((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary' : 
+                                              th:classappend="${((r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')) ? 'bg-primary' : 
                                                                ((r.roleName != null and (r.roleName.name() == 'DELIVERY_STAFF' or r.roleName == 'Delivery Staff')) ? 'bg-secondary text-white' : 
                                                                ((r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')) ? 'bg-secondary' : 'bg-info text-dark')))}"
                                               th:text="${r.roleName}">
                                             Role
                                         </span>
-                                        <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'ADMIN' or r.roleName == 'Admin')}">- Quản trị viên tối cao hệ thống</span>
                                         <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'STAFF' or r.roleName == 'Staff')}">- Nhân viên vận hành & kiểm duyệt</span>
                                         <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'CUSTOMER' or r.roleName == 'Customer')}">- Khách hàng mua sắm hoa quả (Tự sinh Giỏ hàng & Hạng thành viên)</span>
                                         <span class="text-secondary small ms-2" th:if="${r.roleName != null and (r.roleName.name() == 'SHOP_OWNER' or r.roleName == 'ShopOwner')}">- Chủ gian hàng bán hoa quả</span>
@@ -732,6 +731,7 @@
                                         </th:block>
                                     </label>
                                 </div>
+                                </th:block>
                             </div>
                             <div class="form-text mt-2 text-muted small">
                                 <i class="bi bi-info-circle me-1"></i>Vui lòng tích chọn ít nhất một vai trò hợp lệ để cấp quyền truy cập.
@@ -770,7 +770,7 @@
                         
                         <div class="p-3 bg-light rounded border mb-3">
                             <div class="row">
-                                <div class="col-sm-4 text-muted small">Tên đăng nhập:</div>
+                                <div class="col-sm-4 text-muted small">Tên người dùng:</div>
                                 <div class="col-sm-8 fw-bold text-dark" id="modalUserName">-</div>
                             </div>
                             <div class="row mt-1">
@@ -1060,7 +1060,7 @@
 
             // 1. Hàm sinh Tên đăng nhập ngẫu nhiên (chuẩn viết liền, dùng _, không dấu cách, không dùng tên người cố định)
             function generateRandomUsername() {
-                const prefixes = ["staff", "admin", "mod", "user"];
+                const prefixes = ["staff", "mod", "user"];
                 const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
                 const chars = "abcdefghjkmnpqrstuvwxyz23456789";
                 let token = "";

@@ -142,41 +142,159 @@
             overflow: hidden;
         }
 
-        .filter-bar {
-            padding: 1.25rem 1.5rem;
+        /* ════════ Quick Filter Tabs ════════ */
+        .shop-filter-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.75rem 1.25rem 0 1.25rem;
             background: #ffffff;
             border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+        }
+
+        .shop-filter-tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .shop-filter-tabs::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .shop-tab-item {
+            display: inline-flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.45rem;
+            padding: 0.65rem 1.1rem;
+            font-size: 0.865rem;
+            font-weight: 600;
+            color: #64748b;
+            text-decoration: none;
+            border-bottom: 2.5px solid transparent;
+            transition: all 0.2s ease;
+            position: relative;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .shop-tab-item:hover {
+            color: #ea580c;
+            background-color: #fff7ed;
+        }
+
+        .shop-tab-item.active {
+            color: #ea580c;
+            border-bottom-color: #ea580c;
+            font-weight: 700;
+            background-color: #fff7ed;
+        }
+
+        .shop-tab-item .badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            border-radius: 9999px;
+            transition: all 0.2s;
+        }
+
+        .shop-tab-item.active .badge {
+            background-color: #ea580c !important;
+            color: #ffffff !important;
+        }
+
+        .filter-bar {
+            padding: 1.15rem 1.25rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .filter-select {
+            font-size: 0.85rem;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
+            padding: 0.48rem 2rem 0.48rem 0.75rem;
+            color: #334155;
+            font-weight: 500;
+            background-color: #ffffff;
+            transition: all 0.2s ease;
+            height: 38px;
+        }
+
+        .filter-select:focus {
+            border-color: #ea580c;
+            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
         }
 
         .search-input-group {
             position: relative;
-            max-width: 360px;
             width: 100%;
         }
 
         .search-input-group i {
             position: absolute;
-            left: 1rem;
+            left: 0.85rem;
             top: 50%;
             transform: translateY(-50%);
             color: #94a3b8;
+            font-size: 0.85rem;
         }
 
         .search-input-group input {
-            padding-left: 2.5rem;
+            padding-left: 2.3rem;
             border-radius: 10px;
             border: 1.5px solid #e2e8f0;
-            font-size: 0.9375rem;
+            font-size: 0.85rem;
+            height: 38px;
         }
 
         .search-input-group input:focus {
             border-color: var(--fruit-green);
-            box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+        }
+
+        .btn-filter-submit {
+            background-color: #ea580c;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: none;
+            border-radius: 10px;
+            height: 38px;
+            padding: 0 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-filter-submit:hover {
+            background-color: #c2410c;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .btn-filter-reset {
+            font-size: 0.85rem;
+            border-radius: 10px;
+            height: 38px;
+            padding: 0 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background-color: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            color: #dc2626;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-filter-reset:hover {
+            background-color: #fee2e2;
+            border-color: #fca5a5;
+            color: #b91c1c;
         }
 
         .product-thumb {
@@ -265,150 +383,6 @@
             color: #cbd5e1;
             margin-bottom: 1rem;
         }
-
-        /* ════════ Floating Jump-In Toast Notification ════════ */
-        .floating-toast-container {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            z-index: 99999;
-            max-width: 440px;
-            width: calc(100% - 48px);
-            pointer-events: auto;
-            animation: toastJumpIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @keyframes toastJumpIn {
-            0% {
-                opacity: 0;
-                transform: translate3d(80px, -20px, 0) scale(0.9);
-            }
-            60% {
-                opacity: 1;
-                transform: translate3d(-10px, 4px, 0) scale(1.02);
-            }
-            100% {
-                opacity: 1;
-                transform: translate3d(0, 0, 0) scale(1);
-            }
-        }
-
-        @keyframes toastFadeOut {
-            0% {
-                opacity: 1;
-                transform: translate3d(0, 0, 0) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translate3d(60px, 0, 0) scale(0.95);
-            }
-        }
-
-        .floating-toast-card {
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.16), 0 4px 16px rgba(21, 128, 61, 0.15);
-            border: 1px solid rgba(187, 247, 208, 0.9);
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
-
-        .toast-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 6px;
-            background: linear-gradient(180deg, #16a34a, #22c55e);
-        }
-
-        .toast-body-content {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.875rem;
-            padding: 1.15rem 1.25rem 1.15rem 1.25rem;
-        }
-
-        .toast-icon-wrap {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: #dcfce7;
-            color: #15803d;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.25);
-            animation: iconPulse 1.8s infinite ease-in-out;
-        }
-
-        @keyframes iconPulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.08);
-            }
-        }
-
-        .toast-text-wrap {
-            flex-grow: 1;
-        }
-
-        .toast-heading {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 0.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-
-        .toast-desc {
-            font-size: 0.875rem;
-            color: #475569;
-            line-height: 1.45;
-        }
-
-        .toast-close-btn {
-            background: transparent;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            padding: 0.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: all 0.2s;
-            font-size: 0.875rem;
-            flex-shrink: 0;
-        }
-
-        .toast-close-btn:hover {
-            background: #f1f5f9;
-            color: #0f172a;
-        }
-
-        .toast-progress-bar {
-            height: 3px;
-            background: linear-gradient(90deg, #16a34a, #4ade80);
-            width: 100%;
-            animation: toastProgress 6s linear forwards;
-        }
-
-        @keyframes toastProgress {
-            0% {
-                width: 100%;
-            }
-            100% {
-                width: 0%;
-            }
-        }
     </style>
 
 <div class="page-container py-2">
@@ -459,51 +433,159 @@
         </div>
     </div>
 
-    <!-- ═══════════════ TOAST THÔNG BÁO NHẢY GÓC MÀN HÌNH ═══════════════ -->
-    <div th:if="${successMessage != null}" id="floatingSuccessToast" class="floating-toast-container" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="floating-toast-card">
-            <div class="toast-indicator"></div>
-            <div class="toast-body-content">
-                <div class="toast-icon-wrap">
-                    <i class="bi bi-check-circle-fill"></i>
-                </div>
-                <div class="toast-text-wrap">
-                    <div class="toast-heading">
-                        <span>Đăng Bán Thành Công!</span>
-                        <span>🎉</span>
-                    </div>
-                    <div class="toast-desc" th:text="${successMessage}">Đăng bán hoa quả thành công!</div>
-                </div>
-                <button type="button" class="toast-close-btn" onclick="dismissToast()" aria-label="Close">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            <div class="toast-progress-bar" id="toastProgressBar"></div>
-        </div>
-    </div>
-
     <!-- ═══════════════ TABLE CONTENT CARD ═══════════════ -->
     <div class="content-card">
-        <!-- Filter & Search Bar -->
-        <div class="filter-bar">
-            <form th:action="@{/shop/products}" method="get" class="d-flex align-items-center gap-2 m-0 w-100" style="max-width: 500px;">
-                <div class="search-input-group flex-grow-1">
-                    <i class="bi bi-search"></i>
-                    <input type="text"
-                           name="keyword"
-                           class="form-control"
-                           placeholder="Tìm kiếm hoa quả theo tên..."
-                           th:value="${keyword}">
-                </div>
-                <button type="submit" class="btn btn-outline-success">Tìm kiếm</button>
-                <a th:if="${keyword != null && !keyword.isEmpty()}" th:href="@{/shop/products}" class="btn btn-light text-secondary">
-                    Xóa lọc
-                </a>
-            </form>
+        <!-- 1. HÀNG TAB LỌC TRẠNG THÁI NHANH (QUICK STATUS TABS) -->
+        <div class="shop-filter-tabs">
+            <!-- Tab Tất cả -->
+            <a th:href="@{/shop/products(tab='ALL', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
+               class="shop-tab-item"
+               th:classappend="${tab == null || tab == 'ALL'} ? 'active' : ''">
+                <span>Tất cả hoa quả</span>
+            </a>
 
-            <div class="text-muted small">
-                Tổng cộng: <strong class="text-dark" th:text="${totalItems != null ? totalItems : 0}">0</strong> loại hoa quả
-            </div>
+            <!-- Tab Đang bán -->
+            <a th:href="@{/shop/products(tab='ACTIVE', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
+               class="shop-tab-item"
+               th:classappend="${tab == 'ACTIVE'} ? 'active' : ''">
+                <span>Đang mở bán</span>
+            </a>
+
+            <!-- Tab Chờ duyệt -->
+            <a th:href="@{/shop/products(tab='PENDING', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
+               class="shop-tab-item"
+               th:classappend="${tab == 'PENDING'} ? 'active' : ''">
+                <span>Chờ duyệt</span>
+            </a>
+
+            <!-- Tab Tạm ẩn -->
+            <a th:href="@{/shop/products(tab='HIDDEN', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
+               class="shop-tab-item"
+               th:classappend="${tab == 'HIDDEN'} ? 'active' : ''">
+                <span>Tạm ẩn</span>
+            </a>
+
+            <!-- Tab Bị từ chối -->
+            <a th:href="@{/shop/products(tab='REJECTED', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
+               class="shop-tab-item"
+               th:classappend="${tab == 'REJECTED'} ? 'active' : ''">
+                <span>Bị từ chối</span>
+            </a>
+
+            <!-- Tab Cảnh báo kho -->
+            <a th:href="@{/shop/products(tab='LOW_STOCK', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
+               class="shop-tab-item"
+               th:classappend="${tab == 'LOW_STOCK'} ? 'active' : ''">
+                <span>Cảnh báo kho / Hết</span>
+            </a>
+        </div>
+
+        <!-- 2. THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC ĐA CHIỀU (FILTER TOOLBAR) -->
+        <div class="filter-bar">
+            <form id="productFilterForm" th:action="@{/shop/products}" method="get" class="m-0 w-100">
+                <!-- Giữ nguyên tab hiện tại khi thay đổi bộ lọc -->
+                <input type="hidden" name="tab" th:value="${tab}">
+                <input type="hidden" name="page" value="1">
+
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <!-- Nhóm ô tìm kiếm & dropdowns -->
+                    <div class="d-flex align-items-center flex-wrap gap-2 flex-grow-1">
+                        <!-- Ô tìm kiếm tên hoa quả -->
+                        <div class="search-input-group" style="min-width: 220px; max-width: 280px;">
+                            <i class="bi bi-search"></i>
+                            <input type="text"
+                                   name="keyword"
+                                   class="form-control"
+                                   placeholder="Tìm kiếm hoa quả theo tên..."
+                                   th:value="${keyword}">
+                        </div>
+
+                        <!-- Dropdown Danh mục hoa quả -->
+                        <div style="min-width: 170px;">
+                            <select name="categoryId" class="form-select filter-select" onchange="document.getElementById('productFilterForm').submit()">
+                                <option value="">Tất cả danh mục</option>
+                                <option th:each="cat : ${categories}"
+                                        th:value="${cat.categoryId}"
+                                        th:text="${cat.categoryName}"
+                                        th:selected="${categoryId != null && categoryId == cat.categoryId}">Trái cây</option>
+                            </select>
+                        </div>
+
+                        <!-- Dropdown Tình trạng kho -->
+                        <div style="min-width: 175px;">
+                            <select name="stockStatus" class="form-select filter-select" onchange="document.getElementById('productFilterForm').submit()">
+                                <option value="ALL" th:selected="${stockStatus == null || stockStatus == 'ALL'}">Tất cả kho hàng</option>
+                                <option value="IN_STOCK" th:selected="${stockStatus == 'IN_STOCK'}">Còn hàng an toàn</option>
+                                <option value="LOW_STOCK" th:selected="${stockStatus == 'LOW_STOCK'}">Sắp hết hàng (&le; 5)</option>
+                                <option value="OUT_OF_STOCK" th:selected="${stockStatus == 'OUT_OF_STOCK'}">Đã hết hàng (0)</option>
+                            </select>
+                        </div>
+
+                        <!-- Dropdown Lọc theo Mức giá (Price Filter) -->
+                        <div style="min-width: 175px;">
+                            <select name="priceRange" id="priceRangeSelect" class="form-select filter-select" onchange="handlePriceRangeChange(this.value)">
+                                <option value="ALL" th:selected="${priceRange == null || priceRange == 'ALL'}">Tất cả mức giá</option>
+                                <option value="UNDER_50K" th:selected="${priceRange == 'UNDER_50K'}">Dưới 50.000 đ</option>
+                                <option value="50K_150K" th:selected="${priceRange == '50K_150K'}">50.000 đ - 150.000 đ</option>
+                                <option value="150K_300K" th:selected="${priceRange == '150K_300K'}">150.000 đ - 300.000 đ</option>
+                                <option value="OVER_300K" th:selected="${priceRange == 'OVER_300K'}">Trên 300.000 đ</option>
+                                <option value="CUSTOM" th:selected="${priceRange == 'CUSTOM' || (minPrice != null && minPrice > 0) || (maxPrice != null && maxPrice > 0)}">Tùy chỉnh khoảng giá...</option>
+                            </select>
+                        </div>
+
+                        <!-- Dropdown Sắp xếp -->
+                        <div style="min-width: 165px;">
+                            <select name="sortBy" class="form-select filter-select" onchange="document.getElementById('productFilterForm').submit()">
+                                <option value="newest" th:selected="${sortBy == null || sortBy == 'newest'}">Mới nhất</option>
+                                <option value="oldest" th:selected="${sortBy == 'oldest'}">Cũ nhất</option>
+                                <option value="price_asc" th:selected="${sortBy == 'price_asc'}">Giá: Thấp đến Cao</option>
+                                <option value="price_desc" th:selected="${sortBy == 'price_desc'}">Giá: Cao đến Thấp</option>
+                                <option value="stock_asc" th:selected="${sortBy == 'stock_asc'}">Kho: Ít đến Nhiều</option>
+                                <option value="stock_desc" th:selected="${sortBy == 'stock_desc'}">Kho: Nhiều đến Ít</option>
+                                <option value="name_asc" th:selected="${sortBy == 'name_asc'}">Tên: A → Z</option>
+                                <option value="name_desc" th:selected="${sortBy == 'name_desc'}">Tên: Z → A</option>
+                            </select>
+                        </div>
+
+                        <!-- Nút Lọc và Đặt lại -->
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="submit" class="btn-filter-submit" title="Áp dụng bộ lọc">
+                                <span>Lọc</span>
+                            </button>
+                            <a th:if="${hasActiveFilters}" th:href="@{/shop/products}" class="btn-filter-reset" title="Đặt lại tất cả bộ lọc">
+                                <span>Đặt lại</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Hiển thị tổng số lượng kết quả -->
+                    <div class="text-muted small text-nowrap ms-auto">
+                        Tìm thấy: <strong class="text-dark" th:text="${totalItems != null ? totalItems : 0}">0</strong> loại hoa quả
+                    </div>
+                </div>
+
+                <!-- HÀNG PHỤ: NHẬP KHOẢNG GIÁ TÙY CHỈNH (EXPANDABLE CUSTOM PRICE ROW) -->
+                <div id="customPriceBox" class="mt-2 pt-2 border-top align-items-center gap-2 flex-wrap"
+                     th:style="${priceRange == 'CUSTOM' || (minPrice != null && minPrice > 0) || (maxPrice != null && maxPrice > 0)} ? 'display: flex;' : 'display: none;'">
+                    <span class="small fw-bold text-secondary d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-cash-stack text-warning"></i> Nhập khoảng giá cụ thể (VND):
+                    </span>
+                    <div class="input-group input-group-sm" style="max-width: 170px;">
+                        <span class="input-group-text bg-white text-muted">Từ</span>
+                        <input type="number" id="minPriceInput" name="minPrice" class="form-control" placeholder="0" th:value="${minPrice}" min="0" step="1000">
+                        <span class="input-group-text bg-white text-muted">đ</span>
+                    </div>
+                    <span class="text-muted">-</span>
+                    <div class="input-group input-group-sm" style="max-width: 170px;">
+                        <span class="input-group-text bg-white text-muted">Đến</span>
+                        <input type="number" id="maxPriceInput" name="maxPrice" class="form-control" placeholder="Tối đa" th:value="${maxPrice}" min="0" step="1000">
+                        <span class="input-group-text bg-white text-muted">đ</span>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-success fw-semibold rounded-pill px-3 py-1">
+                        Áp dụng giá
+                    </button>
+                </div>
+            </form>
         </div>
 
         <!-- BẢNG HOA QUẢ -->
@@ -677,13 +759,21 @@
         <!-- EMPTY STATE -->
         <div class="empty-state" th:if="${products == null || products.empty}">
             <div class="empty-icon">
-                <i class="bi bi-basket3"></i>
+                <i class="bi bi-search text-warning" th:if="${hasActiveFilters}"></i>
+                <i class="bi bi-basket3 text-secondary" th:unless="${hasActiveFilters}"></i>
             </div>
-            <h3 class="h5 fw-bold text-dark mb-2">Chưa Có Hoa Quả Nào</h3>
-            <p class="text-secondary small mb-4">
+            <h3 class="h5 fw-bold text-dark mb-2" th:if="${hasActiveFilters}">Không Tìm Thấy Hoa Quả Phù Hợp</h3>
+            <h3 class="h5 fw-bold text-dark mb-2" th:unless="${hasActiveFilters}">Chưa Có Hoa Quả Nào</h3>
+            <p class="text-secondary small mb-4" th:if="${hasActiveFilters}">
+                Không có sản phẩm nào thỏa mãn các điều kiện tìm kiếm hoặc bộ lọc hiện tại. Vui lòng thử nới lỏng bộ lọc hoặc xóa lọc.
+            </p>
+            <p class="text-secondary small mb-4" th:unless="${hasActiveFilters}">
                 Cửa hàng của bạn hiện chưa có sản phẩm nào. Hãy bắt đầu đăng bán hoa quả tươi ngon ngay hôm nay!
             </p>
-            <a th:href="@{/shop/products/create}" class="btn btn-success px-4 py-2 rounded-pill fw-medium">
+            <a th:if="${hasActiveFilters}" th:href="@{/shop/products}" class="btn btn-outline-danger px-4 py-2 rounded-pill fw-medium shadow-xs">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa Tất Cả Bộ Lọc
+            </a>
+            <a th:unless="${hasActiveFilters}" th:href="@{/shop/products/create}" class="btn btn-success px-4 py-2 rounded-pill fw-medium shadow-xs">
                 <i class="bi bi-plus-circle-fill me-1"></i> Thêm Hoa Quả Đầu Tiên
             </a>
         </div>
@@ -698,15 +788,15 @@
             <nav aria-label="Page navigation">
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item" th:classappend="${currentPage <= 1} ? 'disabled' : ''">
-                        <a class="page-link" th:href="${currentPage > 1} ? @{/shop/products(page=${currentPage - 1}, keyword=${keyword})} : '#'">Trước</a>
+                        <a class="page-link" th:href="${currentPage > 1} ? @{/shop/products(page=${currentPage - 1}, tab=${tab}, keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})} : '#'">Trước</a>
                     </li>
                     <li class="page-item"
                         th:each="p : ${#numbers.sequence(1, totalPages)}"
                         th:classappend="${p == currentPage} ? 'active' : ''">
-                        <a class="page-link" th:href="@{/shop/products(page=${p}, keyword=${keyword})}" th:text="${p}">1</a>
+                        <a class="page-link" th:href="@{/shop/products(page=${p}, tab=${tab}, keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}" th:text="${p}">1</a>
                     </li>
                     <li class="page-item" th:classappend="${currentPage >= totalPages} ? 'disabled' : ''">
-                        <a class="page-link" th:href="${currentPage < totalPages} ? @{/shop/products(page=${currentPage + 1}, keyword=${keyword})} : '#'">Sau</a>
+                        <a class="page-link" th:href="${currentPage < totalPages} ? @{/shop/products(page=${currentPage + 1}, tab=${tab}, keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})} : '#'">Sau</a>
                     </li>
                 </ul>
             </nav>
@@ -719,22 +809,21 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    function dismissToast() {
-        const toast = document.getElementById('floatingSuccessToast');
-        if (toast) {
-            toast.style.animation = 'toastFadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
-            setTimeout(() => toast.remove(), 400);
+    function handlePriceRangeChange(val) {
+        const box = document.getElementById('customPriceBox');
+        if (val === 'CUSTOM') {
+            box.style.display = 'flex';
+            const minInput = document.getElementById('minPriceInput');
+            if (minInput) minInput.focus();
+        } else {
+            box.style.display = 'none';
+            const minInput = document.getElementById('minPriceInput');
+            const maxInput = document.getElementById('maxPriceInput');
+            if (minInput) minInput.value = '';
+            if (maxInput) maxInput.value = '';
+            document.getElementById('productFilterForm').submit();
         }
     }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const toast = document.getElementById('floatingSuccessToast');
-        if (toast) {
-            setTimeout(function() {
-                dismissToast();
-            }, 6000);
-        }
-    });
 </script>
 </div>
 </body>

@@ -16,7 +16,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v11H3zM14 10h4l3 4v3h-7"/><path d="M14 14h7"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
             <span>Đơn giao hàng</span>
         </a>
-        <a class="deliverer-sidebar__link" href="/shipper/orders?paymentMethod=COD&amp;status=DELIVERED" th:href="@{/shipper/orders(paymentMethod=COD,status=DELIVERED)}"
+        <a class="deliverer-sidebar__link" href="/shipper/orders?paymentMethod=COD&amp;status=DELIVERED" th:href="@{/shipper/orders(paymentMethod='COD',status='DELIVERED')}"
            th:classappend="${active == 'cod'} ? ' deliverer-sidebar__link--active' : ''"
            th:attr="aria-current=${active == 'cod' ? 'page' : null}"
            aria-label="Đơn COD đã giao" title="Đơn COD đã giao">

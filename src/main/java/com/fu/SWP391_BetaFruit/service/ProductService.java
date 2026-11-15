@@ -2,6 +2,7 @@ package com.fu.SWP391_BetaFruit.service;
 
 import com.fu.SWP391_BetaFruit.dto.request.ProductCreateRequest;
 import com.fu.SWP391_BetaFruit.dto.request.ProductUpdateRequest;
+import com.fu.SWP391_BetaFruit.dto.request.ShopProductFilterRequest;
 import com.fu.SWP391_BetaFruit.entity.Product;
 import com.fu.SWP391_BetaFruit.entity.Shop;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ public interface ProductService {
     Map<String, Object> getAdminProductPageData(String keyword, String tab, int page, int size, String sortBy, String sortDir);
     Product createProductForShop(Integer userId, ProductCreateRequest request);
     Page<Product> getShopProductsPaginated(Integer userId, String keyword, int page, int size);
+    Map<String, Object> getShopProductPageData(Integer userId, ShopProductFilterRequest filterRequest);
     Shop getShopByUserId(Integer userId);
     void toggleProductVisibilityForShop(Integer userId, Integer productId);
     Product getShopProductForEdit(Integer userId, Integer productId);

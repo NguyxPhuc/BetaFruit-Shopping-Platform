@@ -191,6 +191,9 @@ public class UserServiceImpl implements UserService {
         }
 
         for (Role role : roles) {
+            if (role.getRoleName() == RoleName.ADMIN) {
+                throw new IllegalArgumentException("Không được phép khởi tạo tài khoản với vai trò Quản trị viên (ADMIN)!");
+            }
             if (!role.isActive()) {
                 String name = role.getRoleName() != null ? role.getRoleName().name() : "";
                 throw new IllegalArgumentException("Vai trò [" + name + "] đang ở trạng thái ẩn hoặc tạm ngưng hoạt động, không thể tạo tài khoản!");
