@@ -613,7 +613,7 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4">
-                        <!-- Họ tên & Tên đăng nhập -->
+                        <!-- Họ tên & Tên người dùng -->
                         <div class="row g-3 mb-3">
                             <div class="col-12 col-md-6">
                                 <label for="createFullName" class="form-label fw-bold">
@@ -626,14 +626,14 @@
                             </div>
                             <div class="col-12 col-md-6">
                                 <label for="createUsername" class="form-label fw-bold">
-                                    Tên đăng nhập <span class="text-danger">*</span>
+                                    Tên người dùng <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="createUsername" name="username"
                                            placeholder="VD: staff_a8k9m" required pattern="^(?!.*(.)\1{2,})[a-zA-Z0-9_]{3,50}$"
                                            title="Từ 3 đến 50 ký tự, chỉ chứa chữ cái, số và dấu gạch dưới (_), không chứa dấu cách và không lặp ký tự liên tiếp quá 2 lần!"
                                            autocomplete="off">
-                                    <button class="btn btn-outline-success d-flex align-items-center" type="button" id="randomUsernameBtn" title="Tạo tên đăng nhập ngẫu nhiên">
+                                    <button class="btn btn-outline-success d-flex align-items-center" type="button" id="randomUsernameBtn" title="Tạo tên người dùng ngẫu nhiên">
                                         <i class="bi bi-shuffle"></i>
                                     </button>
                                 </div>
@@ -641,7 +641,7 @@
                                     Chỉ gồm chữ cái, số và dấu gạch dưới (_), viết liền không dấu cách (VD: staff_a8k9m).
                                 </div>
                                 <div class="text-danger small mt-1 d-none" id="usernameWarning">
-                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Tên đăng nhập viết liền không khoảng trắng, chỉ dùng dấu gạch dưới (_) và không nhập @!
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Tên người dùng viết liền không khoảng trắng, chỉ dùng dấu gạch dưới (_) và không nhập @!
                                 </div>
                             </div>
                         </div>
@@ -770,7 +770,7 @@
                         
                         <div class="p-3 bg-light rounded border mb-3">
                             <div class="row">
-                                <div class="col-sm-4 text-muted small">Tên đăng nhập:</div>
+                                <div class="col-sm-4 text-muted small">Tên người dùng:</div>
                                 <div class="col-sm-8 fw-bold text-dark" id="modalUserName">-</div>
                             </div>
                             <div class="row mt-1">
