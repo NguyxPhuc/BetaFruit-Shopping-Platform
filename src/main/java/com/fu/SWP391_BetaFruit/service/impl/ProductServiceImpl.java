@@ -194,13 +194,15 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("Danh mục hoa quả này hiện đang tạm đóng, vui lòng chọn danh mục khác!");
         }
 
+        validateProductTextFields(request.getProductName(), request.getDescription());
+
         List<VariantItemRequest> variantList = request.getEffectiveVariants();
         if (variantList.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng nhập ít nhất 1 thực thể (biến thể) cho hoa quả!");
         }
 
-        for (VariantItemRequest vReq : variantList) {
-            validateVariantItem(vReq);
+        for (int i = 0; i < variantList.size(); i++) {
+            validateVariantItem(variantList.get(i), i + 1);
         }
 
         // Lưu ảnh lên MinIO nếu có MultipartFile tải lên
@@ -614,6 +616,18 @@ public class ProductServiceImpl implements ProductService {
         MasterCategory category = masterCategoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục hoa quả với mã ID: " + request.getCategoryId()));
 
+        validateProductTextFields(request.getProductName(), request.getDescription());
+
+        // Kiểm tra thực thể trước khi cập nhật entity và upload ảnh lên MinIO
+        List<VariantItemRequest> reqVariants = request.getEffectiveVariants();
+        if (reqVariants.isEmpty()) {
+            throw new IllegalArgumentException("Hoa quả phải có ít nhất 1 thực thể!");
+        }
+
+        for (int i = 0; i < reqVariants.size(); i++) {
+            validateVariantItem(reqVariants.get(i), i + 1);
+        }
+
         product.setProductName(request.getProductName().trim());
         product.setCategory(category);
         product.setDescription(request.getDescription().trim());
@@ -621,16 +635,6 @@ public class ProductServiceImpl implements ProductService {
         // Nếu sản phẩm từng bị từ chối phê duyệt, khi chủ shop chỉnh sửa xong thì gửi lại về trạng thái PENDING
         if (product.getApprovalStatus() == ProductApprovalStatus.REJECTED) {
             product.setApprovalStatus(ProductApprovalStatus.PENDING);
-        }
-
-        // Kiểm tra thực thể trước khi upload ảnh lên MinIO
-        List<VariantItemRequest> reqVariants = request.getEffectiveVariants();
-        if (reqVariants.isEmpty()) {
-            throw new IllegalArgumentException("Hoa quả phải có ít nhất 1 thực thể!");
-        }
-
-        for (VariantItemRequest vReq : reqVariants) {
-            validateVariantItem(vReq);
         }
 
         // Lưu ảnh mới lên MinIO nếu người dùng tải tệp ảnh lên
@@ -722,22 +726,32 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-    private void validateVariantItem(VariantItemRequest vReq) {
+    private void validateProductTextFields(String productName, String description) {
+        if (productName == null || productName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên hoa quả không được để trống.");
+        }
+        if (description == null || description.trim().length() < 20) {
+            throw new IllegalArgumentException("Mô tả chi tiết hoa quả phải có ít nhất 20 ký tự.");
+        }
+    }
+
+    private void validateVariantItem(VariantItemRequest vReq, int position) {
+        String label = "Thực thể #" + position + " ('" + vReq.getVariantName() + "')";
         BigDecimal minPrice = new BigDecimal("1000");
         if (vReq.getOriginalPrice() == null || vReq.getOriginalPrice().compareTo(minPrice) < 0) {
-            throw new IllegalArgumentException("Thực thể '" + vReq.getVariantName() + "' phải có giá bán từ 1,000 VNĐ trở lên.");
+            throw new IllegalArgumentException(label + " phải có giá bán từ 1,000 VNĐ trở lên.");
         }
         if (vReq.getSalePrice() != null) {
             if (vReq.getSalePrice().compareTo(minPrice) < 0 || vReq.getSalePrice().compareTo(vReq.getOriginalPrice()) >= 0) {
-                throw new IllegalArgumentException("Giá khuyến mãi của thực thể '" + vReq.getVariantName()
-                        + "' phải từ 1,000 VNĐ trở lên và nhỏ hơn giá bán (" + vReq.getOriginalPrice() + " đ)!");
+                throw new IllegalArgumentException(label
+                        + " có giá khuyến mãi phải từ 1,000 VNĐ trở lên và nhỏ hơn giá bán (" + vReq.getOriginalPrice() + " đ)!");
             }
         }
         if (vReq.getStockQuantity() != null && vReq.getStockQuantity() < 0) {
-            throw new IllegalArgumentException("Số lượng tồn kho của thực thể '" + vReq.getVariantName() + "' không được là số âm.");
+            throw new IllegalArgumentException(label + " có số lượng tồn kho không được là số âm.");
         }
         if (vReq.getLowStockThreshold() != null && vReq.getLowStockThreshold() < 0) {
-            throw new IllegalArgumentException("Mức báo sắp hết của thực thể '" + vReq.getVariantName() + "' không được là số âm.");
+            throw new IllegalArgumentException(label + " có mức báo sắp hết không được là số âm.");
         }
     }
 }
