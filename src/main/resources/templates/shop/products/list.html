@@ -441,54 +441,42 @@
             <a th:href="@{/shop/products(tab='ALL', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
                class="shop-tab-item"
                th:classappend="${tab == null || tab == 'ALL'} ? 'active' : ''">
-                <i class="bi bi-grid-fill"></i>
                 <span>Tất cả hoa quả</span>
-                <span class="badge bg-secondary" th:text="${totalCount != null ? totalCount : 0}">0</span>
             </a>
 
             <!-- Tab Đang bán -->
             <a th:href="@{/shop/products(tab='ACTIVE', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
                class="shop-tab-item"
                th:classappend="${tab == 'ACTIVE'} ? 'active' : ''">
-                <i class="bi bi-check-circle-fill text-success"></i>
                 <span>Đang mở bán</span>
-                <span class="badge bg-success" th:text="${activeCount != null ? activeCount : 0}">0</span>
             </a>
 
             <!-- Tab Chờ duyệt -->
             <a th:href="@{/shop/products(tab='PENDING', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
                class="shop-tab-item"
                th:classappend="${tab == 'PENDING'} ? 'active' : ''">
-                <i class="bi bi-clock-history text-warning"></i>
                 <span>Chờ duyệt</span>
-                <span class="badge bg-warning text-dark" th:text="${pendingCount != null ? pendingCount : 0}">0</span>
             </a>
 
             <!-- Tab Tạm ẩn -->
             <a th:href="@{/shop/products(tab='HIDDEN', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
                class="shop-tab-item"
                th:classappend="${tab == 'HIDDEN'} ? 'active' : ''">
-                <i class="bi bi-eye-slash-fill text-secondary"></i>
                 <span>Tạm ẩn</span>
-                <span class="badge bg-secondary" th:text="${hiddenCount != null ? hiddenCount : 0}">0</span>
             </a>
 
             <!-- Tab Bị từ chối -->
             <a th:href="@{/shop/products(tab='REJECTED', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
                class="shop-tab-item"
                th:classappend="${tab == 'REJECTED'} ? 'active' : ''">
-                <i class="bi bi-x-circle-fill text-danger"></i>
                 <span>Bị từ chối</span>
-                <span class="badge bg-danger" th:text="${rejectedCount != null ? rejectedCount : 0}">0</span>
             </a>
 
             <!-- Tab Cảnh báo kho -->
             <a th:href="@{/shop/products(tab='LOW_STOCK', keyword=${keyword}, categoryId=${categoryId}, stockStatus=${stockStatus}, priceRange=${priceRange}, minPrice=${minPrice}, maxPrice=${maxPrice}, sortBy=${sortBy})}"
                class="shop-tab-item"
                th:classappend="${tab == 'LOW_STOCK'} ? 'active' : ''">
-                <i class="bi bi-exclamation-triangle-fill text-danger"></i>
                 <span>Cảnh báo kho / Hết</span>
-                <span class="badge bg-danger" th:text="${lowStockTabCount != null ? lowStockTabCount : 0}">0</span>
             </a>
         </div>
 
@@ -515,7 +503,7 @@
                         <!-- Dropdown Danh mục hoa quả -->
                         <div style="min-width: 170px;">
                             <select name="categoryId" class="form-select filter-select" onchange="document.getElementById('productFilterForm').submit()">
-                                <option value="">📁 Tất cả danh mục</option>
+                                <option value="">Tất cả danh mục</option>
                                 <option th:each="cat : ${categories}"
                                         th:value="${cat.categoryId}"
                                         th:text="${cat.categoryName}"
@@ -526,17 +514,17 @@
                         <!-- Dropdown Tình trạng kho -->
                         <div style="min-width: 175px;">
                             <select name="stockStatus" class="form-select filter-select" onchange="document.getElementById('productFilterForm').submit()">
-                                <option value="ALL" th:selected="${stockStatus == null || stockStatus == 'ALL'}">📦 Tất cả kho hàng</option>
-                                <option value="IN_STOCK" th:selected="${stockStatus == 'IN_STOCK'}">🟢 Còn hàng an toàn</option>
-                                <option value="LOW_STOCK" th:selected="${stockStatus == 'LOW_STOCK'}">🟡 Sắp hết hàng (&le; 5)</option>
-                                <option value="OUT_OF_STOCK" th:selected="${stockStatus == 'OUT_OF_STOCK'}">🔴 Đã hết hàng (0)</option>
+                                <option value="ALL" th:selected="${stockStatus == null || stockStatus == 'ALL'}">Tất cả kho hàng</option>
+                                <option value="IN_STOCK" th:selected="${stockStatus == 'IN_STOCK'}">Còn hàng an toàn</option>
+                                <option value="LOW_STOCK" th:selected="${stockStatus == 'LOW_STOCK'}">Sắp hết hàng (&le; 5)</option>
+                                <option value="OUT_OF_STOCK" th:selected="${stockStatus == 'OUT_OF_STOCK'}">Đã hết hàng (0)</option>
                             </select>
                         </div>
 
                         <!-- Dropdown Lọc theo Mức giá (Price Filter) -->
                         <div style="min-width: 175px;">
                             <select name="priceRange" id="priceRangeSelect" class="form-select filter-select" onchange="handlePriceRangeChange(this.value)">
-                                <option value="ALL" th:selected="${priceRange == null || priceRange == 'ALL'}">💰 Tất cả mức giá</option>
+                                <option value="ALL" th:selected="${priceRange == null || priceRange == 'ALL'}">Tất cả mức giá</option>
                                 <option value="UNDER_50K" th:selected="${priceRange == 'UNDER_50K'}">Dưới 50.000 đ</option>
                                 <option value="50K_150K" th:selected="${priceRange == '50K_150K'}">50.000 đ - 150.000 đ</option>
                                 <option value="150K_300K" th:selected="${priceRange == '150K_300K'}">150.000 đ - 300.000 đ</option>
@@ -548,25 +536,23 @@
                         <!-- Dropdown Sắp xếp -->
                         <div style="min-width: 165px;">
                             <select name="sortBy" class="form-select filter-select" onchange="document.getElementById('productFilterForm').submit()">
-                                <option value="newest" th:selected="${sortBy == null || sortBy == 'newest'}">↕️ Mới nhất</option>
-                                <option value="oldest" th:selected="${sortBy == 'oldest'}">↕️ Cũ nhất</option>
-                                <option value="price_asc" th:selected="${sortBy == 'price_asc'}">💵 Giá: Thấp đến Cao</option>
-                                <option value="price_desc" th:selected="${sortBy == 'price_desc'}">💵 Giá: Cao đến Thấp</option>
-                                <option value="stock_asc" th:selected="${sortBy == 'stock_asc'}">📦 Kho: Ít đến Nhiều</option>
-                                <option value="stock_desc" th:selected="${sortBy == 'stock_desc'}">📦 Kho: Nhiều đến Ít</option>
-                                <option value="name_asc" th:selected="${sortBy == 'name_asc'}">🔤 Tên: A → Z</option>
-                                <option value="name_desc" th:selected="${sortBy == 'name_desc'}">🔤 Tên: Z → A</option>
+                                <option value="newest" th:selected="${sortBy == null || sortBy == 'newest'}">Mới nhất</option>
+                                <option value="oldest" th:selected="${sortBy == 'oldest'}">Cũ nhất</option>
+                                <option value="price_asc" th:selected="${sortBy == 'price_asc'}">Giá: Thấp đến Cao</option>
+                                <option value="price_desc" th:selected="${sortBy == 'price_desc'}">Giá: Cao đến Thấp</option>
+                                <option value="stock_asc" th:selected="${sortBy == 'stock_asc'}">Kho: Ít đến Nhiều</option>
+                                <option value="stock_desc" th:selected="${sortBy == 'stock_desc'}">Kho: Nhiều đến Ít</option>
+                                <option value="name_asc" th:selected="${sortBy == 'name_asc'}">Tên: A → Z</option>
+                                <option value="name_desc" th:selected="${sortBy == 'name_desc'}">Tên: Z → A</option>
                             </select>
                         </div>
 
                         <!-- Nút Lọc và Đặt lại -->
                         <div class="d-flex align-items-center gap-2">
                             <button type="submit" class="btn-filter-submit" title="Áp dụng bộ lọc">
-                                <i class="bi bi-funnel-fill"></i>
                                 <span>Lọc</span>
                             </button>
                             <a th:if="${hasActiveFilters}" th:href="@{/shop/products}" class="btn-filter-reset" title="Đặt lại tất cả bộ lọc">
-                                <i class="bi bi-arrow-counterclockwise"></i>
                                 <span>Đặt lại</span>
                             </a>
                         </div>
