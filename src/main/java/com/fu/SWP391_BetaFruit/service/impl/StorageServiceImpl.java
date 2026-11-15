@@ -81,7 +81,7 @@ public class StorageServiceImpl implements StorageService {
             String cleanFolder = (folder != null && !folder.trim().isEmpty())
                     ? folder.trim().replaceAll("^/+|/+$", "")
                     : "general";
-            String objectName = cleanFolder + fileName;
+            String objectName = cleanFolder + "/" + fileName;
             // Đẩy InputStream lên MinIO
             try (InputStream stream = file.getInputStream()) {
                 minioClient.putObject(
