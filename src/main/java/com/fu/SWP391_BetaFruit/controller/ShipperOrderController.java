@@ -118,8 +118,10 @@ public class ShipperOrderController {
         model.addAttribute("codDebt", codDebt);
         model.addAttribute("codCeiling", codCeiling);
         model.addAttribute("remainingQuota", remainingQuota);
+        model.addAttribute("availableQuota", remainingQuota);
         model.addAttribute("isCodLimitReached", isCodLimitReached);
         model.addAttribute("pendingAssignments", pendingAssignments);
+        model.addAttribute("unremittedAssignments", pendingAssignments);
         model.addAttribute("pastCollections", pastCollections);
         return "shipper/cod-history";
     }
