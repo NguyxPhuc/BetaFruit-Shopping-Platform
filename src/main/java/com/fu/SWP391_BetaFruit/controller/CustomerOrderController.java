@@ -146,13 +146,23 @@ public class CustomerOrderController {
     public static class OrderCompletionScheduler {
         private final OrderRepository orders;
         private final OrderCompletionService completion;
+        private final CustomerOrderService customerOrders;
+        private final Duration autoReceiveDelay;
         private final Duration delay;
 
-        // Thời gian chờ tính từ lúc khách xác nhận đã nhận hàng. Đổi 72h thành 10s để demo.
+        // Hai mốc chờ đặt cạnh nhau để dễ chỉnh; cấu hình bên ngoài sẽ ghi đè giá trị mặc định.
         public OrderCompletionScheduler(OrderRepository orders, OrderCompletionService completion,
+                CustomerOrderService customerOrders,
+                // ĐÃ GIAO -> ĐÃ NHẬN: sửa 24h tại đây (ví dụ 10s để demo).
+                @Value("${orders.auto-receive.delay:24h}") String autoReceiveDelay,
+                // ĐÃ NHẬN -> HOÀN TẤT: sửa 72h tại đây.
                 @Value("${orders.completion.delay:72h}") String delay) {
             this.orders = orders;
             this.completion = completion;
+            this.customerOrders = customerOrders;
+            this.autoReceiveDelay = DurationStyle.detectAndParse(autoReceiveDelay);
+            if (this.autoReceiveDelay.isNegative() || this.autoReceiveDelay.isZero())
+                throw new IllegalArgumentException("orders.auto-receive.delay phải lớn hơn 0");
             this.delay = DurationStyle.detectAndParse(delay);
             if (this.delay.isNegative() || this.delay.isZero())
                 throw new IllegalArgumentException("orders.completion.delay phải lớn hơn 0");
@@ -169,6 +179,14 @@ public class CustomerOrderController {
         // "0 30 * * * *"    — Phút 30 của mỗi giờ
         public void completeReceivedOrders() {
             LocalDateTime now = LocalDateTime.now();
+            LocalDateTime deliveredCutoff = now.minus(autoReceiveDelay);
+            for (Integer orderId : orders.findAutoReceiptCandidates(deliveredCutoff)) {
+                try {
+                    customerOrders.autoConfirmReceived(orderId, deliveredCutoff);
+                } catch (Exception ex) {
+                    log.error("Không thể tự xác nhận nhận hàng cho đơn #{}. Sẽ thử lại ở lần quét tiếp theo.", orderId, ex);
+                }
+            }
             LocalDateTime cutoff = now.minus(delay);
             for (Integer orderId : orders.findCompletionAndSettlementCandidates(cutoff)) {
                 try {

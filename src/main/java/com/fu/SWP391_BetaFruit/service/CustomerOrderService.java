@@ -4,6 +4,7 @@ import com.fu.SWP391_BetaFruit.dto.response.CustomerOrderResponse;
 import com.fu.SWP391_BetaFruit.dto.response.TierUpgradeResult;
 import com.fu.SWP391_BetaFruit.enums.OrderStatus;
 import org.springframework.data.domain.Page;
+import java.time.LocalDateTime;
 
 public interface CustomerOrderService {
 
@@ -14,4 +15,6 @@ public interface CustomerOrderService {
     CustomerOrderResponse getOrderForReview(Integer orderId, Integer customerId);
 
     TierUpgradeResult confirmReceived(Integer orderId, Integer customerId);
+
+    void autoConfirmReceived(Integer orderId, LocalDateTime deliveredCutoff);
 }

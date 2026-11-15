@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -94,13 +95,33 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Đơn hàng chỉ có thể xác nhận khi ở trạng thái Đã giao hàng");
         }
 
+        return receiveOrder(order, false);
+    }
+
+    @Override
+    @Transactional
+    public void autoConfirmReceived(Integer orderId, LocalDateTime deliveredCutoff) {
+        Order order = orderRepository.findLockedById(orderId).orElse(null);
+        if (order == null || order.getOrderStatus() != OrderStatus.DELIVERED) return;
+        var delivered = orderStatusHistoryRepository
+                .findFirstByOrderOrderIdAndStatusToOrderByCreatedAtDescHistoryIdDesc(orderId, OrderStatus.DELIVERED)
+                .orElse(null);
+        if (delivered == null || delivered.getCreatedAt() == null
+                || delivered.getCreatedAt().isAfter(deliveredCutoff)) return;
+        receiveOrder(order, true);
+    }
+
+    private TierUpgradeResult receiveOrder(Order order, boolean automatic) {
+        Integer orderId = order.getOrderId();
+        Integer customerId = order.getCustomer().getUserId();
         order.setOrderStatus(OrderStatus.RECEIVED);
         orderRepository.save(order);
 
         User customer = userRepository.getReferenceById(customerId);
         orderStatusHistoryRepository.save(new OrderStatusHistory(
                 null, order, customer, OrderStatus.DELIVERED, OrderStatus.RECEIVED,
-                "Khách hàng xác nhận đã nhận hàng", null
+                automatic ? "Hệ thống tự xác nhận nhận hàng do hết thời gian chờ sau khi giao thành công"
+                        : "Khách hàng xác nhận đã nhận hàng", null
         ));
 
         // Kích hoạt Loyalty Engine thăng hạng
@@ -108,16 +129,17 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 customerId, order.getOrderId(), order.getFinalAmount()
         );
 
-        log.info("Khách hàng #{} đã xác nhận nhận hàng cho đơn #{}. Kết quả thăng hạng: upgraded={}",
-                customerId, orderId, upgradeResult.isUpgraded());
+        log.info("Xác nhận nhận hàng cho khách #{}, đơn #{}, automatic={}. Kết quả thăng hạng: upgraded={}",
+                customerId, orderId, automatic, upgradeResult.isUpgraded());
 
         // Bắn thông báo hoàn tất đơn hàng cho Khách hàng
         try {
             if (notificationService != null) {
                 notificationService.createBaseNotification(
                         customer,
-                        "Đã xác nhận nhận hàng cho đơn #" + order.getOrderId(),
-                        "Đơn hàng sẽ tự động hoàn tất sau thời gian chờ được hệ thống cấu hình.",
+                        (automatic ? "Hệ thống tự xác nhận nhận hàng cho đơn #" : "Đã xác nhận nhận hàng cho đơn #") + order.getOrderId(),
+                        automatic ? "Đã hết thời gian chờ sau khi giao thành công. Đơn hàng sẽ tiếp tục chờ hoàn tất theo cấu hình."
+                                : "Đơn hàng sẽ tự động hoàn tất sau thời gian chờ được hệ thống cấu hình.",
                         NotificationType.ORDER_STATUS,
                         "/orders/" + order.getOrderId()
                 );
@@ -134,7 +156,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                         notificationService.createBaseNotification(
                                 assignment.getShipper().getUser(),
                                 "✅ Khách đã nhận đơn hàng #" + order.getOrderId(),
-                                "Khách hàng đã nhận kiện hàng hoa quả và xác nhận hài lòng. Cuốc giao đã kết thúc trọn vẹn.",
+                                automatic ? "Hệ thống tự xác nhận nhận hàng do hết thời gian chờ sau khi giao thành công."
+                                        : "Khách hàng đã nhận kiện hàng hoa quả và xác nhận hài lòng. Cuốc giao đã kết thúc trọn vẹn.",
                                 NotificationType.ORDER_STATUS,
                                 "/shipper/orders/" + order.getOrderId()
                         );

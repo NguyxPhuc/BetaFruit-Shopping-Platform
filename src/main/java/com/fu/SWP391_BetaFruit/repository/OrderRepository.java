@@ -19,6 +19,17 @@ import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 
+    @Query("""
+            select o.orderId from Order o
+            where o.orderStatus = com.fu.SWP391_BetaFruit.enums.OrderStatus.DELIVERED
+                and exists (select h.historyId from OrderStatusHistory h
+                    where h.order = o
+                    and h.statusTo = com.fu.SWP391_BetaFruit.enums.OrderStatus.DELIVERED
+                    and h.createdAt <= :cutoff)
+            order by o.orderId
+            """)
+    List<Integer> findAutoReceiptCandidates(@Param("cutoff") LocalDateTime cutoff);
+
     // Received orders whose holding period elapsed, plus completed orders awaiting settlement.
     @Query("""
             select o.orderId from Order o
