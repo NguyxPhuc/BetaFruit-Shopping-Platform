@@ -651,13 +651,29 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     /**
      * Lấy danh sách Voucher đặc quyền theo cấp bậc hiện tại (Shopee Rewards Style)
      */
+    @Override
+    @Transactional
+    public List<TierCoupon> getCustomerCouponEntitlements(Integer userId) {
+        CustomerMembership membership = syncCustomerMembershipTier(userId);
+        MembershipTier currentTier = membership != null ? membership.getTier() : null;
+        MembershipTier baseTier = membershipTierRepository.findTopByOrderByMinSpentRequiredAsc();
+        if (currentTier == null || currentTier.getTierId() == null || baseTier == null
+                || Objects.equals(currentTier.getTierId(), baseTier.getTierId())) {
+            return Collections.emptyList();
+        }
+        return tierCouponRepository.findByTier_TierId(currentTier.getTierId()).stream()
+                .filter(tc -> tc.getCoupon() != null && tc.getCoupon().getShop() == null
+                        && Boolean.TRUE.equals(tc.getCoupon().getIsActive()))
+                .toList();
+    }
+
     private List<TierVoucherResponse> getExclusiveVouchersForTier(Integer userId, int tierIndex, MembershipTier currentTier) {
         if (tierIndex <= 0 || currentTier == null || currentTier.getTierId() == null || tierCouponRepository == null) {
             return Collections.emptyList();
         }
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        List<TierCoupon> configuredList = tierCouponRepository.findByTier_TierId(currentTier.getTierId());
+        List<TierCoupon> configuredList = getCustomerCouponEntitlements(userId);
         if (configuredList == null || configuredList.isEmpty()) {
             return Collections.emptyList();
         }

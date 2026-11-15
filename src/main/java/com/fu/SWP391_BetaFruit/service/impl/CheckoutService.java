@@ -8,6 +8,7 @@ import com.fu.SWP391_BetaFruit.enums.*;
 import com.fu.SWP391_BetaFruit.repository.*;
 import com.fu.SWP391_BetaFruit.service.CartService;
 import com.fu.SWP391_BetaFruit.service.NotificationService;
+import com.fu.SWP391_BetaFruit.service.MembershipTierService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -34,9 +35,8 @@ public class CheckoutService {
     private final PaymentTransactionRepository payments;
     private final CheckoutCouponRepository coupons;
     private final NotificationService notifications;
+    private final MembershipTierService membership;
     private final TierCouponRepository tierCoupons;
-    private final CustomerMembershipRepository customerMemberships;
-    private final MembershipTierRepository membershipTiers;
 
     @Value("${checkout.shipping-fee:0}")
     private BigDecimal shippingFee = BigDecimal.ZERO;
@@ -45,10 +45,12 @@ public class CheckoutService {
     @Value("${checkout.coupon.default-limit-per-user:1}")
     private int defaultCouponLimitPerUser = 1;
 
+    @Transactional
     public CheckoutResponse preview(Integer customerId, List<Integer> selectedIds) {
         return preview(customerId, selectedIds, null);
     }
 
+    @Transactional
     public CheckoutResponse preview(Integer customerId, List<Integer> selectedIds, String couponCode) {
         var summary = carts.getSummary(customerId); // Also validates active CUSTOMER access.
         var selected = selectedIds == null ? Set.<Integer>of() : new HashSet<>(selectedIds);
@@ -96,28 +98,19 @@ public class CheckoutService {
         Shop shop = entities.getFirst().getVariant().getProduct().getShop();
         CheckoutCouponRules.validateShopOwnerFraud(coupon, shop, customerId);
         CheckoutCouponRules.validate(coupon, subtotal, java.time.LocalDateTime.now());
+        // Only platform coupons assigned to a membership bundle require tier access.
+        // Ordinary platform/shop codes remain usable by entering the code directly.
         int allowedLimit = defaultCouponLimitPerUser;
-        if (tierCoupons != null) {
-            List<TierCoupon> couponTiers = tierCoupons.findByCoupon_CouponId(coupon.getCouponId());
-            if (!couponTiers.isEmpty()) {
-                MembershipTier customerTier = null;
-                if (customerMemberships != null) {
-                    var memberOpt = customerMemberships.findByUserId(customerId);
-                    if (memberOpt.isPresent()) {
-                        customerTier = memberOpt.get().getTier();
-                    }
-                }
-                if (customerTier == null && membershipTiers != null) {
-                    customerTier = membershipTiers.findTopByOrderByMinSpentRequiredAsc();
-                }
-                CheckoutCouponRules.validateTierEligibility(coupon, customerTier, couponTiers);
-                allowedLimit = CheckoutCouponRules.resolveTierQuota(couponTiers, customerTier, defaultCouponLimitPerUser);
-            }
+        if (platform && tierCoupons.existsByCoupon_CouponId(coupon.getCouponId())) {
+            TierCoupon entitlement = membership.getCustomerCouponEntitlements(customerId).stream()
+                    .filter(tc -> Objects.equals(tc.getCoupon().getCouponId(), coupon.getCouponId()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Mã giảm giá không thuộc quyền lợi membership hiện tại của bạn."));
+            allowedLimit = entitlement.getEffectiveUsageQuota();
         }
-        if (orders != null && customerId != null) {
-            long usedCount = orders.countValidUsedCouponByCustomer(customerId, coupon.getCouponId());
-            CheckoutCouponRules.validateUserUsageLimit(usedCount, allowedLimit);
-        }
+        long usedCount = orders.countValidUsedCouponByCustomer(customerId, coupon.getCouponId());
+        CheckoutCouponRules.validateUserUsageLimit(usedCount, allowedLimit);
         BigDecimal discount = OrderPricing.couponDiscount(coupon, subtotal, shipping);
         if (discount.signum() == 0)
             throw new IllegalArgumentException("Mã giảm giá không làm giảm số tiền đơn hàng này.");
@@ -220,6 +213,7 @@ public class CheckoutService {
         return List.copyOf(result);
     }
 
+    @Transactional
     public List<AvailableCheckoutCouponResponse> getAvailableCouponsForCustomer(
             Integer customerId, Integer shopId, BigDecimal subtotal, BigDecimal shippingFee) {
         if (customerId == null || subtotal == null) {
@@ -228,57 +222,13 @@ public class CheckoutService {
         LocalDateTime now = LocalDateTime.now();
         BigDecimal currentShipping = shippingFee != null ? shippingFee : BigDecimal.ZERO;
 
-        // 1. Get Customer Membership Tier
-        MembershipTier customerTier = null;
-        if (customerMemberships != null) {
-            var memberOpt = customerMemberships.findByUserId(customerId);
-            if (memberOpt.isPresent()) {
-                customerTier = memberOpt.get().getTier();
-            }
-        }
-        if (customerTier == null && membershipTiers != null) {
-            customerTier = membershipTiers.findTopByOrderByMinSpentRequiredAsc();
-        }
-
-        // 2. Collect candidate coupons (Map by couponId to avoid duplicates)
-        Map<Integer, Coupon> candidateMap = new LinkedHashMap<>();
-
-        // 2a. Platform coupons
-        if (coupons != null) {
-            List<Coupon> platformCoupons = coupons.findByShopIsNullAndIsActiveTrue();
-            if (platformCoupons != null) {
-                for (Coupon c : platformCoupons) {
-                    if (c != null && c.getCouponId() != null) candidateMap.put(c.getCouponId(), c);
-                }
-            }
-            // 2b. Shop coupons
-            if (shopId != null) {
-                List<Coupon> shopCoupons = coupons.findByShop_ShopIdAndIsActiveTrue(shopId);
-                if (shopCoupons != null) {
-                    for (Coupon c : shopCoupons) {
-                        if (c != null && c.getCouponId() != null) candidateMap.put(c.getCouponId(), c);
-                    }
-                }
-            }
-        }
-
-        // 2c. Tier coupons for customer's tier
-        if (tierCoupons != null && customerTier != null && customerTier.getTierId() != null) {
-            List<TierCoupon> configuredList = tierCoupons.findByTier_TierId(customerTier.getTierId());
-            if (configuredList != null) {
-                for (TierCoupon tc : configuredList) {
-                    Coupon c = tc.getCoupon();
-                    if (c != null && Boolean.TRUE.equals(c.getIsActive()) && c.getCouponId() != null) {
-                        candidateMap.put(c.getCouponId(), c);
-                    }
-                }
-            }
-        }
+        List<TierCoupon> entitlements = membership.getCustomerCouponEntitlements(customerId);
 
         // 3. Evaluate each candidate coupon
         List<AvailableCheckoutCouponResponse> result = new ArrayList<>();
 
-        for (Coupon c : candidateMap.values()) {
+        for (TierCoupon entitlement : entitlements) {
+            Coupon c = entitlement.getCoupon();
             if (c == null || !Boolean.TRUE.equals(c.getIsActive())) continue;
 
             boolean eligible = true;
@@ -301,18 +251,7 @@ public class CheckoutService {
             }
 
             // Check per-user usage / Tier quota
-            int allowedLimit = defaultCouponLimitPerUser;
-            List<TierCoupon> cTierCoupons = (tierCoupons != null) ? tierCoupons.findByCoupon_CouponId(c.getCouponId()) : List.of();
-            if (!cTierCoupons.isEmpty()) {
-                // Validate tier eligibility
-                try {
-                    CheckoutCouponRules.validateTierEligibility(c, customerTier, cTierCoupons);
-                    allowedLimit = CheckoutCouponRules.resolveTierQuota(cTierCoupons, customerTier, defaultCouponLimitPerUser);
-                } catch (IllegalArgumentException ex) {
-                    eligible = false;
-                    ineligibleReason = ex.getMessage();
-                }
-            }
+            int allowedLimit = entitlement.getEffectiveUsageQuota();
 
             long userUsedCount = 0;
             if (orders != null && c.getCouponId() != null) {
@@ -352,18 +291,7 @@ public class CheckoutService {
                 }
             }
 
-            // Determine Scope Label
-            String scopeLabel = "Toàn sàn";
-            if (c.getShop() != null && c.getShop().getShopName() != null) {
-                scopeLabel = "Shop: " + c.getShop().getShopName();
-            } else if (!cTierCoupons.isEmpty()) {
-                String tiers = cTierCoupons.stream()
-                        .map(tc -> tc.getTier() != null ? tc.getTier().getTierName() : "")
-                        .filter(s -> !s.isBlank())
-                        .distinct()
-                        .collect(Collectors.joining(", "));
-                scopeLabel = tiers.isEmpty() ? "Đặc quyền Hội viên" : "Đặc quyền " + tiers;
-            }
+            String scopeLabel = "Đặc quyền " + entitlement.getTier().getTierName();
 
             // Determine Title
             String title;

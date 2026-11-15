@@ -193,6 +193,13 @@
 
     <!-- User Account Card at bottom -->
     <div class="mt-auto border-top border-white-10">
+        <div class="p-3" th:unless="${session.LOGGED_IN_ROLES != null and #strings.contains(session.LOGGED_IN_ROLES.toString(), 'ADMIN')}">
+            <a th:href="@{/auth/logout}" href="/auth/logout"
+               class="btn btn-danger w-100 d-flex align-items-center justify-content-center gap-2 fw-semibold">
+                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                <span>Đăng xuất tài khoản</span>
+            </a>
+        </div>
         <div class="dropdown">
             <a href="#" class="admin-user-card dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                 <div class="admin-avatar-circle"

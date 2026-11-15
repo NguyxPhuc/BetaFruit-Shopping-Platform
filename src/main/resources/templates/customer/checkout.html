@@ -52,7 +52,7 @@
             </section>
             <section class="checkout-card" aria-labelledby="couponHeading">
                 <h2 id="couponHeading">03. Mã giảm giá</h2>
-                <p id="couponHelp">Mỗi đơn dùng tối đa một mã giảm sản phẩm hoặc phí giao hàng. Mã của cửa hàng chỉ áp dụng tại cửa hàng đó; mã toàn sàn dùng cho mọi cửa hàng.</p>
+                <p id="couponHelp">Mỗi đơn dùng tối đa một mã giảm sản phẩm hoặc phí giao hàng. Bạn có thể nhập mã toàn sàn hoặc mã của cửa hàng đang mua. Mục chọn voucher hội viên chỉ hiển thị mã thuộc quyền lợi hạng hiện tại của bạn.</p>
                 <label for="couponCode">Nhập mã giảm giá</label>
                 <div class="checkout-coupon-input">
                     <input id="couponCode" name="couponCode" type="text" maxlength="50" autocomplete="off"
@@ -62,7 +62,7 @@
                 </div>
                 <div class="checkout-voucher-picker-row">
                     <button type="button" class="btn-open-voucher-modal" onclick="openVoucherModal()">
-                        <span>🏷️ Chọn voucher có sẵn</span>
+                        <span>🏷️ Chọn voucher hội viên</span>
                         <span class="badge-count" th:if="${availableCoupons != null and !availableCoupons.isEmpty()}"
                               th:text="${#lists.size(availableCoupons)}">0</span>
                     </button>
@@ -156,7 +156,7 @@
     <div id="voucherModal" class="voucher-modal-backdrop" onclick="handleBackdropClick(event)">
         <div class="voucher-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="voucherModalTitle">
             <div class="voucher-modal-header">
-                <h3 id="voucherModalTitle"><span>🏷️</span> Chọn BetaFruit Voucher</h3>
+                <h3 id="voucherModalTitle"><span>🏷️</span> Chọn voucher hội viên</h3>
                 <button type="button" class="voucher-modal-close" onclick="closeVoucherModal()" aria-label="Đóng">✕</button>
             </div>
             <div class="voucher-modal-tabs">
@@ -174,7 +174,7 @@
                 <!-- Empty state -->
                 <div th:if="${availableCoupons == null or availableCoupons.isEmpty()}" style="text-align: center; padding: 30px 10px; color: #64748b;">
                     <p style="font-size: 1.1rem; margin-bottom: 6px;">🎁 Chưa có mã giảm giá nào</p>
-                    <p style="font-size: 0.9rem; margin: 0;">Hiện tại chưa có mã ưu đãi phù hợp với giỏ hàng này.</p>
+                    <p style="font-size: 0.9rem; margin: 0;">Hạng thành viên hiện tại của bạn chưa có voucher được cấp. Xem quyền lợi tại trang Hội viên.</p>
                 </div>
 
                 <div th:if="${availableCoupons != null and !availableCoupons.isEmpty()}">

@@ -21,4 +21,6 @@ public interface TierCouponRepository extends JpaRepository<TierCoupon, Integer>
     void deleteByTier_TierId(@Param("tierId") Integer tierId);
 
     boolean existsByTier_TierIdAndCoupon_CouponId(Integer tierId, Integer couponId);
+
+    boolean existsByCoupon_CouponId(Integer couponId);
 }

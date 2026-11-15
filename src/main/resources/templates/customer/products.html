@@ -33,7 +33,7 @@
                            id="keywordInput"
                            name="keyword"
                            class="bf-filter-input"
-                           placeholder="Tìm..."
+                           placeholder="Tên sản phẩm hoặc shop"
                            th:value="${filter.keyword}" />
                 </div>
 
@@ -190,6 +190,10 @@
                                   class="bf-img-placeholder-text">Ảnh sản phẩm</span>
                         </div>
                         <div class="bf-product-title" th:text="${product.productName}">Táo Envy</div>
+                        <div class="bf-product-shop">
+                            <span>Shop:</span>
+                            <span th:text="${#strings.isEmpty(product.shopName) ? 'Chưa có thông tin' : product.shopName}">BetaFruit</span>
+                        </div>
                         <div class="bf-product-price" th:text="${product.formattedPrice}">180.000đ</div>
                     </a>
                 </article>

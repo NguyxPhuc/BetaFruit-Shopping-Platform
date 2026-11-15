@@ -14,6 +14,7 @@ public interface MembershipTierService {
 
     // Phía Customer: BR-LY-01, BR-LY-02, BR-LY-03
     CustomerMembershipResponse getCustomerMembershipData(Integer userId);
+    List<com.fu.SWP391_BetaFruit.entity.TierCoupon> getCustomerCouponEntitlements(Integer userId);
     com.fu.SWP391_BetaFruit.entity.CustomerMembership syncCustomerMembershipTier(Integer userId);
     void syncAllCustomersMembershipTier();
 

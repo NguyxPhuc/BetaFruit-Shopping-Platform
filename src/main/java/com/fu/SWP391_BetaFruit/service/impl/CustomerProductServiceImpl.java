@@ -69,7 +69,7 @@ public class CustomerProductServiceImpl implements CustomerProductService {
         }
 
         // Apply in-memory filters
-        final String cleanKeyword = (request.getKeyword() != null) ? request.getKeyword().trim().toLowerCase() : "";
+        final String cleanKeyword = (request.getKeyword() != null) ? request.getKeyword().trim().toLowerCase(Locale.ROOT) : "";
         final Integer targetCategory = request.getCategoryId();
         final BigDecimal minPrice = request.getMinPrice();
         final BigDecimal maxPrice = request.getMaxPrice();
@@ -79,8 +79,9 @@ public class CustomerProductServiceImpl implements CustomerProductService {
         List<CustomerProductCardResponse> filtered = cardResponses.stream().filter(card -> {
             // Keyword filter
             if (!cleanKeyword.isEmpty()) {
-                boolean matchName = card.getProductName() != null && card.getProductName().toLowerCase().contains(cleanKeyword);
-                if (!matchName) {
+                boolean matchName = card.getProductName() != null && card.getProductName().toLowerCase(Locale.ROOT).contains(cleanKeyword);
+                boolean matchShop = card.getShopName() != null && card.getShopName().toLowerCase(Locale.ROOT).contains(cleanKeyword);
+                if (!matchName && !matchShop) {
                     return false;
                 }
             }
