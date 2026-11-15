@@ -43,5 +43,20 @@ application-local.properties
 # Mock Data / Database scripts
 mock_data_full.sql
 
-# Local Validation Tests
-*ValidationTest.java
+# Local Tests
+src/test/
+*Test.java
+
+# Diagrams & Design files
+*.drawio
+*.drawio.png
+*.drawio.svg
+*.io
+
+# Spreadsheet files
+*.xlsx
+*.xls
+*.xlsm
+*.xslx
+*.csv
+
