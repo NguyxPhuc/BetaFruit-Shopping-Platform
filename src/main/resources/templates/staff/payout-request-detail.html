@@ -79,11 +79,9 @@
         <!-- Cột phải: Form Quyết định phê duyệt (Chỉ hiển thị khi đang PENDING) -->
         <div class="col-12 col-lg-5">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden" th:if="${detailResponse.status.name() == 'PENDING'}">
-                <div class="card-header bg-dark text-white p-3 px-4">
-                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
-                        <i class="bi bi-check-circle fs-5"></i>
-                        <span>Thực Hiện Quyết Định</span>
-                    </h5>
+                <div class="card-header bg-light border-bottom p-4">
+                    <span class="badge bg-primary-subtle text-primary text-uppercase mb-2">QUYẾT ĐỊNH XỬ LÝ</span>
+                    <h4 class="fw-bold text-dark mb-0">Thực Hiện Quyết Định</h4>
                 </div>
                 <div class="card-body p-4">
                     <form th:action="@{'/staff/payout-request/' + ${detailResponse.requestId} + '/process'}"
@@ -102,7 +100,11 @@
                                       id="note"
                                       class="form-control"
                                       rows="3"
+                                      oninput="document.getElementById('noteErrorClient').style.display='none'; this.style.borderColor='';"
                                       placeholder="Ví dụ: Đã chuyển khoản qua Internet Banking mã GD #VCB123456... Hoặc: Sai tên chủ tài khoản thụ hưởng so với CCCD."></textarea>
+                            <div id="noteErrorClient" class="text-danger small mt-1 fw-semibold" style="display: none;">
+                                Vui lòng nhập lý do từ chối vào ô ghi chú này (tối thiểu 5 ký tự) trước khi từ chối!
+                            </div>
                             <small class="text-muted d-block mt-1">
                                 * Ghi chú này sẽ được gửi trực tiếp vào Thông báo của chủ cửa hàng nếu bạn bấm Từ Chối.
                             </small>
@@ -194,12 +196,11 @@
         <div class="bf-modal-card">
             <h4 class="bf-modal-title" style="color: #b91c1c;">Xác nhận từ chối yêu cầu rút tiền</h4>
             <p class="bf-modal-message mb-3">
-                Số tiền sẽ được tự động hoàn trả vào ví của Shop. Vui lòng nhập lý do từ chối để hệ thống gửi thông báo cho chủ cửa hàng:
+                Bạn có chắc chắn muốn từ chối yêu cầu rút tiền này? Số tiền sẽ được hoàn trả tự động vào ví của Shop.
             </p>
-            <div class="text-start mb-3">
-                <label for="modalRejectNote" class="form-label small fw-bold text-dark">Lý do từ chối <span class="text-danger">*</span></label>
-                <textarea id="modalRejectNote" class="form-control" rows="3" placeholder="Ví dụ: Tên chủ tài khoản không khớp với hồ sơ đăng ký..."></textarea>
-                <div id="modalRejectError" class="text-danger small mt-1" style="display: none;">Vui lòng nhập lý do từ chối (tối thiểu 5 ký tự).</div>
+            <div class="p-3 bg-light rounded-3 mb-3 text-start border">
+                <div class="text-muted small fw-bold mb-1">Lý do từ chối gửi cho Shop:</div>
+                <div id="modalRejectReasonPreview" class="text-dark small" style="word-break: break-word;"></div>
             </div>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-secondary w-50" onclick="closeRejectModal()">Hủy bỏ</button>
@@ -225,17 +226,28 @@
         }
 
         function openRejectModal() {
-            const currentNote = document.getElementById('note').value.trim();
-            const modalNote = document.getElementById('modalRejectNote');
-            if (modalNote && currentNote) {
-                modalNote.value = currentNote;
+            const noteInput = document.getElementById('note');
+            const noteVal = noteInput ? noteInput.value.trim() : '';
+            const errorDiv = document.getElementById('noteErrorClient');
+
+            if (noteVal.length < 5) {
+                if (errorDiv) errorDiv.style.display = 'block';
+                if (noteInput) {
+                    noteInput.style.borderColor = '#dc3545';
+                    noteInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    noteInput.focus();
+                }
+                return;
             }
-            document.getElementById('modalRejectError').style.display = 'none';
+
+            if (errorDiv) errorDiv.style.display = 'none';
+            if (noteInput) noteInput.style.borderColor = '';
+
+            const preview = document.getElementById('modalRejectReasonPreview');
+            if (preview) preview.textContent = noteVal;
+
             const modal = document.getElementById('bfRejectModal');
-            if (modal) {
-                modal.showModal();
-                if (modalNote) modalNote.focus();
-            }
+            if (modal) modal.showModal();
         }
 
         function closeRejectModal() {
@@ -244,14 +256,6 @@
         }
 
         function confirmReject() {
-            const modalNote = document.getElementById('modalRejectNote');
-            const reason = modalNote ? modalNote.value.trim() : '';
-            if (reason.length < 5) {
-                document.getElementById('modalRejectError').style.display = 'block';
-                if (modalNote) modalNote.focus();
-                return;
-            }
-            document.getElementById('note').value = reason;
             document.getElementById('payoutStatusInput').value = 'REJECTED';
             document.getElementById('processPayoutForm').submit();
         }
