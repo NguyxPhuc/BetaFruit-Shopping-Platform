@@ -29,6 +29,7 @@ public class ProductUpdateRequest {
     private Integer categoryId;
 
     @NotBlank(message = "Mô tả hoa quả không được để trống.")
+    @Size(min = 20, message = "Mô tả chi tiết hoa quả phải có ít nhất 20 ký tự.")
     private String description;
 
     private String imageUrl;
