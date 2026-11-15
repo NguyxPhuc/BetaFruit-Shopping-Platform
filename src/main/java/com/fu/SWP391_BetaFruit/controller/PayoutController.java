@@ -79,7 +79,6 @@ public class PayoutController {
         try {
             PayoutDetailResponse detailResponse = payoutService.getPayoutDetail(requestId, id);
             model.addAttribute("detailResponse", detailResponse);
-            model.addAttribute("requestId", requestId);
         }catch (Exception e){
             model.addAttribute("errorMessage", e.getMessage());
         }

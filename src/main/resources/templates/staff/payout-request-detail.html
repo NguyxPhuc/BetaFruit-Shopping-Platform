@@ -86,9 +86,12 @@
                     </h5>
                 </div>
                 <div class="card-body p-4">
-                    <form th:action="@{'/staff/payout-request/' + ${requestId} + '/process'}"
+                    <form th:action="@{'/staff/payout-request/' + ${detailResponse.requestId} + '/process'}"
                           method="post"
                           id="processPayoutForm">
+
+                        <!-- Hidden input for payoutStatus -->
+                        <input type="hidden" name="payoutStatus" id="payoutStatusInput" value="">
 
                         <!-- Ghi chú / Lý do từ chối -->
                         <div class="mb-4">
@@ -105,24 +108,20 @@
                             </small>
                         </div>
 
-                        <!-- 2 Nút hành động -->
+                        <!-- 2 Nút hành động (không dùng popup trình duyệt) -->
                         <div class="d-grid gap-3">
                             <!-- Nút Chấp thuận -->
-                            <button type="submit"
-                                    name="payoutStatus"
-                                    value="COMPLETED"
+                            <button type="button"
                                     class="btn btn-success btn-lg rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
-                                    onclick="return confirm('Bạn xác nhận ĐÃ CHUYỂN KHOẢN thành công cho Shop và muốn DUYỆT yêu cầu này?');">
+                                    onclick="openApproveModal()">
                                 <i class="bi bi-check2-circle fs-5"></i>
                                 <span>Phê Duyệt & Giải Ngân</span>
                             </button>
 
                             <!-- Nút Từ chối -->
-                            <button type="submit"
-                                    name="payoutStatus"
-                                    value="REJECTED"
+                            <button type="button"
                                     class="btn btn-outline-danger btn-lg rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2"
-                                    onclick="return confirm('Bạn có chắc chắn muốn TỪ CHỐI yêu cầu rút tiền này? Tiền sẽ được tự động hoàn lại ví cho Shop.');">
+                                    onclick="openRejectModal()">
                                 <i class="bi bi-x-circle fs-5"></i>
                                 <span>Từ Chối & Hoàn Tiền Ví</span>
                             </button>
@@ -141,6 +140,122 @@
         </div>
     </div>
 
+    <style>
+        .bf-modal-dialog {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            max-width: 440px;
+            width: 90%;
+            margin: auto;
+        }
+        .bf-modal-dialog::backdrop {
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
+        }
+        .bf-modal-card {
+            background: #ffffff;
+            padding: 24px 20px 20px;
+            border-radius: 12px;
+        }
+        .bf-modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+        .bf-modal-message {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.5;
+            margin: 0 0 15px 0;
+            text-align: center;
+        }
+    </style>
+
+    <!-- MODAL XÁC NHẬN PHÊ DUYỆT (THUẦN HTML5 / CSS, KHÔNG DÙNG ICON) -->
+    <dialog id="bfApproveModal" class="bf-modal-dialog">
+        <div class="bf-modal-card">
+            <h4 class="bf-modal-title">Xác nhận phê duyệt giải ngân</h4>
+            <p class="bf-modal-message">
+                Bạn xác nhận ĐÃ CHUYỂN KHOẢN THÀNH CÔNG số tiền này cho Shop và muốn hoàn tất giải ngân yêu cầu rút tiền?
+            </p>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-secondary w-50" onclick="closeApproveModal()">Hủy bỏ</button>
+                <button type="button" class="btn btn-success w-50 fw-bold" onclick="confirmApprove()">Xác nhận duyệt</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- MODAL TỪ CHỐI YÊU CẦU (THUẦN HTML5 / CSS, KHÔNG DÙNG ICON) -->
+    <dialog id="bfRejectModal" class="bf-modal-dialog">
+        <div class="bf-modal-card">
+            <h4 class="bf-modal-title" style="color: #b91c1c;">Xác nhận từ chối yêu cầu rút tiền</h4>
+            <p class="bf-modal-message mb-3">
+                Số tiền sẽ được tự động hoàn trả vào ví của Shop. Vui lòng nhập lý do từ chối để hệ thống gửi thông báo cho chủ cửa hàng:
+            </p>
+            <div class="text-start mb-3">
+                <label for="modalRejectNote" class="form-label small fw-bold text-dark">Lý do từ chối <span class="text-danger">*</span></label>
+                <textarea id="modalRejectNote" class="form-control" rows="3" placeholder="Ví dụ: Tên chủ tài khoản không khớp với hồ sơ đăng ký..."></textarea>
+                <div id="modalRejectError" class="text-danger small mt-1" style="display: none;">Vui lòng nhập lý do từ chối (tối thiểu 5 ký tự).</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-secondary w-50" onclick="closeRejectModal()">Hủy bỏ</button>
+                <button type="button" class="btn btn-danger w-50 fw-bold" onclick="confirmReject()">Xác nhận từ chối</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        function openApproveModal() {
+            const modal = document.getElementById('bfApproveModal');
+            if (modal) modal.showModal();
+        }
+
+        function closeApproveModal() {
+            const modal = document.getElementById('bfApproveModal');
+            if (modal) modal.close();
+        }
+
+        function confirmApprove() {
+            document.getElementById('payoutStatusInput').value = 'COMPLETED';
+            document.getElementById('processPayoutForm').submit();
+        }
+
+        function openRejectModal() {
+            const currentNote = document.getElementById('note').value.trim();
+            const modalNote = document.getElementById('modalRejectNote');
+            if (modalNote && currentNote) {
+                modalNote.value = currentNote;
+            }
+            document.getElementById('modalRejectError').style.display = 'none';
+            const modal = document.getElementById('bfRejectModal');
+            if (modal) {
+                modal.showModal();
+                if (modalNote) modalNote.focus();
+            }
+        }
+
+        function closeRejectModal() {
+            const modal = document.getElementById('bfRejectModal');
+            if (modal) modal.close();
+        }
+
+        function confirmReject() {
+            const modalNote = document.getElementById('modalRejectNote');
+            const reason = modalNote ? modalNote.value.trim() : '';
+            if (reason.length < 5) {
+                document.getElementById('modalRejectError').style.display = 'block';
+                if (modalNote) modalNote.focus();
+                return;
+            }
+            document.getElementById('note').value = reason;
+            document.getElementById('payoutStatusInput').value = 'REJECTED';
+            document.getElementById('processPayoutForm').submit();
+        }
+    </script>
 </div>
 </body>
 </html>
