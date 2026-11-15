@@ -14,7 +14,6 @@ import com.fu.SWP391_BetaFruit.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -121,32 +119,17 @@ public class ProductController {
         }
 
         // Kiểm tra hình ảnh (chỉ chấp nhận tải tệp ảnh từ máy tính)
-        boolean hasFile = request.getImageFile() != null && !request.getImageFile().isEmpty();
-        if (!hasFile) {
+        if (request.getImageFile() == null || request.getImageFile().isEmpty()) {
             bindingResult.rejectValue("imageUrl", "error.product",
                     "Vui lòng tải lên hình ảnh đại diện của hoa quả từ máy tính.");
         }
 
-        validateDescriptionTrimmedLength(request.getDescription(), bindingResult);
-
-        // Kiểm tra hợp lệ danh sách thực thể (biến thể) và các lỗi binding của variants
-        List<VariantItemRequest> effectiveVariants = request.getEffectiveVariants();
-        validateVariantsAndPopulateError(effectiveVariants, bindingResult, model);
-
-        // Kiểm tra hợp lệ dữ liệu cơ bản
-        if (bindingResult.hasErrors() || model.containsAttribute("errorMessage")) {
-            if (request.getVariants() == null || request.getVariants().isEmpty()) {
-                request.setVariants(effectiveVariants);
-            }
-            if (request.getVariants().isEmpty()) {
-                request.getVariants().add(new VariantItemRequest());
-            }
-            model.addAttribute("shop", shop);
-            model.addAttribute("categories", categoryService.getActiveCategories());
-            return "shop/products/create";
+        if (bindingResult.hasErrors()) {
+            populateErrorFromBindingResult(bindingResult, model);
+            return prepareCreateFormView(shop, request, model);
         }
 
-        // Ảnh đại diện sẽ được ProductServiceImpl kiểm tra định dạng và lưu lên MinIO
+        // Nghiệp vụ kiểm tra chi tiết, upload MinIO và lưu dữ liệu nằm tại ProductServiceImpl
         try {
             Product savedProduct = productService.createProductForShop(userId, request);
             redirectAttributes.addFlashAttribute("successMessage",
@@ -155,14 +138,10 @@ public class ProductController {
             return "redirect:/shop/products";
         } catch (IllegalArgumentException | InvalidUploadImageException ex) {
             model.addAttribute("errorMessage", ex.getMessage());
-            model.addAttribute("shop", shop);
-            model.addAttribute("categories", categoryService.getActiveCategories());
-            return "shop/products/create";
+            return prepareCreateFormView(shop, request, model);
         } catch (Exception ex) {
             model.addAttribute("errorMessage", "Đã xảy ra sự cố trong quá trình lưu hoa quả: " + ex.getMessage());
-            model.addAttribute("shop", shop);
-            model.addAttribute("categories", categoryService.getActiveCategories());
-            return "shop/products/create";
+            return prepareCreateFormView(shop, request, model);
         }
     }
 
@@ -272,27 +251,12 @@ public class ProductController {
             return "redirect:/shop/products";
         }
 
-        validateDescriptionTrimmedLength(request.getDescription(), bindingResult);
-
-        // Kiểm tra hợp lệ danh sách thực thể (biến thể) và các lỗi binding của variants
-        List<VariantItemRequest> effectiveVariants = request.getEffectiveVariants();
-        validateVariantsAndPopulateError(effectiveVariants, bindingResult, model);
-
-        // Kiểm tra lỗi validation
-        if (bindingResult.hasErrors() || model.containsAttribute("errorMessage")) {
-            if (request.getVariants() == null || request.getVariants().isEmpty()) {
-                request.setVariants(effectiveVariants);
-            }
-            if (request.getVariants().isEmpty()) {
-                request.getVariants().add(new VariantItemRequest());
-            }
-            model.addAttribute("shop", shop);
-            model.addAttribute("categories", categoryService.getActiveCategories());
-            model.addAttribute("originalProduct", originalProduct);
-            return "shop/products/edit";
+        if (bindingResult.hasErrors()) {
+            populateErrorFromBindingResult(bindingResult, model);
+            return prepareEditFormView(shop, originalProduct, request, model);
         }
 
-        // Nếu có ảnh mới tải lên, ProductServiceImpl sẽ kiểm tra định dạng và lưu lên MinIO
+        // Nghiệp vụ kiểm tra chi tiết, upload MinIO và cập nhật dữ liệu nằm tại ProductServiceImpl
         try {
             Product updatedProduct = productService.updateProductForShop(userId, id, request);
             redirectAttributes.addFlashAttribute("successMessage",
@@ -300,85 +264,60 @@ public class ProductController {
             return "redirect:/shop/products";
         } catch (IllegalArgumentException | InvalidUploadImageException ex) {
             model.addAttribute("errorMessage", ex.getMessage());
-            model.addAttribute("shop", shop);
-            model.addAttribute("categories", categoryService.getActiveCategories());
-            model.addAttribute("originalProduct", originalProduct);
-            return "shop/products/edit";
+            return prepareEditFormView(shop, originalProduct, request, model);
         } catch (Exception ex) {
             model.addAttribute("errorMessage", "Đã xảy ra sự cố trong quá trình cập nhật hoa quả: " + ex.getMessage());
-            model.addAttribute("shop", shop);
-            model.addAttribute("categories", categoryService.getActiveCategories());
-            model.addAttribute("originalProduct", originalProduct);
-            return "shop/products/edit";
+            return prepareEditFormView(shop, originalProduct, request, model);
         }
     }
 
-    private void validateDescriptionTrimmedLength(String description, BindingResult bindingResult) {
-        if (!bindingResult.hasFieldErrors("description")
-                && description != null
-                && !description.trim().isEmpty()
-                && description.trim().length() < 20) {
-            bindingResult.rejectValue("description", "error.description",
-                    "Mô tả chi tiết hoa quả phải có ít nhất 20 ký tự.");
-        }
-    }
-
-    private void validateVariantsAndPopulateError(List<VariantItemRequest> effectiveVariants,
-            BindingResult bindingResult,
-            Model model) {
-        if (effectiveVariants.isEmpty()) {
-            model.addAttribute("errorMessage", "Vui lòng nhập ít nhất 1 thực thể cho hoa quả.");
+    private void populateErrorFromBindingResult(BindingResult bindingResult, Model model) {
+        if (!bindingResult.hasErrors() || model.containsAttribute("errorMessage")) {
             return;
         }
-
-        BigDecimal minPrice = new BigDecimal("1000");
-        for (int i = 0; i < effectiveVariants.size(); i++) {
-            VariantItemRequest v = effectiveVariants.get(i);
-            if (v.getOriginalPrice() == null || v.getOriginalPrice().compareTo(minPrice) < 0) {
-                model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                        + "') phải có giá bán từ 1,000 VNĐ trở lên.");
-                return;
-            }
-            if (v.getSalePrice() != null
-                    && (v.getSalePrice().compareTo(minPrice) < 0
-                            || v.getSalePrice().compareTo(v.getOriginalPrice()) >= 0)) {
-                model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                        + "') có giá khuyến mãi phải từ 1,000 VNĐ trở lên và nhỏ hơn giá bán.");
-                return;
-            }
-            if (v.getStockQuantity() == null) {
-                v.setStockQuantity(0);
-            } else if (v.getStockQuantity() < 0) {
-                model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                        + "') có số lượng tồn kho không được âm.");
-                return;
-            }
-            if (v.getLowStockThreshold() == null) {
-                v.setLowStockThreshold(5);
-            } else if (v.getLowStockThreshold() < 0) {
-                model.addAttribute("errorMessage", "Thực thể #" + (i + 1) + " ('" + v.getVariantName()
-                        + "') có mức báo sắp hết không được là số âm.");
+        for (FieldError fieldError : bindingResult.getFieldErrors()) {
+            if (fieldError.getField() != null && fieldError.getField().startsWith("variants")) {
+                String msg = fieldError.isBindingFailure()
+                        ? "Dữ liệu số ở phần thực thể không hợp lệ, vui lòng kiểm tra lại."
+                        : fieldError.getDefaultMessage();
+                model.addAttribute("errorMessage", msg);
                 return;
             }
         }
-
-        // Bắt các lỗi binding/validation khác (trên thực thể hoặc trường cơ bản) để luôn bật được toast lỗi
-        if (bindingResult.hasErrors() && !model.containsAttribute("errorMessage")) {
-            for (FieldError fieldError : bindingResult.getFieldErrors()) {
-                if (fieldError.getField() != null && fieldError.getField().startsWith("variants")) {
-                    String msg = fieldError.isBindingFailure()
-                            ? "Dữ liệu số ở phần thực thể không hợp lệ, vui lòng kiểm tra lại."
-                            : fieldError.getDefaultMessage();
-                    model.addAttribute("errorMessage", msg);
-                    return;
-                }
-            }
-            FieldError firstError = bindingResult.getFieldError();
-            if (firstError != null) {
-                model.addAttribute("errorMessage", firstError.isBindingFailure()
-                        ? "Dữ liệu nhập vào chưa hợp lệ, vui lòng kiểm tra lại."
-                        : firstError.getDefaultMessage());
-            }
+        FieldError firstError = bindingResult.getFieldError();
+        if (firstError != null) {
+            model.addAttribute("errorMessage", firstError.isBindingFailure()
+                    ? "Dữ liệu nhập vào chưa hợp lệ, vui lòng kiểm tra lại."
+                    : firstError.getDefaultMessage());
         }
+    }
+
+    private String prepareCreateFormView(Shop shop, ProductCreateRequest request, Model model) {
+        request.setVariants(normalizeVariantsForView(request.getVariants(), request.getEffectiveVariants()));
+        return renderProductFormView("shop/products/create", shop, null, model);
+    }
+
+    private String prepareEditFormView(Shop shop, Product originalProduct, ProductUpdateRequest request, Model model) {
+        request.setVariants(normalizeVariantsForView(request.getVariants(), request.getEffectiveVariants()));
+        return renderProductFormView("shop/products/edit", shop, originalProduct, model);
+    }
+
+    private List<VariantItemRequest> normalizeVariantsForView(List<VariantItemRequest> current,
+            List<VariantItemRequest> fallback) {
+        List<VariantItemRequest> resolved = (current == null || current.isEmpty()) ? fallback : current;
+        if (resolved == null || resolved.isEmpty()) {
+            resolved = new java.util.ArrayList<>();
+            resolved.add(new VariantItemRequest());
+        }
+        return resolved;
+    }
+
+    private String renderProductFormView(String viewName, Shop shop, Product originalProduct, Model model) {
+        model.addAttribute("shop", shop);
+        model.addAttribute("categories", categoryService.getActiveCategories());
+        if (originalProduct != null) {
+            model.addAttribute("originalProduct", originalProduct);
+        }
+        return viewName;
     }
 }
