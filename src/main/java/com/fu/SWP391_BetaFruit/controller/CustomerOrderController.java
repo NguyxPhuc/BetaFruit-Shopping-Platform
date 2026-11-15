@@ -150,7 +150,7 @@ public class CustomerOrderController {
 
         // Thời gian chờ tính từ lúc khách xác nhận đã nhận hàng. Đổi 72h thành 10s để demo.
         public OrderCompletionScheduler(OrderRepository orders, OrderCompletionService completion,
-                @Value("${orders.completion.delay:72h}") String delay) {
+                @Value("${orders.completion.delay:10s}") String delay) {
             this.orders = orders;
             this.completion = completion;
             this.delay = DurationStyle.detectAndParse(delay);

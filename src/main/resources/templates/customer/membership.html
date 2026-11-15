@@ -165,22 +165,71 @@
         /* Benefits Table */
         .benefits-matrix {
             background: #ffffff;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid #e9ecef;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+            margin-bottom: 28px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         }
-        .tier-row-current {
-            background-color: #f0fdf4 !important;
+        .benefits-matrix .card-header {
+            padding: 20px 24px 16px 24px;
+            background: #ffffff;
+            border-bottom: 1px solid #f0f2f5 !important;
+        }
+        .benefits-matrix .table-responsive {
+            padding: 0;
+            margin: 0;
+            overflow-x: auto;
+        }
+        .benefits-matrix table {
+            width: 100%;
+            margin-bottom: 0;
+            border-collapse: collapse;
+        }
+        .benefits-matrix th {
+            white-space: nowrap !important;
+            vertical-align: middle;
+            font-size: 0.88rem;
             font-weight: 600;
+            color: #495057;
+            background: #f8fbf9;
+            border-bottom: 2px solid #e2ece5 !important;
+            padding: 14px 16px;
+        }
+        .benefits-matrix td {
+            vertical-align: middle;
+            padding: 15px 16px;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        .benefits-matrix th:first-child,
+        .benefits-matrix td:first-child {
+            padding-left: 24px !important;
+        }
+        .benefits-matrix th:last-child,
+        .benefits-matrix td:last-child {
+            padding-right: 24px !important;
+        }
+        .tier-row-current td {
+            background-color: #f0fdf4 !important;
+        }
+        .tier-row-current td:first-child {
+            border-left: 4px solid #2d6a4f !important;
         }
         .current-pill {
             background: #2d6a4f;
             color: #ffffff;
-            font-size: 0.72rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            margin-left: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            vertical-align: middle;
+            line-height: 1.2;
+            box-shadow: 0 2px 4px rgba(45, 106, 79, 0.2);
         }
         /* Exclusive Tier Vouchers (Shopee Rewards Style) */
         .exclusive-voucher-section {
@@ -377,7 +426,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h3 style="font-size: 1.15rem; font-weight: 700; color: #1b4332; margin: 0;">Tiến Trình Thăng Hạng</h3>
                     <span class="badge" style="background: #e8f5e9; color: #2d6a4f; font-weight: 700; padding: 6px 12px; border-radius: 20px;"
-                          th:text="${#numbers.formatDecimal(membership.progressPercentage, 1, 1)} + '%'">75%</span>
+                          th:text="${#numbers.formatDecimal(membership.progressPercentage < membership.progressOrdersPercentage ? membership.progressPercentage : membership.progressOrdersPercentage, 1, 1)} + '%'">75%</span>
                 </div>
 
                 <!-- Tiến trình theo chi tiêu -->
@@ -403,14 +452,28 @@
                     </div>
                 </div>
 
-                <div th:if="${membership.hasNextTier}" style="background: #f8f9fa; border-left: 4px solid #2d6a4f; padding: 12px 16px; border-radius: 6px; margin-top: 10px;">
-                    <p style="margin: 0; color: #495057; font-size: 0.95rem;">
-                        💡 <strong>Chuẩn Shopee Rewards:</strong> Bạn chỉ cần đạt thêm
-                        <strong style="color: #d90429;" th:text="${membership.ordersNeeded} + ' đơn hàng'">2 đơn</strong>
-                        HOẶC chi tiêu thêm
-                        <strong style="color: #d90429;" th:text="${#numbers.formatDecimal(membership.amountNeeded, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500.000 ₫</strong>
-                        để nâng cấp lên
-                        <strong style="color: #2d6a4f;" th:text="${membership.nextTierName}">Hạng Kim Cương</strong>!
+                <div th:if="${membership.hasNextTier}" style="background: #f8f9fa; border-left: 4px solid #2d6a4f; padding: 14px 18px; border-radius: 8px; margin-top: 14px;">
+                    <p style="margin: 0; color: #333333; font-size: 0.95rem; line-height: 1.5;">
+                        💡 <strong>Chuẩn Shopee Rewards:</strong>
+                        <span th:if="${membership.amountNeeded > 0 and membership.ordersNeeded > 0}">
+                            Để thăng hạng lên <strong style="color: #2d6a4f;" th:text="${membership.nextTierName}">Hạng Vàng</strong>, bạn cần đồng thời tích lũy thêm
+                            <strong style="color: #d90429;" th:text="${membership.ordersNeeded} + ' đơn hàng'">2 đơn</strong>
+                            VÀ chi tiêu thêm
+                            <strong style="color: #d90429;" th:text="${#numbers.formatDecimal(membership.amountNeeded, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500.000 ₫</strong>.
+                        </span>
+                        <span th:if="${membership.amountNeeded == 0 and membership.ordersNeeded > 0}">
+                            Chi tiêu của bạn đã đạt điều kiện! Bạn chỉ cần hoàn tất thêm
+                            <strong style="color: #d90429;" th:text="${membership.ordersNeeded} + ' đơn hàng'">14 đơn</strong>
+                            nữa để thăng hạng lên <strong style="color: #2d6a4f;" th:text="${membership.nextTierName}">Hạng Vàng</strong>!
+                        </span>
+                        <span th:if="${membership.amountNeeded > 0 and membership.ordersNeeded == 0}">
+                            Số đơn hàng của bạn đã đạt điều kiện! Bạn chỉ cần chi tiêu thêm
+                            <strong style="color: #d90429;" th:text="${#numbers.formatDecimal(membership.amountNeeded, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500.000 ₫</strong>
+                            nữa để thăng hạng lên <strong style="color: #2d6a4f;" th:text="${membership.nextTierName}">Hạng Vàng</strong>!
+                        </span>
+                        <span th:if="${membership.amountNeeded == 0 and membership.ordersNeeded == 0}">
+                            🎉 Chúc mừng bạn đã đủ điều kiện thăng lên <strong style="color: #2d6a4f;" th:text="${membership.nextTierName}">Hạng mới</strong>!
+                        </span>
                     </p>
                 </div>
                 <div th:unless="${membership.hasNextTier}">
@@ -487,42 +550,46 @@
 
             <!-- Benefits Matrix (BR-LY-03) -->
             <div class="card shadow-sm border-0 benefits-matrix">
-                <div class="card-header bg-white py-3 border-0">
+                <div class="card-header border-0">
                     <h3 style="font-size: 1.15rem; font-weight: 700; color: #1b4332; margin: 0;">Bảng So Sánh Quyền Lợi Các Cấp Bậc</h3>
                 </div>
                 <div class="table-responsive">
-                    <table class="table align-middle mb-0" style="border-collapse: collapse; width: 100%;">
-                        <thead style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <table class="table align-middle mb-0">
+                        <thead>
                         <tr>
-                            <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Hạng Thành Viên</th>
-                            <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Chi Tiêu Tối Thiểu</th>
-                            <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Số Đơn Tối Thiểu</th>
-                            <th style="padding: 14px 20px; font-weight: 600; color: #495057;">Đặc Quyền Hội Viên</th>
-                            <th style="padding: 14px 20px; font-weight: 600; color: #495057; text-align: center;">Trạng Thái Của Bạn</th>
+                            <th style="width: 28%; text-align: left;">Hạng Thành Viên</th>
+                            <th style="width: 18%; text-align: center;">Chi Tiêu Tối Thiểu</th>
+                            <th style="width: 16%; text-align: center;">Số Đơn Tối Thiểu</th>
+                            <th style="width: 22%; text-align: center;">Đặc Quyền Hội Viên</th>
+                            <th style="width: 16%; text-align: center;">Trạng Thái Của Bạn</th>
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="tier : ${membership.allTiers}" th:classappend="${tier.isCurrent ? 'tier-row-current' : ''}" style="border-bottom: 1px solid #f1f3f5;">
-                            <td style="padding: 14px 20px;">
-                                <strong th:text="${tier.tierName}">Đồng</strong>
-                                <span th:if="${tier.isCurrent}" class="current-pill">Hiện tại</span>
+                        <tr th:each="tier : ${membership.allTiers}" th:classappend="${tier.isCurrent ? 'tier-row-current' : ''}">
+                            <td style="text-align: left;">
+                                <div style="display: inline-flex; align-items: center; flex-wrap: nowrap; gap: 8px;">
+                                    <strong style="color: #212529; font-size: 0.95rem; white-space: nowrap;" th:text="${tier.tierName}">Đồng</strong>
+                                    <span th:if="${tier.isCurrent}" class="current-pill">
+                                        <i class="bi bi-check-circle-fill"></i> Hiện tại
+                                    </span>
+                                </div>
                             </td>
-                            <td style="padding: 14px 20px;">
+                            <td style="text-align: center; font-weight: 600; color: #1b4332;">
                                 <span th:text="${#numbers.formatDecimal(tier.minSpentRequired, 0, 'COMMA', 0, 'POINT')}">0</span> ₫
                             </td>
-                            <td style="padding: 14px 20px;">
+                            <td style="text-align: center; font-weight: 600; color: #1b4332;">
                                 <span th:text="${tier.minOrdersRequired}">0</span> đơn
                             </td>
-                            <td style="padding: 14px 20px;">
-                                <span class="badge" style="background: #e8f5e9; color: #2d6a4f; font-size: 0.85rem; padding: 6px 12px; border-radius: 8px;">
+                            <td style="text-align: center;">
+                                <span class="badge" style="background: #e8f5e9; color: #2d6a4f; font-size: 0.85rem; padding: 7px 14px; border-radius: 8px; font-weight: 600; white-space: nowrap; display: inline-block;">
                                     Gói Voucher VIP &amp; Freeship
                                 </span>
                             </td>
-                            <td style="padding: 14px 20px; text-align: center;">
-                                <span th:if="${tier.isCurrent}" style="color: #2d6a4f; font-weight: 700;">
-                                    ✓ Đang áp dụng
+                            <td style="text-align: center;">
+                                <span th:if="${tier.isCurrent}" style="color: #2d6a4f; font-weight: 700; background: #e8f5e9; border: 1px solid #b7e4c7; padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="bi bi-check2-circle"></i> Đang áp dụng
                                 </span>
-                                <span th:unless="${tier.isCurrent}" style="color: #adb5bd;">
+                                <span th:unless="${tier.isCurrent}" style="color: #adb5bd; font-weight: 600; font-size: 1.1rem;">
                                     -
                                 </span>
                             </td>
