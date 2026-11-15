@@ -156,6 +156,8 @@
                         <span class="badge" th:classappend="${order.paymentMethod == 'COD' ? ' badge--cod' : ' badge--online'}" th:text="${order.paymentMethod == 'COD' ? 'COD' : 'Online'}"></span>
                         <small class="payment-note" th:if="${order.paymentMethod == 'VNPAY'}">Không thu tiền mặt</small>
                         <small class="payment-note" th:if="${order.paymentMethod == 'COD' and order.amountToCollect > 0}" th:text="'Cần thu ' + ${#numbers.formatDecimal(order.amountToCollect, 0, 'COMMA', (order.amountToCollect.stripTrailingZeros().scale() > 0 ? 2 : 0), 'POINT')} + 'đ'"></small>
+                        <small class="payment-note" style="color: #15803d; font-weight: 600;" th:if="${order.paymentMethod == 'COD' and order.amountToCollect == 0 and order.isCODRemitted == true}">✓ Đã nộp Hub</small>
+                        <small class="payment-note" style="color: #b45309; font-weight: 600;" th:if="${order.paymentMethod == 'COD' and (order.orderStatus == 'DELIVERED' or order.orderStatus == 'RECEIVED' or order.orderStatus == 'SUCCESS') and (order.isCODRemitted == null or order.isCODRemitted == false)}">⏳ Giữ COD (chưa nộp)</small>
                     </td>
                     <td><span class="badge order-status"
                               th:classappend="${order.orderStatus == 'DELIVERED' or order.orderStatus == 'RECEIVED' or order.orderStatus == 'SUCCESS'} ? ' order-status--done' : (${order.orderStatus == 'FAILED' or order.orderStatus == 'CANCELLED' or order.orderStatus == 'REJECTED'} ? ' order-status--closed' : (${order.orderStatus == 'PENDING' or order.orderStatus == 'PREPARING'} ? ' order-status--waiting' : ''))"

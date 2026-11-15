@@ -86,18 +86,18 @@ class LoyaltyEngineTest {
     }
 
     @Test
-    @DisplayName("Case 1: Khách đạt ngưỡng chi tiêu 1.000.000 ₫ -> Tự động thăng hạng Bạc và gửi thông báo")
+    @DisplayName("Case 1: Khách đạt ĐỒNG THỜI cả 2 tiêu chí (Chi tiêu >= 1.000.000 ₫ VÀ Đơn hàng >= 3 đơn) -> Tự động thăng hạng Bạc")
     void testUpgradeBySpendThreshold() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(1L);
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(3L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
-        // Khách hoàn thành đơn 1.200.000 ₫
+        // Khách hoàn thành đơn 1.200.000 ₫ và đạt mốc 3 đơn
         TierUpgradeResult result = membershipTierService.processOrderCompleted(10, 101, new BigDecimal("1200000.00"));
 
-        assertTrue(result.isUpgraded(), "Khách hàng phải được nâng hạng");
+        assertTrue(result.isUpgraded(), "Khách hàng phải được nâng hạng khi đạt cả chi tiêu và số đơn");
         assertEquals("Thành viên Bạc", result.getNewTierName());
         assertEquals(BigDecimal.ZERO, result.getNewDiscountPercent());
         assertEquals(new BigDecimal("1200000.00"), result.getCumulativeSpend());
@@ -119,28 +119,41 @@ class LoyaltyEngineTest {
     }
 
     @Test
-    @DisplayName("Case 2: Tiêu chí kép Shopee - Chi tiêu chưa đủ nhưng đạt 3 đơn hoàn tất -> Vẫn thăng hạng Bạc")
+    @DisplayName("Case 2: Tiêu chí kép Shopee - Đủ 3 đơn hoàn tất nhưng chi tiêu chưa đủ (200k < 1tr) -> KHÔNG thăng hạng Bạc")
     void testUpgradeByOrderCountThreshold_ShopeeDualCriteria() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
-        // Chi tiêu đơn chỉ 200.000đ nhưng đây là đơn thứ 3 hoàn tất
+        // Chi tiêu đơn chỉ 200.000đ dù đây là đơn thứ 3 hoàn tất
         when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(3L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 
         TierUpgradeResult result = membershipTierService.processOrderCompleted(10, 102, new BigDecimal("200000.00"));
 
-        assertTrue(result.isUpgraded(), "Tiêu chí kép Shopee: Đạt số đơn tối thiểu (3 đơn) phải được lên hạng");
-        assertEquals("Thành viên Bạc", result.getNewTierName());
-        assertEquals(BigDecimal.ZERO, result.getNewDiscountPercent());
+        assertFalse(result.isUpgraded(), "Tiêu chí kép Shopee: Bắt buộc phải đồng thời đạt cả chi tiêu và số đơn mới được lên hạng");
+        assertEquals(new BigDecimal("200000.00"), result.getCumulativeSpend());
     }
 
     @Test
-    @DisplayName("Case 3: Thăng hạng nhảy cóc (Multi-tier Leap) - Mua đơn 16.000.000 ₫ nhảy thẳng lên Kim Cương")
-    void testMultiTierLeap_ToDiamond() {
+    @DisplayName("Case 3: Chi tiêu cao 16.000.000 ₫ nhưng mới có 1 đơn (< 25 đơn Kim Cương) -> KHÔNG lên Kim Cương")
+    void testSpendSufficientButOrdersInsufficient_ShouldNotUpgradeToDiamond() {
         when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
         when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
         when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(1L);
+        when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
+                .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
+
+        TierUpgradeResult result = membershipTierService.processOrderCompleted(10, 103, new BigDecimal("16000000.00"));
+
+        assertFalse(result.isUpgraded(), "Chi tiêu dù đạt 16tr nhưng mới có 1 đơn (< 25 đơn Kim Cương, < 3 đơn Bạc) thì không được lên hạng");
+    }
+
+    @Test
+    @DisplayName("Case 3b: Thăng hạng nhảy cóc khi ĐỒNG THỜI đạt cả 16.000.000 ₫ VÀ 25 đơn -> Lên thẳng Kim Cương")
+    void testMultiTierLeap_ToDiamond() {
+        when(userRepository.findById(10)).thenReturn(Optional.of(testUser));
+        when(customerMembershipRepository.findByUserId(10)).thenReturn(Optional.of(customerMembership));
+        when(orderRepository.countByCustomer_UserIdAndOrderStatusIn(eq(10), any())).thenReturn(25L);
         when(membershipTierRepository.findAllByOrderByMinSpentRequiredAsc())
                 .thenReturn(List.of(bronzeTier, silverTier, goldTier, diamondTier));
 

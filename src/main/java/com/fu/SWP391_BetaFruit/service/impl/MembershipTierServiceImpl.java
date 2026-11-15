@@ -81,9 +81,9 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             int minOrders = (tier.getMinOrdersRequired() != null) ? tier.getMinOrdersRequired() : 0;
             BigDecimal tierMinSpent = (tier.getMinSpentRequired() != null) ? tier.getMinSpentRequired() : BigDecimal.ZERO;
             boolean spendPassed = totalSpent.compareTo(tierMinSpent) >= 0;
-            boolean ordersPassed = (minOrders > 0) && (completedOrders >= minOrders);
+            boolean ordersPassed = (minOrders == 0) || (completedOrders >= minOrders);
 
-            if (spendPassed || ordersPassed) {
+            if (spendPassed && ordersPassed) {
                 qualifiedTier = tier;
             } else {
                 break;
@@ -135,8 +135,8 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         // Lấy tất cả các hạng thành viên được sắp xếp tăng dần theo MinSpentRequired (BR-LY-02)
         List<MembershipTier> sortedTiers = membershipTierRepository.findAllByOrderByMinSpentRequiredAsc();
 
-        // Xác định hạng cao nhất mà Customer đạt được theo TIÊU CHÍ KÉP SHOPEE (BR-LY-03):
-        // Thỏa mãn Đạt mốc chi tiêu HOẶC Đạt mốc số đơn hoàn tất
+        // Xác định hạng cao nhất mà Customer đạt được theo TIÊU CHÍ KÉP ĐỒNG THỜI (BR-LY-03):
+        // Thỏa mãn ĐỒNG THỜI cả mốc chi tiêu VÀ mốc số đơn hoàn tất (Chuẩn Shopee Rewards)
         MembershipTier currentTier = null;
         MembershipTier nextTier = null;
         int currentTierIndex = -1;
@@ -146,10 +146,10 @@ public class MembershipTierServiceImpl implements MembershipTierService {
             int minOrders = (tier.getMinOrdersRequired() != null) ? tier.getMinOrdersRequired() : 0;
             BigDecimal tierMinSpent = (tier.getMinSpentRequired() != null) ? tier.getMinSpentRequired() : BigDecimal.ZERO;
             boolean spendPassed = totalSpent.compareTo(tierMinSpent) >= 0;
-            boolean ordersPassed = (minOrders > 0) && (completedOrders >= minOrders);
+            boolean ordersPassed = (minOrders == 0) || (completedOrders >= minOrders);
 
-            if (spendPassed || ordersPassed) {
-                currentTier = tier; // Cập nhật hạng cao nhất thỏa mãn
+            if (spendPassed && ordersPassed) {
+                currentTier = tier; // Cập nhật hạng cao nhất thỏa mãn đồng thời
                 currentTierIndex = i;
             } else {
                 // Hạng đầu tiên chưa đạt chính là nextTier
@@ -422,7 +422,7 @@ public class MembershipTierServiceImpl implements MembershipTierService {
     }
 
     // =========================================================================
-    // 3. SHOPEE LOYALTY ENGINE: TỰ ĐỘNG TÍCH LŨY, NÂNG HẠNG & ĐẶC QUYỀN
+    // 3.LOYALTY ENGINE: TỰ ĐỘNG TÍCH LŨY, NÂNG HẠNG & ĐẶC QUYỀN
     // =========================================================================
     @Override
     @Transactional
@@ -462,16 +462,18 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         MembershipTier currentTierInDb = membership.getTier();
         MembershipTier qualifiedTier = null;
 
-        // Quét tìm hạng cao nhất theo tiêu chí kép:
-        // Đạt chi tiêu tối thiểu HOẶC đạt số đơn hoàn tất tối thiểu
+        // Quét tìm hạng cao nhất theo tiêu chí kép đồng thời:
+        // Đạt chi tiêu tối thiểu VÀ đạt số đơn hoàn tất tối thiểu (Chuẩn Shopee Rewards)
         for (int i = 0; i < sortedTiers.size(); i++) {
             MembershipTier t = sortedTiers.get(i);
             int minOrders = (t.getMinOrdersRequired() != null) ? t.getMinOrdersRequired() : 0;
             boolean spendPassed = newSpend.compareTo(t.getMinSpentRequired()) >= 0;
-            boolean ordersPassed = (minOrders > 0) && (completedOrders >= minOrders);
+            boolean ordersPassed = (minOrders == 0) || (completedOrders >= minOrders);
 
-            if (spendPassed || ordersPassed) {
-                qualifiedTier = t; // Cập nhật hạng cao nhất thỏa mãn
+            if (spendPassed && ordersPassed) {
+                qualifiedTier = t; // Cập nhật hạng cao nhất thỏa mãn đồng thời
+            } else {
+                break;
             }
         }
 
