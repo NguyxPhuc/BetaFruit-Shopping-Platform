@@ -6,4 +6,7 @@ public class RegexUtils {
     public static final String PHONE_REGEX = "^0[35789][0-9]{8}$";
     public static final String USERNAME_REGEX = "^[a-zA-Z0-9_]{3,50}$";
     public static final String PASSWORD_NO_SPACE_REGEX = "^\\S{8,64}$";
+    public static final String BANK_ACCOUNT_REGEX = "^[0-9]+$";
+    public static final String ACCOUNT_NAME_REGEX = "^[a-zA-Z\\s]+$";
+    public static final String BANK_NAME_REGEX = "^[a-zA-Z0-9\\s\\u00C0-\\u1EF9\\-'.()&/]+$";
 }
