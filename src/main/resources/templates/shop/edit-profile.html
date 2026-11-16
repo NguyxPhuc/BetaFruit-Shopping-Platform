@@ -155,7 +155,6 @@
                                    th:field="*{bankAccountNumber}"
                                    class="form-input"
                                    placeholder="Ví dụ: 19036788889999"
-                                   pattern="^[0-9]+$"
                                    maxlength="50"
                                    required>
                             <span class="field-error-msg" th:if="${#fields.hasErrors('bankAccountNumber')}" th:errors="*{bankAccountNumber}" style="color: #dc2626; font-size: 12px; margin-top: 4px; display: block;"></span>
@@ -173,6 +172,8 @@
                                th:field="*{accountName}"
                                class="form-input"
                                placeholder="Ví dụ: NGUYEN VAN A"
+                               style="text-transform: uppercase;"
+                               oninput="this.value = this.value.toUpperCase()"
                                maxlength="100"
                                required>
                         <span class="field-error-msg" th:if="${#fields.hasErrors('accountName')}" th:errors="*{accountName}" style="color: #dc2626; font-size: 12px; margin-top: 4px; display: block;"></span>

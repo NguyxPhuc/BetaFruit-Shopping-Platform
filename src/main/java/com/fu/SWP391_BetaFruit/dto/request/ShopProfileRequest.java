@@ -29,15 +29,17 @@ public class ShopProfileRequest {
     private String phone;
 
     @NotBlank(message = "Vui lòng nhập tên ngân hàng")
+    @Pattern(regexp = RegexUtils.BANK_NAME_REGEX, message = "Tên ngân hàng không được chứa ký tự đặc biệt")
     @Size(max = 100, message = "Tên ngân hàng không được vượt quá 100 ký tự")
     private String bankName;
 
     @NotBlank(message = "Vui lòng nhập số tài khoản ngân hàng")
-    @Pattern(regexp = "^[0-9]+$", message = "Số tài khoản ngân hàng chỉ được chứa chữ số")
+    @Pattern(regexp = RegexUtils.BANK_ACCOUNT_REGEX, message = "Số tài khoản ngân hàng chỉ được chứa chữ số")
     @Size(max = 50, message = "Số tài khoản không được vượt quá 50 ký tự")
     private String bankAccountNumber;
 
     @NotBlank(message = "Vui lòng nhập tên chủ tài khoản")
+    @Pattern(regexp = RegexUtils.ACCOUNT_NAME_REGEX, message = "Tên chủ tài khoản chỉ được chứa chữ cái không dấu và khoảng trắng")
     @Size(max = 100, message = "Tên chủ tài khoản không được vượt quá 100 ký tự")
     private String accountName;
 }
