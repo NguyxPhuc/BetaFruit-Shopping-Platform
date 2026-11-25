@@ -16,6 +16,12 @@ import java.util.stream.Collectors;
 public final class CheckoutCouponRules {
     private CheckoutCouponRules() {}
 
+    /**
+     * Tác dụng: Kiểm tra voucher đang bật, đúng thời hạn, còn lượt toàn hệ thống và đạt giá trị đơn tối
+     * thiểu; sai điều kiện sẽ báo lỗi áp mã.
+     * Màn hình / luồng: Màn customer/checkout: CheckoutService.preview gọi khi áp mã và khi kiểm tra lại
+     * trước lúc tạo đơn.
+     */
     public static void validate(Coupon coupon, BigDecimal merchandiseTotal, LocalDateTime now) {
         if (!Boolean.TRUE.equals(coupon.getIsActive()))
             throw new IllegalArgumentException("Mã giảm giá đang tạm dừng.");

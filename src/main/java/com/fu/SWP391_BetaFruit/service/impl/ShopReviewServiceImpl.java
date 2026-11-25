@@ -17,6 +17,11 @@ public class ShopReviewServiceImpl implements ShopReviewService {
     private final ReviewRepository reviewRepository;
     private final ShopRepository shopRepository;
 
+    /**
+     * Tác dụng: Kiểm tra đánh giá thuộc shop của người đăng nhập, nội dung không trống và tối đa 5.000 ký
+     * tự rồi lưu phản hồi cùng thời gian; gửi lại sẽ thay phản hồi trước.
+     * Màn hình / luồng: Màn shop/reviews/list; ShopReviewController.reply gọi từ form phản hồi đánh giá.
+     */
     @Override
     @Transactional
     public void saveReply(Integer ownerId, Integer reviewId, String reply) {

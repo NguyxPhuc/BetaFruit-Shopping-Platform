@@ -53,6 +53,12 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         this.orderStockService = orderStockService;
     }
 
+    /**
+     * Tác dụng: Tải đơn thuộc shop của người đăng nhập, ghép sản phẩm, lịch sử, giao hàng, thanh toán và
+     * lợi nhuận dự kiến.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     @Override
     @Transactional(readOnly = true)
     public ShopOrderDetailResponse getOrderDetailForShopOwner(Integer orderId, Integer ownerId) {
@@ -106,10 +112,21 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 pricing.shopDiscountAmount());
     }
 
+    /**
+     * Tác dụng: Đổi enum thành mã chuỗi để đưa vào DTO chi tiết đơn; giữ null nếu chưa có giá trị.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     private String enumName(Enum<?> value) {
         return value == null ? null : value.name();
     }
 
+    /**
+     * Tác dụng: Tìm đơn theo chủ shop, từ khóa và trạng thái; gọi buildSort, phân trang ở database rồi
+     * chuyển kết quả sang DTO.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     @Override
     @Transactional(readOnly = true)
     public Page<ShopOrderListItemResponse> getOrdersForShopOwner(
@@ -124,10 +141,22 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 .map(this::toListItem);
     }
 
+    /**
+     * Tác dụng: Chuyển Order thành dữ liệu một dòng đơn hàng, gồm tiền khách trả, tiền shop nhận và quyền
+     * hiển thị các nút thao tác; bản nhận Amounts dùng lại tiền đã tính.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     private ShopOrderListItemResponse toListItem(Order order) {
         return toListItem(order, OrderPricing.calculate(order));
     }
 
+    /**
+     * Tác dụng: Chuyển Order thành dữ liệu một dòng đơn hàng, gồm tiền khách trả, tiền shop nhận và quyền
+     * hiển thị các nút thao tác; bản nhận Amounts dùng lại tiền đã tính.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     private ShopOrderListItemResponse toListItem(Order order, OrderPricing.Amounts pricing) {
         return new ShopOrderListItemResponse(
                 order.getOrderId(),
@@ -148,6 +177,12 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         );
     }
 
+    /**
+     * Tác dụng: Chọn cách sắp xếp ở database theo yêu cầu UI; chọn Tiền nhận sẽ dùng
+     * OrderPricing.NET_SORT_EXPRESSION trước khi phân trang.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     private Sort buildSort(String sortBy, String sortDirection) {
         Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection)
                 ? Sort.Direction.ASC : Sort.Direction.DESC;
@@ -161,18 +196,36 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         };
     }
 
+    /**
+     * Tác dụng: Xử lý nút Xác nhận: gọi changeStatus chuyển PENDING sang CONFIRMED, kiểm tra thanh toán
+     * VNPAY và trừ kho.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     @Override
     @Transactional
     public void confirmOrder(Integer orderId, Integer ownerId) {
         changeStatus(orderId, ownerId, OrderStatus.PENDING, OrderStatus.CONFIRMED, "Shop xác nhận đơn hàng");
     }
 
+    /**
+     * Tác dụng: Xử lý nút Chuẩn bị hàng: chỉ chuyển đơn từ CONFIRMED sang PREPARING và lưu lịch sử qua
+     * changeStatus.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     @Override
     @Transactional
     public void startPreparingOrder(Integer orderId, Integer ownerId) {
         changeStatus(orderId, ownerId, OrderStatus.CONFIRMED, OrderStatus.PREPARING, "Shop bắt đầu chuẩn bị hàng");
     }
 
+    /**
+     * Tác dụng: Xử lý nút Sẵn sàng giao: chuyển PREPARING sang READY rồi gọi điều phối tự động nếu service
+     * được cấu hình.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     @Override
     @Transactional
     public void markOrderReady(Integer orderId, Integer ownerId) {
@@ -180,6 +233,12 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         if (autoDispatchService != null) { try { autoDispatchService.autoDispatchOrder(orderId); } catch (Exception ignored) {} }
     }
 
+    /**
+     * Tác dụng: Hủy đơn trước khi shipper lấy hàng; hoàn kho nếu đơn đã qua xác nhận, rồi lưu trạng thái
+     * CANCELLED và lịch sử.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     @Override
     @Transactional
     public void cancelOrder(Integer orderId, Integer ownerId) {
@@ -193,6 +252,12 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         saveStatusChange(order, ownerId, OrderStatus.CANCELLED, "Shop hủy đơn hàng");
     }
 
+    /**
+     * Tác dụng: Hàm nội bộ dùng chung khi xác nhận, chuẩn bị hoặc sẵn sàng giao: kiểm tra bước chuyển;
+     * riêng xác nhận kiểm tra thanh toán và gọi OrderStockService.deduct.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     private void changeStatus(Integer orderId, Integer ownerId, OrderStatus expectedStatus,
                               OrderStatus nextStatus, String note) {
         Order order = getOwnedOrder(orderId, ownerId);
@@ -216,11 +281,22 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         saveStatusChange(order, ownerId, nextStatus, note);
     }
 
+    /**
+     * Tác dụng: Lấy và khóa đơn thuộc chủ shop hiện tại trước khi cập nhật; chặn thao tác lên đơn của shop khác.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     private Order getOwnedOrder(Integer orderId, Integer ownerId) {
         return orderRepository.findByOrderIdAndShopOwnerUserId(orderId, ownerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng của cửa hàng này"));
     }
 
+    /**
+     * Tác dụng: Cập nhật trạng thái đơn và ghi người thao tác, trạng thái cũ/mới cùng ghi chú vào lịch sử;
+     * dùng bởi changeStatus và cancelOrder.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     private void saveStatusChange(Order order, Integer ownerId, OrderStatus nextStatus, String note) {
         OrderStatus previousStatus = order.getOrderStatus();
         order.setOrderStatus(nextStatus);
@@ -228,6 +304,11 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 null, order, userRepository.getReferenceById(ownerId), previousStatus, nextStatus, note, null));
     }
 
+    /**
+     * Tác dụng: Xác định đơn còn trong các trạng thái cho phép shop hủy để DTO quyết định hiển thị nút Hủy.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     private boolean canShopCancel(OrderStatus status) {
         return status == OrderStatus.PENDING
                 || status == OrderStatus.CONFIRMED
@@ -235,6 +316,11 @@ public class ShopOrderServiceImpl implements ShopOrderService {
                 || status == OrderStatus.READY;
     }
 
+    /**
+     * Tác dụng: Đổi mã trạng thái đơn sang nhãn tiếng Việt để hiển thị trong danh sách, chi tiết và lịch sử.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     */
     private String statusLabel(OrderStatus status) {
         if (status == null) return "Chưa xác định";
         return switch (status) {
@@ -253,7 +339,15 @@ public class ShopOrderServiceImpl implements ShopOrderService {
         };
     }
 
-    /** Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result. */
+    /**
+     * Tác dụng: Tải trang kết quả an toàn; nếu trang vượt giới hạn do URL hoặc dữ liệu thay đổi thì tải lại
+     * trang hợp lệ.
+     * Màn hình / luồng: Danh sách shop/orders và chi tiết shop/order-detail; ShopOrderController gọi qua
+     * ShopOrderService.
+     *
+     * Ghi chú hiện có:
+     * Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result.
+     */
     private <T> Page<T> loadPage(int page, int size, java.util.function.IntFunction<Page<T>> query) {
         int index = Math.max(0, page);
         // Keep the SQL offset within the range accepted by JPA providers.

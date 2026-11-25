@@ -205,6 +205,12 @@ public class CustomerProductServiceImpl implements CustomerProductService {
         return getProductDetail(productId, 1);
     }
 
+    /**
+     * Tác dụng: Tải sản phẩm hợp lệ cùng biến thể, ảnh, thông tin shop và đánh giá phân trang để dựng dữ
+     * liệu chi tiết sản phẩm.
+     * Màn hình / luồng: Màn customer/product-detail; CustomerProductController.viewProductDetails gọi khi
+     * mở sản phẩm hoặc chuyển trang đánh giá.
+     */
     @Override
     @Transactional(readOnly = true)
     public CustomerProductDetailResponse getProductDetail(Integer productId, int reviewPage) {

@@ -67,6 +67,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return toDetailResponse(order);
     }
 
+    /**
+     * Tác dụng: Lấy đơn thuộc khách ở RECEIVED/SUCCESS và ghép các đánh giá đã viết theo dòng hàng;
+     * CustomerReviewController.orderReviews dùng để mở màn đánh giá.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng khách và customer/order-reviews; luồng tự xác nhận còn
+     * được tác vụ nền gọi.
+     */
     @Override
     @Transactional(readOnly = true)
     public CustomerOrderResponse getOrderForReview(Integer orderId, Integer customerId) {
@@ -98,6 +104,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return receiveOrder(order, false);
     }
 
+    /**
+     * Tác dụng: Tác vụ nền gọi để tự xác nhận đơn đã giao quá mốc deliveredCutoff; khóa đơn, kiểm tra lịch
+     * sử giao hàng rồi gọi receiveOrder. Không được gọi trực tiếp từ UI.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng khách và customer/order-reviews; luồng tự xác nhận còn
+     * được tác vụ nền gọi.
+     */
     @Override
     @Transactional
     public void autoConfirmReceived(Integer orderId, LocalDateTime deliveredCutoff) {
@@ -111,6 +123,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         receiveOrder(order, true);
     }
 
+    /**
+     * Tác dụng: Xử lý chung cho khách bấm Đã nhận hàng và tự xác nhận: chuyển RECEIVED, ghi lịch sử, cập
+     * nhật membership và gửi thông báo khách/shipper.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng khách và customer/order-reviews; luồng tự xác nhận còn
+     * được tác vụ nền gọi.
+     */
     private TierUpgradeResult receiveOrder(Order order, boolean automatic) {
         Integer orderId = order.getOrderId();
         Integer customerId = order.getCustomer().getUserId();
@@ -175,6 +193,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return toResponse(order, java.util.Map.of());
     }
 
+    /**
+     * Tác dụng: Ghép Order, các dòng sản phẩm và đánh giá thành DTO cho danh sách/chi tiết đơn và màn đánh
+     * giá; xác định cờ được xác nhận nhận hàng.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng khách và customer/order-reviews; luồng tự xác nhận còn
+     * được tác vụ nền gọi.
+     */
     private CustomerOrderResponse toResponse(Order order, java.util.Map<Integer, Review> reviews) {
         List<OrderItem> items = orderItemRepository.findByOrderOrderIdOrderByOrderItemIdAsc(order.getOrderId());
         List<CustomerOrderResponse.OrderItemResponse> itemResponses = items.stream()
@@ -250,6 +274,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .build();
     }
 
+    /**
+     * Tác dụng: Đổi một dòng đơn thành DTO gồm giá snapshot, thành tiền và dữ liệu review/quyền sửa;
+     * toResponse dùng để dựng danh sách sản phẩm.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng khách và customer/order-reviews; luồng tự xác nhận còn
+     * được tác vụ nền gọi.
+     */
     private CustomerOrderResponse.OrderItemResponse toOrderItemResponse(OrderItem item, Review review) {
         return new CustomerOrderResponse.OrderItemResponse(
                 item.getOrderItemId(), item.getVariant().getProduct().getProductId(),
@@ -262,6 +292,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 review == null || !hasCustomerUsedEdit(review));
     }
 
+    /**
+     * Tác dụng: Nhận biết lượt sửa review đã dùng theo chênh lệch updatedAt/createdAt hơn 2 giây;
+     * toOrderItemResponse dùng để quyết định quyền sửa trên màn đánh giá.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng khách và customer/order-reviews; luồng tự xác nhận còn
+     * được tác vụ nền gọi.
+     */
     private boolean hasCustomerUsedEdit(Review review) {
         return review.getUpdatedAt() != null
                 && review.getCreatedAt() != null
@@ -286,7 +322,15 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         };
     }
 
-    /** Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result. */
+    /**
+     * Tác dụng: Tải trang danh sách đơn khách và tự đưa về trang hợp lệ khi URL vượt giới hạn hoặc dữ liệu
+     * thay đổi; getCustomerOrders gọi.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng khách và customer/order-reviews; luồng tự xác nhận còn
+     * được tác vụ nền gọi.
+     *
+     * Ghi chú hiện có:
+     * Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result.
+     */
     private <T> Page<T> loadPage(int page, int size, java.util.function.IntFunction<Page<T>> query) {
         int index = Math.max(0, page);
         // Keep the SQL offset within the range accepted by JPA providers.

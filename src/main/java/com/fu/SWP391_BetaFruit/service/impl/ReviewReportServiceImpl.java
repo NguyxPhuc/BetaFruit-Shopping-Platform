@@ -209,7 +209,14 @@ public class ReviewReportServiceImpl implements ReviewReportService {
         return reviewReportRepository.countByStatus(DisputeStatus.PENDING);
     }
 
-    /** Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result. */
+    /**
+     * Tác dụng: Tải trang đánh giá và tự quay về trang hợp lệ khi chỉ số vượt kết quả; tránh danh sách
+     * trống do URL cũ hoặc dữ liệu thay đổi.
+     * Màn hình / luồng: Màn shop/reviews/list; getShopReviewsPageData gọi khi shop lọc hoặc chuyển trang đánh giá.
+     *
+     * Ghi chú hiện có:
+     * Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result.
+     */
     private <T> Page<T> loadPage(int page, int size, java.util.function.IntFunction<Page<T>> query) {
         int index = Math.max(0, page);
         // Keep the SQL offset within the range accepted by JPA providers.

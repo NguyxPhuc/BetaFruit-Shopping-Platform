@@ -65,6 +65,11 @@ public class CustomerProductController {
         return "customer/products";
     }
 
+    /**
+     * Tác dụng: Nhận ID sản phẩm và trang đánh giá, gọi CustomerProductService.getProductDetail, thêm
+     * cartToken rồi trả template chi tiết; không có sản phẩm thì về danh sách.
+     * Màn hình / luồng: Màn customer/product-detail; khách mở sản phẩm tại /products/{productId}.
+     */
     @GetMapping("/products/{productId}")
     public String viewProductDetails(@PathVariable Integer productId,
                                      @RequestParam(defaultValue = "1") int reviewPage,

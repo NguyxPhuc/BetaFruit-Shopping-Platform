@@ -21,6 +21,12 @@ public class DeliveryAssignmentService {
         this.orders = orders; this.assignments = assignments; this.shippers = shippers; this.users = users;
     }
 
+    /**
+     * Tác dụng: Khóa đơn READY chưa đối soát, chặn phân công trùng, kiểm tra shipper/người phân công rồi
+     * tạo DeliveryAssignment.
+     * Màn hình / luồng: Luồng điều phối tự động: AutoDispatchServiceImpl gọi; kết quả xuất hiện trong danh
+     * sách/chi tiết đơn shipper.
+     */
     @Transactional
     public DeliveryAssignment assign(Integer orderId, Integer shipperId, Integer assignedById) {
         var order = orders.findLockedById(orderId).orElseThrow(() ->

@@ -49,6 +49,12 @@ public class ShipperOrderController {
         this.codCollectionService = codCollectionService;
     }
 
+    /**
+     * Tác dụng: Nhận bộ lọc/sắp xếp/phân trang, tải đơn được phân công và bổ sung công nợ/hạn mức COD rồi
+     * hiển thị shipper/orders.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; nối UI với query/detail service và
+     * OrderDeliveryService.
+     */
     @GetMapping
     public String list(HttpSession session, Model model,
             @RequestParam(required = false) String keyword,
@@ -126,6 +132,12 @@ public class ShipperOrderController {
         return "shipper/cod-history";
     }
 
+    /**
+     * Tác dụng: Tải chi tiết đúng đơn được phân công qua DelivererOrderDetailService, bổ sung thông tin
+     * shipper và trả shipper/order-detail.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; nối UI với query/detail service và
+     * OrderDeliveryService.
+     */
     @GetMapping("/{orderId}")
     public String detail(@PathVariable Integer orderId, HttpSession session, Model model) {
         var user = currentUser(session);
@@ -136,6 +148,12 @@ public class ShipperOrderController {
         return "shipper/order-detail";
     }
 
+    /**
+     * Tác dụng: Nhận nút Đã lấy hàng, gọi OrderDeliveryService.markPickedUp qua change rồi chuyển lại chi
+     * tiết đơn.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; nối UI với query/detail service và
+     * OrderDeliveryService.
+     */
     @PostMapping("/{orderId}/picked-up")
     public String pickUp(@PathVariable Integer orderId, HttpSession session, RedirectAttributes redirect) {
         var user = currentUser(session);
@@ -144,6 +162,12 @@ public class ShipperOrderController {
         return change(orderId, () -> delivery.markPickedUp(orderId, shipperId), redirect);
     }
 
+    /**
+     * Tác dụng: Nhận nút Bắt đầu giao, gọi OrderDeliveryService.startDelivering qua change rồi chuyển lại
+     * chi tiết đơn.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; nối UI với query/detail service và
+     * OrderDeliveryService.
+     */
     @PostMapping("/{orderId}/delivering")
     public String delivering(@PathVariable Integer orderId, HttpSession session, RedirectAttributes redirect) {
         var user = currentUser(session);
@@ -152,6 +176,12 @@ public class ShipperOrderController {
         return change(orderId, () -> delivery.startDelivering(orderId, shipperId), redirect);
     }
 
+    /**
+     * Tác dụng: Nhận nút Giao thành công cùng xác nhận thu COD, gọi OrderDeliveryService.markDelivered qua
+     * change để hoàn tất bước giao.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; nối UI với query/detail service và
+     * OrderDeliveryService.
+     */
     @PostMapping("/{orderId}/delivered")
     public String delivered(@PathVariable Integer orderId, HttpSession session, RedirectAttributes redirect,
             @RequestParam(defaultValue = "false") boolean codCollected) {
@@ -173,6 +203,12 @@ public class ShipperOrderController {
     }
 
 
+    /**
+     * Tác dụng: Bọc thao tác lấy hàng/bắt đầu giao/giao thành công/báo sự cố, gắn thông báo thành công hoặc
+     * lỗi 409 rồi redirect về chi tiết đơn.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; nối UI với query/detail service và
+     * OrderDeliveryService.
+     */
     private String change(Integer orderId, Runnable action, RedirectAttributes redirect) {
         try {
             action.run();
@@ -184,10 +220,21 @@ public class ShipperOrderController {
         return "redirect:/shipper/orders/" + orderId;
     }
 
+    /**
+     * Tác dụng: Gọi SessionUserService.findCurrentUser để lấy shipper đăng nhập trước khi đọc hoặc cập nhật
+     * đơn hàng.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; nối UI với query/detail service và
+     * OrderDeliveryService.
+     */
     private User currentUser(HttpSession session) {
         return sessions.findCurrentUser(session).orElse(null);
     }
 
+    /**
+     * Tác dụng: Đọc page/size từ request, yêu cầu mỗi tham số xuất hiện một lần và là số nguyên trong giới
+     * hạn; thiếu thì dùng mặc định, sai thì tạo InvalidPagination.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đơn được phân công của shipper.
+     */
     private static int paginationNumber(MultiValueMap<String, String> params, String key, int fallback, int min, int max) {
         var values = params.get(key);
         if (values == null) return fallback;
@@ -203,6 +250,11 @@ public class ShipperOrderController {
         }
     }
 
+    /**
+     * Tác dụng: Tạo lỗi InvalidPagination kèm khoảng giá trị hợp lệ; paginationNumber gọi khi số trang/kích
+     * thước trang sai.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đơn được phân công của shipper.
+     */
     private static InvalidPagination invalid(String key, int min, int max) {
         return new InvalidPagination("Tham số " + key + " phải là số nguyên từ " + min + " đến " + max + ". Hãy sửa giá trị đã nhập.");
     }

@@ -16,7 +16,8 @@ public interface CouponRepository extends JpaRepository<Coupon, Integer> {
     // Shop Owner queries
     Page<Coupon> findByShop_ShopId(Integer shopId, Pageable pageable);
 
-    Page<Coupon> findByShop_ShopIdAndCouponCodeContainingIgnoreCase(Integer shopId, String keyword, Pageable pageable);
+    Page<Coupon> findByShop_ShopIdAndCouponCodeContainingIgnoreCase
+            (Integer shopId, String keyword, Pageable pageable);
 
     Optional<Coupon> findByCouponIdAndShop_ShopId(Integer couponId, Integer shopId);
 

@@ -33,6 +33,11 @@ public class ShopOrderController {
         this.shopOrderService = shopOrderService;
     }
 
+    /**
+     * Tác dụng: Nhận yêu cầu danh sách cùng từ khóa, trạng thái, cách sắp xếp và phân trang; gọi
+     * getOrdersForShopOwner rồi đưa dữ liệu vào template shop/orders.
+     * Màn hình / luồng: Màn shop/orders và shop/order-detail; gọi nghiệp vụ qua ShopOrderService.
+     */
     @GetMapping
     public String orderList(
             Model model,
@@ -74,6 +79,11 @@ public class ShopOrderController {
         return "shop/orders";
     }
 
+    /**
+     * Tác dụng: Nhận mã đơn, gọi getOrderDetailForShopOwner cho chủ shop đăng nhập rồi hiển thị template
+     * shop/order-detail.
+     * Màn hình / luồng: Màn shop/orders và shop/order-detail; gọi nghiệp vụ qua ShopOrderService.
+     */
     @GetMapping("/{orderId}")
     public String orderDetail(@PathVariable Integer orderId,
                               HttpSession session,
@@ -84,6 +94,11 @@ public class ShopOrderController {
         addOwnerName(session, model);
         return "shop/order-detail";
     }
+    /**
+     * Tác dụng: Nhận nút Xác nhận, gọi service.confirmOrder và chuyển lại danh sách hoặc chi tiết; giữ bộ
+     * lọc/phân trang và hiển thị lỗi nghiệp vụ nếu có.
+     * Màn hình / luồng: Màn shop/orders và shop/order-detail; gọi nghiệp vụ qua ShopOrderService.
+     */
     @PostMapping("/{orderId}/confirm")
     public String confirmOrder(@PathVariable Integer orderId,
                                HttpSession session,
@@ -103,6 +118,11 @@ public class ShopOrderController {
         return target;
     }
 
+    /**
+     * Tác dụng: Nhận nút Chuẩn bị hàng, gọi service.startPreparingOrder rồi chuyển về danh sách hoặc chi
+     * tiết theo returnToDetail.
+     * Màn hình / luồng: Màn shop/orders và shop/order-detail; gọi nghiệp vụ qua ShopOrderService.
+     */
     @PostMapping("/{orderId}/preparing")
     public String startPreparingOrder(@PathVariable Integer orderId,
                                       HttpSession session,
@@ -116,6 +136,11 @@ public class ShopOrderController {
         return target;
     }
 
+    /**
+     * Tác dụng: Nhận nút Sẵn sàng giao, gọi service.markOrderReady rồi tải lại màn đơn hàng với các tham số
+     * danh sách được giữ.
+     * Màn hình / luồng: Màn shop/orders và shop/order-detail; gọi nghiệp vụ qua ShopOrderService.
+     */
     @PostMapping("/{orderId}/ready")
     public String markOrderReady(@PathVariable Integer orderId,
                                  HttpSession session,
@@ -129,6 +154,11 @@ public class ShopOrderController {
         return target;
     }
 
+    /**
+     * Tác dụng: Nhận nút Hủy đơn, gọi service.cancelOrder rồi chuyển lại danh sách hoặc chi tiết theo
+     * returnToDetail.
+     * Màn hình / luồng: Màn shop/orders và shop/order-detail; gọi nghiệp vụ qua ShopOrderService.
+     */
     @PostMapping("/{orderId}/cancel")
     public String cancelOrder(@PathVariable Integer orderId,
                               HttpSession session,
@@ -142,15 +172,30 @@ public class ShopOrderController {
         return target;
     }
 
+    /**
+     * Tác dụng: Đọc ID người đăng nhập từ session; các handler dùng để lấy đơn/thao tác đúng chủ shop hoặc
+     * chuyển sang đăng nhập.
+     * Màn hình / luồng: Màn shop/orders và shop/order-detail; gọi nghiệp vụ qua ShopOrderService.
+     */
     private Integer currentUserId(HttpSession session) {
         return session != null && session.getAttribute("LOGGED_IN_USER_ID") instanceof Integer id ? id : null;
     }
 
+    /**
+     * Tác dụng: Đưa tên chủ shop từ session vào model để hiển thị phần thông tin người dùng của trang đơn hàng.
+     * Màn hình / luồng: Màn shop/orders và shop/order-detail; gọi nghiệp vụ qua ShopOrderService.
+     */
     private void addOwnerName(HttpSession session, Model model) {
         String name = (String) session.getAttribute("LOGGED_IN_FULLNAME");
         model.addAttribute("shopOwnerName", name != null ? name : "Chủ cửa hàng");
     }
 
+    /**
+     * Tác dụng: Đọc page/size từ request, yêu cầu mỗi tham số xuất hiện một lần và là số nguyên trong giới
+     * hạn; thiếu thì dùng mặc định, sai thì tạo InvalidPagination.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đơn shop và chuyển về danh sách sau xác nhận/chuẩn
+     * bị/sẵn sàng/hủy.
+     */
     private static int paginationNumber(MultiValueMap<String, String> params, String key, int fallback, int min, int max) {
         var values = params.get(key);
         if (values == null) return fallback;
@@ -166,10 +211,22 @@ public class ShopOrderController {
         }
     }
 
+    /**
+     * Tác dụng: Tạo lỗi InvalidPagination kèm khoảng giá trị hợp lệ; paginationNumber gọi khi số trang/kích
+     * thước trang sai.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đơn shop và chuyển về danh sách sau xác nhận/chuẩn
+     * bị/sẵn sàng/hủy.
+     */
     private static InvalidPagination invalid(String key, int min, int max) {
         return new InvalidPagination("Tham số " + key + " phải là số nguyên từ " + min + " đến " + max + ". Hãy sửa giá trị đã nhập.");
     }
 
+    /**
+     * Tác dụng: Tạo URL redirect giữ page, size và các bộ lọc được truyền vào sau thao tác; dùng
+     * paginationNumber để kiểm tra tham số trước khi dựng URL.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đơn shop và chuyển về danh sách sau xác nhận/chuẩn
+     * bị/sẵn sàng/hủy.
+     */
     private String paginationRedirect(String path, MultiValueMap<String, String> params, int firstPage, String... filters) {
         int page = paginationNumber(params, "page", firstPage, firstPage, Integer.MAX_VALUE);
         int size = paginationNumber(params, "size", 10, 1, 100);

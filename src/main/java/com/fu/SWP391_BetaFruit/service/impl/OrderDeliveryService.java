@@ -39,16 +39,33 @@ public class OrderDeliveryService {
         this.notificationService = notificationService;
     }
 
+    /**
+     * Tác dụng: Xử lý nút Đã lấy hàng: transition chuyển READY sang PICKED_UP sau khi kiểm tra đúng shipper
+     * được phân công.
+     * Màn hình / luồng: Màn shipper/order-detail; ShipperOrderController gọi các thao tác cập nhật tiến
+     * trình giao hàng.
+     */
     @Transactional
     public void markPickedUp(Integer orderId, Integer shipperId) {
         transition(orderId, shipperId, OrderStatus.READY, OrderStatus.PICKED_UP, "Shipper đã lấy hàng");
     }
 
+    /**
+     * Tác dụng: Xử lý nút Bắt đầu giao: transition chuyển PICKED_UP sang DELIVERING và ghi lịch sử.
+     * Màn hình / luồng: Màn shipper/order-detail; ShipperOrderController gọi các thao tác cập nhật tiến
+     * trình giao hàng.
+     */
     @Transactional
     public void startDelivering(Integer orderId, Integer shipperId) {
         transition(orderId, shipperId, OrderStatus.PICKED_UP, OrderStatus.DELIVERING, "Shipper bắt đầu giao hàng");
     }
 
+    /**
+     * Tác dụng: Hàm nội bộ dùng chung khi lấy hàng/bắt đầu giao: khóa và kiểm tra phân công, trạng thái kỳ
+     * vọng, chưa đối soát rồi đổi trạng thái và lưu lịch sử.
+     * Màn hình / luồng: Màn shipper/order-detail; ShipperOrderController gọi các thao tác cập nhật tiến
+     * trình giao hàng.
+     */
     private void transition(Integer orderId, Integer shipperId, OrderStatus expected, OrderStatus next, String note) {
         Order order = assignedOrder(orderId, shipperId);
         if (order.getOrderStatus() != expected || Boolean.TRUE.equals(order.getIsSettled())) {
@@ -58,6 +75,12 @@ public class OrderDeliveryService {
         history.save(new OrderStatusHistory(null, order, users.getReferenceById(shipperId), expected, next, note, null));
     }
 
+    /**
+     * Tác dụng: Xác nhận giao thành công từ DELIVERING, yêu cầu xác nhận thu COD nếu có; chốt tiền shop,
+     * ghi nhận nợ COD và thông báo. Tiền chưa được cộng vào số dư shop ở bước này.
+     * Màn hình / luồng: Màn shipper/order-detail; ShipperOrderController gọi các thao tác cập nhật tiến
+     * trình giao hàng.
+     */
     @Transactional
     public void markDelivered(Integer orderId, Integer shipperId, boolean codCollected) {
         Order order = assignedOrder(orderId, shipperId);
@@ -137,6 +160,12 @@ public class OrderDeliveryService {
     }
 
 
+    /**
+     * Tác dụng: Lấy và khóa đơn, kiểm tra shipper hiện tại là người được phân công; các thao tác giao hàng
+     * và báo sự cố dùng trước khi cập nhật.
+     * Màn hình / luồng: Màn shipper/order-detail; ShipperOrderController gọi các thao tác cập nhật tiến
+     * trình giao hàng.
+     */
     private Order assignedOrder(Integer orderId, Integer shipperId) {
         Order order = orders.findLockedById(orderId).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn hàng"));

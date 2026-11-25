@@ -31,11 +31,23 @@ public class CheckoutController {
     private record Receipt(Integer customerId, List<CheckoutResponse.PlacedOrder> orders,
                            PaymentMethod paymentMethod, String paymentToken) {}
 
+    /**
+     * Tác dụng: Đặt Cache-Control no-store trước các handler checkout để trình duyệt không giữ lại form đặt
+     * hàng/token cũ.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     @ModelAttribute
     public void preventCachedForms(HttpServletResponse response) {
         response.setHeader("Cache-Control", "no-store");
     }
 
+    /**
+     * Tác dụng: Mở checkout từ sản phẩm đã chọn trong giỏ hoặc draft cũ; tính lại preview, chuẩn bị token,
+     * địa chỉ và voucher rồi trả template customer/checkout.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     @GetMapping
     public String view(@RequestParam(required = false) List<Integer> itemIds, HttpSession session,
                        Model model, RedirectAttributes redirect) {
@@ -87,6 +99,12 @@ public class CheckoutController {
         }
     }
 
+    /**
+     * Tác dụng: Xử lý mở/xác nhận hộp chọn địa chỉ; kiểm tra token và quyền sở hữu địa chỉ, giữ phương thức
+     * thanh toán/mã đã nhập rồi tải lại checkout.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     @PostMapping("/address")
     public String selectAddress(@RequestParam String checkoutToken,
                                 @RequestParam(defaultValue = "open") String addressAction,
@@ -121,6 +139,12 @@ public class CheckoutController {
         }
     }
 
+    /**
+     * Tác dụng: Xử lý áp dụng hoặc bỏ voucher; kiểm tra token, gọi preview tính lại tiền và thay
+     * draft/token rồi chuyển về khu vực mã giảm giá.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     @PostMapping("/coupon")
     public String applyCoupon(@RequestParam String checkoutToken,
                               @RequestParam(defaultValue = "") String couponCode,
@@ -154,6 +178,12 @@ public class CheckoutController {
         }
     }
 
+    /**
+     * Tác dụng: Nhận nút Đặt hàng, kiểm tra draft/token chống gửi lại rồi gọi CheckoutService.place; lưu
+     * receipt, chuyển VNPAY hoặc về trang đặt hàng thành công.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     @PostMapping
     public String place(@RequestParam(required = false) Integer addressId,
                         @RequestParam(required = false) String checkoutToken,
@@ -190,6 +220,12 @@ public class CheckoutController {
         }
     }
 
+    /**
+     * Tác dụng: Hiển thị receipt của đúng khách trên customer/checkout-success; đơn VNPAY được bổ sung
+     * trạng thái và khả năng thanh toán lại.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     @GetMapping("/success")
     public String success(HttpSession session, Model model) {
         Receipt receipt = (Receipt) session.getAttribute("CHECKOUT_RECEIPT");
@@ -205,6 +241,12 @@ public class CheckoutController {
         return "customer/checkout-success";
     }
 
+    /**
+     * Tác dụng: Nhận nút thanh toán VNPAY từ checkout-success; kiểm tra receipt, token và đơn thuộc receipt
+     * rồi gọi startPayment.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     @PostMapping("/{orderId}/pay")
     public String pay(@PathVariable Integer orderId, @RequestParam String paymentToken,
                       HttpSession session, RedirectAttributes redirect, HttpServletRequest request) {
@@ -221,6 +263,12 @@ public class CheckoutController {
         }
     }
 
+    /**
+     * Tác dụng: Hàm nội bộ dùng sau đặt đơn VNPAY hoặc bấm thanh toán lại: tạo base URL/IP, gọi
+     * CheckoutPaymentService.start rồi redirect đến cổng thanh toán.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     private String startPayment(Integer orderId, HttpSession session, RedirectAttributes redirect,
                                 HttpServletRequest request) {
         try {
@@ -238,12 +286,23 @@ public class CheckoutController {
         }
     }
 
+    /**
+     * Tác dụng: Bắt lỗi sai kiểu tham số checkout, gắn thông báo và chuyển về giỏ hàng để khách chọn lại dữ liệu.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     @ExceptionHandler({org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
     public String invalidInput(RedirectAttributes redirect) {
         redirect.addFlashAttribute("errorMessage", "Thông tin checkout không hợp lệ. Vui lòng chọn lại sản phẩm và địa chỉ.");
         return "redirect:/cart";
     }
 
+    /**
+     * Tác dụng: Đọc ID khách từ session; các handler checkout dùng để gắn draft/receipt và thao tác service
+     * với đúng người đăng nhập.
+     * Màn hình / luồng: Màn customer/checkout và customer/checkout-success; nối thao tác UI với
+     * CheckoutService/CheckoutPaymentService.
+     */
     private Integer customerId(HttpSession session) {
         return (Integer) session.getAttribute("LOGGED_IN_USER_ID");
     }

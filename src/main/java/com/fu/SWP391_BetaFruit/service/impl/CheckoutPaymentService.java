@@ -24,6 +24,12 @@ public class CheckoutPaymentService {
 
     public record State(boolean paid, boolean canPay, String statusLabel) {}
 
+    /**
+     * Tác dụng: Đọc các giao dịch VNPAY của từng đơn thuộc khách, trả nhãn thanh toán và cờ canPay để màn
+     * checkout-success bật/tắt nút thanh toán.
+     * Màn hình / luồng: Màn checkout-success và thao tác thanh toán lại từ đơn hàng khách;
+     * CheckoutController/CustomerOrderController gọi.
+     */
     @Transactional(readOnly = true)
     public Map<Integer, State> states(Integer customerId, List<Integer> orderIds) {
         Map<Integer, State> result = new LinkedHashMap<>();
@@ -47,6 +53,12 @@ public class CheckoutPaymentService {
         return result;
     }
 
+    /**
+     * Tác dụng: Khóa đơn thuộc khách, chỉ cho thanh toán VNPAY khi còn PENDING và chưa PAID; gọi
+     * PaymentService.createPayment bằng số tiền đã lưu để lấy URL chuyển sang VNPAY.
+     * Màn hình / luồng: Màn checkout-success và thao tác thanh toán lại từ đơn hàng khách;
+     * CheckoutController/CustomerOrderController gọi.
+     */
     @Transactional(rollbackFor = Exception.class)
     public String start(Integer customerId, Integer orderId, String ipAddress, String baseUrl) throws Exception {
         Order order = owned(orders.findLockedById(orderId).orElseThrow(
@@ -62,6 +74,12 @@ public class CheckoutPaymentService {
         return response.getPaymentUrl();
     }
 
+    /**
+     * Tác dụng: Hàm nội bộ của states/start: kiểm tra đơn thuộc khách hiện tại trước khi đọc trạng thái
+     * hoặc tạo thanh toán.
+     * Màn hình / luồng: Màn checkout-success và thao tác thanh toán lại từ đơn hàng khách;
+     * CheckoutController/CustomerOrderController gọi.
+     */
     private Order owned(Order order, Integer customerId) {
         if (customerId == null || order.getCustomer() == null
                 || !Objects.equals(order.getCustomer().getUserId(), customerId))
@@ -69,6 +87,11 @@ public class CheckoutPaymentService {
         return order;
     }
 
+    /**
+     * Tác dụng: Kiểm tra đơn đã có giao dịch VNPAY PAID chưa; start dùng để chặn thanh toán lại đơn đã trả tiền.
+     * Màn hình / luồng: Màn checkout-success và thao tác thanh toán lại từ đơn hàng khách;
+     * CheckoutController/CustomerOrderController gọi.
+     */
     private boolean paid(Order order) {
         return transactions.findByOrderOrderIdOrderByCreatedAtAscTransactionIdAsc(order.getOrderId()).stream()
                 .anyMatch(tx -> "VNPAY".equalsIgnoreCase(tx.getGateway()) && tx.getStatus() == PaymentStatus.PAID);

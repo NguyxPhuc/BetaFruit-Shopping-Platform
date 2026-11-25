@@ -32,14 +32,32 @@ public class OrderStockService {
         this.users = users;
     }
 
+    /**
+     * Tác dụng: Trừ kho khi shop xác nhận đơn PENDING sang CONFIRMED; chuyển xử lý chung sang updateStock
+     * với deduct=true.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng shop: luồng Xác nhận và Hủy qua ShopOrderServiceImpl;
+     * chạy trong transaction của thao tác đơn.
+     */
     public void deduct(Order order, Integer ownerId) {
         updateStock(order, ownerId, true);
     }
 
+    /**
+     * Tác dụng: Hoàn kho khi shop hủy đơn đã xác nhận nhưng shipper chưa lấy hàng; gọi updateStock với
+     * deduct=false.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng shop: luồng Xác nhận và Hủy qua ShopOrderServiceImpl;
+     * chạy trong transaction của thao tác đơn.
+     */
     public void restore(Order order, Integer ownerId) {
         updateStock(order, ownerId, false);
     }
 
+    /**
+     * Tác dụng: Gộp số lượng theo biến thể, khóa kho theo thứ tự ID, kiểm tra đủ hàng/đúng shop rồi cập
+     * nhật tồn và ghi giao dịch xuất hoặc hoàn kho.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng shop: luồng Xác nhận và Hủy qua ShopOrderServiceImpl;
+     * chạy trong transaction của thao tác đơn.
+     */
     private void updateStock(Order order, Integer ownerId, boolean deduct) {
         // Aggregate repeated variants and lock in the same order across all orders.
         Map<Integer, Integer> quantities = new TreeMap<>();
@@ -94,6 +112,12 @@ public class OrderStockService {
         }
     }
 
+    /**
+     * Tác dụng: Tạo lỗi HTTP 409 khi kho hoặc dữ liệu đơn không hợp lệ; updateStock dùng để hủy thao tác và
+     * báo lý do về màn đơn hàng.
+     * Màn hình / luồng: Danh sách/chi tiết đơn hàng shop: luồng Xác nhận và Hủy qua ShopOrderServiceImpl;
+     * chạy trong transaction của thao tác đơn.
+     */
     private ResponseStatusException conflict(String message) {
         return new ResponseStatusException(HttpStatus.CONFLICT, message);
     }

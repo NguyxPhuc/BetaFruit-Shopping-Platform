@@ -22,6 +22,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class ShopReviewController {
     private final ShopReviewService shopReviewService;
 
+    /**
+     * Tác dụng: Nhận phản hồi đã kiểm tra đầu vào, gọi ShopReviewService.saveReply rồi chuyển về danh sách,
+     * giữ trang và bộ lọc cùng thông báo kết quả.
+     * Màn hình / luồng: Màn shop/reviews/list; form phản hồi gửi đến /shop/reviews/{reviewId}/reply.
+     */
     @PostMapping("/{reviewId}/reply")
     public String reply(@PathVariable Integer reviewId,
                         @Valid @ModelAttribute ShopReviewReplyRequest request,
@@ -47,6 +52,11 @@ public class ShopReviewController {
         return target;
     }
 
+    /**
+     * Tác dụng: Đọc page/size từ request, yêu cầu mỗi tham số xuất hiện một lần và là số nguyên trong giới
+     * hạn; thiếu thì dùng mặc định, sai thì tạo InvalidPagination.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đánh giá shop sau khi phản hồi.
+     */
     private static int paginationNumber(MultiValueMap<String, String> params, String key, int fallback, int min, int max) {
         var values = params.get(key);
         if (values == null) return fallback;
@@ -62,10 +72,20 @@ public class ShopReviewController {
         }
     }
 
+    /**
+     * Tác dụng: Tạo lỗi InvalidPagination kèm khoảng giá trị hợp lệ; paginationNumber gọi khi số trang/kích
+     * thước trang sai.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đánh giá shop sau khi phản hồi.
+     */
     private static InvalidPagination invalid(String key, int min, int max) {
         return new InvalidPagination("Tham số " + key + " phải là số nguyên từ " + min + " đến " + max + ". Hãy sửa giá trị đã nhập.");
     }
 
+    /**
+     * Tác dụng: Tạo URL redirect giữ page, size và các bộ lọc được truyền vào sau thao tác; dùng
+     * paginationNumber để kiểm tra tham số trước khi dựng URL.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đánh giá shop sau khi phản hồi.
+     */
     private String paginationRedirect(String path, MultiValueMap<String, String> params, int firstPage, String... filters) {
         int page = paginationNumber(params, "page", firstPage, firstPage, Integer.MAX_VALUE);
         int size = paginationNumber(params, "size", 10, 1, 100);

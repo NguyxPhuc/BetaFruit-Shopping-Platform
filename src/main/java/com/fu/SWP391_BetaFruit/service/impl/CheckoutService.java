@@ -45,11 +45,23 @@ public class CheckoutService {
     @Value("${checkout.coupon.default-limit-per-user:1}")
     private int defaultCouponLimitPerUser = 1;
 
+    /**
+     * Tác dụng: Tạo bản xem trước từ các dòng giỏ được chọn của một shop, kiểm tra khả dụng và tính tổng;
+     * bản có couponCode kiểm tra thêm voucher, quyền membership và lượt dùng.
+     * Màn hình / luồng: Màn customer/checkout; CheckoutController gọi để xem trước, áp mã, chọn địa chỉ và
+     * đặt hàng.
+     */
     @Transactional
     public CheckoutResponse preview(Integer customerId, List<Integer> selectedIds) {
         return preview(customerId, selectedIds, null);
     }
 
+    /**
+     * Tác dụng: Tạo bản xem trước từ các dòng giỏ được chọn của một shop, kiểm tra khả dụng và tính tổng;
+     * bản có couponCode kiểm tra thêm voucher, quyền membership và lượt dùng.
+     * Màn hình / luồng: Màn customer/checkout; CheckoutController gọi để xem trước, áp mã, chọn địa chỉ và
+     * đặt hàng.
+     */
     @Transactional
     public CheckoutResponse preview(Integer customerId, List<Integer> selectedIds, String couponCode) {
         var summary = carts.getSummary(customerId); // Also validates active CUSTOMER access.
@@ -126,17 +138,37 @@ public class CheckoutService {
                 platform ? null : coupon.getShop().getShopName()));
     }
 
+    /**
+     * Tác dụng: Lấy các địa chỉ giao hàng đang hoạt động của khách, ưu tiên mặc định; dùng để hiển thị và
+     * xác nhận lựa chọn địa chỉ ở checkout.
+     * Màn hình / luồng: Màn customer/checkout; CheckoutController gọi để xem trước, áp mã, chọn địa chỉ và
+     * đặt hàng.
+     */
     public List<Address> shippingAddresses(Integer customerId) {
         carts.getSummary(customerId);
         return addresses.findByUser_UserIdAndAddressTypeAndIsActiveTrue(customerId, AddressType.SHIPPING)
                 .stream().sorted(Comparator.comparing(a -> !Boolean.TRUE.equals(a.getIsDefault()))).toList();
     }
 
+    /**
+     * Tác dụng: Kiểm tra lại bản preview và địa chỉ, khóa khách/voucher để tránh đặt trùng rồi tạo đơn
+     * PENDING, lưu giá/giá vốn, ghi nhận lượt voucher và xóa dòng giỏ đã mua; bản 3 tham số mặc định COD.
+     * Kho chỉ trừ khi shop xác nhận.
+     * Màn hình / luồng: Màn customer/checkout; CheckoutController gọi để xem trước, áp mã, chọn địa chỉ và
+     * đặt hàng.
+     */
     @Transactional
     public List<CheckoutResponse.PlacedOrder> place(Integer customerId, CheckoutResponse reviewed, Integer addressId) {
         return place(customerId, reviewed, addressId, PaymentMethod.COD);
     }
 
+    /**
+     * Tác dụng: Kiểm tra lại bản preview và địa chỉ, khóa khách/voucher để tránh đặt trùng rồi tạo đơn
+     * PENDING, lưu giá/giá vốn, ghi nhận lượt voucher và xóa dòng giỏ đã mua; bản 3 tham số mặc định COD.
+     * Kho chỉ trừ khi shop xác nhận.
+     * Màn hình / luồng: Màn customer/checkout; CheckoutController gọi để xem trước, áp mã, chọn địa chỉ và
+     * đặt hàng.
+     */
     @Transactional
     public List<CheckoutResponse.PlacedOrder> place(Integer customerId, CheckoutResponse reviewed, Integer addressId,
                                                    PaymentMethod paymentMethod) {
@@ -344,6 +376,12 @@ public class CheckoutService {
         return String.format(Locale.GERMANY, "%,d", amount.longValue());
     }
 
+    /**
+     * Tác dụng: Lấy các dòng đã chọn từ đúng giỏ của khách; preview và place dùng để nối dữ liệu hiển thị
+     * với entity trước khi tính tiền/tạo đơn.
+     * Màn hình / luồng: Màn customer/checkout; CheckoutController gọi để xem trước, áp mã, chọn địa chỉ và
+     * đặt hàng.
+     */
     private List<CartItem> selectedItems(Integer customerId, Set<Integer> ids) {
         Cart cart = cartRepository.findByCustomer_UserId(customerId)
                 .orElseThrow(() -> new IllegalArgumentException("Giỏ hàng đang trống."));

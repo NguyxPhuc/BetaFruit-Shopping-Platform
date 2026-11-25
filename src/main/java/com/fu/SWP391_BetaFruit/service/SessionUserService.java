@@ -18,6 +18,12 @@ public class SessionUserService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Tác dụng: Đọc LOGGED_IN_USER_ID từ session và tra User trong database; trả Optional rỗng khi chưa có
+     * session hoặc ID không hợp lệ.
+     * Màn hình / luồng: Luồng đơn hàng shipper; ShipperOrderController.currentUser gọi trước khi tải màn
+     * hình hoặc cập nhật đơn.
+     */
     public Optional<User> findCurrentUser(HttpSession session) {
         if (session == null) return Optional.empty();
         Object rawUserId = session.getAttribute(CURRENT_USER_ID);

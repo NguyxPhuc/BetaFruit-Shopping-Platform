@@ -18,6 +18,12 @@ public class ShipperOrderQueryService {
         this.assignments = assignments;
     }
 
+    /**
+     * Tác dụng: Tìm đơn được phân công cho shipper theo từ khóa, trạng thái, phương thức thanh toán; sắp
+     * xếp, phân trang và chuyển sang DTO.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; ShipperOrderController và
+     * DelivererOrderDetailService gọi.
+     */
     public Page<ShipperOrderResponse> searchOrders(Integer shipperId, String keyword, OrderStatus status,
             PaymentMethod paymentMethod, String sortBy, String sortDirection, int page, int size) {
         Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
@@ -33,12 +39,24 @@ public class ShipperOrderQueryService {
                 .map(a -> response(a.getOrder()));
     }
 
+    /**
+     * Tác dụng: Lấy thông tin tóm tắt một đơn đúng shipper được phân công;
+     * DelivererOrderDetailService.getDetail dùng khi mở chi tiết.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; ShipperOrderController và
+     * DelivererOrderDetailService gọi.
+     */
     public ShipperOrderResponse getOrder(Integer orderId, Integer shipperId) {
         return assignments.findByOrderOrderIdAndShipperUserId(orderId, shipperId)
                 .map(a -> response(a.getOrder())).orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn được phân công"));
     }
 
+    /**
+     * Tác dụng: Chuyển đơn thành DTO gồm tổng tiền, COD phải thu/đang giữ, trạng thái nộp tiền và quyền xác
+     * nhận giao; dùng chung cho danh sách và chi tiết.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; ShipperOrderController và
+     * DelivererOrderDetailService gọi.
+     */
     private ShipperOrderResponse response(Order order) {
         return new ShipperOrderResponse(order.getOrderId(), order.getOrderStatus().name(),
                 order.getCustomer().getFullName(), order.getCustomer().getPhone(),
@@ -51,7 +69,14 @@ public class ShipperOrderQueryService {
                         && !Boolean.TRUE.equals(order.getIsSettled()));
     }
 
-    /** Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result. */
+    /**
+     * Tác dụng: Tải trang danh sách đơn được phân công và tự sửa chỉ số trang vượt giới hạn; searchOrders gọi.
+     * Màn hình / luồng: Màn shipper/orders và shipper/order-detail; ShipperOrderController và
+     * DelivererOrderDetailService gọi.
+     *
+     * Ghi chú hiện có:
+     * Query a bounded page; recover when a URL or concurrent deletion leaves it outside the result.
+     */
     private <T> Page<T> loadPage(int page, int size, java.util.function.IntFunction<Page<T>> query) {
         int index = Math.max(0, page);
         // Keep the SQL offset within the range accepted by JPA providers.

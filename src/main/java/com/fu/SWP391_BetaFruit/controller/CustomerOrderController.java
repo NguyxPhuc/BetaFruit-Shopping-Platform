@@ -92,6 +92,12 @@ public class CustomerOrderController {
         return "customer/order-detail";
     }
 
+    /**
+     * Tác dụng: Nhận nút thanh toán lại, lấy khách và thông tin request rồi gọi
+     * CheckoutPaymentService.start; lỗi thì quay về chi tiết đơn kèm thông báo.
+     * Màn hình / luồng: Màn đơn hàng khách, đặc biệt customer/order-detail; thao tác thanh toán lại qua
+     * CheckoutPaymentService.
+     */
     @PostMapping("/{orderId}/pay")
     public String retryVnpay(@PathVariable Integer orderId, HttpSession session,
                              HttpServletRequest request, RedirectAttributes redirectAttributes) {
@@ -262,6 +268,11 @@ public class CustomerOrderController {
         }
     }
 
+    /**
+     * Tác dụng: Đọc page/size từ request, yêu cầu mỗi tham số xuất hiện một lần và là số nguyên trong giới
+     * hạn; thiếu thì dùng mặc định, sai thì tạo InvalidPagination.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đơn hàng khách.
+     */
     private static int paginationNumber(MultiValueMap<String, String> params, String key, int fallback, int min, int max) {
         var values = params.get(key);
         if (values == null) return fallback;
@@ -277,6 +288,11 @@ public class CustomerOrderController {
         }
     }
 
+    /**
+     * Tác dụng: Tạo lỗi InvalidPagination kèm khoảng giá trị hợp lệ; paginationNumber gọi khi số trang/kích
+     * thước trang sai.
+     * Màn hình / luồng: Hàm nội bộ phục vụ danh sách đơn hàng khách.
+     */
     private static InvalidPagination invalid(String key, int min, int max) {
         return new InvalidPagination("Tham số " + key + " phải là số nguyên từ " + min + " đến " + max + ". Hãy sửa giá trị đã nhập.");
     }

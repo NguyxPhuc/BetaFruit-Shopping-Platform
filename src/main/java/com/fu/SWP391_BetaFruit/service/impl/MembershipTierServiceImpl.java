@@ -649,6 +649,12 @@ public class MembershipTierServiceImpl implements MembershipTierService {
         }
     }
     /**
+     * Tác dụng: Lấy voucher sàn đang bật gắn với hạng hiện tại của khách; trả rỗng nếu chưa có hạng đặc
+     * quyền hoặc cấu hình không sẵn sàng.
+     * Màn hình / luồng: Checkout và quyền lợi membership: CheckoutService dùng để kiểm tra/gợi ý mã;
+     * getExclusiveVouchersForTier dùng để dựng danh sách voucher.
+     *
+     * Ghi chú hiện có:
      * Lấy danh sách Voucher đặc quyền theo cấp bậc hiện tại (Shopee Rewards Style)
      */
     @Override

@@ -20,6 +20,12 @@ public class DelivererOrderDetailService {
         this.assignments = assignments; this.items = items; this.history = history; this.orders = orders;
     }
 
+    /**
+     * Tác dụng: Kiểm tra phân công rồi ghép tóm tắt đơn, sản phẩm, lịch sử và các cờ cho phép lấy hàng/bắt
+     * đầu giao để hiển thị chi tiết.
+     * Màn hình / luồng: Màn shipper/order-detail; ShipperOrderController.detail gọi khi shipper mở một đơn
+     * được phân công.
+     */
     @Transactional(readOnly = true)
     public DelivererOrderDetailResponse getDetail(Integer orderId, Integer shipperId) {
         var assignment = assignments.findByOrderOrderIdAndShipperUserId(orderId, shipperId)
